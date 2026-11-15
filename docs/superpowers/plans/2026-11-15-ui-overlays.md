@@ -4,7 +4,7 @@
 
 **Goal:** Everything that opens over a page in the App rises from the bottom, works by thumb on a phone (swipe to close, keyboard-aware), the most used things are one tap away on phones, record data is shown one way everywhere, and all of it is written down in the binding UI guide `docs/design/app.md` that every agent loads.
 
-**Architecture:** `<ContentSheet>` (`src/components/content-sheet.tsx`, used by all ~45 `<UrlSheet>` drawers) switches from Base UI `Dialog` to Base UI `Drawer` (already installed, `@base-ui/react` 1.8.0: swipe-to-dismiss, nested drawers, virtual keyboard handling), keeping its props; a `compact` variant covers confirmations. The five remaining non-bottom overlays move onto it and a `node --test` guard keeps it that way. Phones get a bottom bar in `<AppShell>` (Start · Suche · Sprout · Menü) and the page's primary action as a round button above it. A new `<DetailList>` replaces five hand-made `<dl>` grids. The UI rules move out of `AGENTS.md` into `docs/design/app.md`; `CLAUDE.md` imports it, `AGENTS.md` points to it.
+**Architecture:** `<ContentSheet>` (`src/components/content-sheet.tsx`, used by all ~45 `<UrlSheet>` drawers) switches from Base UI `Dialog` to Base UI `Drawer` (already installed, `@base-ui/react` 1.8.0: swipe-to-dismiss, nested drawers, virtual keyboard handling), keeping its props; a `compact` variant covers confirmations. The five remaining non-bottom overlays move onto it and a `node --test` guard keeps it that way. Phones get a floating glass tab bar in `<AppShell>` in the iOS style: a capsule with Start · Suche · Menü, plus the page's primary action as a separate round button next to it (four elements at most). Sprout stays in the top bar. A new `<DetailList>` replaces five hand-made `<dl>` grids. The UI rules move out of `AGENTS.md` into `docs/design/app.md`; `CLAUDE.md` imports it, `AGENTS.md` points to it.
 
 **Tech Stack:** Next.js 16 (App Router), React 19, Base UI `Drawer` / `Dialog`, Tailwind v4 tokens, `node --test` (`npm test`).
 
@@ -37,8 +37,8 @@ Phones today: navigation and Sprout sit in the top bar (sidebar trigger top left
 1. **Swipe with unsaved input**: swiping a drawer down with a dirty form asks first; "Abbrechen" snaps the sheet back with the input intact. → Task 1 Step 4.
 2. **Swipe vs. scroll**: in a long drawer (task drawer `?task=`) scrolled halfway, dragging down scrolls the content; only at the top does it close the sheet. → Task 1 Step 4.
 3. **Confirm from inside a drawer** (⋯ → trash): only the confirm sheet closes on cancel/Escape/backdrop; the drawer below keeps its input. Quick create from a contact picker inside a drawer returns the new contact to that drawer. → Task 2 Step 6.
-4. **Page SaveBar on phones**: a dirty edit page shows its SaveBar *above* the bottom bar, and the round "+" button is hidden while it shows. → Task 4 Step 5.
-5. **Einlass (`/scan`)**: its own bottom tab bar still works on phones and covers the App bar (no double bar). → Task 4 Step 5.
+4. **Bar vs. SaveBar and keyboard on phones**: while a page SaveBar shows (dirty edit page, create page) or an input has focus, the floating bar and its "+" are hidden, so the SaveBar takes the bottom and nothing floats over the keyboard; after saving/cancelling/blur the bar returns. → Task 4 Step 6.
+5. **Einlass (`/scan`)**: its own bottom tab bar still works on phones and the App's floating bar is hidden there (no double bar). → Task 4 Step 6.
 
 ---
 
@@ -140,27 +140,63 @@ Screenshot 1 at 375px and 1280px as proof.
 
 ---
 
-### Task 4: Phones — bottom bar and the primary action in thumb reach
+### Task 4: Phones — floating glass tab bar (iOS style)
+
+Agreed look (2026-11-15): a floating capsule with **three** tabs, Start · Suche · Menü, each with an icon and a small label below, roomy spacing. Next to it, a separate round button for the page's primary action. Four elements at most. Pages without a primary action show the capsule alone, centred. Sprout stays a round button in the top bar. Liquid-Glass look: blur plus saturation on a translucent background, a fine light top edge and a soft shadow. No SVG refraction filter (Safari doesn't support it).
 
 **Files:**
 - Create: `src/components/mobile-bar.tsx`
-- Modify: `src/components/app-shell.tsx`, `src/components/command-search.tsx`, `src/components/page.tsx` (`PageHeader` primary), `src/components/save-bar.tsx` (page variant)
-- Modify (only if a label is missing): `src/i18n/messages/de.json`, `en.json` — `common.menu` = "Menü" / "Menu"
+- Modify: `src/app/globals.css` (glass tokens + `.glass` class)
+- Modify: `src/components/app-shell.tsx`, `src/components/command-search.tsx`, `src/components/page.tsx` (`PageHeader` primary), `src/components/save-bar.tsx` (`data-slot="save-bar"` on the page variant)
+- Modify (if missing): `src/i18n/messages/de.json` / `en.json`, `common.menu` = "Menü" / "Menu"
 
 **Interfaces:**
-- Produces: `MobileBar()` (client, no props), rendered by `AppShell` only when `search` is true (the App, not `/admin`). The CSS variable `--mobile-bar` (`3.75rem` below `md`, `0px` from `md`) is set on `SidebarInset`. Other parts read it for spacing. Search opens on `document` event `"roots:search"`.
+- Produces: `MobileBar()` (client, no props), rendered by `AppShell` only when `search` is true (the App, not `/admin`). Search opens on the `document` event `"roots:search"`. Hook attributes: `data-slot="mobile-bar"`, `data-slot="page-primary"` (the round button), `data-slot="save-bar"`, `data-own-tab-bar` (pages with their own bar, e.g. `/scan`). The bar's height, including its gap, is `--mobile-bar` on `SidebarInset`: `calc(4.75rem + env(safe-area-inset-bottom))` below `md`, `0px` from `md`.
 
-- [ ] **Step 1: `MobileBar`** — `nav` with `aria-label`, `md:hidden fixed inset-x-0 bottom-0 z-30 flex border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]`. Four equal items (`flex-1 flex-col items-center gap-0.5 min-h-14 text-xs`, icon + label): **Start** (`Link` to `APP_HOME`, active when on it), **Suche** (`document.dispatchEvent(new Event("roots:search"))`), **Sprout** (`useSprout()` toggle, `aria-expanded`), **Menü** (`useSidebar().setOpenMobile(true)`).
+- [ ] **Step 1: Glass tokens in `globals.css`** (not in `theme.css`: that file gets replaced by theme exports, so these tokens derive from it). `:root` / `.dark`:
+  - `--glass: color-mix(in oklch, var(--background) 72%, transparent)`
+  - `--glass-border: color-mix(in oklch, var(--foreground) 10%, transparent)`
+  - `--glass-highlight`: light = `color-mix(in oklch, var(--background) 80%, transparent)`, dark = `color-mix(in oklch, var(--foreground) 14%, transparent)`
 
-- [ ] **Step 2: Wire it** — `CommandSearch`: also open on `"roots:search"` (next to the ⌘K listener). `AppShell` (when `search`): render `<MobileBar />` inside `SidebarInset`, set `max-md:[--mobile-bar:3.75rem]` on it, `main` gets `max-md:pb-[calc(var(--mobile-bar)+1.5rem)]`; on phones hide the top bar's `SidebarTrigger`, its separator and `SproutButton` (they live in the bar now; `/admin` keeps them).
+  Plus a class `.glass`: `background: var(--glass); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-lg); backdrop-filter: blur(20px) saturate(180%)`. Fallback: under `@supports not (backdrop-filter: blur(1px))` and `@media (prefers-reduced-transparency: reduce)`, the background becomes `var(--background)`.
 
-- [ ] **Step 3: Primary action** — in `PageHeader`, a link-type `primary` gets on phones `max-md:fixed max-md:right-4 max-md:bottom-[calc(var(--mobile-bar)+env(safe-area-inset-bottom)+1rem)] max-md:z-30 max-md:size-14 max-md:rounded-full max-md:shadow-lg`, label `max-md:sr-only` (still its `aria-label`), hidden on phones while a page SaveBar is present (`max-md:[body:has([data-slot=save-bar])_&]:hidden`). ReactNode primaries stay inline.
+- [ ] **Step 2: `MobileBar`.** A `nav` with `aria-label` and `data-slot="mobile-bar"`, `md:hidden fixed z-30 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4`. Right edge: `right-4` with the capsule centred at `w-[78%]` when the page has no primary action; when it has one, `right-[calc(1rem+3.625rem+0.75rem)]` via `[body:has([data-slot=page-primary])_&]`, leaving room for the round button. The capsule is `glass rounded-full p-1.5 flex gap-1.5`. Three tabs (`flex-1 flex flex-col items-center gap-0.5 min-h-11 py-1.5 rounded-full text-[11px]`, icon `size-5`):
+  - **Start**: `Link` to `APP_HOME`; `aria-current="page"` when active.
+  - **Suche**: `document.dispatchEvent(new Event("roots:search"))`.
+  - **Menü**: `useSidebar().setOpenMobile(true)`.
 
-- [ ] **Step 4: Page SaveBar above the bar** — the page variant of `SaveBar` gets `data-slot="save-bar"` and `bottom-[var(--mobile-bar,0px)]` instead of `bottom-0` (the drawer variant unchanged).
+  The active tab has a pill (`bg-primary/10 text-primary`). The pill is one absolutely positioned element, moved with `translateX(index * 100%)` plus the gap, `transition-transform duration-300`, no measuring. Touch: `active:scale-95 transition`, `[-webkit-tap-highlight-color:transparent] touch-manipulation select-none`.
+  **Shrinking while scrolling down:** a scroll listener (passive, rAF) sets `data-compact` on the bar after 24px of downward scroll and removes it on any upward scroll. Compact = only the active tab's icon, labels and the other tabs collapsed (`grid-template-columns` / `max-width` transition). Under `motion-reduce` there is no animation, the switch is instant.
 
-- [ ] **Step 5: Lint, build, browser** — `npm run lint && npm run build`; then at 375px with touch: bar shows on Kontakte; Start/Suche/Sprout/Menü each work; "+" button bottom right opens the new-contact page; open a contact, change a field → SaveBar sits above the bar, no "+"; `/scan`: only the Einlass tab bar is visible and usable; at 1280px: no bar, no round button, header unchanged; `/admin` at 375px: top-bar trigger as before. Screenshot Kontakte at 375px as proof.
+- [ ] **Step 3: Primary action as the round button.** In `PageHeader`, a link-type `primary` keeps its place in the header from `md`. On phones it becomes the round button next to the capsule: `data-slot="page-primary"`, `max-md:glass max-md:fixed max-md:z-30 max-md:right-4 max-md:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] max-md:size-[3.625rem] max-md:rounded-full max-md:p-0`, label `max-md:sr-only` (keeps its `aria-label`), icon `size-6`. ReactNode primaries stay inline.
 
-- [ ] **Step 6: Commit** — the files above ("Phones: bottom bar (Start, Suche, Sprout, Menü), primary action as round button above it, page SaveBar above the bar").
+- [ ] **Step 4: Hide when it would get in the way** (CSS only). The bar *and* `page-primary` get `max-md:hidden` when:
+  - a SaveBar is on the page: `[body:has([data-slot=save-bar])_&]`, so the SaveBar takes the bottom;
+  - an input is focused: `[body:has(input:focus,textarea:focus,select:focus,[contenteditable]:focus)_&]`, so nothing floats over the keyboard;
+  - the page has its own tab bar: `[body:has([data-own-tab-bar])_&]` (set that attribute on the `/scan` bar, `scan/page.tsx:87`).
+
+  Sheets cover the bar anyway (`z-50`).
+
+- [ ] **Step 5: Wire it into the shell.** `CommandSearch` also opens on `"roots:search"`, next to the ⌘K listener. `AppShell` (when `search`):
+  - Render `<MobileBar />` inside `SidebarInset` and set `max-md:[--mobile-bar:calc(4.75rem+env(safe-area-inset-bottom))]` on it.
+  - `main` gets `max-md:pb-[calc(var(--mobile-bar)+1rem)]`; content scrolls visibly under the glass.
+  - On phones, hide the top bar's `SidebarTrigger` and its separator (Menü lives in the bar now). `SproutButton` stays in the top bar on every size. `/admin` keeps everything as it is.
+
+- [ ] **Step 6: Lint, build, browser.** Run `npm run lint && npm run build`. Then check at 375px with touch, in light and dark:
+  - **Kontakte:** the capsule shows three spaced tabs and the "+" circle beside it; "+" opens the new-contact page; Start, Suche and Menü each work.
+  - **Scrolling:** down shrinks the capsule to the active icon, up restores it.
+  - **Start page (no primary):** the capsule is alone and centred.
+  - **Contact page:** focus a field → bar and "+" disappear; change a field and blur → SaveBar at the bottom, no bar; Speichern → the bar is back.
+  - **Content:** scrolls visibly blurred under the bar; the last list item is reachable above it.
+  - **`/scan`:** only the Einlass tab bar.
+  - **1280px:** no bar, "+" in the header as before.
+  - **`/admin` at 375px:** top-bar trigger as before.
+
+  As proof, screenshot Kontakte at 375px in light and dark.
+
+- [ ] **Step 7: Commit** the files above: "Phones: floating glass tab bar (Start, Suche, Menü) with the page's primary action as a round button beside it, shrinks on scroll, hides for SaveBar/keyboard".
+
+Not in this task: `viewport-fit=cover` and safe areas at the top only matter once roots can be added to the home screen as a web app (no manifest yet).
 
 ---
 
@@ -171,7 +207,7 @@ Screenshot 1 at 375px and 1280px as proof.
 - Modify: `AGENTS.md` (line 50 and lines 86–121), `CLAUDE.md`
 
 **Interfaces:**
-- Consumes: names from Tasks 1–4 (`ContentSheet compact`, `ContentSheetClose`, `DetailList`, `MobileBar`, `--mobile-bar`, `overlays.test.mjs`).
+- Consumes: names from Tasks 1–4 (`ContentSheet compact`, `ContentSheetClose`, `DetailList`, `MobileBar`, `.glass`, `--mobile-bar`, `overlays.test.mjs`).
 
 - [ ] **Step 1: Create `docs/design/app.md`**, sections in this order:
 1. `# roots — App UI guide`: "Binding for every screen in the App and `/admin`. Read it before any UI change; new UI rules go here, not into AGENTS.md. The public site has its own sheet: `docs/design/site.md`."
@@ -230,9 +266,13 @@ UI's dialog/drawer. A new exception goes into that test's allowed list *and* int
 The App is used on the go (door, shifts, looking someone up), so phones are a first-class device, not a squeezed
 desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
 
-- **Thumb zone**: on phones the bottom bar (`<MobileBar>`: Start · Suche · Sprout · Menü) holds the global ways
-  around; the page's one primary action (`PageHeader` `primary`) floats as a round button above it, bottom right.
-  Everything else stays in the header and its ⋯ menu. Space above the bar comes from `--mobile-bar`.
+- **Thumb zone**: on phones a floating glass tab bar (`<MobileBar>`, iOS style) holds the global ways around: a
+  capsule with Start · Suche · Menü, and next to it the page's one primary action (`PageHeader` `primary`) as a round
+  button. Never more than four elements; a new tab only replaces one. Sprout stays in the top bar. Everything else
+  stays in the header and its ⋯ menu. The capsule shrinks to the active tab while scrolling down, and the bar hides
+  while a SaveBar shows or an input has focus. Content scrolls under the glass; space below it comes from
+  `--mobile-bar`. Glass = the `.glass` class (tokens in `globals.css`, derived from the theme), with a solid
+  fallback for "reduce transparency".
 - **Phone-critical flows** (check these at 375px first, with touch): Einlass/Scan, Meine Schichten incl. clock in/out,
   looking up a contact and calling/mailing them, tasks, notifications, Sprout.
 - **Sheets**: full width, from below the top bar; swipe down closes; the focused field stays above the keyboard;
@@ -243,7 +283,7 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   `size-8`, bar items and the primary action at least 44px high.
 - **Inputs** keep the shadcn sizes (`text-base` on phones), so iOS doesn't zoom; use `<TypedInput kind>` so phones get
   the right keyboard (numbers, email, phone).
-- A page with its own bottom tab bar (Einlass) lies above the App bar (`z-40`) instead of adding a second one.
+- A page with its own bottom tab bar (Einlass) marks it `data-own-tab-bar`; the App bar then hides instead of adding a second one.
 ```
 
 - [ ] **Step 2: Shrink `AGENTS.md`** — delete lines 86–121 (`## Design system` … "Check new screens at 375px, 768px and 1280px before committing.") and put in their place:

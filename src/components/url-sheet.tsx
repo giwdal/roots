@@ -35,19 +35,22 @@ export function UrlSheet({
   const t = useT()
   const answered = useRef(0)
 
-  const close = () => {
-    // A backdrop click is an outside press and an overlay click: ask once per gesture.
-    if (Date.now() - answered.current < 500) return
+  // Ask before throwing away unsaved changes (once per gesture: a backdrop click is an outside press and a click).
+  const confirmClose = () => {
+    if (Date.now() - answered.current < 500) return false
     const ok = confirmDiscard(document.querySelector("[data-slot=sheet-content]"), t("common.discardUnsaved"))
     answered.current = Date.now()
-    if (!ok) return
+    return ok
+  }
+  // After the slide-down: drop the sheet's params (and ok/error) from the URL.
+  const closed = () => {
     const next = new URLSearchParams(searchParams)
     for (const p of [...params, "error", "ok"]) next.delete(p)
     router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false })
   }
 
   return (
-    <ContentSheet onClose={close} wide={wide} label={title}>
+    <ContentSheet onClose={confirmClose} onClosed={closed} wide={wide} label={title}>
       <div className="grid gap-1.5 px-6 pt-6 pb-4">
         {/* Title row: actions + ⋯ sit left of the close button (absolute, top right). */}
         <div className="flex items-start gap-2 pr-10">

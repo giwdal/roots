@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Dialog } from "@base-ui/react/dialog"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -22,12 +23,17 @@ function place(el: HTMLElement) {
  * right. `<UrlSheet>` uses it for every record/new/edit drawer; the content column is centred (wide = imports,
  * previews). Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */
-export function ContentSheet({ onClose, wide, children, label }: { onClose: () => void; wide?: boolean; children: React.ReactNode; label?: string }) {
+export function ContentSheet({ onClose, onClosed, wide, children, label }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; children: React.ReactNode; label?: string }) {
   const t = useT()
+  // Closing: ask (`onClose` may say no), slide down, then `onClosed` (e.g. drop the URL param) once the animation ended.
+  const [open, setOpen] = useState(true)
+  const close = () => {
+    if (onClose() !== false) setOpen(false)
+  }
   return (
-    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(o) => !o && close()} onOpenChangeComplete={(o) => !o && onClosed()}>
       <Dialog.Portal>
-        <Dialog.Backdrop onClick={onClose} className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <Dialog.Backdrop onClick={close} className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
         <Dialog.Popup
           data-slot="sheet-content"
           aria-label={label}
@@ -38,7 +44,7 @@ export function ContentSheet({ onClose, wide, children, label }: { onClose: () =
             window.addEventListener("resize", update)
             return () => window.removeEventListener("resize", update)
           }}
-          className="fixed bottom-0 z-50 flex flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover text-sm text-popover-foreground shadow-2xl transition duration-300 ease-out data-ending-style:translate-y-full data-starting-style:translate-y-full"
+          className="fixed bottom-0 z-50 flex flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full"
         >
           <Dialog.Close render={<Button variant="ghost" size="icon-sm" className="absolute top-4 right-4 z-30" />}>
             <XIcon />

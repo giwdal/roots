@@ -6238,7 +6238,6 @@
   "calendar": {
     "nav": "Calendar",
     "title": "Calendar",
-    "hint": "Everything with a date in one place: events, shifts, tasks, projects, rentals and courses.",
     "source": "Area",
     "sources": {
       "events": "Events",

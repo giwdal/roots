@@ -25,7 +25,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const entries = await calendarEntries(ctx, t, from, to, src ? [src] : sources)
   return (
     <Page>
-      <PageHeader area="calendar" title={t("calendar.title")} description={t("calendar.hint")} />
+      <PageHeader area="calendar" title={t("calendar.title")} />
       <div className="flex flex-wrap items-center gap-3">
         <FilterMenu param="src" label={t("calendar.source")} options={sources.map((s: CalendarSource) => ({ value: s, label: t.dynamic(`calendar.sources.${s}`) }))} />
       </div>

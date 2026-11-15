@@ -69,7 +69,8 @@ export function PageHeader({
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}
-            {description && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
+            {/* Area pages speak for themselves (the top bar names them): no intro sentence; record pages may explain. */}
+            {description && !(area && !crumbs) && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
           </div>
         </div>
         {(actions || menu || primary || settings) && (

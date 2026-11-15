@@ -6238,7 +6238,6 @@
   "calendar": {
     "nav": "Kalender",
     "title": "Kalender",
-    "hint": "Alles mit Datum an einem Ort: Veranstaltungen, Schichten, Aufgaben, Projekte, Vermietung und Kurse.",
     "source": "Bereich",
     "sources": {
       "events": "Veranstaltungen",

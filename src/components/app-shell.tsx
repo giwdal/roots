@@ -45,7 +45,9 @@ export async function AppShell({
           {/* The App's phones have the Menü tab in the bottom bar (opens a bottom sheet); the menu button shows only while that bar is hidden. */}
           {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
           <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
-          {bar ?? <PageTitle groups={groups} fallback={title} />}
+          {/* Where am I: a record page's crumbs (<TopbarCrumbs>) replace the area › page title. */}
+          <div id="topbar-crumbs" className="min-w-0 flex-1 overflow-hidden text-sm empty:hidden" />
+          <div className="min-w-0 [#topbar-crumbs:not(:empty)+&]:hidden">{bar ?? <PageTitle groups={groups} fallback={title} />}</div>
           {/* Phones: the page header's gear / actions / ⋯ land here (<HeaderActions>). */}
           <div id="topbar-actions" className="ml-auto flex items-center gap-1 empty:hidden md:hidden" />
           {search && <SproutButton />}

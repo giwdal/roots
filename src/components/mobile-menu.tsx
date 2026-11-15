@@ -28,7 +28,8 @@ const manyChildren = (n: SidebarLink) => (n.children?.length ?? 0) > 1
  * tiles (same `groups` as the sidebar), account rows; an area with sub-pages drills into level 2 (big rows).
  * Opens on the "roots:menu" event, at the current area's sub-pages when there are any.
  */
-export function MobileMenu({ header, groups, me }: { header: React.ReactNode; groups: Group[]; me: Me }) {
+// switchOrgs: more than one org to choose from (several memberships, or a platform admin) – otherwise no org row.
+export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.ReactNode; switchOrgs: boolean; groups: Group[]; me: Me }) {
   const t = useT()
   const router = useRouter()
   const pathname = appRoute(usePathname())
@@ -71,6 +72,7 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
       onClose={() => {}}
       onClosed={() => setOpen(false)}
       label={t("shell.menu")}
+      closeButton={false}
       header={
         current ? (
           <div className="flex items-center gap-2">
@@ -81,11 +83,7 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
               {current.icon} <span className="truncate">{current.label}</span>
             </ContentSheetTitle>
           </div>
-        ) : (
-          <ContentSheetTitle ref={heading} tabIndex={-1} className="text-base font-semibold outline-none">
-            {t("shell.menu")}
-          </ContentSheetTitle>
-        )
+        ) : null
       }
     >
       {current ? (
@@ -110,7 +108,11 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
         </div>
       ) : (
         <div className="grid gap-4 p-4">
-          {header}
+          {/* Level 1 needs no visible title (the grab handle says "sheet"); screen readers still get one. */}
+          <ContentSheetTitle ref={heading} tabIndex={-1} className="sr-only">
+            {t("shell.menu")}
+          </ContentSheetTitle>
+          {switchOrgs && header}
           <button type="button" onClick={search} className={cn("flex h-11 w-full items-center gap-2 rounded-xl border px-3 text-sm text-muted-foreground", TAP)}>
             <SearchIcon className="size-4" /> {t("search.open")}
           </button>

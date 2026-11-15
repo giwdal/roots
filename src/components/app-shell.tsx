@@ -19,9 +19,11 @@ export async function AppShell({
   search,
   orgId,
   bar,
+  switchOrgs = false,
   children,
 }: {
   header: React.ReactNode
+  switchOrgs?: boolean // more than one org to choose from: the phone menu shows the org switcher
   groups: { label?: string; items: SidebarLink[] }[]
   me: Me
   title: string
@@ -52,7 +54,7 @@ export async function AppShell({
           <ConfirmHost />
         </main>
         {search && <MobileBar />}
-        {search && <MobileMenu header={header} groups={groups} me={me} />}
+        {search && <MobileMenu header={header} switchOrgs={switchOrgs} groups={groups} me={me} />}
       </SidebarInset>
       {search && <SproutPanel key={orgId} orgId={orgId ?? ""} />}
     </SidebarProvider>

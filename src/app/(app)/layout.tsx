@@ -49,6 +49,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       search
       orgId={ctx.org.id}
       header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} />}
+      switchOrgs={(allOrgs ?? ctx.orgs).length > 1}
       groups={groups}
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}

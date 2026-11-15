@@ -74,7 +74,7 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   class (`@utility glass` in `globals.css`, derived from the theme tokens), with a solid fallback for "reduce
   transparency". While the bar is hidden by a SaveBar or a page's own tab bar, the top bar shows the menu button
   (`@utility bar-fallback`), so phones never lose the menu.
-- **Menü** opens a bottom sheet, not the sidebar: org switcher and search on top, the nav areas as a 3-column tile grid (icon + label, active area tinted), an area with sub-pages drills into big rows (back = ‹ Menü), account rows at the bottom; it opens at the current area's sub-pages. Same `groups` as the sidebar (`<MobileMenu>`), so new modules appear automatically.
+- **Menü** opens a bottom sheet, not the sidebar, with no title row and no X (grab handle, swipe or backdrop close it): the org switcher only when there is more than one org to choose (several orgs or a platform admin), search on top, the nav areas as a 3-column tile grid (icon + label, active area tinted), an area with sub-pages drills into big rows (back = ‹ Menü), account rows at the bottom; it opens at the current area's sub-pages. Same `groups` as the sidebar (`<MobileMenu>`), so new modules appear automatically.
 - **Phone-critical flows** (check these at 375px first, with touch): Einlass/Scan, Meine Schichten incl. clock in/out,
   looking up a contact and calling/mailing them, tasks, notifications, Sprout.
 - **Sheets**: full width, from below the top bar; swipe down closes; the focused field stays above the keyboard;

@@ -6,14 +6,13 @@ import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { formatMoney } from "@/lib/inputs"
 import { param, withParams } from "@/lib/url"
 import { cn } from "@/lib/utils"
 import { stockHistory, stockList } from "@/shop/stock"
 import { StockForm } from "./stock-form"
 
 // Shop → Lager: every physical item with what's on hand, held by open orders and still free; a row opens its
-// drawer to book a movement (Zugang, Entnahme, Schwund, Inventur) or a sale at the merch table, and its history.
+// drawer to book a movement (Zugang, Entnahme, Schwund, Inventur) and its history; sales are orders (Neue Bestellung).
 export default async function StockPage({ searchParams }: PageProps<"/shop/stock">) {
   const ctx = await requirePerm("shop.view")
   const t = await getT()
@@ -21,14 +20,7 @@ export default async function StockPage({ searchParams }: PageProps<"/shop/stock
   const itemId = param(sp, "item")
   const items = await stockList(ctx.supabase, ctx.org.id)
   const item = itemId ? items.find((i) => i.item_id === itemId) : undefined
-  const [history, price] = item
-    ? await Promise.all([
-        stockHistory(ctx.supabase, ctx.org.id, item.item_id!),
-        item.variant_id
-          ? ctx.supabase.from("product_variants").select("price_cents, products(price_cents)").eq("id", item.variant_id).single().then(({ data }) => data?.price_cents ?? data?.products?.price_cents ?? null)
-          : ctx.supabase.from("products").select("price_cents").eq("id", item.product_id!).single().then(({ data }) => data?.price_cents ?? null),
-      ])
-    : [[], null]
+  const history = item ? await stockHistory(ctx.supabase, ctx.org.id, item.item_id!) : []
   const manage = ctx.can("shop.manage")
   const num = (n: number | null) => (n === null ? "–" : String(n))
 
@@ -65,7 +57,15 @@ export default async function StockPage({ searchParams }: PageProps<"/shop/stock
           }
         >
           <div className="grid gap-6">
-            {manage && <StockForm item={item.item_id!} onHand={item.on_hand ?? 0} price={price === null ? "" : formatMoney(price)} />}
+            {manage && <StockForm item={item.item_id!} onHand={item.on_hand ?? 0} />}
+            {manage && (
+              <p className="text-sm text-muted-foreground">
+                {t("store.lager.saleHint")}{" "}
+                <Link href={`/shop/orders?new=order&item=${item.item_id}`} className="text-primary underline-offset-4 hover:underline">
+                  {t("store.lager.saleLink")}
+                </Link>
+              </p>
+            )}
             <section className="grid gap-2">
               <h3 className="text-sm font-medium">{t("store.lager.history")}</h3>
               {history.length ? (

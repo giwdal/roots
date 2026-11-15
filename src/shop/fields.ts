@@ -359,15 +359,13 @@ export function refundAdjustment(remaining: { cents: number; rate: number }[], e
 
 // ---------- Lager (stock movements) ----------
 
-export const STOCK_KINDS = ["receipt", "withdrawal", "loss", "count", "sale"] as const
+export const STOCK_KINDS = ["receipt", "withdrawal", "loss", "count"] as const
 export type StockKind = (typeof STOCK_KINDS)[number]
-export type StockMove =
-  | { move: { quantity: number; reason: "receipt" | "withdrawal" | "loss" | "correction"; note: string | null } }
-  | { sale: { quantity: number; unit: number; note: string | null } }
+export type StockMove = { move: { quantity: number; reason: "receipt" | "withdrawal" | "loss" | "correction"; note: string | null } }
 
 /**
  * One booking from the Lager drawer / API: Zugang (+), Entnahme / Schwund (−), Inventur (counted → the difference to
- * what is on hand), or Verkauf vor Ort (a real order, paid cash). `onHand` = stock − sold, for the count.
+ * what is on hand). Sales are orders (Bestellungen → Neue Bestellung), never stock bookings. `onHand` = stock − sold.
  */
 export function readStockMove(get: (k: string) => string, onHand: number): StockMove | { error: string } {
   const kind = STOCK_KINDS.find((k) => k === get("kind"))
@@ -376,11 +374,6 @@ export function readStockMove(get: (k: string) => string, onHand: number): Stock
   const n = Number(get(kind === "count" ? "counted" : "quantity").trim())
   if (!Number.isInteger(n) || n < (kind === "count" ? 0 : 1) || n > 1_000_000) return { error: "store.lager.quantityInvalid" }
   if (kind === "count") return n === onHand ? { error: "store.lager.noChange" } : { move: { quantity: n - onHand, reason: "correction", note } }
-  if (kind === "sale") {
-    const unit = moneyCents(get("price"))
-    if (unit === null || unit < 1 || unit > MAX_UNIT_CENTS) return { error: "store.priceInvalid" }
-    return { sale: { quantity: n, unit, note } }
-  }
   return { move: { quantity: kind === "receipt" ? n : -n, reason: kind, note } }
 }
 
@@ -388,7 +381,10 @@ export function readStockMove(get: (k: string) => string, onHand: number): Stock
 
 export type TeamOrder = {
   lines: { id: string; q: number; unit: number }[] // variant / product id, quantity, gross price per piece in cents
-  name: string
+  buyer: "none" | "crm" | "new" // walk-in sale / a CRM contact (its details updated) / a new CRM contact
+  name: string | null // none: null ("Verkauf vor Ort")
+  first_name: string | null
+  last_name: string | null
   email: string | null
   phone: string | null
   address: { company: string | null; street: string; postal_code: string; city: string; country: string } | null
@@ -400,6 +396,7 @@ export type TeamOrder = {
   note: string | null
   notify: boolean // send the buyer the usual mail
   contact_id: string | null // picked from the CRM (else matched/created by email as usual)
+  invoice: boolean // issue an invoice (else none, whatever the automatic setting says)
 }
 
 /** The "Neue Bestellung" form / API → a team order, or an error key. `lines` = JSON [{ id, q, p }] (p in cents). */
@@ -415,9 +412,15 @@ export function readTeamOrder(get: (k: string) => string): { order: TeamOrder } 
     .filter((l) => l.id)
   if (!lines.length) return { error: "store.teamOrder.noItems" }
   if (lines.length > MAX_CART_LINES || lines.some((l) => !/^[0-9a-f-]{36}$/.test(l.id) || !(l.q >= 1 && l.q <= 1000) || !(l.unit >= 0 && l.unit <= MAX_UNIT_CENTS))) return { error: "errors.invalid_input" }
-  const name = get("name").trim().slice(0, 200)
-  if (!name) return { error: "store.teamOrder.nameRequired" }
-  const email = get("email").trim().toLowerCase() || null
+  const buyer = (["crm", "new"] as const).find((b) => b === get("buyer")) ?? "none"
+  const contactId = /^[0-9a-f-]{36}$/.test(get("contact_id")) ? get("contact_id") : null
+  if (buyer === "crm" && !contactId) return { error: "store.teamOrder.pickContact" }
+  const first = get("first_name").trim().slice(0, 100) || null
+  const last = get("last_name").trim().slice(0, 100) || null
+  const company = get("company").trim().slice(0, 200) || null
+  const name = buyer === "none" ? null : [first, last].filter(Boolean).join(" ") || company
+  if (buyer !== "none" && !name) return { error: "store.teamOrder.nameRequired" }
+  const email = buyer === "none" ? null : get("email").trim().toLowerCase() || null
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "errors.invalid_email" }
   const delivery = DELIVERIES.find((d) => d === get("delivery")) ?? "pickup"
   const street = get("street").trim().slice(0, 200)
@@ -431,10 +434,13 @@ export function readTeamOrder(get: (k: string) => string): { order: TeamOrder } 
   return {
     order: {
       lines,
+      buyer,
       name,
+      first_name: first,
+      last_name: last,
       email,
-      phone: get("phone").trim().slice(0, 50) || null,
-      address: street || city ? { company: get("company").trim().slice(0, 200) || null, street, postal_code, city, country } : null,
+      phone: buyer === "none" ? null : get("phone").trim().slice(0, 50) || null,
+      address: buyer !== "none" && (street || city) ? { company, street, postal_code, city, country } : null,
       delivery,
       shipping_cents: delivery === "shipping" ? shipping : 0,
       paid,
@@ -442,7 +448,8 @@ export function readTeamOrder(get: (k: string) => string): { order: TeamOrder } 
       done: get("done") === "1",
       note: get("note").trim().slice(0, 2000) || null,
       notify: get("notify") === "1",
-      contact_id: /^[0-9a-f-]{36}$/.test(get("contact_id")) ? get("contact_id") : null,
+      contact_id: buyer === "crm" ? contactId : null,
+      invoice: get("invoice") === "1",
     },
   }
 }

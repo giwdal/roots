@@ -6134,31 +6134,25 @@
         "receipt": "Receipt",
         "withdrawal": "Withdrawal",
         "loss": "Loss",
-        "count": "Stocktake",
-        "sale": "Sale on site"
+        "count": "Stocktake"
       },
       "hints": {
         "receipt": "New goods arrived (delivery, repress).",
         "withdrawal": "Goods go out without a sale: promo, free copies, own use.",
         "loss": "Broken, lost or missing.",
-        "count": "Counted stock – the difference is booked as a correction.",
-        "sale": "A sale e.g. at the merch table, paid cash: becomes a completed order with revenue (and an invoice if automatic)."
+        "count": "Counted stock – the difference is booked as a correction."
       },
       "quantity": "Quantity",
       "counted": "Counted",
-      "unitPrice": "Price per piece",
       "note": "Note",
       "notePlaceholder": {
         "receipt": "e.g. delivery from the pressing plant",
         "withdrawal": "e.g. promo for radio",
         "loss": "e.g. damaged in transit",
-        "count": "e.g. year-end stocktake",
-        "sale": "e.g. concert Leipzig"
+        "count": "e.g. year-end stocktake"
       },
       "book": "Book",
-      "sell": "Record sale",
       "booked": "Booked.",
-      "soldDone": "Sale recorded – completed as an order.",
       "history": "History",
       "noHistory": "No movements yet.",
       "reasons": {
@@ -6170,16 +6164,16 @@
         "sale": "Sale",
         "returned": "Refunded"
       },
-      "counterName": "Sale on site",
       "quantityInvalid": "Please enter a valid quantity.",
-      "noChange": "The counted stock already matches – nothing to book."
+      "noChange": "The counted stock already matches – nothing to book.",
+      "saleHint": "Sold (e.g. at a merch table)?",
+      "saleLink": "Record as an order"
     },
     "teamOrder": {
       "new": "New order",
       "hint": "For orders that happened offline (in person, by phone, by mail) – they count like shop orders: stock, invoice, contact.",
       "fromCrm": "Contact from the CRM",
-      "searchCrm": "Search or create …",
-      "name": "Name",
+      "searchCrm": "Search name, email or company …",
       "email": "Email (optional)",
       "phone": "Phone (optional)",
       "item": "Item",
@@ -6206,7 +6200,25 @@
       "noItems": "Please choose at least one item.",
       "nameRequired": "Please enter a name.",
       "addressRequired": "For shipping, please enter the full address.",
-      "unknownItem": "An item no longer exists."
+      "unknownItem": "An item no longer exists.",
+      "walkIn": "Sale on site",
+      "buyerNone": "No buyer",
+      "buyerCrm": "Contact from the CRM",
+      "buyerNew": "New contact",
+      "buyerNoneHint": "Quick sale, e.g. at a merch table or fair – the order is called “Sale on site”.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "company": "Company (optional)",
+      "crmHint": "Changes and additions are saved to the contact.",
+      "newHint": "Created as a new contact in the CRM.",
+      "pickContact": "Please choose a contact from the CRM.",
+      "contactExists": "This email already belongs to a contact – please choose “Contact from the CRM”.",
+      "invoice": "Issue an invoice",
+      "invoiceHint": "Private buyers don't need an invoice – the sale is recorded either way. Up to €250 a simplified invoice without an address is fine."
+    },
+    "payFilter": {
+      "open": "Still to pay",
+      "paid": "Paid"
     }
   }
 }

@@ -17,59 +17,87 @@ import { createTeamOrderAction, orderBuyer } from "../actions"
 
 type Item = { id: string; label: string; price: number }
 type Line = { key: number; id: string; q: number; price: string }
-type Buyer = { name: string; email: string; phone: string; company: string; street: string; postal_code: string; city: string; country: string }
-const EMPTY: Buyer = { name: "", email: "", phone: "", company: "", street: "", postal_code: "", city: "", country: "DE" }
+type Buyer = { first_name: string; last_name: string; email: string; phone: string; company: string; street: string; postal_code: string; city: string; country: string }
+const EMPTY: Buyer = { first_name: "", last_name: "", email: "", phone: "", company: "", street: "", postal_code: "", city: "", country: "DE" }
+type Mode = "none" | "crm" | "new"
 
 /**
- * "Neue Bestellung" for orders that happened offline: buyer from the CRM (search or create) or typed in, items with
- * their price (editable), delivery, paid now (cash / transfer) or still open, done already, mail to the buyer.
+ * "Neue Bestellung" for sales outside the online shop: no buyer (merch table), a CRM contact (search; its details
+ * can be completed and are saved back) or a new contact (created). Items at editable prices, delivery, paid now
+ * (cash / transfer) or open, done already, invoice, mail.
  */
-export function NewOrderForm({ items, currency }: { items: Item[]; currency: string }) {
+export function NewOrderForm({ items, currency, initialItem }: { items: Item[]; currency: string; initialItem?: string | null }) {
   const t = useT()
+  const first = items.find((i) => i.id === initialItem)
+  const [mode, setMode] = useState<Mode>("none")
   const [contact, setContact] = useState<string | null>(null)
   const [buyer, setBuyer] = useState<Buyer>(EMPTY)
-  const [lines, setLines] = useState<Line[]>([{ key: 1, id: "", q: 1, price: "" }])
+  const [lines, setLines] = useState<Line[]>([{ key: 1, id: first?.id ?? "", q: 1, price: first ? formatMoney(first.price) : "" }])
   const [delivery, setDelivery] = useState("pickup")
   const [paid, setPaid] = useState<"cash" | "transfer" | "">("cash")
+  const [invoice, setInvoice] = useState<boolean | null>(null) // null = follow the default (a buyer with an address)
   const [loading, start] = useTransition()
   const set = (k: keyof Buyer) => (e: React.ChangeEvent<HTMLInputElement>) => setBuyer({ ...buyer, [k]: e.target.value })
   const total = lines.reduce((s, l) => s + l.q * (moneyCents(l.price) ?? 0), 0)
+  const withBuyer = mode !== "none" && (mode === "new" || !!contact)
+  const wantInvoice = invoice ?? (withBuyer && !!buyer.street && !!buyer.city)
   const segment = (name: string, value: string, current: string, onPick: (v: string) => void, label: string) => (
     <label key={value} className="cursor-pointer rounded-md px-3 py-1.5 text-sm has-checked:bg-background has-checked:shadow-sm">
       <input type="radio" name={name} value={value} checked={current === value} onChange={() => onPick(value)} className="sr-only" />
       {label}
     </label>
   )
+  const field = (k: keyof Buyer, label: string, props: React.ComponentProps<typeof Input> = {}) => (
+    <div className="grid gap-2">
+      <Label htmlFor={`o-${k}`}>{label}</Label>
+      <Input id={`o-${k}`} name={k} value={buyer[k]} onChange={set(k)} disabled={loading} {...props} />
+    </div>
+  )
 
   return (
     <form action={createTeamOrderAction} className="grid gap-6">
-      <input type="hidden" name="contact_id" value={contact ?? ""} />
+      <input type="hidden" name="contact_id" value={mode === "crm" ? (contact ?? "") : ""} />
+      <input type="hidden" name="invoice" value={wantInvoice ? "1" : ""} />
       <input type="hidden" name="lines" value={JSON.stringify(lines.filter((l) => l.id).map((l) => ({ id: l.id, q: l.q, p: moneyCents(l.price) ?? 0 })))} />
 
       <FormCard title={t("store.buyer")}>
-        <ContactPicker
-          name="_contact"
-          label={t("store.teamOrder.fromCrm")}
-          placeholder={t("store.teamOrder.searchCrm")}
-          onChange={(c) => {
-            setContact(c?.id ?? null)
-            if (c) start(async () => setBuyer({ ...EMPTY, ...((await orderBuyer(c.id)) ?? {}) }))
-          }}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="o-name">{t("store.teamOrder.name")}</Label>
-            <Input id="o-name" name="name" required maxLength={200} value={buyer.name} onChange={set("name")} disabled={loading} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="o-email">{t("store.teamOrder.email")}</Label>
-            <Input id="o-email" name="email" type="email" value={buyer.email} onChange={set("email")} disabled={loading} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="o-phone">{t("store.teamOrder.phone")}</Label>
-            <Input id="o-phone" name="phone" type="tel" value={buyer.phone} onChange={set("phone")} disabled={loading} />
-          </div>
+        <div role="radiogroup" aria-label={t("store.buyer")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
+          {segment("buyer", "none", mode, (v) => setMode(v as Mode), t("store.teamOrder.buyerNone"))}
+          {segment("buyer", "crm", mode, (v) => setMode(v as Mode), t("store.teamOrder.buyerCrm"))}
+          {segment("buyer", "new", mode, (v) => (setMode(v as Mode), setContact(null), setBuyer(EMPTY)), t("store.teamOrder.buyerNew"))}
         </div>
+        {mode === "none" && <p className="text-sm text-muted-foreground">{t("store.teamOrder.buyerNoneHint")}</p>}
+        {mode === "crm" && (
+          <ContactPicker
+            name="_contact"
+            label={t("store.teamOrder.buyerCrm")}
+            placeholder={t("store.teamOrder.searchCrm")}
+            noCreate
+            onChange={(c) => {
+              setContact(c?.id ?? null)
+              if (!c) return setBuyer(EMPTY)
+              start(async () => setBuyer({ ...EMPTY, ...((await orderBuyer(c.id)) ?? {}) }))
+            }}
+          />
+        )}
+        {withBuyer && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("first_name", t("store.teamOrder.firstName"))}
+              {field("last_name", t("store.teamOrder.lastName"))}
+              {field("email", t("store.teamOrder.email"), { type: "email" })}
+              {field("phone", t("store.teamOrder.phone"), { type: "tel" })}
+              {field("company", t("store.teamOrder.company"))}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)_5rem]">
+              {field("street", t("store.teamOrder.street"), { required: delivery === "shipping" })}
+              {field("postal_code", t("store.teamOrder.postalCode"), { required: delivery === "shipping" })}
+              {field("city", t("store.teamOrder.city"), { required: delivery === "shipping" })}
+              {field("country", t("store.teamOrder.country"), { maxLength: 2, className: "uppercase" })}
+            </div>
+            <p className="text-xs text-muted-foreground">{t(mode === "new" ? "store.teamOrder.newHint" : "store.teamOrder.crmHint")}</p>
+          </>
+        )}
       </FormCard>
 
       <FormCard title={t("store.items")}>
@@ -110,30 +138,12 @@ export function NewOrderForm({ items, currency }: { items: Item[]; currency: str
 
       <FormCard title={t("store.delivery")}>
         <div role="radiogroup" aria-label={t("store.delivery")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
-          {["pickup", "shipping", "digital"].map((d) => segment("delivery", d, delivery, setDelivery, t.dynamic(`store.deliveries.${d}`)))}
+          {["pickup", ...(withBuyer ? ["shipping"] : []), "digital"].map((d) => segment("delivery", d, delivery, setDelivery, t.dynamic(`store.deliveries.${d}`)))}
         </div>
         {delivery === "shipping" && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="o-street">{t("store.teamOrder.street")}</Label>
-              <Input id="o-street" name="street" required value={buyer.street} onChange={set("street")} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="o-zip">{t("store.teamOrder.postalCode")}</Label>
-              <Input id="o-zip" name="postal_code" required value={buyer.postal_code} onChange={set("postal_code")} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="o-city">{t("store.teamOrder.city")}</Label>
-              <Input id="o-city" name="city" required value={buyer.city} onChange={set("city")} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="o-country">{t("store.teamOrder.country")}</Label>
-              <Input id="o-country" name="country" maxLength={2} value={buyer.country} onChange={set("country")} className="w-20 uppercase" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="o-ship">{t("store.teamOrder.shipping")}</Label>
-              <TypedInput kind="money" id="o-ship" name="shipping" />
-            </div>
+          <div className="grid gap-2 sm:max-w-48">
+            <Label htmlFor="o-ship">{t("store.teamOrder.shipping")}</Label>
+            <TypedInput kind="money" id="o-ship" name="shipping" />
           </div>
         )}
       </FormCard>
@@ -154,14 +164,21 @@ export function NewOrderForm({ items, currency }: { items: Item[]; currency: str
           <input type="checkbox" name="done" value="1" defaultChecked className="size-4 accent-primary" />
           {t("store.teamOrder.done")}
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={wantInvoice} onChange={(e) => setInvoice(e.target.checked)} className="size-4 accent-primary" />
+          {t("store.teamOrder.invoice")}
+        </label>
+        <p className="text-xs text-muted-foreground">{t("store.teamOrder.invoiceHint")}</p>
       </FormCard>
 
       <FormCard title={t("store.teamOrder.more")}>
         <Textarea name="note" rows={2} maxLength={2000} placeholder={t("store.teamOrder.notePlaceholder")} aria-label={t("store.teamOrder.notePlaceholder")} />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="notify" value="1" disabled={!buyer.email} className="size-4 accent-primary" />
-          {t("store.teamOrder.notify")}
-        </label>
+        {withBuyer && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="notify" value="1" disabled={!buyer.email} className="size-4 accent-primary" />
+            {t("store.teamOrder.notify")}
+          </label>
+        )}
       </FormCard>
 
       <SaveBar label={t("store.teamOrder.create")} always />

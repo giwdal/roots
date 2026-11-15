@@ -348,7 +348,7 @@ export async function saveTrack(fd: FormData) {
 
 // ---------- Lager ----------
 
-/** Book a movement or a sale at the merch table on one item (drawer on Shop → Lager). */
+/** Book a movement on one item (drawer on Shop → Lager). */
 export async function bookStockAction(fd: FormData) {
   const { ctx, t } = await manager()
   const itemId = id(fd, "item")
@@ -357,16 +357,15 @@ export async function bookStockAction(fd: FormData) {
   if (!item) back("/shop/stock", { error: t("errors.not_found") })
   const r = readStockMove(getter(fd), item.on_hand ?? 0)
   if ("error" in r) back(here, { error: msg(t, r.error) })
-  let order: string | null = null
   try {
-    order = await bookStock(ctx.supabase, ctx.org.id, item, r)
+    await bookStock(ctx.supabase, ctx.org.id, item, r)
   } catch (e) {
     const m = e instanceof Error ? e.message : ""
     if (!t.has(m)) console.error("shop stock", itemId, e)
     back(here, { error: msg(t, m) })
   }
   deliverSoon()
-  back(here, { ok: t(order ? "store.lager.soldDone" : "store.lager.booked") })
+  back(here, { ok: t("store.lager.booked") })
 }
 
 // ---------- orders entered by the team ----------
@@ -376,7 +375,7 @@ export async function orderBuyer(contactId: string) {
   const ctx = await requirePerm("shop.manage")
   if (!UUID.test(contactId)) return null
   const { data: c } = await ctx.supabase.from("contacts").select("first_name, last_name, company, email, phone, street, postal_code, city, country").eq("id", contactId).eq("org_id", ctx.org.id).maybeSingle()
-  return c && { name: [c.first_name, c.last_name].filter(Boolean).join(" ") || c.company || "", email: c.email ?? "", phone: c.phone ?? "", company: c.company ?? "", street: c.street ?? "", postal_code: c.postal_code ?? "", city: c.city ?? "", country: c.country ?? "DE" }
+  return c && { first_name: c.first_name ?? "", last_name: c.last_name ?? "", email: c.email ?? "", phone: c.phone ?? "", company: c.company ?? "", street: c.street ?? "", postal_code: c.postal_code ?? "", city: c.city ?? "", country: c.country ?? "DE" }
 }
 
 /** "Neue Bestellung" (sold offline, by phone …) → the new order's page. */

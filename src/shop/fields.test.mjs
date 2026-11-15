@@ -135,15 +135,14 @@ test("refunds: pieces per line or another amount, never more than is left", asyn
   assert.deepEqual(refundAdjustment([{ cents: 1000, rate: 19 }], 0), [])
 })
 
-test("Lager: receipt +, withdrawal −, count books the difference, sale needs a price", () => {
+test("Lager: receipt +, withdrawal −, count books the difference, no sales", () => {
   const g = (o) => (k) => o[k] ?? ""
   assert.deepEqual(readStockMove(g({ kind: "receipt", quantity: "50" }), 0), { move: { quantity: 50, reason: "receipt", note: null } })
   assert.deepEqual(readStockMove(g({ kind: "withdrawal", quantity: "3", note: " Promo " }), 10), { move: { quantity: -3, reason: "withdrawal", note: "Promo" } })
   assert.deepEqual(readStockMove(g({ kind: "count", counted: "7" }), 10), { move: { quantity: -3, reason: "correction", note: null } })
   assert.deepEqual(readStockMove(g({ kind: "count", counted: "10" }), 10), { error: "store.lager.noChange" })
   assert.deepEqual(readStockMove(g({ kind: "loss", quantity: "0" }), 10), { error: "store.lager.quantityInvalid" })
-  assert.deepEqual(readStockMove(g({ kind: "sale", quantity: "2", price: "25,00" }), 10), { sale: { quantity: 2, unit: 2500, note: null } })
-  assert.ok("error" in readStockMove(g({ kind: "sale", quantity: "2" }), 10))
+  assert.ok("error" in readStockMove(g({ kind: "sale", quantity: "2", price: "25,00" }), 10)) // sales are orders
 })
 
 test("team order: lines, buyer, delivery address, paid vs open", () => {
@@ -152,7 +151,7 @@ test("team order: lines, buyer, delivery address, paid vs open", () => {
   const r = readTeamOrder(g(base))
   assert.deepEqual([r.order.lines, r.order.payment, r.order.paid, r.order.notify], [[{ id: V, q: 2, unit: 2500 }], "pickup", "cash", true])
   assert.equal(readTeamOrder(g({ ...base, lines: "[]" })).error, "store.teamOrder.noItems")
-  assert.equal(readTeamOrder(g({ ...base, name: " " })).error, "store.teamOrder.nameRequired")
+  assert.equal(readTeamOrder(g({ ...base, name: " " })).order.name, null) // walk-in customer
   assert.equal(readTeamOrder(g({ ...base, delivery: "shipping" })).error, "store.teamOrder.addressRequired")
   const open = readTeamOrder(g({ ...base, delivery: "shipping", paid: "", street: "A 1", postal_code: "10115", city: "Berlin", shipping: "4,90" })).order
   assert.deepEqual([open.paid, open.payment, open.shipping_cents], [null, "transfer", 490])

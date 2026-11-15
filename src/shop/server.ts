@@ -278,6 +278,7 @@ const addressLines = (o: Pick<Order, "name" | "company" | "street" | "postal_cod
 export async function ensureInvoice(orderId: string, force = false) {
   const o = await loadOrder(orderId)
   if (!o || o.pay_orders.amount_total === 0) return // free orders (name your price 0 €, free downloads): no invoice
+  if (!force && (o.pay_orders.metadata as { no_invoice?: boolean } | null)?.no_invoice) return // team order without invoice
   const [{ data: mod }, settings] = await Promise.all([
     db().from("org_modules").select("module_key").eq("org_id", o.org_id).eq("module_key", "invoices").maybeSingle(),
     shopSettings(o.org_id),
@@ -478,11 +479,23 @@ export async function createTeamOrder(orgId: string, o: TeamOrder) {
     return { description: (v ? `${p.name} · ${v.name}` : p.name).slice(0, 200), quantity: l.q, unitAmount: l.unit, sourceId: l.id, metadata: { tax_rate: p.tax_rate, product_id: p.id, kind: digital ? "digital" : "physical" } }
   })
   if (o.shipping_cents > 0) items.push({ description: t("store.shippingLine"), quantity: 1, unitAmount: o.shipping_cents, sourceId: undefined as unknown as string, metadata: { tax_rate: Math.max(...items.map((i) => Number(i.metadata.tax_rate))), shipping: true } as never })
-  const orderId = await createOrder({ orgId, sourceModule: "shop", customerEmail: o.email ?? undefined, customerName: o.name, metadata: { manual: true, ...(o.notify ? {} : { silent: true }) }, items })
+  const name = o.name ?? t("store.teamOrder.walkIn")
+  // The buyer is always a CRM contact (or nobody): new → created, picked → its details brought up to date.
+  let contactId = o.contact_id
+  const details = { email: o.email, phone: o.phone, company: o.address?.company ?? null, street: o.address?.street ?? null, postal_code: o.address?.postal_code ?? null, city: o.address?.city ?? null, country: o.address?.country ?? null }
+  const given = Object.fromEntries(Object.entries(details).filter(([, v]) => v))
+  if (o.buyer === "new") {
+    const { data: c, error } = await db().from("contacts").insert({ org_id: orgId, first_name: o.first_name, last_name: o.last_name, ...given, tags: ["Shop"] }).select("id").single()
+    if (error || !c) throw new Error(error?.code === "23505" ? "store.teamOrder.contactExists" : "store.failed")
+    contactId = c.id
+  } else if (o.buyer === "crm" && contactId && Object.keys(given).length) {
+    await db().from("contacts").update({ ...given, ...(o.first_name ? { first_name: o.first_name } : {}), ...(o.last_name ? { last_name: o.last_name } : {}) }).eq("id", contactId).eq("org_id", orgId)
+  }
+  const orderId = await createOrder({ orgId, sourceModule: "shop", customerEmail: o.email ?? undefined, customerName: name, metadata: { manual: true, ...(o.notify ? {} : { silent: true }), ...(o.invoice ? {} : { no_invoice: true }) }, items })
   const a = o.address
   const { data: so, error } = await db()
     .from("shop_orders")
-    .insert({ org_id: orgId, order_id: orderId, number: 0, contact_id: o.contact_id, delivery: o.delivery, payment: o.payment, name: o.name, phone: o.phone, company: a?.company ?? null, street: a?.street ?? null, postal_code: a?.postal_code ?? null, city: a?.city ?? null, country: a?.country ?? null, shipping_cents: o.shipping_cents, note: o.note })
+    .insert({ org_id: orgId, order_id: orderId, number: 0, contact_id: contactId, delivery: o.delivery, payment: o.payment, name, phone: o.phone, company: a?.company ?? null, street: a?.street ?? null, postal_code: a?.postal_code ?? null, city: a?.city ?? null, country: a?.country ?? null, shipping_cents: o.shipping_cents, note: o.note })
     .select("id")
     .single()
   if (error || !so) {
@@ -493,6 +506,8 @@ export async function createTeamOrder(orgId: string, o: TeamOrder) {
   if (o.paid && total > 0) await payManually(orderId, o.paid)
   else if (total === 0) await db().from("pay_orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", orderId)
   if (!o.paid || total === 0) await placed(orderId)
+  // "Rechnung erstellen" ticked: issue it now, even with automatic invoices off.
+  if (o.invoice && total > 0) await ensureInvoice(orderId, true).catch((e) => console.error("team order invoice", orderId, e))
   if (o.done) await db().from("shop_orders").update({ status: "completed" }).eq("id", so.id)
   return so.id
 }

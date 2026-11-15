@@ -5,6 +5,7 @@ import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
 import { Segments } from "@/components/segments"
+import { FilterMenu } from "@/components/filter-menu"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
@@ -35,6 +36,10 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
   const statuses = VIEWS[view]
   if (statuses) query = query.in("status", [...statuses])
   if (q) query = /^\d+$/.test(q) ? query.eq("number", Number(q)) : query.ilike("name", `%${q}%`)
+  // Payment filter: still to pay (open, failed, expired) or paid.
+  const pay = param(sp, "pay")
+  if (pay === "open") query = query.in("pay_orders.status", ["open", "failed", "expired"])
+  if (pay === "paid") query = query.in("pay_orders.status", ["paid", "partially_refunded"])
   const canInvoice = ctx.can("shop.manage") && ctx.modules.has("invoices")
   const creating = ctx.can("shop.manage") && param(sp, "new") === "order"
   const [{ data }, missing, { data: catalog }] = await Promise.all([
@@ -68,11 +73,12 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
       {missing > 0 && <form id="issue-invoices" action={issueMissingInvoicesAction} hidden />}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <div className="flex flex-wrap items-center gap-3">
-        <SearchBox q={q} label={t("store.searchOrders")} keep={{ view }} />
+        <SearchBox q={q} label={t("store.searchOrders")} keep={{ view, ...(pay ? { pay } : {}) }} />
         <Segments
           label={t("store.orders")}
           items={(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((v) => ({ href: `/shop/orders${withParams(sp, { view: v === "open" ? undefined : v, page: undefined })}`, label: t.dynamic(`store.views.${v}`), current: v === view }))}
         />
+        <FilterMenu param="pay" label={t("store.payment")} options={[{ value: "open", label: t("store.payFilter.open") }, { value: "paid", label: t("store.payFilter.paid") }]} />
       </div>
       <DataTable
         rows={rows}
@@ -137,7 +143,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
       {creating && (
         <UrlSheet params={["new"]} title={t("store.teamOrder.new")} description={t("store.teamOrder.hint")}>
           <Notice error={param(sp, "error")} />
-          <NewOrderForm items={items} currency="eur" />
+          <NewOrderForm items={items} currency="eur" initialItem={param(sp, "item")} />
         </UrlSheet>
       )}
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />

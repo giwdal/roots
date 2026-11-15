@@ -30,7 +30,7 @@ export async function inviteMember(db: Db, org: { id: string; name: string }, in
   return { link, email, mailFailed: !sent }
 }
 
-export type FieldInput = { label: string; options?: string[]; required?: boolean }
+export type FieldInput = { label: string; options?: string[]; required?: boolean; colors?: Record<string, string> }
 const clean = (f: FieldInput) => ({
   label: f.label.trim().slice(0, 100),
   options: [...new Set((f.options ?? []).map((o) => o.trim().slice(0, 100)).filter(Boolean))].slice(0, 100),
@@ -59,6 +59,8 @@ export async function updateField(db: Db, orgId: string, id: string, input: Fiel
   const { data: old } = await db.from("custom_fields").select("type").eq("id", id).eq("org_id", orgId).maybeSingle()
   if (!old) return { error: "errors.not_allowed" }
   if (old.type === "select" && !f.options.length) return { error: "errors.options_required" }
-  const { error } = await db.from("custom_fields").update({ label: f.label, required: f.required, ...(old.type === "select" ? { options: f.options } : {}) }).eq("id", id).eq("org_id", orgId)
+  // Option colours: only for options that still exist, only known colour names.
+  const colors = Object.fromEntries(Object.entries(input.colors ?? {}).filter(([o, c]) => f.options.includes(o) && /^[a-z]{3,10}$/.test(c)))
+  const { error } = await db.from("custom_fields").update({ label: f.label, required: f.required, ...(old.type === "select" ? { options: f.options, option_colors: colors } : {}) }).eq("id", id).eq("org_id", orgId)
   return error ? { error: "db", db: error } : { id }
 }

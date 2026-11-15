@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { billable, coversPeriod, earliestEnd, isPaused, periodFee, periods, reminderScope } from "./dues.ts"
+import { billable, coversPeriod, earliestEnd, isPaused, paidUntil, periodEnd, periodFee, periods, reminderScope } from "./dues.ts"
 import { pain008, sepaText } from "./sepa.ts"
 
 test("periods are calendar-aligned and start inside the range", () => {
@@ -89,4 +89,14 @@ test("reminderScope counts only overdue dues outside a SEPA run, people by membe
   ]
   assert.deepEqual(reminderScope(open, "2026-11-04"), { people: 1, cents: 5600 })
   assert.deepEqual(reminderScope([], "2026-11-04"), { people: 0, cents: 0 })
+})
+
+test("paid until: end of the last paid period without gaps", () => {
+  const fee = (period_start, status) => ({ kind: "fee", period_start, status })
+  assert.equal(periodEnd("2026-04-01", "quarter"), "2026-06-30")
+  assert.equal(periodEnd("2026-01-01", "year"), "2026-12-31")
+  assert.equal(paidUntil([fee("2026-01-01", "paid"), fee("2026-04-01", "paid"), fee("2026-07-01", "open")], "quarter"), "2026-06-30")
+  assert.equal(paidUntil([fee("2026-04-01", "paid"), fee("2026-01-01", "open")], "quarter"), null) // gap at the start
+  assert.equal(paidUntil([fee("2026-01-01", "paid"), fee("2026-04-01", "cancelled"), fee("2026-07-01", "paid")], "quarter"), "2026-09-30")
+  assert.equal(paidUntil([{ kind: "entry", period_start: null, status: "paid" }], "quarter"), null)
 })

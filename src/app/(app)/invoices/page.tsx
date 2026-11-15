@@ -1,16 +1,13 @@
 import Link from "next/link"
-import { PlusIcon } from "lucide-react"
 import { FilterMenu } from "@/components/filter-menu"
 import { Page, PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
 import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
-import { SubmitButton } from "@/components/submit-button"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
-import { createDocument } from "./actions"
 
 const KINDS = ["invoice", "quote", "cancellation"] as const
 const STATUSES = ["draft", "sent", "paid", "accepted", "declined", "cancelled"] as const
@@ -52,23 +49,13 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
       {label}
     </Link>
   )
-  const newDoc = (k: (typeof KINDS)[number], label: string, variant: "default" | "outline") => (
-    <form action={createDocument}>
-      <input type="hidden" name="kind" value={k} />
-      <SubmitButton size="sm" variant={variant} data-shortcut={variant === "default" ? "new" : undefined}>
-        <PlusIcon /> {label}
-      </SubmitButton>
-    </form>
-  )
-
   return (
     <Page>
       <PageHeader
         area="finance"
         title={t("invoices.title")}
         settings={canManage && { href: "/invoices/settings", label: t("common.settings") }}
-        actions={canManage && newDoc("quote", t("invoices.newQuote"), "outline")}
-        primary={canManage && newDoc("invoice", t("invoices.newInvoice"), "default")}
+        primary={canManage ? { href: "/invoices/new", label: t("invoices.newInvoice"), more: [{ href: "/invoices/new?kind=quote", label: t("invoices.newQuote") }] } : undefined}
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <div className="flex flex-wrap items-center gap-2">

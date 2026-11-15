@@ -34,7 +34,7 @@ export default async function AdminRoles({ searchParams }: PageProps<"/admin/rol
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-heading text-2xl font-semibold">{t("admin.roles.title")}</h1>
+        <h1 className="sr-only">{t("admin.roles.title")}</h1>
         <Button render={<Link href={withParams(sp, { new: "role", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
           {t("admin.roles.new")}
         </Button>

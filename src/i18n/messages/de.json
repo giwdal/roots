@@ -1450,7 +1450,10 @@
       "select": "Auswahl",
       "email": "E-Mail",
       "url": "Link"
-    }
+    },
+    "colors": "Farben",
+    "colorFor": "Farbe für {option}",
+    "noColor": "Keine Farbe"
   },
   "import": {
     "file": "CSV-Datei",
@@ -1936,7 +1939,9 @@
     "shortInvoicesHint": "Kleinbetragsrechnung (§ 33 UStDV): bis 250 € brutto darf die Anschrift der Käufer:in fehlen – z. B. bei Shop-Bestellungen zur Abholung.",
     "cancelsNumber": "Storniert Rechnung {number} →",
     "fromShopOrder": "Shop-Bestellung #{number}",
-    "confirmCancel": "Stornorechnung erstellen? Sie bekommt eine eigene Nummer und negative Beträge, diese Rechnung gilt dann als storniert. Für eine Korrektur danach eine neue Rechnung ausstellen."
+    "confirmCancel": "Stornorechnung erstellen? Sie bekommt eine eigene Nummer und negative Beträge, diese Rechnung gilt dann als storniert. Für eine Korrektur danach eine neue Rechnung ausstellen.",
+    "creatingInvoice": "Rechnung wird angelegt …",
+    "creatingQuote": "Angebot wird angelegt …"
   },
   "guestlists": {
     "nav": "Gästelisten",
@@ -2392,7 +2397,8 @@
       "active": "Aktiv",
       "ended": "Ausgetreten",
       "all": "Alle",
-      "trash": "Papierkorb"
+      "trash": "Papierkorb",
+      "returned": "Rücklastschrift"
     },
     "noMatch": "Keine Mitgliedschaften gefunden.",
     "empty": "Noch keine Mitgliedschaften.",
@@ -2624,7 +2630,13 @@
       "one": "{count} Beitrag über {amount} als eingezogen markieren?",
       "other": "{count} Beiträge über {amount} als eingezogen markieren?"
     },
-    "confirmCollectedHint": "Erst markieren, wenn die Bank die Lastschrift ausgeführt hat. Die Beiträge gelten dann als bezahlt."
+    "confirmCollectedHint": "Erst markieren, wenn die Bank die Lastschrift ausgeführt hat. Die Beiträge gelten dann als bezahlt.",
+    "paidUntil": "bezahlt bis {date}",
+    "returned": "Rücklastschrift {date}",
+    "markReturned": "Rücklastschrift",
+    "confirmReturned": "Zahlung als fehlgeschlagen markieren?",
+    "confirmReturnedHint": "Der Beitrag ist dann wieder offen (z. B. Rücklastschrift) und zählt als überfällig.",
+    "paidUntilCol": "Bezahlt bis"
   },
   "forms": {
     "nav": "Formulare",
@@ -4122,7 +4134,8 @@
         "due_on": "Fällig am",
         "status": "Status",
         "paid_on": "Bezahlt am",
-        "reminders": "Mahnungen"
+        "reminders": "Mahnungen",
+        "failed_at": "Zahlung fehlgeschlagen am"
       },
       "event": {
         "id": "Event",
@@ -4862,7 +4875,8 @@
       "change": "Icon ändern",
       "remove": "Icon entfernen"
     },
-    "iconInvalid": "Bitte ein Emoji wählen."
+    "iconInvalid": "Bitte ein Emoji wählen.",
+    "creating": "Seite wird angelegt …"
   },
   "emoji": {
     "search": "Emoji suchen …",
@@ -5311,7 +5325,8 @@
     "noticeRenewHint": "Monate vor Ende der Laufzeit kündigen",
     "statusHint": "Eine Anfrage hält das Objekt noch nicht frei – erst „Bestätigt“ ist es vergeben.",
     "contractSheetHint": "Mit den Daten dieses Mietverhältnisses – ablegen speichert das PDF hier und beim Kontakt, senden schickt es per E-Mail.",
-    "createdContract": "Angelegt – jetzt den Vertrag erstellen."
+    "createdContract": "Angelegt – jetzt den Vertrag erstellen.",
+    "newRentalAny": "Neue Vergabe"
   },
   "oauth": {
     "title": "{app} mit roots verbinden",
@@ -6222,6 +6237,24 @@
     "payFilter": {
       "open": "Noch zu bezahlen",
       "paid": "Bezahlt"
+    }
+  },
+  "calendar": {
+    "nav": "Kalender",
+    "title": "Kalender",
+    "source": "Bereich",
+    "sources": {
+      "events": "Veranstaltungen",
+      "shifts": "Schichten",
+      "tasks": "Aufgaben",
+      "projects": "Projekte",
+      "rentals": "Vermietung",
+      "courses": "Kurse"
+    },
+    "rentalMarks": {
+      "start": "Mietbeginn",
+      "deadline": "letzter Tag für Kündigung",
+      "end": "Vertragsende"
     }
   }
 }

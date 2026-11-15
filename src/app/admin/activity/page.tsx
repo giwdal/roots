@@ -59,7 +59,7 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
 
   return (
     <div className="grid gap-4">
-      <h1 className="font-heading text-2xl font-semibold">{t("admin.activity.title")}</h1>
+      <h1 className="sr-only">{t("admin.activity.title")}</h1>
       {org && (
         <p className="text-sm">
           {t("admin.activity.filteredBy", { org: orgName.get(org) ?? org })}{" "}

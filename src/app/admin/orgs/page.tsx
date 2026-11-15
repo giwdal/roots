@@ -42,7 +42,7 @@ export default async function AdminOrgs({ searchParams }: PageProps<"/admin/orgs
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-heading text-2xl font-semibold">{t("admin.orgs.title")}</h1>
+        <h1 className="sr-only">{t("admin.orgs.title")}</h1>
         <Button render={<Link href={withParams(sp, { new: "org", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
           {t("admin.orgs.new")}
         </Button>

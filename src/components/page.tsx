@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { PlusIcon, SettingsIcon, type LucideIcon } from "lucide-react"
-import { AreaCrumbs } from "@/components/area-crumbs"
-import { PageCrumbs } from "@/components/page-crumbs"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
+import { HeaderActions } from "@/components/header-actions"
+import { PrimaryAction } from "@/components/primary-action"
+import { TopbarCrumbs } from "@/components/topbar-crumbs"
 
 // The App's page anatomy (see /style/app): <Page> sets one of three widths, <PageHeader> is the same header everywhere,
 // <RecordLayout> is a record page's two columns, <FormCard> groups fields by topic, <EmptyState> fills empty lists.
@@ -45,33 +46,43 @@ export function PageHeader({
   description?: React.ReactNode
   actions?: React.ReactNode
   menu?: React.ReactNode
-  primary?: { href: string; label: string; icon?: LucideIcon } | React.ReactNode
+  primary?: { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } | React.ReactNode
   settings?: { href: string; label: string } | false
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
-  const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon } => !!p && typeof p === "object" && "href" in p && "label" in p
+  // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
+  // (pages with their own icon are in the sidebar too: Benachrichtigungen, Dateien …)
+  const overview = !!(area || icon) && !crumbs
+  const inTopBar = overview || (typeof title === "string" && crumbs?.at(-1)?.label === title)
+  const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
+  // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
+  const bare = inTopBar && !badge && !meta && !(description && !overview)
   return (
-    <header className="grid gap-3">
-      {crumbs ? <PageCrumbs items={crumbs} /> : area && <AreaCrumbs area={area} />}
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="flex min-w-0 items-start gap-3">
+    <header className={bare ? "contents" : "grid gap-3"}>
+      {/* Where you are lives in the top bar (area › page, or a record's crumbs via <TopbarCrumbs>): no second crumb
+          row and no area icon here; area pages keep their title only for screen readers, record pages show it. */}
+      {crumbs && <TopbarCrumbs items={crumbs} />}
+      <div className={bare ? "contents" : "flex flex-wrap items-start justify-between gap-x-4 gap-y-3"}>
+        <div className={bare ? "sr-only" : "flex min-w-0 items-start gap-3"}>
           {Icon && (
-            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground" aria-hidden>
+            <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground", (area || icon || crumbs) && "hidden")} aria-hidden>
               <Icon className="size-5" />
             </span>
           )}
           <div className="grid min-w-0 gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="font-heading text-2xl font-semibold break-words">{title}</h1>
+              <h1 className={cn("font-heading text-2xl font-semibold break-words", inTopBar && "sr-only")}>{title}</h1>
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}
-            {description && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
+            {/* Area pages speak for themselves (the top bar names them): no intro sentence; record pages may explain. */}
+            {description && !overview && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
           </div>
         </div>
         {(actions || menu || primary || settings) && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={cn("flex flex-wrap items-center gap-2 max-md:contents", bare && "contents")}>
+            <HeaderActions>
             {settings && (
               <Tooltip>
                 <TooltipTrigger render={<Button render={<Link href={settings.href} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={settings.label} />}>
@@ -82,7 +93,12 @@ export function PageHeader({
             )}
             {actions}
             {menu}
-            {isLink(primary) && PrimaryIcon ? (
+            </HeaderActions>
+            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes to the bar everywhere. */}
+            <HeaderActions desktop={isLink(primary)}>
+            {isLink(primary) && primary.more?.length ? (
+              <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />
+            ) : isLink(primary) && PrimaryIcon ? (
               // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
               <Button
                 render={<Link href={primary.href} aria-label={primary.label} />}
@@ -97,6 +113,7 @@ export function PageHeader({
             ) : (
               (primary as React.ReactNode)
             )}
+            </HeaderActions>
           </div>
         )}
       </div>

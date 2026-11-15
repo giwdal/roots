@@ -70,7 +70,6 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         }
         badge={status && <Badge variant={status.is_done ? "secondary" : "outline"}>{status.name}</Badge>}
         meta={[lead && t("projects.leadBy", { name: lead }), period].filter(Boolean).join(" · ") || undefined}
-        actions={<ViewSegments t={t} sp={sp} views={views} current={view} />}
         menu={
           canManage && (
             <ActionsMenu>
@@ -89,6 +88,9 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
 
       {view === "overview" ? (
         <>
+          <div className="flex justify-end">
+            <ViewSegments t={t} sp={sp} views={views} current={view} />
+          </div>
           <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
           <RecordLayout
             aside={
@@ -183,7 +185,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
       ) : (
         <>
           <Notice error={!param(sp, "task") ? param(sp, "error") : undefined} ok={!param(sp, "task") ? param(sp, "ok") : undefined} />
-          <TasksView ctx={ctx} t={t} sp={sp} base={base} view={view as TaskView} projectId={p.id} basics={basics} />
+          <TasksView ctx={ctx} t={t} sp={sp} base={base} view={view as TaskView} projectId={p.id} basics={basics} views={<ViewSegments t={t} sp={sp} views={views} current={view} />} />
         </>
       )}
     </Page>

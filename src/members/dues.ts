@@ -59,3 +59,20 @@ export function reminderScope(open: { membership_id: string; amount_cents: numbe
   const due = open.filter((d) => d.due_on < today && !d.run_id)
   return { people: new Set(due.map((d) => d.membership_id)).size, cents: due.reduce((s, d) => s + d.amount_cents, 0) }
 }
+
+/** Last day of the period that starts on `start` (calendar-aligned periods, see periods()). */
+export const periodEnd = (start: string, interval: Interval) => (interval === "none" ? start : iso(parts(start)[0], parts(start)[1] - 1 + MONTHS[interval], 0))
+
+/**
+ * "Bezahlt bis": the end of the last paid period fee, counting from the first one without gaps (an open or failed
+ * period stops it; cancelled ones are skipped). null = nothing paid yet.
+ */
+export function paidUntil(dues: { kind: string; period_start: string | null; status: string }[], interval: Interval) {
+  let until: string | null = null
+  for (const d of dues.filter((x) => x.kind === "fee" && x.period_start).sort((a, b) => a.period_start!.localeCompare(b.period_start!))) {
+    if (d.status === "cancelled") continue
+    if (d.status !== "paid") break
+    until = periodEnd(d.period_start!, interval)
+  }
+  return until
+}

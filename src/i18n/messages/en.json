@@ -1450,7 +1450,10 @@
       "select": "Choice",
       "email": "Email",
       "url": "Link"
-    }
+    },
+    "colors": "Colours",
+    "colorFor": "Colour for {option}",
+    "noColor": "No colour"
   },
   "import": {
     "file": "CSV file",
@@ -1936,7 +1939,9 @@
     "shortInvoicesHint": "Small-amount invoice (§ 33 UStDV): up to €250 gross the buyer's address may be missing – e.g. for shop orders picked up in person.",
     "cancelsNumber": "Cancels invoice {number} →",
     "fromShopOrder": "Shop order #{number}",
-    "confirmCancel": "Create a cancellation invoice? It gets its own number and negative amounts, and this invoice counts as cancelled. For a correction, issue a new invoice afterwards."
+    "confirmCancel": "Create a cancellation invoice? It gets its own number and negative amounts, and this invoice counts as cancelled. For a correction, issue a new invoice afterwards.",
+    "creatingInvoice": "Creating invoice …",
+    "creatingQuote": "Creating quote …"
   },
   "guestlists": {
     "nav": "Guest lists",
@@ -2392,7 +2397,8 @@
       "active": "Active",
       "ended": "Left",
       "all": "All",
-      "trash": "Trash"
+      "trash": "Trash",
+      "returned": "Returned"
     },
     "noMatch": "No memberships found.",
     "empty": "No memberships yet.",
@@ -2624,7 +2630,13 @@
       "one": "Mark {count} due over {amount} as collected?",
       "other": "Mark {count} dues over {amount} as collected?"
     },
-    "confirmCollectedHint": "Only mark it once the bank has run the direct debit. The dues then count as paid."
+    "confirmCollectedHint": "Only mark it once the bank has run the direct debit. The dues then count as paid.",
+    "paidUntil": "paid until {date}",
+    "returned": "Returned {date}",
+    "markReturned": "Payment failed",
+    "confirmReturned": "Mark the payment as failed?",
+    "confirmReturnedHint": "The due is open again (e.g. returned direct debit) and counts as overdue.",
+    "paidUntilCol": "Paid until"
   },
   "forms": {
     "nav": "Forms",
@@ -4122,7 +4134,8 @@
         "due_on": "Due on",
         "status": "Status",
         "paid_on": "Paid on",
-        "reminders": "Reminders"
+        "reminders": "Reminders",
+        "failed_at": "Payment failed on"
       },
       "event": {
         "id": "Event",
@@ -4862,7 +4875,8 @@
       "change": "Change icon",
       "remove": "Remove icon"
     },
-    "iconInvalid": "Please pick an emoji."
+    "iconInvalid": "Please pick an emoji.",
+    "creating": "Creating page …"
   },
   "emoji": {
     "search": "Search emoji …",
@@ -5311,7 +5325,8 @@
     "noticeRenewHint": "months notice before the term ends",
     "statusHint": "A request doesn't hold the object yet – only “Confirmed” books it.",
     "contractSheetHint": "Filled from this rental – saving stores the PDF here and on the contact, sending mails it.",
-    "createdContract": "Created – now write the contract."
+    "createdContract": "Created – now write the contract.",
+    "newRentalAny": "New rental"
   },
   "oauth": {
     "title": "Connect {app} to roots",
@@ -6222,6 +6237,24 @@
     "payFilter": {
       "open": "Still to pay",
       "paid": "Paid"
+    }
+  },
+  "calendar": {
+    "nav": "Calendar",
+    "title": "Calendar",
+    "source": "Area",
+    "sources": {
+      "events": "Events",
+      "shifts": "Shifts",
+      "tasks": "Tasks",
+      "projects": "Projects",
+      "rentals": "Rentals",
+      "courses": "Courses"
+    },
+    "rentalMarks": {
+      "start": "Rental starts",
+      "deadline": "last day to give notice",
+      "end": "Contract ends"
     }
   }
 }

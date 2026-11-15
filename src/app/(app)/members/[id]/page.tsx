@@ -15,7 +15,7 @@ import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import type { Tables } from "@/lib/supabase/types"
 import { param, type SearchParams } from "@/lib/url"
-import { earliestEnd, type Interval } from "@/members/dues"
+import { earliestEnd, paidUntil, type Interval } from "@/members/dues"
 import { loadFields, type FieldDef } from "@/lib/custom-fields"
 import { IdCard } from "@/members/id-card"
 import { DateField, Field, MembershipFields, TYPE_COLS, type Type } from "../membership-parts"
@@ -43,12 +43,14 @@ async function MembershipBody({
 }) {
   const { data: dues } = await ctx.supabase
     .from("member_dues")
-    .select("id, description, amount_cents, due_on, status, paid_on, run_id")
+    .select("id, kind, period_start, description, amount_cents, due_on, status, paid_on, run_id, failed_at")
     .eq("org_id", ctx.org.id)
     .eq("membership_id", m.id)
     .order("due_on", { ascending: false })
     .limit(100)
   const type = types.find((x) => x.id === m.type_id)
+  // "Bezahlt bis": end of the last paid period fee without gaps.
+  const until = paidUntil(dues ?? [], (m.fee_interval ?? type?.interval ?? "none") as Interval)
   const here = `/members/${m.id}`
   const name = m.contacts ? contactName(m.contacts) : ""
 
@@ -59,7 +61,7 @@ async function MembershipBody({
         crumbs={[{ href: "/members", label: t("membership.nav") }, { label: name }]}
         title={name}
         badge={m.deleted_at && <Badge variant="destructive">{t("membership.filters.trash")}</Badge>}
-        meta={[m.member_no && t("membership.numberShort", { number: m.member_no }), type?.name].filter(Boolean).join(" · ")}
+        meta={[m.member_no && t("membership.numberShort", { number: m.member_no }), type?.name, until && t("membership.paidUntil", { date: t.date(until) })].filter(Boolean).join(" · ")}
         actions={
           m.contacts && (
             <Button render={<Link href={`/contacts/${m.contacts.id}`} />} nativeButton={false} size="sm" variant="outline">
@@ -127,6 +129,7 @@ async function MembershipBody({
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="text-xs text-muted-foreground">{t.date(d.due_on)}</span>
                         <Badge variant={d.status === "paid" ? "default" : d.status === "open" ? "secondary" : "outline"}>{t(`membership.dueStatus.${d.status as "open" | "paid" | "cancelled"}`)}</Badge>
+                        {d.status === "open" && d.failed_at && <Badge variant="destructive">{t("membership.returned", { date: t.date(d.failed_at, { dateStyle: "short" }) })}</Badge>}
                         <span className="ml-auto flex gap-1">
                           {canManage && d.status === "open" && d.due_on < today() && (
                             <form action={sendReminders}>
@@ -134,6 +137,17 @@ async function MembershipBody({
                               <input type="hidden" name="back" value={here} />
                               <SubmitButton size="xs" variant="ghost">
                                 {t("membership.remind")}
+                              </SubmitButton>
+                            </form>
+                          )}
+                          {canManage && d.status === "paid" && (
+                            // The payment came back (returned direct debit, failed transfer): open again with the date.
+                            <form action={setDueStatus}>
+                              <input type="hidden" name="id" value={d.id} />
+                              <input type="hidden" name="status" value="failed" />
+                              <input type="hidden" name="back" value={here} />
+                              <SubmitButton size="xs" variant="ghost" data-confirm="membership.confirmReturned">
+                                {t("membership.markReturned")}
                               </SubmitButton>
                             </form>
                           )}

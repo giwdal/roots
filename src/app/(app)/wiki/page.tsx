@@ -1,14 +1,13 @@
 import Link from "next/link"
 import { PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
-import { PlusIcon } from "lucide-react"
 import { SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { SubmitButton } from "@/components/submit-button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, type SearchParams } from "@/lib/url"
-import { newPageAction, restorePageAction } from "./actions"
+import { restorePageAction } from "./actions"
 import { TreeNav } from "./tree-nav"
 
 // Wiki start: the page tree, search over titles and texts, recently changed pages (or the trash).
@@ -45,15 +44,7 @@ export default async function WikiPage({ searchParams }: { searchParams: Promise
       <PageHeader
         area="wiki"
         title={t("wiki.title")}
-        primary={
-          canManage && (
-            <form action={newPageAction}>
-              <SubmitButton size="sm" data-shortcut="new">
-                <PlusIcon /> {t("wiki.newPage")}
-              </SubmitButton>
-            </form>
-          )
-        }
+        primary={canManage ? { href: "/wiki/new", label: t("wiki.newPage") } : undefined}
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">

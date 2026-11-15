@@ -83,7 +83,6 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
               <Button variant="outline" size="sm" render={<Link href="/projects/tasks" />} nativeButton={false}>
                 <ListTodoIcon /> {t("projects.allTasks")}
               </Button>
-              <ViewSegments t={t} sp={sp} views={VIEWS} current={view} />
             </>
           )
         }
@@ -96,14 +95,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             </ActionsMenu>
           )
         }
-        primary={
-          canManage &&
-          !trash && (
-            <Button size="sm" render={<Link href="/projects/new" />} nativeButton={false}>
-              <PlusIcon /> {t("projects.newProject")}
-            </Button>
-          )
-        }
+        primary={canManage && !trash ? { href: "/projects/new", label: t("projects.newProject") } : undefined}
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       {empty ? (
@@ -148,6 +140,9 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           <div className="flex flex-wrap items-center gap-2">
             <SearchBox q={q} label={t("projects.searchProjects")} />
             <FilterMenu param="lead" label={t("projects.lead")} allLabel={t("projects.everyone")} options={team.map((p) => ({ value: p.id, label: p.name }))} />
+            <div className="ml-auto">
+              <ViewSegments t={t} sp={sp} views={VIEWS} current={view} />
+            </div>
           </div>
           {view === "board" ? (
             <Board kind="project" statuses={projectStatuses} tasks={projects} canManage={canManage} back={here} today={today} />

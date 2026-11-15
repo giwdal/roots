@@ -30,18 +30,19 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
   const t = await getT()
   const sp = await searchParams
   const canManage = ctx.can("members.manage")
-  const status = (["open", "paid", "cancelled", "all"] as const).find((s) => s === param(sp, "status")) ?? "open"
+  const status = (["open", "failed", "paid", "cancelled", "all"] as const).find((s) => s === param(sp, "status")) ?? "open"
   const page = pageParam(sp)
   const now = today()
   const year = now.slice(0, 4)
 
   let query = ctx.supabase
     .from("member_dues")
-    .select("id, membership_id, description, amount_cents, due_on, status, run_id, reminders, reminded_at, memberships(number, contacts(first_name, last_name, company, email))")
+    .select("id, membership_id, description, amount_cents, due_on, status, run_id, reminders, reminded_at, failed_at, memberships(number, contacts(first_name, last_name, company, email))")
     .eq("org_id", ctx.org.id)
     .order("due_on", { ascending: false })
     .range(...pageRange(page))
-  if (status !== "all") query = query.eq("status", status)
+  if (status === "failed") query = query.eq("status", "open").not("failed_at", "is", null)
+  else if (status !== "all") query = query.eq("status", status)
   const [{ data }, { data: runs }, { data: open }, { data: tagRows }] = await Promise.all([
     query,
     ctx.supabase.from("sepa_runs").select("id, collection_on, count, total_cents, status, created_at").eq("org_id", ctx.org.id).order("created_at", { ascending: false }).limit(10),
@@ -194,8 +195,8 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
       )}
 
       <nav aria-label={t("membership.status")} className="flex w-fit max-w-full flex-wrap gap-1 justify-self-end rounded-lg bg-muted p-1">
-        {(["open", "paid", "cancelled", "all"] as const).map((s) =>
-          chip(withParams(sp, { status: s === "open" ? undefined : s, page: undefined, run: undefined }), s === status, s === "all" ? t("membership.filters.all") : t(`membership.dueStatus.${s}`)),
+        {(["open", "failed", "paid", "cancelled", "all"] as const).map((s) =>
+          chip(withParams(sp, { status: s === "open" ? undefined : s, page: undefined, run: undefined }), s === status, s === "all" ? t("membership.filters.all") : s === "failed" ? t("membership.filters.returned") : t(`membership.dueStatus.${s}`)),
         )}
       </nav>
       <DataTable
@@ -222,6 +223,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
               <Badge variant={r.status === "paid" ? "default" : r.status === "open" ? (r.due_on < now ? "destructive" : "secondary") : "outline"}>
                 {r.status === "open" && r.due_on < now ? t("membership.overdue") : t(`membership.dueStatus.${r.status as Status}`)}
                 {r.status === "open" && r.run_id ? ` · ${t("membership.inRun")}` : ""}
+                {r.status === "open" && r.failed_at ? ` · ${t("membership.returned", { date: t.date(r.failed_at, { dateStyle: "short" }) })}` : ""}
                 {r.status === "open" && r.reminded_at ? ` · ${t("membership.reminded", { count: r.reminders, date: t.date(r.reminded_at) })}` : ""}
               </Badge>
             ),

@@ -28,7 +28,7 @@ const DUES = ["overdue", "week", "none"] as const
  * Aufgaben") project – all in the URL. `projectId` = only that project's tasks (the project page); new tasks land there.
  * ?task=<id> opens the side panel.
  */
-export async function TasksView({ ctx, t, sp, base, view, projectId, basics }: { ctx: Ctx; t: T; sp: SearchParams; base: string; view: TaskView; projectId?: string; basics: Awaited<ReturnType<typeof projectBasics>> }) {
+export async function TasksView({ ctx, t, sp, base, view, projectId, basics, views }: { ctx: Ctx; t: T; sp: SearchParams; base: string; view: TaskView; projectId?: string; basics: Awaited<ReturnType<typeof projectBasics>>; views?: React.ReactNode }) {
   const canManage = ctx.can("projects.manage")
   const tag = param(sp, "tag")
   const who = param(sp, "assignee")
@@ -83,6 +83,7 @@ export async function TasksView({ ctx, t, sp, base, view, projectId, basics }: {
           <FilterMenu param="project" label={t("projects.project")} allLabel={t("projects.allProjects")} options={[{ value: "none", label: t("projects.noProject") }, ...projects.map((p) => ({ value: p.id, label: p.name }))]} />
         )}
         {tags.length > 0 && <FilterMenu param="tag" label={t("projects.tags")} allLabel={t("projects.allTags")} options={tags.map((x) => ({ value: x, label: x }))} />}
+        {views && <div className="ml-auto">{views}</div>}
       </div>
 
       {view === "board" ? (

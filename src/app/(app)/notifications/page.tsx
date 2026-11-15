@@ -38,8 +38,8 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
         title={t("inbox.title")}
         actions={
           <form action={markAllRead}>
-            <SubmitButton variant="outline" size="sm">
-              <CheckCheckIcon /> {t("inbox.markAllRead")}
+            <SubmitButton variant="outline" size="sm" aria-label={t("inbox.markAllRead")} title={t("inbox.markAllRead")}>
+              <CheckCheckIcon /> <span className="max-md:sr-only">{t("inbox.markAllRead")}</span>
             </SubmitButton>
           </form>
         }

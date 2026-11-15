@@ -65,7 +65,7 @@ export const OBJECTS = {
     table: "member_dues",
     module: "members",
     record: true,
-    fields: [pick("kind", ["fee", "entry", "levy"]), text("description"), num("amount_cents"), date("due_on"), pick("status", ["open", "paid", "cancelled"], true), date("paid_on"), num("reminders")],
+    fields: [pick("kind", ["fee", "entry", "levy"]), text("description"), num("amount_cents"), date("due_on"), pick("status", ["open", "paid", "cancelled"], true), date("paid_on"), num("reminders"), date("failed_at")],
     relations: { membership_id: "membership" },
     // An open item on the run's membership (first payment, card fee …): amount in cents, may be calculated ("{x}*3").
     create: { fields: ["description", "amount_cents", "due_on", "kind"], parents: { membership_id: "membership" } },

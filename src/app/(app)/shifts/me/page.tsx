@@ -47,7 +47,7 @@ export default async function MyShifts({ searchParams }: PageProps<"/shifts/me">
 
   return (
     <Page>
-      <PageHeader area="shifts" title={t("shifts.tabs.me")} />
+      <PageHeader area="shifts" title={t("shifts.tabs.me")} primary={{ href: `/shifts/me${withParams(sp, { new: "time", edit: undefined })}`, label: t("time.add") }} />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
       <section aria-labelledby="time" className="grid gap-4">

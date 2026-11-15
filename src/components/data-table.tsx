@@ -28,15 +28,15 @@ export function DataTable<R>({
   if (!rows.length) return typeof empty !== "string" ? empty : <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
   return (
     <>
-      {/* Phones: one card per row (first column = title, the rest as label/value). Tablet + desktop: the table. */}
+      {/* Phones: one card per row (first column = title, the rest as label/value), no bulk selection. Tablet + desktop: the table. */}
       <ul className="grid gap-2 md:hidden">
         {rows.map((row) => {
           const href = rowHref?.(row)
           const [first, ...rest] = columns
           return (
             <li key={rowKey(row)} className="relative grid gap-2 rounded-lg border bg-card p-3 text-sm has-[a:hover]:bg-muted/50 has-checked:border-primary">
+              {/* No tick boxes on phones: bulk actions are a desktop/tablet thing. */}
               <div className="flex items-start gap-3 font-medium">
-                {box(row)}
                 {href ? (
                   <Link
                     href={href}

@@ -91,7 +91,8 @@ export function PageHeader({
             {actions}
             {menu}
             </HeaderActions>
-            <HeaderActions desktop>
+            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes to the bar everywhere. */}
+            <HeaderActions desktop={isLink(primary)}>
             {isLink(primary) && PrimaryIcon ? (
               // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
               <Button

@@ -1,3 +1,4 @@
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import { FilterMenu } from "@/components/filter-menu"
@@ -67,9 +68,22 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
         area="finance"
         title={t("invoices.title")}
         settings={canManage && { href: "/invoices/settings", label: t("common.settings") }}
-        actions={canManage && newDoc("quote", t("invoices.newQuote"), "outline")}
+        menu={
+          canManage && (
+            <ActionsMenu>
+              <MenuSubmit form="new-quote" icon={<PlusIcon />}>
+                {t("invoices.newQuote")}
+              </MenuSubmit>
+            </ActionsMenu>
+          )
+        }
         primary={canManage && newDoc("invoice", t("invoices.newInvoice"), "default")}
       />
+      {canManage && (
+        <form id="new-quote" action={createDocument} hidden>
+          <input type="hidden" name="kind" value="quote" />
+        </form>
+      )}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <div className="flex flex-wrap items-center gap-2">
         <SearchBox q={q} label={t("invoices.search")} />

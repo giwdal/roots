@@ -46,6 +46,8 @@ export async function AppShell({
           {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
           <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
           {bar ?? <PageTitle groups={groups} fallback={title} />}
+          {/* Phones: the page header's gear / actions / ⋯ land here (<HeaderActions>). */}
+          <div id="topbar-actions" className="ml-auto flex items-center gap-1 empty:hidden md:hidden" />
           {search && <SproutButton />}
         </header>
         <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>

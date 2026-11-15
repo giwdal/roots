@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
+import { HeaderActions } from "@/components/header-actions"
 
 // The App's page anatomy (see /style/app): <Page> sets one of three widths, <PageHeader> is the same header everywhere,
 // <RecordLayout> is a record page's two columns, <FormCard> groups fields by topic, <EmptyState> fills empty lists.
@@ -73,7 +74,8 @@ export function PageHeader({
           </div>
         </div>
         {(actions || menu || primary || settings) && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 max-md:contents">
+            <HeaderActions>
             {settings && (
               <Tooltip>
                 <TooltipTrigger render={<Button render={<Link href={settings.href} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={settings.label} />}>
@@ -84,6 +86,7 @@ export function PageHeader({
             )}
             {actions}
             {menu}
+            </HeaderActions>
             {isLink(primary) && PrimaryIcon ? (
               // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
               <Button

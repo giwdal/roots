@@ -81,7 +81,7 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   the SaveBar sticks to the bottom above the home indicator.
 - **Buttons in short sheets** stack full width on phones, main action at the bottom (closest to the thumb):
   `flex flex-col-reverse gap-2 sm:flex-row sm:justify-end`.
-- **Where am I** is the top bar (area › page). On phones `<PageHeader>` drops its crumb row and area icon, and area pages their title (kept for screen readers); record pages keep the record title. Don't add a second title or crumb line inside pages.
+- **Where am I** is the top bar (area › page). On phones `<PageHeader>` drops its crumb row and area icon, and area pages their title (kept for screen readers); record pages keep the record title. Don't add a second title or crumb line inside pages. The header's gear / actions / ⋯ move into the top bar next to Sprout on phones (`<HeaderActions>` portals into `#topbar-actions`); the primary action is the round button by the tab bar.
 - **Bulk actions** (tick boxes + bulk bar) are tablet/desktop only: `<DataTable>` cards on phones have no tick boxes, so anything a bulk action does must also be possible on the single record.
 - **Touch**: nothing only on hover — whatever appears on hover is also in a ⋯ menu or visible; touch targets at least
   `size-8`, bar items and the primary action at least 44px high.

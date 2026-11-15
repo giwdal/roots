@@ -27,7 +27,7 @@ export function SproutButton() {
   const t = useT()
   const { open, setOpen } = useSprout()
   return (
-    <Button variant={open ? "secondary" : "outline"} size="sm" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="sprout-panel" className="ml-auto">
+    <Button variant={open ? "secondary" : "outline"} size="sm" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="sprout-panel" className="ml-auto [#topbar-actions:not(:empty)+&]:ml-0">
       <SproutIcon /> <span className="max-sm:sr-only">{t("sprout.name")}</span>
     </Button>
   )

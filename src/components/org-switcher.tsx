@@ -19,9 +19,9 @@ type Org = { id: string; name: string; logo_path?: string | null }
 
 /**
  * Top of the sidebar: the active org. A menu to switch (and to create an org) only when there is something to switch
- * to; platform admins get every org, the ones they aren't a member of marked "Admin".
+ * to; platform admins get every org.
  */
-export function OrgSwitcher({ orgs, current, memberOf }: { orgs: Org[]; current: Org; memberOf?: string[] }) {
+export function OrgSwitcher({ orgs, current }: { orgs: Org[]; current: Org }) {
   const t = useT()
   const [pending, start] = useTransition()
   if (orgs.length <= 1)
@@ -49,11 +49,7 @@ export function OrgSwitcher({ orgs, current, memberOf }: { orgs: Org[]; current:
               <DropdownMenuItem key={o.id} onClick={() => o.id !== current.id && start(() => switchOrg(o.id))}>
                 <Picture path={o.logo_path} name={o.name} size="sm" square />
                 <span className="truncate">{o.name}</span>
-                {o.id === current.id ? (
-                  <span className="ml-auto text-xs text-muted-foreground">{t("shell.current")}</span>
-                ) : (
-                  memberOf && !memberOf.includes(o.id) && <span className="ml-auto text-xs text-muted-foreground">{t("shell.adminAccess")}</span>
-                )}
+                {o.id === current.id && <span className="ml-auto text-xs text-muted-foreground">{t("shell.current")}</span>}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />

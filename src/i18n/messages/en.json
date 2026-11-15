@@ -192,8 +192,7 @@
     "settings": "Settings",
     "current": "Current",
     "newOrg": "New organisation",
-    "mainNav": "Main",
-    "adminAccess": "Admin"
+    "mainNav": "Main"
   },
   "home": {
     "role": "You're signed in as {role}.",

@@ -192,8 +192,7 @@
     "settings": "Einstellungen",
     "current": "Aktuell",
     "newOrg": "Neue Organisation",
-    "mainNav": "Hauptnavigation",
-    "adminAccess": "Admin"
+    "mainNav": "Hauptnavigation"
   },
   "home": {
     "role": "Du bist angemeldet als {role}.",

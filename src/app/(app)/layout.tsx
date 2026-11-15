@@ -48,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       search
       orgId={ctx.org.id}
-      header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} memberOf={allOrgs ? ctx.orgs.filter((o) => !ctx.viaPlatform || o.id !== ctx.org.id).map((o) => o.id) : undefined} />}
+      header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} />}
       groups={groups}
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}

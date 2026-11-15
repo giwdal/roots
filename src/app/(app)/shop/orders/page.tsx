@@ -5,6 +5,7 @@ import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
 import { Segments } from "@/components/segments"
+import { FilterMenu } from "@/components/filter-menu"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
@@ -12,6 +13,8 @@ import { pageParam, param, withParams } from "@/lib/url"
 import { cn } from "@/lib/utils"
 import { missingInvoices } from "@/shop/server"
 import { issueMissingInvoicesAction } from "../actions"
+import { UrlSheet } from "@/components/url-sheet"
+import { NewOrderForm } from "./new-order-form"
 
 const VIEWS = { open: ["new", "ready"], done: ["shipped", "completed"], cancelled: ["cancelled"], all: null } as const
 
@@ -33,14 +36,30 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
   const statuses = VIEWS[view]
   if (statuses) query = query.in("status", [...statuses])
   if (q) query = /^\d+$/.test(q) ? query.eq("number", Number(q)) : query.ilike("name", `%${q}%`)
+  // Payment filter: still to pay (open, failed, expired) or paid.
+  const pay = param(sp, "pay")
+  if (pay === "open") query = query.in("pay_orders.status", ["open", "failed", "expired"])
+  if (pay === "paid") query = query.in("pay_orders.status", ["paid", "partially_refunded"])
   const canInvoice = ctx.can("shop.manage") && ctx.modules.has("invoices")
-  const [{ data }, missing] = await Promise.all([query, canInvoice ? missingInvoices(ctx.org.id) : 0])
+  const creating = ctx.can("shop.manage") && param(sp, "new") === "order"
+  const [{ data }, missing, { data: catalog }] = await Promise.all([
+    query,
+    canInvoice ? missingInvoices(ctx.org.id) : 0,
+    // "Neue Bestellung": every product/variant of the org (drafts too) with its price.
+    creating ? ctx.supabase.from("products").select("id, name, price_cents, position, product_variants(id, name, price_cents, position)").eq("org_id", ctx.org.id).is("deleted_at", null).order("position").limit(500) : Promise.resolve({ data: null }),
+  ])
+  const items = (catalog ?? []).flatMap((p) =>
+    p.product_variants.length
+      ? [...p.product_variants].sort((a, b) => a.position - b.position).map((v) => ({ id: v.id, label: `${p.name} · ${v.name}`, price: v.price_cents ?? p.price_cents }))
+      : [{ id: p.id, label: p.name, price: p.price_cents }],
+  )
   const rows = (data ?? []).slice(0, PAGE_SIZE)
   const paid = (s: string) => s === "paid" || s === "partially_refunded"
 
   return (
     <Page>
       <PageHeader area="shop" title={t("store.orders")} settings={ctx.can("shop.manage") && { href: "/shop/settings", label: t("common.settings") }}
+        primary={ctx.can("shop.manage") ? { href: `/shop/orders${withParams(sp, { new: "order" })}`, label: t("store.teamOrder.new") } : undefined}
         menu={
           missing > 0 && (
             <ActionsMenu>
@@ -54,11 +73,12 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
       {missing > 0 && <form id="issue-invoices" action={issueMissingInvoicesAction} hidden />}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <div className="flex flex-wrap items-center gap-3">
-        <SearchBox q={q} label={t("store.searchOrders")} keep={{ view }} />
+        <SearchBox q={q} label={t("store.searchOrders")} keep={{ view, ...(pay ? { pay } : {}) }} />
         <Segments
           label={t("store.orders")}
           items={(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((v) => ({ href: `/shop/orders${withParams(sp, { view: v === "open" ? undefined : v, page: undefined })}`, label: t.dynamic(`store.views.${v}`), current: v === view }))}
         />
+        <FilterMenu param="pay" label={t("store.payment")} options={[{ value: "open", label: t("store.payFilter.open") }, { value: "paid", label: t("store.payFilter.paid") }]} />
       </div>
       <DataTable
         rows={rows}
@@ -120,6 +140,12 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
           },
         ]}
       />
+      {creating && (
+        <UrlSheet params={["new"]} title={t("store.teamOrder.new")} description={t("store.teamOrder.hint")}>
+          <Notice error={param(sp, "error")} />
+          <NewOrderForm items={items} currency="eur" initialItem={param(sp, "item")} />
+        </UrlSheet>
+      )}
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
     </Page>
   )

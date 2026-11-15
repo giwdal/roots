@@ -2,15 +2,14 @@
 
 import { useState } from "react"
 import { SubmitButton } from "@/components/submit-button"
-import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useT } from "@/i18n/client"
 import { STOCK_KINDS, type StockKind } from "@/shop/fields"
 import { bookStockAction } from "../actions"
 
-/** Lager drawer: Zugang · Entnahme · Schwund · Inventur · Verkauf vor Ort. The fields follow the kind. */
-export function StockForm({ item, onHand, price }: { item: string; onHand: number; price: string }) {
+/** Lager drawer: Zugang · Entnahme · Schwund · Inventur. Sales go through Bestellungen → Neue Bestellung. */
+export function StockForm({ item, onHand }: { item: string; onHand: number }) {
   const t = useT()
   const [kind, setKind] = useState<StockKind>("receipt")
   return (
@@ -30,18 +29,12 @@ export function StockForm({ item, onHand, price }: { item: string; onHand: numbe
           <Label htmlFor="stock-qty">{t(kind === "count" ? "store.lager.counted" : "store.lager.quantity")}</Label>
           <Input key={kind} id="stock-qty" name={kind === "count" ? "counted" : "quantity"} type="number" inputMode="numeric" min={kind === "count" ? 0 : 1} defaultValue={kind === "count" ? onHand : ""} required />
         </div>
-        {kind === "sale" && (
-          <div className="grid gap-2">
-            <Label htmlFor="stock-price">{t("store.lager.unitPrice")}</Label>
-            <TypedInput kind="money" id="stock-price" name="price" defaultValue={price} required />
-          </div>
-        )}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="stock-note">{t("store.lager.note")}</Label>
         <Input id="stock-note" name="note" maxLength={500} placeholder={t.dynamic(`store.lager.notePlaceholder.${kind}`)} />
       </div>
-      <SubmitButton className="justify-self-start">{t(kind === "sale" ? "store.lager.sell" : "store.lager.book")}</SubmitButton>
+      <SubmitButton className="justify-self-start">{t("store.lager.book")}</SubmitButton>
     </form>
   )
 }

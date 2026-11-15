@@ -898,7 +898,13 @@
     },
     "activity": {
       "title": "Aktivität",
-      "filteredBy": "Gefiltert auf {org}."
+      "filteredBy": "Gefiltert auf {org}.",
+      "errors": "Fehler",
+      "noErrors": "Keine Fehler – alles läuft.",
+      "errorKinds": {
+        "automation": "Automation",
+        "email": "E-Mail"
+      }
     },
     "trash": {
       "title": "Papierkorb",
@@ -1166,7 +1172,8 @@
       "domain.connected": "Eigene Domain verbunden",
       "shop.order_placed": "Shop-Bestellung eingegangen",
       "shop.order_ready": "Shop-Bestellung abholbereit",
-      "shop.order_shipped": "Shop-Bestellung versendet"
+      "shop.order_shipped": "Shop-Bestellung versendet",
+      "automation.failed": "Automation fehlgeschlagen"
     },
     "messages": {
       "member.joined": "👋 Neues Mitglied: {who}",
@@ -1209,7 +1216,8 @@
       "domain.connected": "🌐 {domain} ist jetzt live",
       "shop.order_placed": "🛍️ Bestellung #{number} von {name}",
       "shop.order_ready": "🛍️ Bestellung #{number} liegt bereit",
-      "shop.order_shipped": "📦 Bestellung #{number} versendet"
+      "shop.order_shipped": "📦 Bestellung #{number} versendet",
+      "automation.failed": "⚠️ Automation „{name}“ fehlgeschlagen ({count}× in 24 h): {error}"
     },
     "hints": {
       "member.joined": "Jemand aus eurem Team (Vorstand, Einlass …) hat eine Einladung angenommen und kann sich in der App anmelden. Nicht für Vereinsmitglieder.",
@@ -6129,31 +6137,25 @@
         "receipt": "Zugang",
         "withdrawal": "Entnahme",
         "loss": "Schwund",
-        "count": "Inventur",
-        "sale": "Verkauf vor Ort"
+        "count": "Inventur"
       },
       "hints": {
         "receipt": "Neue Ware ist da (Lieferung, Nachpressung).",
         "withdrawal": "Ware geht raus ohne Verkauf: Promo, Freiexemplare, Eigenbedarf.",
         "loss": "Kaputt, verloren oder nicht auffindbar.",
-        "count": "Gezählter Bestand – die Differenz wird als Korrektur gebucht.",
-        "sale": "Verkauf z. B. am Merch-Stand, bar bezahlt: wird eine abgeschlossene Bestellung mit Umsatz (und Rechnung, falls automatisch)."
+        "count": "Gezählter Bestand – die Differenz wird als Korrektur gebucht."
       },
       "quantity": "Menge",
       "counted": "Gezählt",
-      "unitPrice": "Preis pro Stück",
       "note": "Notiz",
       "notePlaceholder": {
         "receipt": "z. B. Lieferung Presswerk",
         "withdrawal": "z. B. Promo für Radio",
         "loss": "z. B. Transportschaden",
-        "count": "z. B. Inventur Jahresende",
-        "sale": "z. B. Konzert Leipzig"
+        "count": "z. B. Inventur Jahresende"
       },
       "book": "Buchen",
-      "sell": "Verkauf erfassen",
       "booked": "Gebucht.",
-      "soldDone": "Verkauf erfasst – als Bestellung abgeschlossen.",
       "history": "Verlauf",
       "noHistory": "Noch keine Bewegungen.",
       "reasons": {
@@ -6165,9 +6167,61 @@
         "sale": "Verkauf",
         "returned": "Erstattet"
       },
-      "counterName": "Verkauf vor Ort",
       "quantityInvalid": "Bitte eine gültige Menge eingeben.",
-      "noChange": "Der gezählte Bestand stimmt schon – nichts zu buchen."
+      "noChange": "Der gezählte Bestand stimmt schon – nichts zu buchen.",
+      "saleHint": "Verkauft (z. B. am Merch-Stand)?",
+      "saleLink": "Als Bestellung erfassen"
+    },
+    "teamOrder": {
+      "new": "Neue Bestellung",
+      "hint": "Für Bestellungen, die offline passiert sind (vor Ort, telefonisch, per Mail) – sie zählen wie Shop-Bestellungen: Lager, Rechnung, Kontakt.",
+      "fromCrm": "Kontakt aus dem CRM",
+      "searchCrm": "Name, E-Mail oder Firma suchen …",
+      "email": "E-Mail (optional)",
+      "phone": "Telefon (optional)",
+      "item": "Artikel",
+      "pickItem": "Artikel wählen …",
+      "unitPrice": "Preis pro Stück",
+      "removeItem": "Artikel entfernen",
+      "addItem": "Artikel hinzufügen",
+      "total": "Summe {amount}",
+      "street": "Straße und Hausnummer",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "shipping": "Versandkosten",
+      "paidCash": "Bezahlt (bar)",
+      "paidTransfer": "Bezahlt (Überweisung)",
+      "open": "Noch offen",
+      "openHow": "Wie wird bezahlt?",
+      "done": "Schon übergeben / erledigt",
+      "more": "Notiz & Benachrichtigung",
+      "notePlaceholder": "Notiz (intern)",
+      "notify": "Bestätigung per E-Mail an die Person senden",
+      "create": "Bestellung anlegen",
+      "created": "Bestellung angelegt.",
+      "noItems": "Bitte mindestens einen Artikel wählen.",
+      "nameRequired": "Bitte einen Namen angeben.",
+      "addressRequired": "Für Versand bitte die vollständige Adresse angeben.",
+      "unknownItem": "Einen der Artikel gibt es nicht mehr.",
+      "walkIn": "Verkauf vor Ort",
+      "buyerNone": "Ohne Käufer:in",
+      "buyerCrm": "Kontakt aus dem CRM",
+      "buyerNew": "Neuer Kontakt",
+      "buyerNoneHint": "Schnellverkauf, z. B. am Merch-Stand oder auf der Messe – die Bestellung heißt „Verkauf vor Ort“.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "company": "Firma (optional)",
+      "crmHint": "Änderungen und Ergänzungen werden im Kontakt gespeichert.",
+      "newHint": "Wird als neuer Kontakt im CRM angelegt.",
+      "pickContact": "Bitte einen Kontakt aus dem CRM wählen.",
+      "contactExists": "Diese E-Mail gehört schon zu einem Kontakt – bitte „Kontakt aus dem CRM“ wählen.",
+      "invoice": "Rechnung erstellen",
+      "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse."
+    },
+    "payFilter": {
+      "open": "Noch zu bezahlen",
+      "paid": "Bezahlt"
     }
   }
 }

@@ -19,12 +19,14 @@ export function ContactPicker({
   initial,
   placeholder,
   onChange,
+  noCreate,
 }: {
   name: string
   label: string
   initial?: Option | null
   placeholder?: string
   onChange?: (picked: Option | null) => void
+  noCreate?: boolean // search only (the form creates contacts itself)
 }) {
   const t = useT()
   const id = useId()
@@ -101,7 +103,7 @@ export function ContactPicker({
                   </button>
                 </li>
               ))}
-              <li>
+              {!noCreate && <li>
                 <button
                   type="button"
                   className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-primary hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
@@ -113,7 +115,7 @@ export function ContactPicker({
                 >
                   <PlusIcon className="size-4" /> {q.trim() ? t("contacts.quickCreateNamed", { name: q.trim() }) : t("contacts.quickCreate")}
                 </button>
-              </li>
+              </li>}
             </ul>
           )}
         </div>

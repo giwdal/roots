@@ -551,4 +551,26 @@ async function finish(db: Db, run: Run, log: LogEntry[], patch: { status: string
     })
     .eq("id", run.id)
     .eq("status", "running") // a run cancelled meanwhile stays cancelled
+  if (patch.status === "failed") await failed(db, run, patch.error ?? "").catch((e) => console.error("automation.failed", run.id, e))
+}
+
+/**
+ * A run failed: tell the people who manage automations (event automation.failed), at most once per workflow and day
+ * – with how many runs failed since – so a "for each" over 200 records doesn't send 200 notifications.
+ */
+async function failed(db: Db, run: Run, error: string) {
+  const since = new Date(Date.now() - 86_400_000).toISOString()
+  const { count: told } = await db.from("hub_events").select("id", { count: "exact", head: true }).eq("org_id", run.org_id).eq("type", "automation.failed").eq("subject_id", run.workflow_id).gte("created_at", since)
+  if (told) return
+  const [{ data: wf }, { count }] = await Promise.all([
+    db.from("workflows").select("name").eq("id", run.workflow_id).single(),
+    db.from("workflow_runs").select("id", { count: "exact", head: true }).eq("workflow_id", run.workflow_id).eq("status", "failed").gte("updated_at", since),
+  ])
+  await db.rpc("emit_event", {
+    p_org: run.org_id,
+    p_type: "automation.failed",
+    p_payload: { workflow_id: run.workflow_id, run_id: run.id, name: wf?.name ?? "", error: error.slice(0, 300), count: Math.max(1, count ?? 1) },
+    p_subject_table: "workflows",
+    p_subject_id: run.workflow_id,
+  })
 }

@@ -25,12 +25,22 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE) // one extra row tells us if there's a next page
   if (table) query = query.eq("table_name", table)
   if (org && /^[0-9a-f-]{36}$/.test(org)) query = query.eq("org_id", org)
-  const { data } = await query
+  // "Fehler": failed automation runs and failed org mails across all orgs (newest 100), instead of the change log.
+  const errorsView = table === "errors"
+  const [{ data }, { data: failedRuns }, { data: failedMails }] = await Promise.all([
+    errorsView ? Promise.resolve({ data: [] as NonNullable<Awaited<typeof query>["data"]> }) : query,
+    errorsView ? supabase.from("workflow_runs").select("id, org_id, workflow_id, error, updated_at, workflows(name)").eq("status", "failed").order("updated_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+    errorsView ? supabase.from("email_log").select("id, org_id, to_email, subject, kind, error, created_at").eq("status", "failed").order("created_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+  ])
+  const errors = [
+    ...(failedRuns ?? []).filter((r) => !org || r.org_id === org).map((r) => ({ id: `run-${r.id}`, org_id: r.org_id, kind: "automation" as const, title: r.workflows?.name ?? "–", error: r.error ?? "", at: r.updated_at })),
+    ...(failedMails ?? []).filter((m) => !org || m.org_id === org).map((m) => ({ id: `mail-${m.id}`, org_id: m.org_id, kind: "email" as const, title: `${m.subject ?? m.kind} → ${m.to_email}`, error: m.error ?? "", at: m.created_at })),
+  ].sort((a, b) => b.at.localeCompare(a.at))
   const entries = data?.slice(0, PAGE_SIZE) ?? []
   const hasNext = (data?.length ?? 0) > PAGE_SIZE
 
   const actorIds = [...new Set(entries.map((e) => e.actor_id).filter((id): id is string => !!id))]
-  const orgIds = [...new Set(entries.map((e) => e.org_id).filter((id): id is string => !!id))]
+  const orgIds = [...new Set([...entries.map((e) => e.org_id), ...errors.map((e) => e.org_id)].filter((id): id is string => !!id))]
   const [{ data: profiles }, { data: orgs }] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name").in("id", actorIds),
     supabase.from("orgs").select("id, name").in("id", orgIds),
@@ -59,19 +69,41 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
         </p>
       )}
       <nav aria-label={t("activity.filter")} className="flex flex-wrap gap-1.5">
-        {[undefined, ...TABLES].map((tab) => (
+        {[undefined, "errors", ...TABLES].map((tab) => (
           <Link
             key={tab ?? "all"}
             href={href({ table: tab, page: 1 })}
             aria-current={tab === table ? "true" : undefined}
             className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground hover:text-foreground aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground"
           >
-            {tab ? area(tab) : t("activity.all")}
+            {tab === "errors" ? t("admin.activity.errors") : tab ? area(tab) : t("activity.all")}
           </Link>
         ))}
       </nav>
 
-      {entries.length === 0 ? (
+      {errorsView ? (
+        errors.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("admin.activity.noErrors")}</p>
+        ) : (
+          <ol className="grid divide-y rounded-lg border">
+            {errors.map((e) => (
+              <li key={e.id} className="grid gap-1 px-4 py-3 text-sm">
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <Badge variant="destructive">{t.dynamic(`admin.activity.errorKinds.${e.kind}`)}</Badge>
+                  <span className="min-w-0 truncate font-medium">{e.title}</span>
+                  {e.org_id && !org && (
+                    <Link href={href({ org: e.org_id, page: 1 })} className="text-muted-foreground underline-offset-4 hover:underline">
+                      {orgName.get(e.org_id) ?? "–"}
+                    </Link>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground tabular-nums">{t.date(e.at, { dateStyle: "medium", timeStyle: "short" })}</span>
+                </span>
+                {e.error && <span className="break-words text-xs text-destructive">{e.error}</span>}
+              </li>
+            ))}
+          </ol>
+        )
+      ) : entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("activity.empty")}</p>
       ) : (
         <ol className="grid divide-y rounded-lg border">

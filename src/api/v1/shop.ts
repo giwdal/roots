@@ -1,9 +1,9 @@
 import { z } from "zod"
 import { deliverSoon } from "@/events/worker"
 import { imageUrl, removeImage } from "@/lib/images"
-import { DELIVERIES, MAIL_KINDS, ORDER_STATUSES, PAYMENTS, PRODUCT_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readVariant, STOCK_KINDS, TAX_RATES } from "@/shop/fields"
+import { DELIVERIES, MAIL_KINDS, ORDER_STATUSES, PAYMENTS, PRODUCT_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readTeamOrder, readVariant, STOCK_KINDS, TAX_RATES } from "@/shop/fields"
 import { bookStock, stockHistory, stockItem, stockList } from "@/shop/stock"
-import { applyOptions, cancelOrder, ensureInvoice, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
+import { applyOptions, cancelOrder, createTeamOrder, ensureInvoice, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
 import { deleteTrack, finishTrackUpload, productTrackList, startTrackUpload, updateTrack } from "@/shop/audio"
 import { ApiError, dbError, endpoint, list, notFound, page, paged, uuid, type Endpoint } from "../core"
 import { putImage, ts, type Db } from "./shared"
@@ -426,6 +426,54 @@ export const endpoints: Endpoint[] = [
     },
   }),
   endpoint({
+    method: "POST",
+    path: "/shop/orders",
+    permission: "shop.manage",
+    tag: TAG,
+    summary: "Enter an order (sold offline)",
+    description: "For orders that happened outside the shop (in person, by phone): any products/variants of the org (`items[].id` = variant id, or product id without variants) at the given gross price per piece. `paid` = cash/transfer marks it paid now; without it the order is open (`payment` transfer = with invoice, pickup = pay on pickup). `done` completes it. `contact_id` links a CRM contact. `notify` sends the buyer the usual confirmation mail. `invoice` issues an invoice (else none). The buyer is always a CRM contact or nobody (`buyer`). Stock and automatic invoices work as for shop orders.",
+    body: z
+      .object({
+        items: z.array(z.object({ id: uuid, quantity: z.number().int().min(1).max(1000), price_cents: z.number().int().min(0) })).min(1).max(30),
+        buyer: z.enum(["none", "crm", "new"]).default("none").describe("none = walk-in sale, crm = `contact_id` (its details updated from the given ones), new = create a contact from first_name/last_name/email/…"),
+        first_name: z.string().max(100).optional(),
+        last_name: z.string().max(100).optional(),
+        email: z.string().email().optional(),
+        phone: z.string().max(50).optional(),
+        contact_id: uuid.optional(),
+        delivery: z.enum(DELIVERIES).default("pickup"),
+        address: z.object({ company: z.string().max(200).optional(), street: z.string().max(200), postal_code: z.string().max(20), city: z.string().max(100), country: z.string().length(2).default("DE") }).optional(),
+        shipping_cents: z.number().int().min(0).optional(),
+        paid: z.enum(["cash", "transfer"]).optional(),
+        payment: z.enum(["transfer", "pickup"]).optional(),
+        done: z.boolean().default(false),
+        note: z.string().max(2000).optional(),
+        notify: z.boolean().default(false),
+        invoice: z.boolean().default(false).describe("Issue an invoice (independent of the automatic setting)"),
+      })
+      .strict(),
+    response: ShopOrder,
+    status: 201,
+    async handler({ db, orgId, body }) {
+      const a = body.address
+      const form: Record<string, string> = {
+        lines: JSON.stringify(body.items.map((i) => ({ id: i.id, q: i.quantity, p: i.price_cents }))),
+        buyer: body.buyer, first_name: body.first_name ?? "", last_name: body.last_name ?? "", email: body.email ?? "", phone: body.phone ?? "", contact_id: body.contact_id ?? "", delivery: body.delivery,
+        company: a?.company ?? "", street: a?.street ?? "", postal_code: a?.postal_code ?? "", city: a?.city ?? "", country: a?.country ?? "",
+        shipping: body.shipping_cents ? (body.shipping_cents / 100).toFixed(2) : "", paid: body.paid ?? "", payment: body.payment ?? "", done: body.done ? "1" : "", note: body.note ?? "", notify: body.notify ? "1" : "", invoice: body.invoice ? "1" : "",
+      }
+      const r = readTeamOrder((k) => form[k] ?? "")
+      if ("error" in r) throw new ApiError(422, r.error.split(".").pop()!.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), r.error)
+      if (r.order.contact_id) {
+        const { data: c } = await db.from("contacts").select("id").eq("id", r.order.contact_id).eq("org_id", orgId).maybeSingle()
+        if (!c) throw new ApiError(422, "invalid_reference", "contact_id does not belong to this organisation.")
+      }
+      const id = await createTeamOrder(orgId, r.order).catch((e) => Promise.reject(stepError(e)))
+      deliverSoon()
+      return orderOf(db, orgId, id)
+    },
+  }),
+  endpoint({
     method: "GET",
     path: "/shop/orders/{id}",
     permission: "shop.view",
@@ -619,30 +667,29 @@ export const endpoints: Endpoint[] = [
     path: "/shop/stock/{id}",
     permission: "shop.manage",
     tag: TAG,
-    summary: "Book stock (receipt, withdrawal, loss, stocktake, sale on site)",
-    description: "`receipt` adds `quantity`, `withdrawal` (promo, free copies, own use) and `loss` take it off, `count` sets the counted stock (`counted`; the difference to on hand is booked as a correction), `sale` records a sale on site (merch table) at `price_cents` per piece: a completed shop order paid cash, with revenue and an invoice when automatic invoices are on. Stock can't go below zero (422 stock_negative).",
+    summary: "Book stock (receipt, withdrawal, loss, stocktake)",
+    description: "`receipt` adds `quantity`, `withdrawal` (promo, free copies, own use) and `loss` take it off, `count` sets the counted stock (`counted`; the difference to on hand is booked as a correction). Sales (also at a merch table) are orders: POST /shop/orders. Stock can't go below zero (422 stock_negative).",
     body: z
       .object({
         kind: z.enum(STOCK_KINDS),
         quantity: z.number().int().min(1).max(1_000_000).optional(),
         counted: z.number().int().min(0).max(1_000_000).optional().describe("For kind count"),
-        price_cents: z.number().int().min(1).optional().describe("For kind sale: price per piece"),
         note: z.string().max(500).optional(),
       })
       .strict(),
-    response: StockRow.extend({ order_id: uuid.nullable().describe("The shop order of a sale on site") }),
+    response: StockRow,
     async handler({ db, orgId, params, body }) {
       const item = await stockItem(db, orgId, params.id)
       if (!item) throw notFound()
-      const form: Record<string, string> = { kind: body.kind, quantity: String(body.quantity ?? ""), counted: String(body.counted ?? ""), price: body.price_cents ? (body.price_cents / 100).toFixed(2) : "", note: body.note ?? "" }
+      const form: Record<string, string> = { kind: body.kind, quantity: String(body.quantity ?? ""), counted: String(body.counted ?? ""), note: body.note ?? "" }
       const r = readStockMove((k) => form[k] ?? "", item.on_hand ?? 0)
       if ("error" in r) throw new ApiError(422, r.error.split(".").pop()!.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), r.error)
-      const order = await bookStock(db, orgId, item, r).catch((e) => {
+      await bookStock(db, orgId, item, r).catch((e) => {
         const key = e instanceof Error ? e.message : ""
         return Promise.reject(key === "errors.stock_negative" ? new ApiError(422, "stock_negative", "That would take the stock below zero.") : stepError(e))
       })
       deliverSoon()
-      return { ...stockOut((await stockItem(db, orgId, params.id))!), order_id: order ? (await db.from("shop_orders").select("order_id").eq("id", order).single()).data?.order_id ?? null : null }
+      return stockOut((await stockItem(db, orgId, params.id))!)
     },
   }),
 ]

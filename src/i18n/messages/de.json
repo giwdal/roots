@@ -6231,5 +6231,24 @@
       "open": "Noch zu bezahlen",
       "paid": "Bezahlt"
     }
+  },
+  "calendar": {
+    "nav": "Kalender",
+    "title": "Kalender",
+    "hint": "Alles mit Datum an einem Ort: Veranstaltungen, Schichten, Aufgaben, Projekte, Vermietung und Kurse.",
+    "source": "Bereich",
+    "sources": {
+      "events": "Veranstaltungen",
+      "shifts": "Schichten",
+      "tasks": "Aufgaben",
+      "projects": "Projekte",
+      "rentals": "Vermietung",
+      "courses": "Kurse"
+    },
+    "rentalMarks": {
+      "start": "Mietbeginn",
+      "deadline": "letzter Tag für Kündigung",
+      "end": "Vertragsende"
+    }
   }
 }

@@ -85,6 +85,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## UI
 **Before any UI change read `docs/design/app.md`** (tokens, page anatomy, overlays, showing data, phones first, every device). It is the binding UI guide; new UI rules go there, not here.
 
+## Dates and the shared calendar
+Every module keeps its own dated table, but anything with a date also shows up in the shared calendar (**Kalender**, `/calendar`, `src/calendar/sources.ts`) as a `CalendarEntry`: `source`, `id`, `title`, `starts_at` / `ends_at` (timestamptz ISO; `ends_at` null = a point in time), `all_day` (date-only things: due dates, project start/end, deadlines), `color` (theme var), `href` (the record). Loaders read through the person's client (RLS) and only for modules that are on and permitted (`sourcesFor`). Long-term rentals show key dates (start, last day to give notice, end), not year-long bars. **A new module with dates adds its loader there** (and later its people for "Mein Kalender").
+
 ## Data lifecycle rules (every new table / feature)
 **Audit (always):** every org-scoped table gets the audit columns + `enable_audit()`. The change log is the history; never write audit data by hand, never put secrets in audited columns. Only platform admins read it (`/admin/activity`); add new tables' labels under `activity.tables`.
 

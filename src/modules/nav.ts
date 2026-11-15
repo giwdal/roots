@@ -17,6 +17,7 @@ import {
   LandmarkIcon,
   MessagesSquareIcon,
   WorkflowIcon,
+  CalendarIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -24,6 +25,12 @@ type Child = { href: string; label: string; module: string | string[]; permissio
 type Area = { key: string; label: string; icon: LucideIcon; children: Child[] }
 
 export const NAV: Area[] = [
+  {
+    key: "calendar",
+    label: "calendar.nav",
+    icon: CalendarIcon,
+    children: [{ href: "/calendar", label: "calendar.nav", module: ["events", "shifts", "projects", "rentals", "courses"], permission: ["events.view", "shifts.view", "projects.view", "rentals.view", "courses.view"] }],
+  },
   {
     key: "contacts",
     label: "contacts.nav",

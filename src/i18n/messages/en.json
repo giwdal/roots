@@ -6231,5 +6231,24 @@
       "open": "Still to pay",
       "paid": "Paid"
     }
+  },
+  "calendar": {
+    "nav": "Calendar",
+    "title": "Calendar",
+    "hint": "Everything with a date in one place: events, shifts, tasks, projects, rentals and courses.",
+    "source": "Area",
+    "sources": {
+      "events": "Events",
+      "shifts": "Shifts",
+      "tasks": "Tasks",
+      "projects": "Projects",
+      "rentals": "Rentals",
+      "courses": "Courses"
+    },
+    "rentalMarks": {
+      "start": "Rental starts",
+      "deadline": "last day to give notice",
+      "end": "Contract ends"
+    }
   }
 }

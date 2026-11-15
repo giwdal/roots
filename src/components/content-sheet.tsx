@@ -36,7 +36,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
       swipeDirection="down"
       onOpenChange={(o, details) => {
         if (o) return
-        // A vetoed close (swipe, Escape, backdrop) leaves the sheet open; the swipe springs back.
+        // A vetoed close leaves the sheet open; for a swipe, Base UI resets the drag when the close is cancelled.
         if (onClose() === false) details.cancel()
         else setOpen(false)
       }}
@@ -45,6 +45,8 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
         <Drawer.VirtualKeyboardProvider>
+          {/* The Viewport owns swipe handling; click-through so the backdrop and the page still get presses. */}
+          <Drawer.Viewport className="pointer-events-none fixed inset-0 z-50">
           <Drawer.Popup
             data-slot="sheet-content"
             aria-label={label}
@@ -55,7 +57,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
               window.addEventListener("resize", update)
               return () => window.removeEventListener("resize", update)
             }}
-            className="fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none"
+            className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none"
           >
             {/* Title bar: grab handle (phones), title (+ actions, ⋯) left, close right; stays on top while the content scrolls. */}
             <div className="sticky top-0 z-30 border-b bg-popover/95 backdrop-blur">
@@ -70,6 +72,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
             </div>
             <div className={cn("flex w-full flex-1 flex-col", compact ? "max-w-xl" : wide ? "max-w-6xl" : "max-w-3xl")}>{children}</div>
           </Drawer.Popup>
+          </Drawer.Viewport>
         </Drawer.VirtualKeyboardProvider>
       </Drawer.Portal>
     </Drawer.Root>

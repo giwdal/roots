@@ -42,27 +42,32 @@ export async function uploadStream(key: string, chunks: AsyncIterable<Uint8Array
   const id = `uploadId=${encodeURIComponent(uploadId)}`
   const etags: string[] = []
   let size = 0
+  // R2 wants every part except the last to be exactly the same size: cut fixed 16 MB parts, carry the rest over.
+  const PART = 16 * 1024 * 1024
   let buf: Uint8Array[] = []
   let buffered = 0
-  const flush = async () => {
-    const part = new Uint8Array(Buffer.concat(buf))
-    buf = []
-    buffered = 0
+  const put = async (part: Uint8Array) => {
     const res = await call(`partNumber=${etags.length + 1}&${id}`, "PUT", part)
-    if (!res.ok) throw new Error(`r2 part upload failed (${res.status})`)
+    if (!res.ok) throw new Error(`r2 part upload failed (${res.status}): ${(await res.text()).slice(0, 200)}`)
     etags.push(res.headers.get("etag")!)
   }
   try {
     for await (const c of chunks) {
+      size += c.length
       buf.push(c)
       buffered += c.length
-      size += c.length
-      if (buffered >= 16 * 1024 * 1024) await flush()
+      if (buffered < PART) continue
+      // Join once per part (not per chunk), send whole parts, keep the rest.
+      const joined = Buffer.concat(buf)
+      let at = 0
+      for (; joined.length - at >= PART; at += PART) await put(new Uint8Array(joined.subarray(at, at + PART)))
+      buf = [joined.subarray(at)]
+      buffered = joined.length - at
     }
-    if (buffered || !etags.length) await flush()
+    if (buffered || !etags.length) await put(new Uint8Array(Buffer.concat(buf)))
     const xml = `<CompleteMultipartUpload>${etags.map((e, i) => `<Part><PartNumber>${i + 1}</PartNumber><ETag>${e}</ETag></Part>`).join("")}</CompleteMultipartUpload>`
     const done = await call(id, "POST", xml)
-    if (!done.ok) throw new Error(`r2 multipart complete failed (${done.status})`)
+    if (!done.ok) throw new Error(`r2 multipart complete failed (${done.status}): ${(await done.text()).slice(0, 200)}`)
     return size
   } catch (e) {
     await call(id, "DELETE").catch(() => {})

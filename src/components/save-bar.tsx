@@ -115,7 +115,7 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
       className={
         target
           ? "sticky bottom-0 z-20 mt-auto border-t bg-background/95 shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"
-          : "sticky bottom-0 z-20 -mx-4 mt-2 border-t bg-background/95 backdrop-blur"
+          : "sticky bottom-0 z-20 -mx-6 mt-2 border-t bg-popover/95 backdrop-blur"
       }
     >
       <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8">

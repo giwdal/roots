@@ -1939,7 +1939,9 @@
     "shortInvoicesHint": "Small-amount invoice (§ 33 UStDV): up to €250 gross the buyer's address may be missing – e.g. for shop orders picked up in person.",
     "cancelsNumber": "Cancels invoice {number} →",
     "fromShopOrder": "Shop order #{number}",
-    "confirmCancel": "Create a cancellation invoice? It gets its own number and negative amounts, and this invoice counts as cancelled. For a correction, issue a new invoice afterwards."
+    "confirmCancel": "Create a cancellation invoice? It gets its own number and negative amounts, and this invoice counts as cancelled. For a correction, issue a new invoice afterwards.",
+    "creatingInvoice": "Creating invoice …",
+    "creatingQuote": "Creating quote …"
   },
   "guestlists": {
     "nav": "Guest lists",

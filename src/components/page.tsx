@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
 import { HeaderActions } from "@/components/header-actions"
+import { PrimaryAction } from "@/components/primary-action"
 import { TopbarCrumbs } from "@/components/topbar-crumbs"
 
 // The App's page anatomy (see /style/app): <Page> sets one of three widths, <PageHeader> is the same header everywhere,
@@ -45,13 +46,13 @@ export function PageHeader({
   description?: React.ReactNode
   actions?: React.ReactNode
   menu?: React.ReactNode
-  primary?: { href: string; label: string; icon?: LucideIcon } | React.ReactNode
+  primary?: { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } | React.ReactNode
   settings?: { href: string; label: string } | false
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
   const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
-  const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon } => !!p && typeof p === "object" && "href" in p && "label" in p
+  const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
   const bare = inTopBar && !badge && !meta && !(description && !(area && !crumbs))
@@ -93,7 +94,9 @@ export function PageHeader({
             </HeaderActions>
             {/* A link primary is the round button on phones (stays out of the top bar); a form button goes to the bar everywhere. */}
             <HeaderActions desktop={isLink(primary)}>
-            {isLink(primary) && PrimaryIcon ? (
+            {isLink(primary) && primary.more?.length ? (
+              <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />
+            ) : isLink(primary) && PrimaryIcon ? (
               // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
               <Button
                 render={<Link href={primary.href} aria-label={primary.label} />}

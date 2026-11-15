@@ -53,13 +53,15 @@ export function PageHeader({
   const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
+  // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
+  const bare = inTopBar && !badge && !meta && !(description && !(area && !crumbs))
   return (
-    <header className="grid gap-3">
+    <header className={bare ? "contents" : "grid gap-3"}>
       {/* Where you are lives in the top bar (area › page, or a record's crumbs via <TopbarCrumbs>): no second crumb
           row and no area icon here; area pages keep their title only for screen readers, record pages show it. */}
       {crumbs && <TopbarCrumbs items={crumbs} />}
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="flex min-w-0 items-start gap-3">
+      <div className={bare ? "contents" : "flex flex-wrap items-start justify-between gap-x-4 gap-y-3"}>
+        <div className={bare ? "sr-only" : "flex min-w-0 items-start gap-3"}>
           {Icon && (
             <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground", (area || crumbs) && "hidden")} aria-hidden>
               <Icon className="size-5" />
@@ -76,7 +78,7 @@ export function PageHeader({
           </div>
         </div>
         {(actions || menu || primary || settings) && (
-          <div className="flex flex-wrap items-center gap-2 max-md:contents">
+          <div className={cn("flex flex-wrap items-center gap-2 max-md:contents", bare && "contents")}>
             <HeaderActions>
             {settings && (
               <Tooltip>

@@ -48,8 +48,8 @@ export async function AppShell({
           {/* Where am I: a record page's crumbs (<TopbarCrumbs>) replace the area › page title. */}
           <div id="topbar-crumbs" className="min-w-0 flex-1 overflow-hidden text-sm empty:hidden" />
           <div className="min-w-0 [#topbar-crumbs:not(:empty)+&]:hidden">{bar ?? <PageTitle groups={groups} fallback={title} />}</div>
-          {/* Phones: the page header's gear / actions / ⋯ land here (<HeaderActions>). */}
-          <div id="topbar-actions" className="ml-auto flex items-center gap-1 empty:hidden md:hidden" />
+          {/* The page header's gear / actions / ⋯ / primary land here (<HeaderActions>). */}
+          <div id="topbar-actions" className="ml-auto flex shrink-0 items-center gap-2 empty:hidden" />
           {search && <SproutButton />}
         </header>
         <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>

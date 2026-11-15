@@ -86,6 +86,7 @@ export function PageHeader({
             {actions}
             {menu}
             </HeaderActions>
+            <HeaderActions desktop>
             {isLink(primary) && PrimaryIcon ? (
               // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
               <Button
@@ -101,6 +102,7 @@ export function PageHeader({
             ) : (
               (primary as React.ReactNode)
             )}
+            </HeaderActions>
           </div>
         )}
       </div>

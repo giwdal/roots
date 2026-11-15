@@ -26,7 +26,7 @@ const manyChildren = (n: SidebarLink) => (n.children?.length ?? 0) > 1
 /**
  * Phones: the "Menü" tab opens this bottom sheet instead of the sidebar. Level 1 = org switcher, search, the areas as
  * tiles (same `groups` as the sidebar), account rows; an area with sub-pages drills into level 2 (big rows).
- * Opens on the "roots:menu" event, at the current area's sub-pages when there are any.
+ * Opens on the "roots:menu" event, always at level 1.
  */
 // switchOrgs: more than one org to choose from (several memberships, or a platform admin) – otherwise no org row.
 export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.ReactNode; switchOrgs: boolean; groups: Group[]; me: Me }) {
@@ -42,14 +42,10 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
   const activeChild = (n: SidebarLink) => activeChildHref(n.children ?? [], pathname)
   const isActive = (n: SidebarLink) => (n.children ? !!activeChild(n) : within(pathname, n.href))
 
-  // The listener reads the latest nav/path through a ref, so it registers once.
-  const start0 = useRef<() => string | null>(() => null)
-  useEffect(() => {
-    start0.current = () => items.find((n) => manyChildren(n) && activeChild(n))?.href ?? null
-  })
+  // Always opens at level 1 (the tiles), never drilled into the current area.
   useEffect(() => {
     const show = () => {
-      setArea(start0.current())
+      setArea(null)
       setOpen(true)
     }
     document.addEventListener("roots:menu", show)

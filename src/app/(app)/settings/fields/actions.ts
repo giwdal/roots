@@ -11,7 +11,10 @@ const PATH = "/settings/fields"
 
 function readField(fd: FormData) {
   // Options: one per line or comma-separated.
-  return { label: String(fd.get("label") ?? ""), options: String(fd.get("options") ?? "").split(/[\n,]/), required: fd.get("required") === "1" }
+  // Colours: color_<i> + color_name_<i> per option shown in the form.
+  const colors: Record<string, string> = {}
+  for (const [k, v] of fd.entries()) if (k.startsWith("color_name_") && fd.get(`color_${k.slice(11)}`)) colors[String(v)] = String(fd.get(`color_${k.slice(11)}`))
+  return { label: String(fd.get("label") ?? ""), options: String(fd.get("options") ?? "").split(/[\n,]/), required: fd.get("required") === "1", colors }
 }
 
 export async function createField(fd: FormData) {

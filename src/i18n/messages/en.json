@@ -1450,7 +1450,10 @@
       "select": "Choice",
       "email": "Email",
       "url": "Link"
-    }
+    },
+    "colors": "Colours",
+    "colorFor": "Colour for {option}",
+    "noColor": "No colour"
   },
   "import": {
     "file": "CSV file",

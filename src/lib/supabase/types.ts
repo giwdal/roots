@@ -419,14 +419,14 @@ isOneToOne: false
                   ]
                 },"custom_fields": {
                   Row: {
-                    "created_at": string,"created_by": string | null,"entity": string,"id": string,"key": string,"label": string,"options": (string)[],"org_id": string,"position": number,"required": boolean,"type": string,"updated_at": string,"updated_by": string | null
+                    "created_at": string,"created_by": string | null,"entity": string,"id": string,"key": string,"label": string,"option_colors": NonNullable<Json>,"options": (string)[],"org_id": string,"position": number,"required": boolean,"type": string,"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by"?: string | null,"entity": string,"id"?: string,"key": string,"label": string,"options"?: (string)[],"org_id": string,"position"?: number,"required"?: boolean,"type": string,"updated_at"?: string,"updated_by"?: string | null
+                    "created_at"?: string,"created_by"?: string | null,"entity": string,"id"?: string,"key": string,"label": string,"option_colors"?: NonNullable<Json>,"options"?: (string)[],"org_id": string,"position"?: number,"required"?: boolean,"type": string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string | null,"entity"?: string,"id"?: string,"key"?: string,"label"?: string,"options"?: (string)[],"org_id"?: string,"position"?: number,"required"?: boolean,"type"?: string,"updated_at"?: string,"updated_by"?: string | null
+                    "created_at"?: string,"created_by"?: string | null,"entity"?: string,"id"?: string,"key"?: string,"label"?: string,"option_colors"?: NonNullable<Json>,"options"?: (string)[],"org_id"?: string,"position"?: number,"required"?: boolean,"type"?: string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Relationships: [
                     {

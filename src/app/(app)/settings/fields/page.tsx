@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { DOT, PICKABLE_COLORS } from "@/projects/fields"
 import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
 import { getContext } from "@/lib/context"
@@ -129,6 +130,29 @@ function FieldForm({ t, action, entity, field }: { t: T; action: (fd: FormData) 
             {t("fields.optionsHint")}
           </p>
         </div>
+      )}
+      {field?.type === "select" && field.options.length > 0 && (
+        // A colour per option (calendar, badges); new options get one after saving them.
+        <fieldset className="grid gap-2">
+          <legend className="mb-1 text-sm font-medium">{t("fields.colors")}</legend>
+          {field.options.map((o, i) => (
+            <div key={o} className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-2 text-sm">
+              <input type="hidden" name={`color_name_${i}`} value={o} />
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="size-3 shrink-0 rounded-full" style={{ background: DOT[(field.option_colors as Record<string, string>)?.[o] ?? ""] ?? "transparent" }} aria-hidden />
+                <span className="truncate">{o}</span>
+              </span>
+              <NativeSelect name={`color_${i}`} defaultValue={(field.option_colors as Record<string, string>)?.[o] ?? ""} aria-label={t("fields.colorFor", { option: o })} className="w-full">
+                <NativeSelectOption value="">{t("fields.noColor")}</NativeSelectOption>
+                {PICKABLE_COLORS.map((c) => (
+                  <NativeSelectOption key={c} value={c}>
+                    {t.dynamic(`projects.colors.${c}`)}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
+          ))}
+        </fieldset>
       )}
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="required" value="1" defaultChecked={field?.required} className="size-4" />

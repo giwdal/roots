@@ -53,8 +53,15 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
   const toDay = to.slice(0, 10)
   const load: Record<CalendarSource, () => Promise<CalendarEntry[]>> = {
     events: async () => {
-      const { data } = await ctx.supabase.from("events").select("id, title, starts_at, ends_at, status").eq("org_id", org).is("deleted_at", null).lt("starts_at", to).or(`ends_at.gte.${from},and(ends_at.is.null,starts_at.gte.${from})`).limit(1000)
-      return (data ?? []).map((e) => ({ source: "events", id: e.id, title: e.status === "cancelled" ? `✕ ${e.title}` : e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: false, color: COLOR.events, href: `/events/${e.id}` }))
+      // Coloured by the first select field of events that has option colours (e.g. "Typ").
+      const { data: fields } = await ctx.supabase.from("custom_fields").select("key, option_colors").eq("org_id", org).eq("entity", "events").eq("type", "select").order("position")
+      const typed = (fields ?? []).find((f) => Object.keys((f.option_colors as object) ?? {}).length)
+      const colorOf = (custom: unknown) => {
+        const v = typed && (custom as Record<string, unknown> | null)?.[typed.key]
+        return (typeof v === "string" && DOT[(typed!.option_colors as Record<string, string>)[v]]) || COLOR.events
+      }
+      const { data } = await ctx.supabase.from("events").select("id, title, starts_at, ends_at, status, custom").eq("org_id", org).is("deleted_at", null).lt("starts_at", to).or(`ends_at.gte.${from},and(ends_at.is.null,starts_at.gte.${from})`).limit(1000)
+      return (data ?? []).map((e) => ({ source: "events", id: e.id, title: e.status === "cancelled" ? `✕ ${e.title}` : e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: false, color: colorOf(e.custom), href: `/events/${e.id}` }))
     },
     shifts: async () => {
       const { data } = await ctx.supabase.from("shifts").select("id, title, starts_at, ends_at, positions(name)").eq("org_id", org).lt("starts_at", to).gte("ends_at", from).limit(2000)

@@ -38,13 +38,13 @@ export async function AppShell({
       <SidebarInset className={search ? "min-w-0 max-md:[--mobile-bar:calc(4.75rem+env(safe-area-inset-bottom))] md:[--mobile-bar:0px]" : "min-w-0"}>
         <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           {/* Phones: the sidebar is a drawer, so the trigger stays; from md the sidebar's edge toggles it. */}
-          {/* The App's phones have the Menü tab in the bottom bar instead. */}
-          {!search && <SidebarTrigger className="-ml-1 md:hidden" />}
-          {!search && <Separator orientation="vertical" className="mr-1 data-vertical:h-4 md:hidden" />}
+          {/* The App's phones have the Menü tab in the bottom bar; the trigger shows only while that bar is hidden. */}
+          <SidebarTrigger className={`-ml-1 md:hidden${search ? " bar-fallback" : ""}`} />
+          <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
           {bar ?? <PageTitle groups={groups} fallback={title} />}
           {search && <SproutButton />}
         </header>
-        <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)]" : ""}`}>
+        <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>
           {children}
           <Shortcuts />
           <ConfirmHost />

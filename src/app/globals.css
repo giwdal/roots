@@ -104,8 +104,26 @@
 /* Phone bar + round primary button get out of the way of the SaveBar, the keyboard and pages with their own tab bar. */
 @utility bar-hide {
   @media (max-width: 767.98px) {
-    body:has([data-slot="save-bar"], [data-own-tab-bar], input:focus, textarea:focus, select:focus, [contenteditable]:focus) & {
+    body:has([data-slot="save-bar"], [data-own-tab-bar], input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=file]):focus, textarea:focus, select:focus, [contenteditable]:focus) & {
       display: none;
+    }
+  }
+}
+
+/* Phones: the top bar's menu button shows only while the floating bar is hidden by a SaveBar or a page's own tab bar. */
+@utility bar-fallback {
+  @media (max-width: 767.98px) {
+    body:not(:has([data-slot="save-bar"], [data-own-tab-bar])) & {
+      display: none;
+    }
+  }
+}
+
+/* No space for the floating bar while a SaveBar replaces it. */
+@utility bar-tight {
+  @media (max-width: 767.98px) {
+    body:has([data-slot="save-bar"]) & {
+      padding-bottom: 1.5rem;
     }
   }
 }

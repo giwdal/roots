@@ -72,7 +72,8 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   round button hide (`@utility bar-hide` in `globals.css`) while a SaveBar shows, an input has focus or the page marks
   its own tab bar. Content scrolls under the glass; space below it comes from `--mobile-bar`. Glass = the `.glass`
   class (`@utility glass` in `globals.css`, derived from the theme tokens), with a solid fallback for "reduce
-  transparency".
+  transparency". While the bar is hidden by a SaveBar or a page's own tab bar, the top bar shows the menu button
+  (`@utility bar-fallback`), so phones never lose the sidebar.
 - **Phone-critical flows** (check these at 375px first, with touch): Einlass/Scan, Meine Schichten incl. clock in/out,
   looking up a contact and calling/mailing them, tasks, notifications, Sprout.
 - **Sheets**: full width, from below the top bar; swipe down closes; the focused field stays above the keyboard;

@@ -37,6 +37,7 @@ export function UrlSheet({
 
   // Ask before throwing away unsaved changes (once per gesture: a backdrop click is an outside press and a click).
   const confirmClose = () => {
+    if (document.querySelectorAll("[data-slot=sheet-content]").length > 1) return false // another sheet lies on top
     if (Date.now() - answered.current < 500) return false
     const ok = confirmDiscard(document.querySelector("[data-slot=sheet-content]"), t("common.discardUnsaved"))
     answered.current = Date.now()

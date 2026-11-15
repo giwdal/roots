@@ -53,17 +53,19 @@ export function PageHeader({
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   return (
     <header className="grid gap-3">
-      {crumbs ? <PageCrumbs items={crumbs} /> : area && <AreaCrumbs area={area} />}
+      {/* Phones: the top bar already shows where you are (area › page), so no second crumb row and no area icon;
+          area pages also drop their title (it is the top bar's page name). Record pages keep their title. */}
+      {(crumbs || area) && <div className="max-md:hidden">{crumbs ? <PageCrumbs items={crumbs} /> : <AreaCrumbs area={area!} />}</div>}
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="flex min-w-0 items-start gap-3">
           {Icon && (
-            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground" aria-hidden>
+            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground max-md:hidden" aria-hidden>
               <Icon className="size-5" />
             </span>
           )}
           <div className="grid min-w-0 gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="font-heading text-2xl font-semibold break-words">{title}</h1>
+              <h1 className={cn("font-heading text-2xl font-semibold break-words", area && !crumbs && "max-md:sr-only")}>{title}</h1>
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}

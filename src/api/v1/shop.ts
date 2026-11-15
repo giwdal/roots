@@ -1,9 +1,9 @@
 import { z } from "zod"
 import { deliverSoon } from "@/events/worker"
 import { imageUrl, removeImage } from "@/lib/images"
-import { DELIVERIES, MAIL_KINDS, ORDER_STATUSES, PAYMENTS, PRODUCT_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readVariant, STOCK_KINDS, TAX_RATES } from "@/shop/fields"
+import { DELIVERIES, MAIL_KINDS, ORDER_STATUSES, PAYMENTS, PRODUCT_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readTeamOrder, readVariant, STOCK_KINDS, TAX_RATES } from "@/shop/fields"
 import { bookStock, stockHistory, stockItem, stockList } from "@/shop/stock"
-import { applyOptions, cancelOrder, ensureInvoice, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
+import { applyOptions, cancelOrder, createTeamOrder, ensureInvoice, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
 import { deleteTrack, finishTrackUpload, productTrackList, startTrackUpload, updateTrack } from "@/shop/audio"
 import { ApiError, dbError, endpoint, list, notFound, page, paged, uuid, type Endpoint } from "../core"
 import { putImage, ts, type Db } from "./shared"
@@ -423,6 +423,51 @@ export const endpoints: Endpoint[] = [
       if (s) q = /^\d+$/.test(s) ? q.eq("number", Number(s)) : q.ilike("name", `%${s}%`)
       const { data } = await q
       return paged((data ?? []).map((r) => orderOut(r as unknown as OrderRow)), query)
+    },
+  }),
+  endpoint({
+    method: "POST",
+    path: "/shop/orders",
+    permission: "shop.manage",
+    tag: TAG,
+    summary: "Enter an order (sold offline)",
+    description: "For orders that happened outside the shop (in person, by phone): any products/variants of the org (`items[].id` = variant id, or product id without variants) at the given gross price per piece. `paid` = cash/transfer marks it paid now; without it the order is open (`payment` transfer = with invoice, pickup = pay on pickup). `done` completes it. `contact_id` links a CRM contact (else matched/created by email). `notify` sends the buyer the usual confirmation mail. Stock and automatic invoices work as for shop orders.",
+    body: z
+      .object({
+        items: z.array(z.object({ id: uuid, quantity: z.number().int().min(1).max(1000), price_cents: z.number().int().min(0) })).min(1).max(30),
+        name: z.string().min(1).max(200),
+        email: z.string().email().optional(),
+        phone: z.string().max(50).optional(),
+        contact_id: uuid.optional(),
+        delivery: z.enum(DELIVERIES).default("pickup"),
+        address: z.object({ company: z.string().max(200).optional(), street: z.string().max(200), postal_code: z.string().max(20), city: z.string().max(100), country: z.string().length(2).default("DE") }).optional(),
+        shipping_cents: z.number().int().min(0).optional(),
+        paid: z.enum(["cash", "transfer"]).optional(),
+        payment: z.enum(["transfer", "pickup"]).optional(),
+        done: z.boolean().default(false),
+        note: z.string().max(2000).optional(),
+        notify: z.boolean().default(false),
+      })
+      .strict(),
+    response: ShopOrder,
+    status: 201,
+    async handler({ db, orgId, body }) {
+      const a = body.address
+      const form: Record<string, string> = {
+        lines: JSON.stringify(body.items.map((i) => ({ id: i.id, q: i.quantity, p: i.price_cents }))),
+        name: body.name, email: body.email ?? "", phone: body.phone ?? "", contact_id: body.contact_id ?? "", delivery: body.delivery,
+        company: a?.company ?? "", street: a?.street ?? "", postal_code: a?.postal_code ?? "", city: a?.city ?? "", country: a?.country ?? "",
+        shipping: body.shipping_cents ? (body.shipping_cents / 100).toFixed(2) : "", paid: body.paid ?? "", payment: body.payment ?? "", done: body.done ? "1" : "", note: body.note ?? "", notify: body.notify ? "1" : "",
+      }
+      const r = readTeamOrder((k) => form[k] ?? "")
+      if ("error" in r) throw new ApiError(422, r.error.split(".").pop()!.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), r.error)
+      if (r.order.contact_id) {
+        const { data: c } = await db.from("contacts").select("id").eq("id", r.order.contact_id).eq("org_id", orgId).maybeSingle()
+        if (!c) throw new ApiError(422, "invalid_reference", "contact_id does not belong to this organisation.")
+      }
+      const id = await createTeamOrder(orgId, r.order).catch((e) => Promise.reject(stepError(e)))
+      deliverSoon()
+      return orderOf(db, orgId, id)
     },
   }),
   endpoint({

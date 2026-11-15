@@ -12,6 +12,8 @@ import { pageParam, param, withParams } from "@/lib/url"
 import { cn } from "@/lib/utils"
 import { missingInvoices } from "@/shop/server"
 import { issueMissingInvoicesAction } from "../actions"
+import { UrlSheet } from "@/components/url-sheet"
+import { NewOrderForm } from "./new-order-form"
 
 const VIEWS = { open: ["new", "ready"], done: ["shipped", "completed"], cancelled: ["cancelled"], all: null } as const
 
@@ -34,13 +36,25 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
   if (statuses) query = query.in("status", [...statuses])
   if (q) query = /^\d+$/.test(q) ? query.eq("number", Number(q)) : query.ilike("name", `%${q}%`)
   const canInvoice = ctx.can("shop.manage") && ctx.modules.has("invoices")
-  const [{ data }, missing] = await Promise.all([query, canInvoice ? missingInvoices(ctx.org.id) : 0])
+  const creating = ctx.can("shop.manage") && param(sp, "new") === "order"
+  const [{ data }, missing, { data: catalog }] = await Promise.all([
+    query,
+    canInvoice ? missingInvoices(ctx.org.id) : 0,
+    // "Neue Bestellung": every product/variant of the org (drafts too) with its price.
+    creating ? ctx.supabase.from("products").select("id, name, price_cents, position, product_variants(id, name, price_cents, position)").eq("org_id", ctx.org.id).is("deleted_at", null).order("position").limit(500) : Promise.resolve({ data: null }),
+  ])
+  const items = (catalog ?? []).flatMap((p) =>
+    p.product_variants.length
+      ? [...p.product_variants].sort((a, b) => a.position - b.position).map((v) => ({ id: v.id, label: `${p.name} · ${v.name}`, price: v.price_cents ?? p.price_cents }))
+      : [{ id: p.id, label: p.name, price: p.price_cents }],
+  )
   const rows = (data ?? []).slice(0, PAGE_SIZE)
   const paid = (s: string) => s === "paid" || s === "partially_refunded"
 
   return (
     <Page>
       <PageHeader area="shop" title={t("store.orders")} settings={ctx.can("shop.manage") && { href: "/shop/settings", label: t("common.settings") }}
+        primary={ctx.can("shop.manage") ? { href: `/shop/orders${withParams(sp, { new: "order" })}`, label: t("store.teamOrder.new") } : undefined}
         menu={
           missing > 0 && (
             <ActionsMenu>
@@ -120,6 +134,12 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
           },
         ]}
       />
+      {creating && (
+        <UrlSheet params={["new"]} title={t("store.teamOrder.new")} description={t("store.teamOrder.hint")}>
+          <Notice error={param(sp, "error")} />
+          <NewOrderForm items={items} currency="eur" />
+        </UrlSheet>
+      )}
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
     </Page>
   )

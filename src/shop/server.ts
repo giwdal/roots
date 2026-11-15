@@ -32,6 +32,7 @@ import {
   type MailKind,
   type Payment,
   type ProductOption,
+  type TeamOrder,
 } from "./fields"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/supabase/types"
@@ -178,7 +179,7 @@ export async function placeOrder(p: PlaceInput) {
 // ---------- after placing / paying ----------
 
 const ORDER_COLS =
-  "id, org_id, order_id, number, token, status, delivery, payment, name, phone, company, street, postal_code, city, country, shipping_name, shipping_cents, note, tracking, contact_id, invoice_id, invoice_error, created_at, pay_orders!inner(status, amount_total, currency, customer_email, customer_name, expires_at, paid_at, pay_order_items(id, description, quantity, refunded_quantity, unit_amount, source_id, metadata), pay_payments(amount, status, provider, pay_refunds(amount, status, reason, created_at))), orgs!inner(slug, name, logo_path, site_domain)"
+  "id, org_id, order_id, number, token, status, delivery, payment, name, phone, company, street, postal_code, city, country, shipping_name, shipping_cents, note, tracking, contact_id, invoice_id, invoice_error, created_at, pay_orders!inner(status, amount_total, currency, customer_email, customer_name, expires_at, paid_at, metadata, pay_order_items(id, description, quantity, refunded_quantity, unit_amount, source_id, metadata), pay_payments(amount, status, provider, pay_refunds(amount, status, reason, created_at))), orgs!inner(slug, name, logo_path, site_domain)"
 
 async function loadOrder(orderId: string) {
   const { data } = await db().from("shop_orders").select(ORDER_COLS).eq("order_id", orderId).maybeSingle()
@@ -409,6 +410,8 @@ export async function mail(kind: MailKind, orderId: string, storno?: string | nu
   const o = await loadOrder(orderId)
   const to = o?.pay_orders.customer_email
   if (!o || !to) return false
+  // Orders the team entered without "send mail": no automatic confirmation (later mails and "send again" still work).
+  if ((kind === "confirmation" || kind === "paid") && (o.pay_orders.metadata as { silent?: boolean } | null)?.silent) return false
   const settings = await shopSettings(o.org_id)
   const conf = ((settings.mails ?? {}) as Record<string, { off?: boolean; message?: string }>)[kind] ?? {}
   if (conf.off) return false
@@ -453,6 +456,46 @@ export async function mail(kind: MailKind, orderId: string, storno?: string | nu
 }
 
 // ---------- team actions (callers check shop.manage) ----------
+
+/**
+ * An order the team enters (sold offline, by phone …): any products/variants of the org (drafts too) at the given
+ * prices, optional shipping line. Paid now (cash/transfer) → like a paid order; else it's placed and waits for the
+ * money (transfer: with invoice, pickup: pay on pickup). Stock counts as usual (not blocked: the goods are gone).
+ * Returns the shop order id. Throws message keys.
+ */
+export async function createTeamOrder(orgId: string, o: TeamOrder) {
+  const ids = [...new Set(o.lines.map((l) => l.id))]
+  const [{ data: variants }, { data: products }] = await Promise.all([
+    db().from("product_variants").select("id, name, digital, products!inner(id, name, kind, tax_rate, org_id, deleted_at)").in("id", ids).eq("org_id", orgId),
+    db().from("products").select("id, name, kind, tax_rate, deleted_at").in("id", ids).eq("org_id", orgId),
+  ])
+  const t = await orgT(orgId)
+  const items = o.lines.map((l) => {
+    const v = variants?.find((x) => x.id === l.id)
+    const p = v ? v.products : products?.find((x) => x.id === l.id)
+    if (!p || p.deleted_at) throw new Error("store.teamOrder.unknownItem")
+    const digital = v ? v.digital || p.kind === "digital" : p.kind === "digital"
+    return { description: (v ? `${p.name} · ${v.name}` : p.name).slice(0, 200), quantity: l.q, unitAmount: l.unit, sourceId: l.id, metadata: { tax_rate: p.tax_rate, product_id: p.id, kind: digital ? "digital" : "physical" } }
+  })
+  if (o.shipping_cents > 0) items.push({ description: t("store.shippingLine"), quantity: 1, unitAmount: o.shipping_cents, sourceId: undefined as unknown as string, metadata: { tax_rate: Math.max(...items.map((i) => Number(i.metadata.tax_rate))), shipping: true } as never })
+  const orderId = await createOrder({ orgId, sourceModule: "shop", customerEmail: o.email ?? undefined, customerName: o.name, metadata: { manual: true, ...(o.notify ? {} : { silent: true }) }, items })
+  const a = o.address
+  const { data: so, error } = await db()
+    .from("shop_orders")
+    .insert({ org_id: orgId, order_id: orderId, number: 0, contact_id: o.contact_id, delivery: o.delivery, payment: o.payment, name: o.name, phone: o.phone, company: a?.company ?? null, street: a?.street ?? null, postal_code: a?.postal_code ?? null, city: a?.city ?? null, country: a?.country ?? null, shipping_cents: o.shipping_cents, note: o.note })
+    .select("id")
+    .single()
+  if (error || !so) {
+    await db().from("pay_orders").update({ status: "cancelled" }).eq("id", orderId)
+    throw error ?? new Error("store.failed")
+  }
+  const total = items.reduce((sum, i) => sum + i.quantity * i.unitAmount, 0)
+  if (o.paid && total > 0) await payManually(orderId, o.paid)
+  else if (total === 0) await db().from("pay_orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", orderId)
+  if (!o.paid || total === 0) await placed(orderId)
+  if (o.done) await db().from("shop_orders").update({ status: "completed" }).eq("id", so.id)
+  return so.id
+}
 
 async function teamOrder(orgId: string, shopOrderId: string) {
   const { data } = await db().from("shop_orders").select("order_id").eq("id", shopOrderId).eq("org_id", orgId).maybeSingle()

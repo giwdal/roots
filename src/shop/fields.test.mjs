@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { changeCart, deliveriesFor, paymentsFor, priceCart, readCart, readProduct, readShippingRates, readStockMove, shippingCents, slugify } from "./fields.ts"
+import { changeCart, deliveriesFor, paymentsFor, priceCart, readCart, readProduct, readShippingRates, readStockMove, readTeamOrder, shippingCents, slugify } from "./fields.ts"
 
 const A = "11111111-1111-4111-8111-111111111111"
 const V = "22222222-2222-4222-8222-222222222222"
@@ -144,4 +144,16 @@ test("Lager: receipt +, withdrawal −, count books the difference, sale needs a
   assert.deepEqual(readStockMove(g({ kind: "loss", quantity: "0" }), 10), { error: "store.lager.quantityInvalid" })
   assert.deepEqual(readStockMove(g({ kind: "sale", quantity: "2", price: "25,00" }), 10), { sale: { quantity: 2, unit: 2500, note: null } })
   assert.ok("error" in readStockMove(g({ kind: "sale", quantity: "2" }), 10))
+})
+
+test("team order: lines, buyer, delivery address, paid vs open", () => {
+  const g = (o) => (k) => o[k] ?? ""
+  const base = { lines: JSON.stringify([{ id: V, q: 2, p: 2500 }]), name: "Erika", delivery: "pickup", paid: "cash", notify: "1" }
+  const r = readTeamOrder(g(base))
+  assert.deepEqual([r.order.lines, r.order.payment, r.order.paid, r.order.notify], [[{ id: V, q: 2, unit: 2500 }], "pickup", "cash", true])
+  assert.equal(readTeamOrder(g({ ...base, lines: "[]" })).error, "store.teamOrder.noItems")
+  assert.equal(readTeamOrder(g({ ...base, name: " " })).error, "store.teamOrder.nameRequired")
+  assert.equal(readTeamOrder(g({ ...base, delivery: "shipping" })).error, "store.teamOrder.addressRequired")
+  const open = readTeamOrder(g({ ...base, delivery: "shipping", paid: "", street: "A 1", postal_code: "10115", city: "Berlin", shipping: "4,90" })).order
+  assert.deepEqual([open.paid, open.payment, open.shipping_cents], [null, "transfer", 490])
 })

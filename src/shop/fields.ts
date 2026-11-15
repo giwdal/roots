@@ -383,3 +383,66 @@ export function readStockMove(get: (k: string) => string, onHand: number): Stock
   }
   return { move: { quantity: kind === "receipt" ? n : -n, reason: kind, note } }
 }
+
+// ---------- orders entered by the team (sold offline, by phone …) ----------
+
+export type TeamOrder = {
+  lines: { id: string; q: number; unit: number }[] // variant / product id, quantity, gross price per piece in cents
+  name: string
+  email: string | null
+  phone: string | null
+  address: { company: string | null; street: string; postal_code: string; city: string; country: string } | null
+  delivery: Delivery
+  shipping_cents: number
+  paid: "cash" | "transfer" | null // null = still open
+  payment: "transfer" | "pickup" // how an open order gets paid (pickup only with delivery pickup)
+  done: boolean // already handed over / sent
+  note: string | null
+  notify: boolean // send the buyer the usual mail
+  contact_id: string | null // picked from the CRM (else matched/created by email as usual)
+}
+
+/** The "Neue Bestellung" form / API → a team order, or an error key. `lines` = JSON [{ id, q, p }] (p in cents). */
+export function readTeamOrder(get: (k: string) => string): { order: TeamOrder } | { error: string } {
+  let raw: unknown
+  try {
+    raw = JSON.parse(get("lines") || "[]")
+  } catch {
+    return { error: "errors.invalid_input" }
+  }
+  const lines = (Array.isArray(raw) ? raw : [])
+    .map((l) => ({ id: String((l as { id?: unknown }).id ?? ""), q: Math.trunc(Number((l as { q?: unknown }).q)), unit: Math.round(Number((l as { p?: unknown }).p)) }))
+    .filter((l) => l.id)
+  if (!lines.length) return { error: "store.teamOrder.noItems" }
+  if (lines.length > MAX_CART_LINES || lines.some((l) => !/^[0-9a-f-]{36}$/.test(l.id) || !(l.q >= 1 && l.q <= 1000) || !(l.unit >= 0 && l.unit <= MAX_UNIT_CENTS))) return { error: "errors.invalid_input" }
+  const name = get("name").trim().slice(0, 200)
+  if (!name) return { error: "store.teamOrder.nameRequired" }
+  const email = get("email").trim().toLowerCase() || null
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "errors.invalid_email" }
+  const delivery = DELIVERIES.find((d) => d === get("delivery")) ?? "pickup"
+  const street = get("street").trim().slice(0, 200)
+  const postal_code = get("postal_code").trim().slice(0, 20)
+  const city = get("city").trim().slice(0, 100)
+  const country = (get("country").trim().toUpperCase() || "DE").slice(0, 2)
+  if (delivery === "shipping" && (!street || !postal_code || !city || !COUNTRIES.includes(country))) return { error: "store.teamOrder.addressRequired" }
+  const shipping = get("shipping").trim() ? moneyCents(get("shipping")) : 0
+  if (shipping === null || shipping > MAX_UNIT_CENTS) return { error: "store.priceInvalid" }
+  const paid = (["cash", "transfer"] as const).find((m) => m === get("paid")) ?? null
+  return {
+    order: {
+      lines,
+      name,
+      email,
+      phone: get("phone").trim().slice(0, 50) || null,
+      address: street || city ? { company: get("company").trim().slice(0, 200) || null, street, postal_code, city, country } : null,
+      delivery,
+      shipping_cents: delivery === "shipping" ? shipping : 0,
+      paid,
+      payment: delivery === "pickup" && (paid || get("payment") !== "transfer") ? "pickup" : "transfer",
+      done: get("done") === "1",
+      note: get("note").trim().slice(0, 2000) || null,
+      notify: get("notify") === "1",
+      contact_id: /^[0-9a-f-]{36}$/.test(get("contact_id")) ? get("contact_id") : null,
+    },
+  }
+}

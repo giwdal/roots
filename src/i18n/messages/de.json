@@ -4875,7 +4875,8 @@
       "change": "Icon ändern",
       "remove": "Icon entfernen"
     },
-    "iconInvalid": "Bitte ein Emoji wählen."
+    "iconInvalid": "Bitte ein Emoji wählen.",
+    "creating": "Seite wird angelegt …"
   },
   "emoji": {
     "search": "Emoji suchen …",
@@ -5324,7 +5325,8 @@
     "noticeRenewHint": "Monate vor Ende der Laufzeit kündigen",
     "statusHint": "Eine Anfrage hält das Objekt noch nicht frei – erst „Bestätigt“ ist es vergeben.",
     "contractSheetHint": "Mit den Daten dieses Mietverhältnisses – ablegen speichert das PDF hier und beim Kontakt, senden schickt es per E-Mail.",
-    "createdContract": "Angelegt – jetzt den Vertrag erstellen."
+    "createdContract": "Angelegt – jetzt den Vertrag erstellen.",
+    "newRentalAny": "Neue Vergabe"
   },
   "oauth": {
     "title": "{app} mit roots verbinden",

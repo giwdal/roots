@@ -23,9 +23,17 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const from = new Date(base.getTime() - 42 * DAY).toISOString()
   const to = new Date(base.getTime() + 70 * DAY).toISOString()
   const entries = await calendarEntries(ctx, t, from, to, src ? [src] : sources)
+  // "+": create something with a date, in the modules this person may manage.
+  const create = [
+    ctx.modules.has("events") && ctx.can("events.manage") && { href: "/events/new", label: t("eventsPage.new") },
+    ctx.modules.has("shifts") && ctx.can("shifts.manage") && { href: "/shifts?new=shift", label: t("shifts.newShift") },
+    ctx.modules.has("projects") && ctx.can("projects.manage") && { href: "/projects/new", label: t("projects.newProject") },
+    ctx.modules.has("courses") && ctx.can("courses.manage") && { href: "/courses/new", label: t("courses.new") },
+    ctx.modules.has("rentals") && ctx.can("rentals.manage") && { href: "/rentals/r/new", label: t("rentals.newRentalAny") },
+  ].filter((x): x is { href: string; label: string } => !!x)
   return (
     <Page>
-      <PageHeader area="calendar" title={t("calendar.title")} />
+      <PageHeader area="calendar" title={t("calendar.title")} primary={create.length ? { ...create[0], more: create.slice(1) } : undefined} />
       <div className="flex flex-wrap items-center gap-3">
         <FilterMenu param="src" label={t("calendar.source")} options={sources.map((s: CalendarSource) => ({ value: s, label: t.dynamic(`calendar.sources.${s}`) }))} />
       </div>

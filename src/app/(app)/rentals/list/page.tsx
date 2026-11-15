@@ -50,6 +50,7 @@ export default async function RentalListPage({ searchParams }: PageProps<"/renta
       <PageHeader
         area="rentals"
         title={trash ? `${t("rentals.tabs.rentals")} · ${t("rentals.trash")}` : t("rentals.tabs.rentals")}
+        primary={canManage && !trash ? { href: "/rentals/r/new", label: t("rentals.newRentalAny") } : undefined}
         menu={
           <ActionsMenu>
             <MenuExport entity="rentals" query={{ view, family }} />

@@ -4875,7 +4875,8 @@
       "change": "Change icon",
       "remove": "Remove icon"
     },
-    "iconInvalid": "Please pick an emoji."
+    "iconInvalid": "Please pick an emoji.",
+    "creating": "Creating page …"
   },
   "emoji": {
     "search": "Search emoji …",
@@ -5324,7 +5325,8 @@
     "noticeRenewHint": "months notice before the term ends",
     "statusHint": "A request doesn't hold the object yet – only “Confirmed” books it.",
     "contractSheetHint": "Filled from this rental – saving stores the PDF here and on the contact, sending mails it.",
-    "createdContract": "Created – now write the contract."
+    "createdContract": "Created – now write the contract.",
+    "newRentalAny": "New rental"
   },
   "oauth": {
     "title": "Connect {app} to roots",

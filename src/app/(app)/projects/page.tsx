@@ -95,14 +95,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             </ActionsMenu>
           )
         }
-        primary={
-          canManage &&
-          !trash && (
-            <Button size="sm" render={<Link href="/projects/new" />} nativeButton={false}>
-              <PlusIcon /> {t("projects.newProject")}
-            </Button>
-          )
-        }
+        primary={canManage && !trash ? { href: "/projects/new", label: t("projects.newProject") } : undefined}
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       {empty ? (

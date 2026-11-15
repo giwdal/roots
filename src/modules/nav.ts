@@ -125,8 +125,8 @@ export const NAV: Area[] = [
     label: "store.nav",
     icon: ShoppingBagIcon,
     children: [
-      { href: "/shop", label: "store.products", module: "shop", permission: "shop.view" },
       { href: "/shop/orders", label: "store.orders", module: "shop", permission: "shop.view" },
+      { href: "/shop", label: "store.products", module: "shop", permission: "shop.view" },
       { href: "/shop/stock", label: "store.lager.title", module: "shop", permission: "shop.view" },
       { href: "/shop/settings", label: "common.settings", module: "shop", permission: "shop.manage" },
     ],

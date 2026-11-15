@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { appRoute, within } from "@/lib/url"
+import { activeChildHref, appRoute, within } from "@/lib/url"
 import { useState, useTransition } from "react"
 import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon } from "lucide-react"
 import { openMyMemberArea } from "@/app/(app)/actions"
@@ -69,8 +69,7 @@ export function AppSidebar({
   const isActive = (href: string) => (target ? matches(href, target) : matches(href, pathname))
   const here = target ?? pathname
   // Sub-pages: the most specific match wins (/members/dues over /members); an area is active if one of them is.
-  const activeChild = (children: { href: string }[]) =>
-    children.filter((c) => matches(c.href, here)).sort((a, b) => appRoute(b.href).length - appRoute(a.href).length)[0]?.href
+  const activeChild = (children: { href: string }[]) => activeChildHref(children, here)
   const go = (href: string) => {
     setOpenMobile(false)
     setClicked({ href, from: pathname })

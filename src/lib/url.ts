@@ -19,6 +19,9 @@ export const within = (path: string, href: string) => {
   const r = appRoute(href)
   return r === "/" ? appRoute(path) === "/" : appRoute(path) === r || appRoute(path).startsWith(r + "/")
 }
+/** Sub-pages of an area: the href of the most specific one containing `path` (/members/dues over /members). */
+export const activeChildHref = (children: { href: string }[], path: string) =>
+  children.filter((c) => within(path, c.href)).sort((a, b) => appRoute(b.href).length - appRoute(a.href).length)[0]?.href
 
 export const safeNext = (next: unknown) =>
   typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && next !== "/" ? next : APP_HOME

@@ -11,14 +11,14 @@ import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
 import { localeNames, locales } from "@/i18n/config"
-import { appRoute, within } from "@/lib/url"
+import { activeChildHref, appRoute, within } from "@/lib/url"
 import { cn } from "@/lib/utils"
 
 type Group = { label?: string; items: SidebarLink[] }
 
 const TAP = "touch-manipulation [-webkit-tap-highlight-color:transparent] transition active:scale-95"
 const TILE = `relative flex h-[4.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-xs [&_svg]:size-5 ${TAP}`
-const ACTIVE = "border-primary/20 bg-primary/10 text-primary"
+const ACTIVE = "border-primary/20 bg-primary/10 [&_svg]:text-primary"
 const ROW = `flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm active:bg-muted [&_svg]:size-5 [&_svg]:text-muted-foreground ${TAP}`
 
 const manyChildren = (n: SidebarLink) => (n.children?.length ?? 0) > 1
@@ -38,19 +38,22 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
   const heading = useRef<HTMLHeadingElement>(null)
 
   const items = groups.flatMap((g) => g.items)
-  // Sub-pages: the most specific match wins (/members/dues over /members).
-  const activeChild = (n: SidebarLink) =>
-    (n.children ?? []).filter((c) => within(pathname, c.href)).sort((a, b) => appRoute(b.href).length - appRoute(a.href).length)[0]?.href
+  const activeChild = (n: SidebarLink) => activeChildHref(n.children ?? [], pathname)
   const isActive = (n: SidebarLink) => (n.children ? !!activeChild(n) : within(pathname, n.href))
 
+  // The listener reads the latest nav/path through a ref, so it registers once.
+  const start0 = useRef<() => string | null>(() => null)
+  useEffect(() => {
+    start0.current = () => items.find((n) => manyChildren(n) && activeChild(n))?.href ?? null
+  })
   useEffect(() => {
     const show = () => {
-      setArea(items.find((n) => manyChildren(n) && activeChild(n))?.href ?? null)
+      setArea(start0.current())
       setOpen(true)
     }
     document.addEventListener("roots:menu", show)
     return () => document.removeEventListener("roots:menu", show)
-  })
+  }, [])
 
   // Moving between levels: focus the new level's heading.
   useEffect(() => heading.current?.focus(), [area, open])
@@ -65,22 +68,28 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
 
   return (
     <ContentSheet
-      compact
       onClose={() => {}}
       onClosed={() => setOpen(false)}
       label={t("shell.menu")}
-      header={<ContentSheetTitle className={cn("text-base font-semibold", current && "sr-only")}>{t("shell.menu")}</ContentSheetTitle>}
+      header={
+        current ? (
+          <div className="flex items-center gap-2">
+            <button type="button" aria-label={t("shell.menu")} onClick={() => setArea(null)} className="-ml-2 flex h-9 shrink-0 items-center rounded-lg pr-2 text-sm text-muted-foreground active:bg-muted [&_svg]:size-5">
+              <ChevronLeftIcon /> {t("shell.menu")}
+            </button>
+            <ContentSheetTitle ref={heading} tabIndex={-1} className="flex min-w-0 items-center gap-2 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-primary">
+              {current.icon} <span className="truncate">{current.label}</span>
+            </ContentSheetTitle>
+          </div>
+        ) : (
+          <ContentSheetTitle ref={heading} tabIndex={-1} className="text-base font-semibold outline-none">
+            {t("shell.menu")}
+          </ContentSheetTitle>
+        )
+      }
     >
       {current ? (
         <div className="grid gap-4 p-4">
-          <div className="flex items-center gap-2">
-            <button type="button" aria-label={t("shell.menu")} onClick={() => setArea(null)} className={cn(ROW, "w-auto shrink-0 gap-1 pr-4 pl-2 text-muted-foreground")}>
-              <ChevronLeftIcon /> {t("shell.menu")}
-            </button>
-          </div>
-          <h2 ref={heading} tabIndex={-1} className="flex items-center gap-3 px-1 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:text-muted-foreground">
-            {current.icon} {current.label}
-          </h2>
           <ul className="divide-y rounded-xl border">
             {current.children?.map((c) => {
               const on = c.href === activeChild(current)
@@ -89,10 +98,10 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
                   <ContentSheetClose
                     nativeButton={false}
                     render={<Link href={c.href} aria-current={on ? "page" : undefined} />}
-                    className={cn("flex h-13 w-full items-center gap-2 px-4 text-sm active:bg-muted", on && "bg-primary/10 text-primary")}
+                    className={cn("flex h-13 w-full items-center gap-2 px-4 text-sm active:bg-muted", on && "bg-primary/10 font-medium")}
                   >
                     <span className="flex-1 truncate">{c.label}</span>
-                    {on ? <CheckIcon className="size-4" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
+                    {on ? <CheckIcon className="size-4 text-primary" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
                   </ContentSheetClose>
                 </li>
               )
@@ -101,9 +110,6 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
         </div>
       ) : (
         <div className="grid gap-4 p-4">
-          <h2 ref={heading} tabIndex={-1} className="sr-only">
-            {t("shell.menu")}
-          </h2>
           {header}
           <button type="button" onClick={search} className={cn("flex h-11 w-full items-center gap-2 rounded-xl border px-3 text-sm text-muted-foreground", TAP)}>
             <SearchIcon className="size-4" /> {t("search.open")}
@@ -130,12 +136,12 @@ export function MobileMenu({ header, groups, me }: { header: React.ReactNode; gr
                     )
                   if (n.newTab)
                     return (
-                      <a key={n.href} href={n.href} target="_blank" rel="noreferrer" className={cls}>
+                      <ContentSheetClose key={n.href} nativeButton={false} render={<a href={n.href} target="_blank" rel="noreferrer" />} className={cls}>
                         {body}
-                      </a>
+                      </ContentSheetClose>
                     )
                   return (
-                    <ContentSheetClose key={n.href} nativeButton={false} render={<Link href={n.children?.[0]?.href ?? n.href} aria-current={on ? "page" : undefined} />} className={cls}>
+                    <ContentSheetClose key={n.href} nativeButton={false} render={<Link href={n.href} aria-current={on ? "page" : undefined} />} className={cls}>
                       {body}
                     </ContentSheetClose>
                   )

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog } from "@base-ui/react/dialog"
+import { Drawer } from "@base-ui/react/drawer"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils"
 // Where the sheet sits: over the content area only (not the sidebar, not the Sprout panel), below the top bar, a
 // gap to the sides. Measured from the App shell, so a collapsed sidebar or an open Sprout panel just work; phones:
 // full width. Set straight on the element (no state), again on resize.
-function place(el: HTMLElement) {
+function place(el: HTMLElement, compact?: boolean) {
+  // compact: no fixed top, the sheet is as tall as its content up to the space below the top bar
+  const pos = (left: string, right: string, top: string) =>
+    Object.assign(el.style, compact ? { left, right, top: "auto", maxHeight: `calc(100dvh - ${top})` } : { left, right, top })
   const inset = document.querySelector<HTMLElement>("[data-slot=sidebar-inset]")
-  if (!inset || window.innerWidth < 768) return Object.assign(el.style, { left: "0px", right: "0px", top: "2.5rem" })
+  if (!inset || window.innerWidth < 768) return pos("0px", "0px", "2.5rem")
   const r = inset.getBoundingClientRect()
   const head = inset.querySelector("header")?.getBoundingClientRect().bottom ?? r.top
-  Object.assign(el.style, { left: `${r.left + 16}px`, right: `${window.innerWidth - r.right + 16}px`, top: `${head + 16}px` })
+  pos(`${r.left + 16}px`, `${window.innerWidth - r.right + 16}px`, `${head + 16}px`)
 }
 
 /**
@@ -23,43 +26,56 @@ function place(el: HTMLElement) {
  * right in the title bar. `<UrlSheet>` uses it for every record/new/edit drawer; content left-aligned below (wide =
  * imports, previews). Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */
-export function ContentSheet({ onClose, onClosed, wide, header, children, label }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string }) {
+export function ContentSheet({ onClose, onClosed, wide, compact, header, children, label }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; compact?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string }) {
   const t = useT()
   // Closing: ask (`onClose` may say no), slide down, then `onClosed` (e.g. drop the URL param) once the animation ended.
   const [open, setOpen] = useState(true)
-  const close = () => {
-    if (onClose() !== false) setOpen(false)
-  }
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && close()} onOpenChangeComplete={(o) => !o && onClosed()}>
-      <Dialog.Portal>
-        <Dialog.Backdrop onClick={close} className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
-        <Dialog.Popup
-          data-slot="sheet-content"
-          aria-label={label}
-          ref={(el) => {
-            if (!el) return
-            const update = () => place(el)
-            update()
-            window.addEventListener("resize", update)
-            return () => window.removeEventListener("resize", update)
-          }}
-          className="fixed bottom-0 z-50 flex flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full"
-        >
-          {/* Title bar: title (+ actions, ⋯) left, close right, one line; stays on top while the content scrolls. */}
-          <div className="sticky top-0 z-30 flex items-start gap-3 border-b bg-popover/95 px-6 py-4 backdrop-blur">
-            <div className="min-w-0 flex-1">{header}</div>
-            <Dialog.Close render={<Button variant="ghost" size="icon-sm" className="-mr-2 shrink-0" />}>
-              <XIcon />
-              <span className="sr-only">{t("common.close")}</span>
-            </Dialog.Close>
-          </div>
-          <div className={cn("flex w-full flex-1 flex-col", wide ? "max-w-6xl" : "max-w-3xl")}>{children}</div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Drawer.Root
+      open={open}
+      swipeDirection="down"
+      onOpenChange={(o, details) => {
+        if (o) return
+        // A vetoed close (swipe, Escape, backdrop) leaves the sheet open; the swipe springs back.
+        if (onClose() === false) details.cancel()
+        else setOpen(false)
+      }}
+      onOpenChangeComplete={(o) => !o && onClosed()}
+    >
+      <Drawer.Portal>
+        <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
+        <Drawer.VirtualKeyboardProvider>
+          <Drawer.Popup
+            data-slot="sheet-content"
+            aria-label={label}
+            ref={(el) => {
+              if (!el) return
+              const update = () => place(el, compact)
+              update()
+              window.addEventListener("resize", update)
+              return () => window.removeEventListener("resize", update)
+            }}
+            className="fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none"
+          >
+            {/* Title bar: grab handle (phones), title (+ actions, ⋯) left, close right; stays on top while the content scrolls. */}
+            <div className="sticky top-0 z-30 border-b bg-popover/95 backdrop-blur">
+              <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
+              <div className="flex items-start gap-3 px-6 py-4">
+                <div className="min-w-0 flex-1">{header}</div>
+                <Drawer.Close render={<Button variant="ghost" size="icon-sm" className="-mr-2 shrink-0" />}>
+                  <XIcon />
+                  <span className="sr-only">{t("common.close")}</span>
+                </Drawer.Close>
+              </div>
+            </div>
+            <div className={cn("flex w-full flex-1 flex-col", compact ? "max-w-xl" : wide ? "max-w-6xl" : "max-w-3xl")}>{children}</div>
+          </Drawer.Popup>
+        </Drawer.VirtualKeyboardProvider>
+      </Drawer.Portal>
+    </Drawer.Root>
   )
 }
 
-export const ContentSheetTitle = Dialog.Title
-export const ContentSheetDescription = Dialog.Description
+export const ContentSheetTitle = Drawer.Title
+export const ContentSheetDescription = Drawer.Description
+export const ContentSheetClose = Drawer.Close

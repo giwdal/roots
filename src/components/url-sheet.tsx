@@ -50,25 +50,31 @@ export function UrlSheet({
   }
 
   return (
-    <ContentSheet onClose={confirmClose} onClosed={closed} wide={wide} label={title}>
-      <div className="grid gap-1.5 px-6 pt-6 pb-4">
-        {/* Title row: actions + ⋯ sit left of the close button (absolute, top right). */}
-        <div className="flex items-start gap-2 pr-10">
-          <ContentSheetTitle className="min-w-0 flex-1 font-heading text-lg font-semibold break-words text-foreground">{title}</ContentSheetTitle>
-          {(actions || menu) && (
-            <div className="-mt-1 flex shrink-0 items-center gap-2">
-              {actions}
-              {menu}
-            </div>
-          )}
+    <ContentSheet
+      onClose={confirmClose}
+      onClosed={closed}
+      wide={wide}
+      label={title}
+      header={
+        <div className="grid gap-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <ContentSheetTitle className="min-w-0 font-heading text-lg font-semibold break-words text-foreground">{title}</ContentSheetTitle>
+            {(actions || menu) && (
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                {actions}
+                {menu}
+              </div>
+            )}
+          </div>
+          {description && <ContentSheetDescription className="text-sm text-muted-foreground">{description}</ContentSheetDescription>}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground empty:hidden">
+            {meta}
+            <span data-slot="sheet-status" className="contents" />
+          </div>
         </div>
-        {description && <ContentSheetDescription className="text-sm text-muted-foreground">{description}</ContentSheetDescription>}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground empty:hidden">
-          {meta}
-          <span data-slot="sheet-status" className="contents" />
-        </div>
-      </div>
-      <div className="grid flex-1 content-start gap-6 px-6 pb-8">{children}</div>
+      }
+    >
+      <div className="grid flex-1 content-start gap-6 px-6 pt-6 pb-8">{children}</div>
     </ContentSheet>
   )
 }

@@ -20,10 +20,10 @@ function place(el: HTMLElement) {
 
 /**
  * The App's drawer: a large sheet rising from the bottom over the content area, rounded top corners, close (X) top
- * right. `<UrlSheet>` uses it for every record/new/edit drawer; the content column is centred (wide = imports,
- * previews). Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
+ * right in the title bar. `<UrlSheet>` uses it for every record/new/edit drawer; content left-aligned below (wide =
+ * imports, previews). Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */
-export function ContentSheet({ onClose, onClosed, wide, children, label }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; children: React.ReactNode; label?: string }) {
+export function ContentSheet({ onClose, onClosed, wide, header, children, label }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string }) {
   const t = useT()
   // Closing: ask (`onClose` may say no), slide down, then `onClosed` (e.g. drop the URL param) once the animation ended.
   const [open, setOpen] = useState(true)
@@ -46,11 +46,15 @@ export function ContentSheet({ onClose, onClosed, wide, children, label }: { onC
           }}
           className="fixed bottom-0 z-50 flex flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full"
         >
-          <Dialog.Close render={<Button variant="ghost" size="icon-sm" className="absolute top-4 right-4 z-30" />}>
-            <XIcon />
-            <span className="sr-only">{t("common.close")}</span>
-          </Dialog.Close>
-          <div className={cn("mx-auto flex w-full flex-1 flex-col", wide ? "max-w-6xl" : "max-w-3xl")}>{children}</div>
+          {/* Title bar: title (+ actions, ⋯) left, close right, one line; stays on top while the content scrolls. */}
+          <div className="sticky top-0 z-30 flex items-start gap-3 border-b bg-popover/95 px-6 py-4 backdrop-blur">
+            <div className="min-w-0 flex-1">{header}</div>
+            <Dialog.Close render={<Button variant="ghost" size="icon-sm" className="-mr-2 shrink-0" />}>
+              <XIcon />
+              <span className="sr-only">{t("common.close")}</span>
+            </Dialog.Close>
+          </div>
+          <div className={cn("flex w-full flex-1 flex-col", wide ? "max-w-6xl" : "max-w-3xl")}>{children}</div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

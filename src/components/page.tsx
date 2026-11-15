@@ -49,6 +49,8 @@ export function PageHeader({
   settings?: { href: string; label: string } | false
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
+  // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
+  const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   return (
@@ -65,7 +67,7 @@ export function PageHeader({
           )}
           <div className="grid min-w-0 gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className={cn("font-heading text-2xl font-semibold break-words", area && !crumbs && "sr-only")}>{title}</h1>
+              <h1 className={cn("font-heading text-2xl font-semibold break-words", inTopBar && "sr-only")}>{title}</h1>
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}
@@ -142,6 +144,8 @@ export function FormCard({ id, title, description, action, className, children }
 /** Nothing here yet: the area's icon, what this is, and the way to the first record. */
 export function EmptyState({ area, icon, title, text, action }: { area?: string; icon?: LucideIcon; title: string; text?: string; action?: React.ReactNode }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
+  // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
+  const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
   return (
     <div className="grid justify-items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
       {Icon && (

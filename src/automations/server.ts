@@ -14,7 +14,7 @@ import type { Json } from "@/lib/supabase/types"
 import { syncTickets } from "@/guestlists/server"
 import { aggregate, calc, fill, Graph, NODE_DATA, next, passes, pickFirst, query, sortRows, stepKey, test, triggerOf, waitMs, type GraphNode, type NodeData, type NodeType } from "./graph"
 import { def, objectsFor, parseRecordTrigger, pickFields, splitPath, type Field, type ObjectKey } from "./objects"
-import { berlinDay, dateMatches, nextRun, resolveDate, type Schedule } from "./schedule"
+import { berlinDay, dateMatchesSince, nextRun, resolveDate, type Schedule } from "./schedule"
 
 type Db = ReturnType<typeof createAdminClient>
 type Run = { id: string; org_id: string; workflow_id: string; contact_id: string | null; node_id: string | null; context: Json; log: Json }
@@ -58,13 +58,14 @@ export async function processSchedules() {
   for (const wf of due ?? []) {
     const next = scheduleNext(wf.graph, now)
     // Newly switched on: only plan the first run.
-    if (wf.next_run_at) started += await startScheduled(db, wf).catch((e) => (console.error("schedule", wf.id, e), 0))
+    if (wf.next_run_at) started += await startScheduled(db, wf, berlinDay(new Date(wf.next_run_at))).catch((e) => (console.error("schedule", wf.id, e), 0))
     await db.from("workflows").update({ next_run_at: next }).eq("id", wf.id)
   }
   return started
 }
 
-async function startScheduled(db: Db, wf: { id: string; org_id: string; graph: unknown }) {
+// `due` = the day this run was due (an earlier day when the worker was down: dates of the days in between count too).
+async function startScheduled(db: Db, wf: { id: string; org_id: string; graph: unknown }, due: string) {
   const g = Graph.parse(wf.graph)
   const d = (triggerOf(g)?.data ?? {}) as { object?: string; rules?: { field: string; op: never; value: string }[]; date_field?: string; offset?: number; yearly?: boolean }
   const rows: { context: NonNullable<Json>; contact_id: string | null }[] = []
@@ -78,7 +79,7 @@ async function startScheduled(db: Db, wf: { id: string; org_id: string; graph: u
       const row = pickFields(object, raw)!
       const ctx = { [object]: row }
       if (d.rules?.length && !d.rules.every((r) => test(r, ctx))) continue
-      if (d.date_field && !dateMatches(row[d.date_field], d.offset ?? 0, !!d.yearly, today)) continue
+      if (d.date_field && !dateMatchesSince(row[d.date_field], d.offset ?? 0, !!d.yearly, due, today)) continue
       const contactId = object === "contact" ? (row.id as string) : typeof row.contact_id === "string" ? row.contact_id : null
       rows.push({ context: { event: `schedule:${object}`, payload: { id: String(row.id) } }, contact_id: contactId })
     }

@@ -67,6 +67,16 @@ const FNS: Record<string, (days: string[]) => string> = {
 const ALIAS: Record<string, string> = { quartalsende: "quarterend", monatsende: "monthend" }
 
 /**
+ * Like dateMatches, for every day from `from` to `today` (both included, at most 62 days back): a run that was missed
+ * (worker down) catches up the dates of the days in between instead of skipping them.
+ */
+export function dateMatchesSince(value: unknown, offset: number, yearly: boolean, from: string, today: string) {
+  let day = from < today ? (from < addDays(today, -62) ? addDays(today, -62) : from) : today
+  for (; day <= today; day = addDays(day, 1)) if (dateMatches(value, offset, yearly, day)) return true
+  return false
+}
+
+/**
  * Date arithmetic for values: "today", "today+10", "today-1y", "2026-12-31+6m", "{x}+2q" (a date placeholder is
  * filled in before) → YYYY-MM-DD. Units d (default), w, m, q (quarter), y; months clamp to the month's end (31 Jan +
  * 1m = 28/29 Feb). Functions: max(a, b, …) / min(…) (latest / earliest; values that aren't dates – an empty

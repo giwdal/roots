@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { dateMatches, nextRun, resolveDate } from "./schedule.ts"
+import { dateMatches, dateMatchesSince, nextRun, resolveDate } from "./schedule.ts"
 
 test("next run of daily, weekly and monthly schedules (Berlin time)", () => {
   const at = new Date("2026-10-13T10:00:00Z") // Tue 12:00 Berlin
@@ -37,4 +37,12 @@ test("date maths: quarters, latest/earliest, quarter/month end", () => {
   assert.equal(resolveDate("min(today, 2026-12-01)", t), "2026-11-15")
   assert.equal(resolveDate("max(quarterend(today), 2026-12-01)", t), "2026-12-31")
   assert.equal(resolveDate("nonsense(today)", t), "nonsense(today)")
+})
+
+test("date reached catches up missed days", () => {
+  // 14 days before the shift on 2026-11-30 = 2026-11-16; the worker was down that day, runs on the 17th
+  assert.equal(dateMatches("2026-11-30", -14, false, "2026-11-17"), false)
+  assert.equal(dateMatchesSince("2026-11-30", -14, false, "2026-11-16", "2026-11-17"), true)
+  assert.equal(dateMatchesSince("2026-11-30", -14, false, "2026-11-17", "2026-11-17"), false) // normal day: only today
+  assert.equal(dateMatchesSince("1990-11-16", 0, true, "2026-11-15", "2026-11-17"), true) // birthday in the gap
 })

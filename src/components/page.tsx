@@ -144,8 +144,6 @@ export function FormCard({ id, title, description, action, className, children }
 /** Nothing here yet: the area's icon, what this is, and the way to the first record. */
 export function EmptyState({ area, icon, title, text, action }: { area?: string; icon?: LucideIcon; title: string; text?: string; action?: React.ReactNode }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
-  // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
-  const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
   return (
     <div className="grid justify-items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
       {Icon && (

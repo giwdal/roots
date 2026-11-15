@@ -84,6 +84,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
           {/* Door mode: a bottom tab bar on phones (thumb reach), a big segmented bar from md. */}
           <nav
             aria-label={t("door.tabs")}
+            data-own-tab-bar
             className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:static md:gap-1 md:rounded-xl md:border md:bg-muted md:p-1"
           >
             {tabs.map((x) => {

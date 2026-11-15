@@ -112,6 +112,7 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
     <div
       role="region"
       aria-label={t("common.unsaved")}
+      data-slot={target ? "save-bar" : undefined}
       className={
         target
           ? "sticky bottom-0 z-20 mt-auto border-t bg-background/95 shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"

@@ -51,8 +51,13 @@ export function CommandSearch() {
         setOpen((o) => !o)
       }
     }
+    const show = () => setOpen(true) // the phone tab bar's "Suche"
     document.addEventListener("keydown", key)
-    return () => document.removeEventListener("keydown", key)
+    document.addEventListener("roots:search", show)
+    return () => {
+      document.removeEventListener("keydown", key)
+      document.removeEventListener("roots:search", show)
+    }
   }, [])
 
   // Debounced server search; only the answer to the latest query is shown.

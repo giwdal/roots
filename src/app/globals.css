@@ -76,3 +76,36 @@
     @apply font-sans;
   }
 }
+
+/* Liquid-glass surfaces (phone tab bar, round primary button). Derived from the theme tokens, so a new theme.css just works. */
+:root {
+  --glass: color-mix(in oklch, var(--background) 72%, transparent);
+  --glass-border: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --glass-highlight: color-mix(in oklch, var(--background) 80%, transparent);
+}
+.dark {
+  --glass-highlight: color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+
+@utility glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-lg);
+  backdrop-filter: blur(20px) saturate(180%);
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--background);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--background);
+    backdrop-filter: none;
+  }
+}
+
+/* Phone bar + round primary button get out of the way of the SaveBar, the keyboard and pages with their own tab bar. */
+@utility bar-hide {
+  @media (max-width: 767.98px) {
+    body:has([data-slot="save-bar"], [data-own-tab-bar], input:focus, textarea:focus, select:focus, [contenteditable]:focus) & {
+      display: none;
+    }
+  }
+}

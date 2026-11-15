@@ -4,6 +4,7 @@ import { Shortcuts } from "@/components/shortcuts"
 import { Separator } from "@/components/ui/separator"
 import { ConfirmHost } from "@/components/confirm-submit"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { MobileBar } from "@/components/mobile-bar"
 import { SproutButton, SproutProvider } from "@/components/sprout/context"
 import { SproutPanel } from "@/components/sprout/panel"
 
@@ -34,19 +35,21 @@ export async function AppShell({
     <SproutProvider initial={search ? jar.get("sprout")?.value : undefined}>
     <SidebarProvider defaultOpen={open}>
       <AppSidebar header={header} groups={groups} me={me} search={search} />
-      <SidebarInset className="min-w-0">
+      <SidebarInset className={search ? "min-w-0 max-md:[--mobile-bar:calc(4.75rem+env(safe-area-inset-bottom))] md:[--mobile-bar:0px]" : "min-w-0"}>
         <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           {/* Phones: the sidebar is a drawer, so the trigger stays; from md the sidebar's edge toggles it. */}
-          <SidebarTrigger className="-ml-1 md:hidden" />
-          <Separator orientation="vertical" className="mr-1 data-vertical:h-4 md:hidden" />
+          {/* The App's phones have the Menü tab in the bottom bar instead. */}
+          {!search && <SidebarTrigger className="-ml-1 md:hidden" />}
+          {!search && <Separator orientation="vertical" className="mr-1 data-vertical:h-4 md:hidden" />}
           {bar ?? <PageTitle groups={groups} fallback={title} />}
           {search && <SproutButton />}
         </header>
-        <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
+        <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)]" : ""}`}>
           {children}
           <Shortcuts />
           <ConfirmHost />
         </main>
+        {search && <MobileBar />}
       </SidebarInset>
       {search && <SproutPanel key={orgId} orgId={orgId ?? ""} />}
     </SidebarProvider>

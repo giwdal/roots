@@ -83,8 +83,16 @@ export function PageHeader({
             {actions}
             {menu}
             {isLink(primary) && PrimaryIcon ? (
-              <Button render={<Link href={primary.href} />} nativeButton={false} size="sm" data-shortcut="new">
-                <PrimaryIcon /> {primary.label}
+              // Phones: the round glass button next to the tab bar (MobileBar); from md the normal header button.
+              <Button
+                render={<Link href={primary.href} aria-label={primary.label} />}
+                nativeButton={false}
+                size="sm"
+                data-shortcut="new"
+                data-slot="page-primary"
+                className="bar-hide max-md:glass max-md:fixed max-md:right-4 max-md:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] max-md:z-30 max-md:size-[3.625rem] max-md:rounded-full max-md:p-0 max-md:text-foreground"
+              >
+                <PrimaryIcon className="max-md:size-6" /> <span className="max-md:sr-only">{primary.label}</span>
               </Button>
             ) : (
               (primary as React.ReactNode)

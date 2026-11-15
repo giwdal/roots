@@ -220,13 +220,14 @@ export async function addLevy(fd: FormData) {
 
 export async function setDueStatus(fd: FormData) {
   const { ctx, t } = await manager(DUES)
-  const status = (["open", "paid", "cancelled"] as const).find((s) => s === fd.get("status"))
+  const status = (["open", "paid", "cancelled", "failed"] as const).find((s) => s === fd.get("status"))
   const back_ = String(fd.get("back") ?? "")
   const to = back_.startsWith("/members") ? back_ : DUES
   if (!status) back(to, { error: t("errors.not_allowed") })
+  // failed = the payment came back (Rücklastschrift): open again, still owed, with the date it failed.
   let update = ctx.supabase
     .from("member_dues")
-    .update({ status, paid_on: status === "paid" ? today() : null })
+    .update(status === "failed" ? { status: "open", paid_on: null, failed_at: new Date().toISOString() } : { status, paid_on: status === "paid" ? today() : null })
     .eq("id", str(fd, "id", 36) ?? "")
     .eq("org_id", ctx.org.id)
   if (status === "open") update = update.is("run_id", null) // collected by a SEPA run: stays paid (cancel the run instead)

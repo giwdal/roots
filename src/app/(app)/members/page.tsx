@@ -1,3 +1,4 @@
+import { paidUntil, type Interval } from "@/members/dues"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { MemberImportBody } from "./import/body"
@@ -37,7 +38,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
 
   let query = ctx.supabase
     .from("memberships")
-    .select("id, number, member_no, starts_on, ends_on, paused_from, paused_until, type_id, contact_id, contacts!inner(first_name, last_name, company, email, user_id)")
+    .select("id, number, member_no, starts_on, ends_on, paused_from, paused_until, type_id, fee_interval, contact_id, contacts!inner(first_name, last_name, company, email, user_id)")
     .eq("org_id", ctx.org.id)
     .order("number")
     .range(...pageRange(page))
@@ -54,10 +55,16 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   // One row per person: the newest membership of each contact on this page; their other periods fold out under the name.
   // ponytail: grouping per page, a person whose periods straddle a page break shows on both pages.
   const rows = [...new Map((data?.slice(0, PAGE_SIZE) ?? []).sort((a, b) => b.starts_on.localeCompare(a.starts_on)).reverse().map((m) => [m.contact_id, m])).values()].sort((a, b) => (a.number ?? 0) - (b.number ?? 0))
-  const { data: others } =
+  const [{ data: others }, { data: fees }] =
     rows.length && status !== "trash"
-      ? await ctx.supabase.from("memberships").select("id, contact_id, starts_on, ends_on, type_id").eq("org_id", ctx.org.id).is("deleted_at", null).in("contact_id", rows.map((r) => r.contact_id)).order("starts_on", { ascending: false })
-      : { data: [] }
+      ? await Promise.all([
+          ctx.supabase.from("memberships").select("id, contact_id, starts_on, ends_on, type_id").eq("org_id", ctx.org.id).is("deleted_at", null).in("contact_id", rows.map((r) => r.contact_id)).order("starts_on", { ascending: false }),
+          // Period fees of the shown memberships, for "Bezahlt bis".
+          ctx.supabase.from("member_dues").select("membership_id, kind, period_start, status").eq("org_id", ctx.org.id).eq("kind", "fee").in("membership_id", rows.map((r) => r.id)).limit(5000),
+        ])
+      : [{ data: [] }, { data: [] }]
+  const until = (r: (typeof rows)[number]) =>
+    paidUntil((fees ?? []).filter((f) => f.membership_id === r.id), (r.fee_interval ?? types?.find((x) => x.id === r.type_id)?.interval ?? "none") as Interval)
   const earlier = (r: (typeof rows)[number]) => (others ?? []).filter((o) => o.contact_id === r.contact_id && o.id !== r.id)
   const typeName = (id: string) => types?.find((x) => x.id === id)?.name ?? ""
   const chip = (href: string, current: boolean, label: string) => (
@@ -171,6 +178,16 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           { header: t("membership.type"), cell: (r) => typeName(r.type_id) },
           { header: t("membership.since"), cell: (r) => t.date(r.starts_on), className: "whitespace-nowrap" },
           { header: t("membership.status"), cell: (r) => state(r) },
+          {
+            header: t("membership.paidUntilCol"),
+            cell: (r) => {
+              const u = until(r)
+              // Red when fees exist and the paid time is over (or nothing paid yet); "–" without fees (free, no fee type).
+              const behind = (fees ?? []).some((f) => f.membership_id === r.id) && (!u || u < now)
+              return <span className={behind && (!r.ends_on || r.ends_on >= now) ? "text-destructive tabular-nums" : "tabular-nums"}>{u ? t.date(u) : "–"}</span>
+            },
+            className: "whitespace-nowrap",
+          },
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />

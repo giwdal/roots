@@ -2392,7 +2392,8 @@
       "active": "Active",
       "ended": "Left",
       "all": "All",
-      "trash": "Trash"
+      "trash": "Trash",
+      "returned": "Returned"
     },
     "noMatch": "No memberships found.",
     "empty": "No memberships yet.",
@@ -2624,7 +2625,13 @@
       "one": "Mark {count} due over {amount} as collected?",
       "other": "Mark {count} dues over {amount} as collected?"
     },
-    "confirmCollectedHint": "Only mark it once the bank has run the direct debit. The dues then count as paid."
+    "confirmCollectedHint": "Only mark it once the bank has run the direct debit. The dues then count as paid.",
+    "paidUntil": "paid until {date}",
+    "returned": "Returned {date}",
+    "markReturned": "Payment failed",
+    "confirmReturned": "Mark the payment as failed?",
+    "confirmReturnedHint": "The due is open again (e.g. returned direct debit) and counts as overdue.",
+    "paidUntilCol": "Paid until"
   },
   "forms": {
     "nav": "Forms",
@@ -4122,7 +4129,8 @@
         "due_on": "Due on",
         "status": "Status",
         "paid_on": "Paid on",
-        "reminders": "Reminders"
+        "reminders": "Reminders",
+        "failed_at": "Payment failed on"
       },
       "event": {
         "id": "Event",

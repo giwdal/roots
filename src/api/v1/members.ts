@@ -143,9 +143,10 @@ const Due = z.object({
   run_id: uuid.nullable().describe("SEPA run the due is collected in"),
   reminders: z.number().int().describe("Payment reminders sent"),
   reminded_at: ts.nullable(),
+  failed_at: ts.nullable().describe("Payment failed / direct debit returned (the due is open again)"),
   updated_at: ts,
 })
-const DUE_COLS = "id, membership_id, kind, description, amount:amount_cents, period_start, due_on, status, paid_on, run_id, reminders, reminded_at, updated_at"
+const DUE_COLS = "id, membership_id, kind, description, amount:amount_cents, period_start, due_on, status, paid_on, run_id, reminders, reminded_at, failed_at, updated_at"
 
 const SepaRun = z.object({
   id: uuid,
@@ -587,14 +588,14 @@ export const endpoints: Endpoint[] = [
     path: "/dues/{id}",
     permission: "members.manage",
     tag: "Members",
-    summary: "Mark a due paid, cancelled or open",
-    description: "For bank or accounting sync. `paid_on` defaults to today. Dues are never deleted.",
-    body: z.object({ status: z.enum(["open", "paid", "cancelled"]), paid_on: day.optional() }).strict(),
+    summary: "Mark a due paid, cancelled, open or failed",
+    description: "For bank or accounting sync. `paid_on` defaults to today. `failed` = the payment failed / the direct debit came back: the due is open again with `failed_at` (also for dues collected in a SEPA run). Dues are never deleted.",
+    body: z.object({ status: z.enum(["open", "paid", "cancelled", "failed"]), paid_on: day.optional() }).strict(),
     response: Due,
     async handler({ db, orgId, params, body }) {
       const { data, error } = await db
         .from("member_dues")
-        .update({ status: body.status, paid_on: body.status === "paid" ? (body.paid_on ?? berlinToday()) : null })
+        .update(body.status === "failed" ? { status: "open", paid_on: null, failed_at: new Date().toISOString() } : { status: body.status, paid_on: body.status === "paid" ? (body.paid_on ?? berlinToday()) : null })
         .eq("id", params.id)
         .eq("org_id", orgId)
         .select(DUE_COLS)

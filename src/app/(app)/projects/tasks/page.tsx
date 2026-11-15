@@ -20,10 +20,9 @@ export default async function AllTasksPage({ searchParams }: { searchParams: Pro
         crumbs={[{ href: "/projects", label: t("projects.title") }, { label: t("projects.allTasks") }]}
         title={t("projects.allTasks")}
         settings={ctx.can("projects.manage") && { href: "/projects/settings", label: t("common.settings") }}
-        actions={<ViewSegments t={t} sp={sp} views={TASK_VIEWS} current={view} />}
       />
       <Notice error={!param(sp, "task") ? param(sp, "error") : undefined} ok={!param(sp, "task") ? param(sp, "ok") : undefined} />
-      <TasksView ctx={ctx} t={t} sp={sp} base="/projects/tasks" view={view} basics={basics} />
+      <TasksView ctx={ctx} t={t} sp={sp} base="/projects/tasks" view={view} basics={basics} views={<ViewSegments t={t} sp={sp} views={TASK_VIEWS} current={view} />} />
     </Page>
   )
 }

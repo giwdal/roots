@@ -8,6 +8,7 @@ import { MobileBar } from "@/components/mobile-bar"
 import { MobileMenu } from "@/components/mobile-menu"
 import { MenuButton } from "@/components/menu-button"
 import { SproutButton, SproutProvider } from "@/components/sprout/context"
+import { TopbarTitle } from "@/components/topbar-crumbs"
 import { SproutPanel } from "@/components/sprout/panel"
 
 // The one layout for signed-in areas (App + /admin): sidebar (drawer on phones, icons when collapsed) + top bar + content.
@@ -45,11 +46,10 @@ export async function AppShell({
           {/* The App's phones have the Menü tab in the bottom bar (opens a bottom sheet); the menu button shows only while that bar is hidden. */}
           {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
           <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
-          {/* Where am I: a record page's crumbs (<TopbarCrumbs>) replace the area › page title. */}
-          <div id="topbar-crumbs" className="min-w-0 flex-1 overflow-hidden text-sm empty:hidden" />
-          <div className="min-w-0 [#topbar-crumbs:not(:empty)+&]:hidden">{bar ?? <PageTitle groups={groups} fallback={title} />}</div>
+          {/* Where am I: the shown record page's crumbs (<TopbarCrumbs>) or the area › page title. */}
+          <TopbarTitle>{bar ?? <PageTitle groups={groups} fallback={title} />}</TopbarTitle>
           {/* The page header's gear / actions / ⋯ / primary land here (<HeaderActions>). */}
-          <div id="topbar-actions" className="ml-auto flex shrink-0 items-center gap-2 empty:hidden" />
+          <div id="topbar-actions" className="flex shrink-0 items-center gap-2 empty:hidden" />
           {search && <SproutButton />}
         </header>
         <main className={`min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>

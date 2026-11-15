@@ -19,7 +19,7 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react"
-import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
+import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -94,6 +94,7 @@ const ICONS: Record<NodeType, LucideIcon> = {
   delete_record: Trash2Icon,
   find_record: SearchIcon,
   aggregate: SigmaIcon,
+  for_each: RepeatIcon,
   telegram: SendIcon,
 }
 const DEFAULTS: Record<NodeType, Data> = {
@@ -110,12 +111,13 @@ const DEFAULTS: Record<NodeType, Data> = {
   delete_record: { object: "" },
   find_record: { object: "", rules: [], sort: "", dir: "desc", label: "" },
   aggregate: { object: "", rules: [], op: "count", field: "", label: "" },
+  for_each: { object: "", rules: [], sort: "", dir: "asc", limit: 50, label: "" },
   telegram: { chat_id: "", text: "" },
 }
 // The sidebar's sections.
 const PALETTE: { section: string; types: NodeType[] }[] = [
   { section: "logic", types: ["condition", "wait"] },
-  { section: "query", types: ["find_record", "aggregate"] },
+  { section: "query", types: ["find_record", "aggregate", "for_each"] },
   { section: "send", types: ["send_email", "notify_team", "telegram"] },
   { section: "data", types: ["add_tag", "remove_tag", "set_field", "create_record", "delete_record"] },
   { section: "connect", types: ["webhook"] },
@@ -130,6 +132,7 @@ function StepNode({ type, data, selected }: NodeProps<FlowNode>) {
     if (type === "trigger") return (d.event as string) ? triggerLabel(String(d.event), t) : t("automations.pickEvent")
     if (type === "wait") return `${d.amount} ${t.dynamic(`automations.units.${d.unit}`)}`
     if (type === "condition") return ((d.rules as { field: string }[]) ?? []).map((r) => r.field).filter(Boolean).join(", ") || "–"
+    if (type === "for_each") return d.object ? `${t.dynamic(`automations.objects.${d.object}`)} · max. ${d.limit ?? 50}` : "–"
     return String(d.subject ?? d.tag ?? d.field ?? d.url ?? d.text ?? d.to ?? "") || "–"
   })()
   const problem = Boolean(data.__problem)
@@ -319,9 +322,9 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
     ...options,
     steps: (() => {
       // Named after what they look up; numbered when the same thing is looked up twice.
-      const data = nodes.filter((n) => n.type === "find_record" || n.type === "aggregate")
+      const data = nodes.filter((n) => n.type === "find_record" || n.type === "aggregate" || n.type === "for_each")
       const base = (n: (typeof data)[number]) =>
-        `${t(n.type === "aggregate" ? "automations.aggResultOf" : "automations.result")}: ${n.data.object ? t.dynamic(`automations.objects.${n.data.object}`) : t.dynamic(`automations.nodes.${n.type}`)}`
+        `${t(n.type === "aggregate" ? "automations.aggResultOf" : n.type === "for_each" ? "automations.eachOf" : "automations.result")}: ${n.data.object ? t.dynamic(`automations.objects.${n.data.object}`) : t.dynamic(`automations.nodes.${n.type}`)}`
       return data.map((n) => {
         const same = data.filter((x) => base(x) === base(n))
         const own = String(n.data.label ?? "")
@@ -585,7 +588,7 @@ function Inspector({
         </div>
       )}
       {type === "condition" && <ConditionForm d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
-      {(type === "find_record" || type === "aggregate") && <DataStepForm type={type} d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
+      {(type === "find_record" || type === "aggregate" || type === "for_each") && <DataStepForm type={type} d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
       {type === "send_email" && (
         <>
           {field("to", t("automations.to"), { maxLength: 320, placeholder: "{contact.email}" })}
@@ -611,6 +614,7 @@ function Inspector({
       )}
       {(type === "add_tag" || type === "remove_tag") && <TagPick value={String(d.tag ?? "")} tags={options.tags} creatable={type === "add_tag"} disabled={!canEdit} onChange={(tag) => onChange({ tag })} />}
       {type === "set_field" && <SetField d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
+      {(type === "set_field" || type === "create_record") && <p className="text-xs text-muted-foreground">{t("automations.valuesHint")}</p>}
       {type === "delete_record" && (
         <div className="grid gap-2">
           <NativeSelect value={String(d.object ?? "")} disabled={!canEdit} aria-label={t("automations.object")} className="w-full" onChange={(e) => onChange({ object: e.target.value })}>
@@ -1129,7 +1133,7 @@ function ConditionForm({ d, options, trigger, extra = [], canEdit, onChange }: {
 
 // Find record / count & calculate: object → conditions (relations to the run, dates of the run …) → first by sort,
 // or count/sum/average/min/max of a number field. The result is usable by all later steps.
-function DataStepForm({ type, d, options, trigger, extra = [], canEdit, onChange }: { type: "find_record" | "aggregate"; d: Record<string, unknown>; options: EditorOptions; trigger: string; extra?: string[]; canEdit: boolean; onChange: (p: Data) => void }) {
+function DataStepForm({ type, d, options, trigger, extra = [], canEdit, onChange }: { type: "find_record" | "aggregate" | "for_each"; d: Record<string, unknown>; options: EditorOptions; trigger: string; extra?: string[]; canEdit: boolean; onChange: (p: Data) => void }) {
   const t = useT()
   const mods = new Set(options.modules)
   const object = String(d.object ?? "") as ObjectKey | ""
@@ -1194,7 +1198,13 @@ function DataStepForm({ type, d, options, trigger, extra = [], canEdit, onChange
               </NativeSelect>
             </div>
           )}
-          <p className="text-xs text-muted-foreground">{t(type === "aggregate" ? "automations.aggHint" : "automations.findHint")}</p>
+          {type === "for_each" && (
+            <label className="flex items-center gap-2 text-sm">
+              {t("automations.eachLimit")}
+              <Input type="number" min={1} max={200} value={Number(d.limit ?? 50)} disabled={!canEdit} onChange={(e) => onChange({ limit: Math.max(1, Math.min(200, Number(e.target.value) || 1)) })} className="w-24" />
+            </label>
+          )}
+          <p className="text-xs text-muted-foreground">{t(type === "aggregate" ? "automations.aggHint" : type === "for_each" ? "automations.eachHint" : "automations.findHint")}</p>
         </>
       )}
     </div>

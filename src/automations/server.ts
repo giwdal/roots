@@ -12,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { fromLocalInput } from "@/lib/time"
 import type { Json } from "@/lib/supabase/types"
 import { syncTickets } from "@/guestlists/server"
-import { aggregate, calc, fill, Graph, NODE_DATA, next, passes, pickFirst, query, stepKey, test, triggerOf, waitMs, type GraphNode, type NodeData, type NodeType } from "./graph"
+import { aggregate, calc, fill, Graph, NODE_DATA, next, passes, pickFirst, query, sortRows, stepKey, test, triggerOf, waitMs, type GraphNode, type NodeData, type NodeType } from "./graph"
 import { def, objectsFor, parseRecordTrigger, pickFields, splitPath, type Field, type ObjectKey } from "./objects"
 import { berlinDay, dateMatches, nextRun, resolveDate, type Schedule } from "./schedule"
 
@@ -129,6 +129,36 @@ async function step(db: Db, run: Run) {
         continue
       }
       return finish(db, run, log, { status: "waiting", node_id: after.id, resume_at: until.toISOString() }, steps)
+    }
+    if (type === "for_each") {
+      // Each record gets its own run from the next step (its own waits, branches, errors); this run ends here.
+      if ((run.context as Row | null)?.loop) {
+        log.push({ at, node: node.id, type, ok: false, note: "no for-each inside a for-each run" })
+        return finish(db, run, log, { status: "failed", node_id: node.id, error: "for each inside a for-each run" }, steps)
+      }
+      try {
+        const d = data as NodeData<"for_each">
+        const items = (await dataStep(db, run.org_id, { ...d, all: true }, ctx)) as Row[]
+        const after = next(g, node.id)
+        const picked = items.slice(0, Math.min(d.limit, 200))
+        if (after && picked.length) {
+          const key = stepKey(node.id)
+          const rows = picked.map((item) => ({
+            org_id: run.org_id,
+            workflow_id: run.workflow_id,
+            node_id: after.id,
+            contact_id: d.object === "contact" ? String(item.id) : typeof item.contact_id === "string" ? item.contact_id : run.contact_id,
+            context: { ...((run.context as Row) ?? {}), steps: { ...steps, [key]: item }, loop: run.id } as NonNullable<Json>,
+          }))
+          const { error } = await db.from("workflow_runs").insert(rows)
+          if (error) throw new Error(error.message)
+        }
+        log.push({ at, node: node.id, type, ok: true, note: `${picked.length} of ${items.length} started${items.length > picked.length ? " (limit)" : ""}` })
+      } catch (e) {
+        log.push({ at, node: node.id, type, ok: false, note: String(e instanceof Error ? e.message : e).slice(0, 300) })
+        return finish(db, run, log, { status: "failed", node_id: node.id, error: String(e instanceof Error ? e.message : e).slice(0, 2000) }, steps)
+      }
+      return finish(db, run, log, { status: "done" }, steps)
     }
     if (type === "find_record" || type === "aggregate") {
       try {
@@ -264,6 +294,7 @@ export async function dataStep(db: Db, orgId: string, d: Record<string, unknown>
   const rows = ((data ?? []) as Row[]).filter((r) => !r.deleted_at).map((r) => pickFields(object, r)!)
   const hits = query(rows, object, (d.rules ?? []) as never, ctx)
   if (d.op !== undefined) return { value: aggregate(hits, d.op as "count", String(d.field ?? "").replace(`${object}.`, "")), count: hits.length }
+  if (d.all) return sortRows(hits, String(d.sort ?? "").replace(`${object}.`, ""), d.dir === "asc" ? "asc" : "desc").map((r) => ({ ...r, __object: object }))
   const first = pickFirst(hits, String(d.sort ?? "").replace(`${object}.`, ""), d.dir === "asc" ? "asc" : "desc")
   return first && { ...first, __object: object } // "change record" on a found record needs its type
 }
@@ -277,7 +308,8 @@ function untilDate(raw: string, ctx: Row) {
 
 // Has this workflow already run for this person / record (within the last N days, 0 = ever)?
 async function ranBefore(db: Db, run: Run, per: string, days: number) {
-  let q = db.from("workflow_runs").select("id", { count: "exact", head: true }).eq("workflow_id", run.workflow_id).neq("id", run.id).neq("status", "cancelled")
+  // Runs started by a "for each" do not count as the workflow having run for that person/record.
+  let q = db.from("workflow_runs").select("id", { count: "exact", head: true }).eq("workflow_id", run.workflow_id).neq("id", run.id).neq("status", "cancelled").is("context->loop", null)
   if (per === "contact") {
     if (!run.contact_id) return false
     q = q.eq("contact_id", run.contact_id)
@@ -399,7 +431,8 @@ async function setField(db: Db, run: Run, rawPath: string, raw: string, ctx: Ctx
     const table = customTable
     const fdef = (await loadFields(db, run.org_id, table)).find((f) => f.key === field.slice(7))
     if (!fdef) throw new Error(`unknown field ${field}`)
-    const parsed = parseValue(fdef, fdef.type === "number" ? calc(raw) : raw)
+    // Calculated values work in custom fields too: numbers/amounts "{x}*3", dates "today+6m", "max({x}, today)+2q".
+    const parsed = parseValue(fdef, fdef.type === "number" || fdef.type === "money" ? calc(raw) : fdef.type === "date" ? resolveDate(raw, berlinDay(new Date())) : raw)
     if (parsed.error) throw new Error(`invalid value for ${fdef.key}`)
     const custom = { ...((row.custom as Row) ?? {}), [fdef.key]: parsed.value ?? null }
     if (parsed.value === undefined) delete custom[fdef.key]
@@ -485,6 +518,11 @@ async function createRecord(db: Db, run: Run, object: string, values: Record<str
     row.added_via = "automation"
   }
   if (object === "membership") row.starts_on ??= berlinDay(new Date())
+  if (object === "due") {
+    // A one-off item unless said otherwise (period fees come from the dues run), due today.
+    row.kind ??= "levy"
+    row.due_on ??= berlinDay(new Date())
+  }
   if (object === "event") {
     // A draft with its own address; publishing stays a human decision.
     row.status = "draft"

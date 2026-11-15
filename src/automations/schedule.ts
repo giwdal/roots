@@ -29,22 +29,60 @@ export function dateMatches(value: unknown, offset: number, yearly: boolean, tod
   return yearly ? day.slice(5) === target.slice(5) : day === target
 }
 
-/**
- * Date arithmetic for values: "today", "today+10", "today-1y", "2026-12-31+6m" (a date placeholder like
- * {membership.ends_on} is filled in before) → YYYY-MM-DD. Units d (default), w, m, y; months clamp to the month's
- * end (31 Jan + 1m = 28/29 Feb). Anything else comes back unchanged.
- */
-export function resolveDate(raw: string, today: string) {
-  const m = /^\s*(today|heute|\d{4}-\d{2}-\d{2})(?:T[^\s+-]*(?:[+-]\d{2}:?\d{2})?)?\s*(?:([+-])\s*(\d{1,4})\s*([dwmy])?)?\s*$/i.exec(raw)
-  if (!m) return raw
-  const base = /^\d/.test(m[1]) ? m[1] : today
-  const n = (m[2] === "-" ? -1 : 1) * Number(m[3] ?? 0)
-  const unit = (m[4] ?? "d").toLowerCase()
+/** Split "a, b(c, d), e" at top-level commas. */
+const args = (s: string) => {
+  const out: string[] = []
+  let depth = 0
+  let cur = ""
+  for (const ch of s) {
+    if (ch === "(") depth++
+    if (ch === ")") depth--
+    if (ch === "," && depth === 0) {
+      out.push(cur)
+      cur = ""
+    } else cur += ch
+  }
+  return [...out, cur]
+}
+const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
+const shift = (base: string, n: number, unit: string) => {
   if (unit === "d" || unit === "w") return addDays(base, n * (unit === "w" ? 7 : 1))
   const [y, mo, d] = base.split("-").map(Number)
-  const months = y * 12 + (mo - 1) + n * (unit === "y" ? 12 : 1)
+  const months = y * 12 + (mo - 1) + n * (unit === "y" ? 12 : unit === "q" ? 3 : 1)
   const ny = Math.floor(months / 12)
   const nm = (months % 12) + 1
   const last = new Date(Date.UTC(ny, nm, 0)).getUTCDate()
   return `${ny}-${String(nm).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`
+}
+const monthEnd = (day: string, extra = 0) => {
+  const [y, m] = day.split("-").map(Number)
+  return new Date(Date.UTC(y, m + extra, 0)).toISOString().slice(0, 10)
+}
+const FNS: Record<string, (days: string[]) => string> = {
+  max: (d) => d.reduce((a, b) => (b > a ? b : a)),
+  min: (d) => d.reduce((a, b) => (b < a ? b : a)),
+  quarterend: (d) => monthEnd(d[0], (3 - ((Number(d[0].slice(5, 7)) - 1) % 3)) - 1),
+  monthend: (d) => monthEnd(d[0]),
+}
+const ALIAS: Record<string, string> = { quartalsende: "quarterend", monatsende: "monthend" }
+
+/**
+ * Date arithmetic for values: "today", "today+10", "today-1y", "2026-12-31+6m", "{x}+2q" (a date placeholder is
+ * filled in before) → YYYY-MM-DD. Units d (default), w, m, q (quarter), y; months clamp to the month's end (31 Jan +
+ * 1m = 28/29 Feb). Functions: max(a, b, …) / min(…) (latest / earliest; values that aren't dates – an empty
+ * placeholder – are skipped), quarterend(x) / monthend(x); an offset may follow: "max({membership.fee_free_until},
+ * today)+6m". Anything else comes back unchanged.
+ */
+export function resolveDate(raw: string, today: string): string {
+  const fn = /^\s*([a-zäöü]+)\s*\((.*)\)\s*(?:([+-])\s*(\d{1,4})\s*([dwmqy])?)?\s*$/i.exec(raw)
+  if (fn) {
+    const name = ALIAS[fn[1].toLowerCase()] ?? fn[1].toLowerCase()
+    const days = args(fn[2]).map((a) => resolveDate(a, today)).filter(isDay)
+    if (!FNS[name] || !days.length) return raw
+    return shift(FNS[name](days), (fn[3] === "-" ? -1 : 1) * Number(fn[4] ?? 0), (fn[5] ?? "d").toLowerCase())
+  }
+  const m = /^\s*(today|heute|\d{4}-\d{2}-\d{2})(?:T[^\s+-]*(?:[+-]\d{2}:?\d{2})?)?\s*(?:([+-])\s*(\d{1,4})\s*([dwmqy])?)?\s*$/i.exec(raw)
+  if (!m) return raw
+  const base = /^\d/.test(m[1]) ? m[1] : today
+  return shift(base, (m[2] === "-" ? -1 : 1) * Number(m[3] ?? 0), (m[4] ?? "d").toLowerCase())
 }

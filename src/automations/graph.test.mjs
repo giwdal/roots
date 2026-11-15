@@ -75,6 +75,12 @@ it("number fields count up: {x}+1, empty = 0", () => {
   assert.equal(calc("{contact.custom.visits}+1"), "1") // nothing stored yet
   assert.equal(calc("10 - 2,5"), "7.5")
   assert.equal(calc("hello"), "hello")
+  assert.equal(calc("1500*3"), "4500")
+  assert.equal(calc("{membership.fee_cents}*3"), "0")
+  assert.equal(calc("1000/3"), "333.33")
+  assert.equal(calc("floor(1000/3)"), "333")
+  assert.equal(calc("round(2.5*3)"), "8")
+  assert.equal(calc("5/0"), "5/0")
 })
 
 it("layout: missing positions by distance from the trigger, given ones kept", () => {
@@ -83,4 +89,11 @@ it("layout: missing positions by distance from the trigger, given ones kept", ()
     edges: [{ id: "1", source: "t", target: "c" }, { id: "2", source: "c", target: "a", sourceHandle: "yes" }, { id: "3", source: "c", target: "b", sourceHandle: "no" }],
   })
   assert.deepEqual(g.nodes.map((x) => x.position), [{ x: 0, y: 0 }, { x: 0, y: 140 }, { x: 0, y: 280 }, { x: 9, y: 9 }])
+})
+
+it("for each: needs an object, limit at most 200", () => {
+  const g = (data) => ({ nodes: [n("t", "trigger", { event: "event.cancelled" }), n("f", "for_each", data), n("m", "send_email", { subject: "Abgesagt", body: "x" })], edges: [e("t", "f"), e("f", "m")] })
+  assert.deepEqual(validate(g({ object: "guest", limit: 100 })), [])
+  assert.deepEqual(validate(g({ object: "" })).map((p) => p.key), ["incomplete"])
+  assert.deepEqual(validate(g({ object: "guest", limit: 500 })).map((p) => p.key), ["incomplete"])
 })

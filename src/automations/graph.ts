@@ -4,7 +4,7 @@
 import { z } from "zod"
 import { berlinDay, resolveDate } from "./schedule.ts"
 
-export const DATA_STEPS = ["find_record", "aggregate"] as const // read only: they put a result into the run
+export const DATA_STEPS = ["find_record", "aggregate", "for_each"] as const // read only: they put a result into the run (for_each: one run per record)
 export const ACTIONS = ["send_email", "add_tag", "remove_tag", "set_field", "create_record", "delete_record", "notify_team", "telegram", "webhook"] as const
 export const NODE_TYPES = ["trigger", "condition", "wait", ...DATA_STEPS, ...ACTIONS] as const
 export type NodeType = (typeof NODE_TYPES)[number]
@@ -44,6 +44,16 @@ export const NODE_DATA = {
     rules: z.array(z.object({ field: text(100), op: z.enum(OPS), value: text(500).default("") })).max(20).default([]),
     sort: text(100).default(""),
     dir: z.enum(["asc", "desc"]).default("desc"),
+    label: text(60).default(""),
+  }),
+  // For each matching record (sorted, at most `limit`, max 200): its own run from the next step on, the record as this
+  // step's result. The current run ends here; no "for each" inside such a run (no loops in loops).
+  for_each: z.object({
+    object: text(40),
+    rules: z.array(z.object({ field: text(100), op: z.enum(OPS), value: text(500).default("") })).max(20).default([]),
+    sort: text(100).default(""),
+    dir: z.enum(["asc", "desc"]).default("asc"),
+    limit: z.number().int().min(1).max(200).default(50),
     label: text(60).default(""),
   }),
   // Count / sum / average / min / max over the records that match.
@@ -166,6 +176,8 @@ function filled(type: NodeType, d: Record<string, unknown>) {
       return !!d.text
     case "create_record":
     case "delete_record":
+      return !!d.object
+    case "for_each":
       return !!d.object
     case "find_record":
     case "aggregate":
@@ -295,18 +307,32 @@ export function aggregate(rows: Record<string, unknown>[], op: "count" | "sum" |
   if (op === "avg") return Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100
   return op === "min" ? Math.min(...nums) : Math.max(...nums)
 }
+export function sortRows(rows: Record<string, unknown>[], sort: string, dir: "asc" | "desc") {
+  return sort ? [...rows].sort((a, b) => String(a[sort] ?? "").localeCompare(String(b[sort] ?? ""), undefined, { numeric: true }) * (dir === "asc" ? 1 : -1)) : rows
+}
 export function pickFirst(rows: Record<string, unknown>[], sort: string, dir: "asc" | "desc") {
-  const sorted = sort ? [...rows].sort((a, b) => String(a[sort] ?? "").localeCompare(String(b[sort] ?? ""), undefined, { numeric: true }) * (dir === "asc" ? 1 : -1)) : rows
-  return sorted[0] ?? null
+  return sortRows(rows, sort, dir)[0] ?? null
 }
 
-/** Number fields: "{contact.custom.visits}+1" (after filling) → "4". An empty value (placeholder left over) counts as 0. */
-export function calc(raw: string) {
-  const m = /^\s*(\{[^}]*\}|-?\d+(?:[.,]\d+)?)\s*([+-])\s*(\d+(?:[.,]\d+)?)\s*$/.exec(raw)
+/**
+ * Number fields: "{contact.custom.visits}+1", "{membership.fee_cents}*3", "{x}/3" (after filling) → "4"; wrap in
+ * floor(…) / round(…) to cut to whole numbers ("floor({x}/100)"). An empty value (placeholder left over) counts as 0.
+ */
+export function calc(raw: string): string {
+  const wrap = /^\s*(floor|round|abrunden|runden)\s*\((.*)\)\s*$/i.exec(raw)
+  if (wrap) {
+    const inner = calc(wrap[2])
+    const n = Number(inner)
+    if (!Number.isFinite(n) || !/^-?\d/.test(inner)) return raw
+    return String(/^(floor|abrunden)$/i.test(wrap[1]) ? Math.floor(n) : Math.round(n))
+  }
+  const m = /^\s*(\{[^}]*\}|-?\d+(?:[.,]\d+)?)\s*([-+*/×:])\s*(\d+(?:[.,]\d+)?)\s*$/.exec(raw)
   if (!m) return raw
   const num = (s: string) => (s.startsWith("{") ? 0 : Number(s.replace(",", ".")))
-  const r = m[2] === "+" ? num(m[1]) + num(m[3]) : num(m[1]) - num(m[3])
-  return String(Math.round(r * 100) / 100)
+  const a = num(m[1])
+  const b = num(m[3])
+  const r = m[2] === "+" ? a + b : m[2] === "-" ? a - b : m[2] === "*" || m[2] === "×" ? a * b : b === 0 ? NaN : a / b
+  return Number.isFinite(r) ? String(Math.round(r * 100) / 100) : raw
 }
 
 /** {first_name}, {payload.title}, {contact.city} … in texts of actions. Unknown placeholders stay as they are. */
@@ -352,8 +378,8 @@ export async function simulate(
       continue
     }
     const step: TraceStep = { node: node.id, type: node.type }
-    if (node.type === "find_record" || node.type === "aggregate") {
-      // Data steps really read (nothing is changed), so later steps can be tested with the result.
+    if (node.type === "find_record" || node.type === "aggregate" || node.type === "for_each") {
+      // Data steps really read (for each: the test follows the first record) (nothing is changed), so later steps can be tested with the result.
       const result = lookup ? await lookup(node, d, ctx) : null
       ctx[stepKey(node.id)] = result
       step.preview = { result: result == null ? "–" : typeof result === "object" ? String((result as Record<string, unknown>).value ?? (result as Record<string, unknown>).title ?? (result as Record<string, unknown>).name ?? (result as Record<string, unknown>).id ?? "") : String(result) }

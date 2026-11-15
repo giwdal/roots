@@ -25,3 +25,16 @@ test("date filters and relative dates", () => {
   assert.equal(resolveDate("2026-10-20T18:00:00+00:00-2w", "2026-10-13"), "2026-10-06")
   assert.equal(resolveDate("{membership.ends_on}+6m", "2026-10-13"), "{membership.ends_on}+6m") // unfilled stays
 })
+
+test("date maths: quarters, latest/earliest, quarter/month end", () => {
+  const t = "2026-11-15"
+  assert.equal(resolveDate("today+2q", t), "2027-05-15")
+  assert.equal(resolveDate("quarterend(today)", t), "2026-12-31")
+  assert.equal(resolveDate("quartalsende(2026-02-10)+2q", t), "2026-09-30")
+  assert.equal(resolveDate("monthend(2026-02-03)", t), "2026-02-28")
+  assert.equal(resolveDate("max(2027-01-31, today)+6m", t), "2027-07-31")
+  assert.equal(resolveDate("max({membership.fee_free_until}, today)+6m", t), "2027-05-15") // empty placeholder skipped
+  assert.equal(resolveDate("min(today, 2026-12-01)", t), "2026-11-15")
+  assert.equal(resolveDate("max(quarterend(today), 2026-12-01)", t), "2026-12-31")
+  assert.equal(resolveDate("nonsense(today)", t), "nonsense(today)")
+})

@@ -3941,7 +3941,8 @@
       "create_record": "Create record",
       "find_record": "Find record",
       "aggregate": "Count & calculate",
-      "delete_record": "Delete record"
+      "delete_record": "Delete record",
+      "for_each": "For each"
     },
     "help": {
       "trigger": "What starts the automation? Every event gets its own run.",
@@ -4541,7 +4542,11 @@
     "dateReached": "Date reached",
     "dateReachedHint": "Once a day for each record whose date is due today – e.g. 28 days before a contract ends, on a birthday or 3 days after an appointment.",
     "dateRecord": "For each",
-    "dateWhich": "Which date"
+    "dateWhich": "Which date",
+    "eachOf": "Each",
+    "eachLimit": "At most",
+    "eachHint": "Starts its own run for every match from the next step on – the match is available there as the result (e.g. to email each person). At most 200 per run; no further “For each” inside such a run.",
+    "valuesHint": "Calculate: numbers {x}+1, {x}*3, floor({x}/100) · dates today+6m, {x}+2q (quarters), quarterend(today), max({x}, today)+6m"
   },
   "numbers": {
     "next": "Next number",

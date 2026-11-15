@@ -3941,7 +3941,8 @@
       "create_record": "Datensatz anlegen",
       "find_record": "Datensatz suchen",
       "aggregate": "Zählen & berechnen",
-      "delete_record": "Datensatz löschen"
+      "delete_record": "Datensatz löschen",
+      "for_each": "Für jeden"
     },
     "help": {
       "trigger": "Womit startet die Automation? Für jedes Ereignis gibt es einen eigenen Durchlauf.",
@@ -4541,7 +4542,11 @@
     "dateReached": "Datum erreicht",
     "dateReachedHint": "Jeden Tag einmal pro Datensatz, dessen Datum heute dran ist – z. B. 28 Tage vor Vertragsende, am Geburtstag oder 3 Tage nach einem Termin.",
     "dateRecord": "Für jede(n)",
-    "dateWhich": "Welches Datum"
+    "dateWhich": "Welches Datum",
+    "eachOf": "Jeweils",
+    "eachLimit": "Höchstens",
+    "eachHint": "Startet für jeden Treffer einen eigenen Ablauf ab dem nächsten Schritt – der Treffer steht dort als Ergebnis bereit (z. B. für eine E-Mail an jede Person). Höchstens 200 pro Durchlauf; in einem solchen Ablauf ist kein weiteres „Für jeden“ möglich.",
+    "valuesHint": "Rechnen: Zahlen {x}+1, {x}*3, floor({x}/100) · Daten today+6m, {x}+2q (Quartale), quarterend(today), max({x}, today)+6m"
   },
   "numbers": {
     "next": "Nächste Nummer",

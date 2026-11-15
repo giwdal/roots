@@ -895,7 +895,13 @@
     },
     "activity": {
       "title": "Aktivität",
-      "filteredBy": "Gefiltert auf {org}."
+      "filteredBy": "Gefiltert auf {org}.",
+      "errors": "Fehler",
+      "noErrors": "Keine Fehler – alles läuft.",
+      "errorKinds": {
+        "automation": "Automation",
+        "email": "E-Mail"
+      }
     },
     "trash": {
       "title": "Papierkorb",
@@ -1163,7 +1169,8 @@
       "domain.connected": "Eigene Domain verbunden",
       "shop.order_placed": "Shop-Bestellung eingegangen",
       "shop.order_ready": "Shop-Bestellung abholbereit",
-      "shop.order_shipped": "Shop-Bestellung versendet"
+      "shop.order_shipped": "Shop-Bestellung versendet",
+      "automation.failed": "Automation fehlgeschlagen"
     },
     "messages": {
       "member.joined": "👋 Neues Mitglied: {who}",
@@ -1206,7 +1213,8 @@
       "domain.connected": "🌐 {domain} ist jetzt live",
       "shop.order_placed": "🛍️ Bestellung #{number} von {name}",
       "shop.order_ready": "🛍️ Bestellung #{number} liegt bereit",
-      "shop.order_shipped": "📦 Bestellung #{number} versendet"
+      "shop.order_shipped": "📦 Bestellung #{number} versendet",
+      "automation.failed": "⚠️ Automation „{name}“ fehlgeschlagen ({count}× in 24 h): {error}"
     },
     "hints": {
       "member.joined": "Jemand aus eurem Team (Vorstand, Einlass …) hat eine Einladung angenommen und kann sich in der App anmelden. Nicht für Vereinsmitglieder.",

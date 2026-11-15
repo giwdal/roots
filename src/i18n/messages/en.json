@@ -895,7 +895,13 @@
     },
     "activity": {
       "title": "Activity",
-      "filteredBy": "Filtered to {org}."
+      "filteredBy": "Filtered to {org}.",
+      "errors": "Errors",
+      "noErrors": "No errors – all good.",
+      "errorKinds": {
+        "automation": "Automation",
+        "email": "Email"
+      }
     },
     "trash": {
       "title": "Trash",
@@ -1163,7 +1169,8 @@
       "domain.connected": "Own domain connected",
       "shop.order_placed": "Shop order placed",
       "shop.order_ready": "Shop order ready for pickup",
-      "shop.order_shipped": "Shop order shipped"
+      "shop.order_shipped": "Shop order shipped",
+      "automation.failed": "Automation failed"
     },
     "messages": {
       "member.joined": "👋 New member: {who}",
@@ -1206,7 +1213,8 @@
       "domain.connected": "🌐 {domain} is live now",
       "shop.order_placed": "🛍️ Order #{number} from {name}",
       "shop.order_ready": "🛍️ Order #{number} is ready",
-      "shop.order_shipped": "📦 Order #{number} shipped"
+      "shop.order_shipped": "📦 Order #{number} shipped",
+      "automation.failed": "⚠️ Automation “{name}” failed ({count}× in 24 h): {error}"
     },
     "hints": {
       "member.joined": "Someone from your team (board, door staff …) accepted an invitation and can sign in to the app. Not for club members.",

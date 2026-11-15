@@ -38,7 +38,7 @@ export async function AppShell({
     <SidebarProvider defaultOpen={open}>
       <AppSidebar header={header} groups={groups} me={me} search={search} />
       <SidebarInset className={search ? "min-w-0 max-md:[--mobile-bar:calc(4.75rem+env(safe-area-inset-bottom))] md:[--mobile-bar:0px]" : "min-w-0"}>
-        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
+        <header className="sticky top-0 z-10 box-content flex h-12 shrink-0 pt-[env(safe-area-inset-top)] items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           {/* Phones: the sidebar is a drawer, so the trigger stays; from md the sidebar's edge toggles it. */}
           {/* The App's phones have the Menü tab in the bottom bar (opens a bottom sheet); the menu button shows only while that bar is hidden. */}
           {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -25,6 +25,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: { default: "roots", template: "%s – roots" }, description: t("meta.description"), icons: { icon: "/favicon.ico" } };
 }
 
+// cover: iOS browsers only report their own toolbars in env(safe-area-inset-*) with this, so the floating bar,
+// sheets and save bars sit above the browser UI instead of behind it.
+export const viewport: Viewport = { viewportFit: "cover" };
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   return (
@@ -36,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
         {/* ponytail: one boundary so every page may read the session/params at request time (Cache Components).
             Add per-route static shells + finer boundaries where load speed matters (public pages first). */}
         <I18nProvider locale={locale} messages={messages[locale]}>

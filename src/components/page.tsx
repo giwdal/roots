@@ -51,11 +51,13 @@ export function PageHeader({
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
-  const inTopBar = (area && !crumbs) || (typeof title === "string" && crumbs?.at(-1)?.label === title)
+  // (pages with their own icon are in the sidebar too: Benachrichtigungen, Dateien …)
+  const overview = !!(area || icon) && !crumbs
+  const inTopBar = overview || (typeof title === "string" && crumbs?.at(-1)?.label === title)
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
-  const bare = inTopBar && !badge && !meta && !(description && !(area && !crumbs))
+  const bare = inTopBar && !badge && !meta && !(description && !overview)
   return (
     <header className={bare ? "contents" : "grid gap-3"}>
       {/* Where you are lives in the top bar (area › page, or a record's crumbs via <TopbarCrumbs>): no second crumb
@@ -64,7 +66,7 @@ export function PageHeader({
       <div className={bare ? "contents" : "flex flex-wrap items-start justify-between gap-x-4 gap-y-3"}>
         <div className={bare ? "sr-only" : "flex min-w-0 items-start gap-3"}>
           {Icon && (
-            <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground", (area || crumbs) && "hidden")} aria-hidden>
+            <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground", (area || icon || crumbs) && "hidden")} aria-hidden>
               <Icon className="size-5" />
             </span>
           )}
@@ -75,7 +77,7 @@ export function PageHeader({
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}
             {/* Area pages speak for themselves (the top bar names them): no intro sentence; record pages may explain. */}
-            {description && !(area && !crumbs) && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
+            {description && !overview && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
           </div>
         </div>
         {(actions || menu || primary || settings) && (

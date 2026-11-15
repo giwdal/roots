@@ -19,7 +19,7 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react"
-import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
+import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, UploadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -32,7 +32,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
-import { ACTIONS, DATA_STEPS, stepKey, triggerKey, validate, WAIT_UNITS, type Graph, type NodeType, type TraceStep } from "@/automations/graph"
+import { ACTIONS, DATA_STEPS, stepKey, triggerKey, validate, WAIT_UNITS, GraphInput, type Graph, type NodeType, type TraceStep } from "@/automations/graph"
 import { creatableFor, deletableFor, def, OBJECTS, searchFields, objectsFor, OPS_FOR, parseRecordTrigger, SCHEDULE_OBJECTS, splitPath, writableFor, type Field, type Kind, type ObjectKey, type RefList } from "@/automations/objects"
 import { saveWorkflow, testPickers, testRun, testSamples, type TestPicker } from "../actions"
 
@@ -316,6 +316,26 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
     a.click()
     URL.revokeObjectURL(a.href)
   }
+  // Load an exported file (or a bare graph) into this editor; nothing is saved until "Speichern".
+  const importJson = async (file: File | undefined) => {
+    if (!file) return
+    if (file.size > 500_000) return void toast.error(t("automations.importInvalid"))
+    let raw: { name?: unknown; description?: unknown; graph?: unknown } | null = null
+    try {
+      raw = JSON.parse(await file.text())
+    } catch {}
+    // GraphInput: positions optional (a graph written by hand or by Claude), filled by layout().
+    const parsed = GraphInput.safeParse(raw?.graph ?? raw)
+    if (!parsed.success) return void toast.error(t("automations.importInvalid"))
+    setNodes(parsed.data.nodes.map((n) => ({ ...n, data: n.data as Data })) as FlowNode[])
+    setEdges(parsed.data.edges.map((e) => ({ ...e, sourceHandle: e.sourceHandle ?? null, label: e.sourceHandle ? t(e.sourceHandle === "yes" ? "automations.yes" : "automations.no") : undefined })))
+    if (typeof raw?.name === "string" && raw.name.trim()) setName(raw.name.slice(0, 200))
+    if (typeof raw?.description === "string") setDescription(raw.description.slice(0, 2000))
+    setSelected(null)
+    setTest(null)
+    setDirty(true)
+    toast.success(t("automations.importLoaded"))
+  }
   const sel = nodes.find((n) => n.id === selected)
   // Results of data steps, usable by every step as objects ("Ergebnis: Mitgliedschaft").
   const flowOptions: EditorOptions = {
@@ -350,6 +370,12 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
           <Button type="button" variant="outline" size="sm" onClick={exportJson}>
             <DownloadIcon /> {t("automations.export")}
           </Button>
+          {canEdit && (
+            <Button type="button" variant="outline" size="sm" render={<label />}>
+              <UploadIcon /> {t("automations.importInto")}
+              <input type="file" accept="application/json,.json" className="sr-only" onChange={(e) => (importJson(e.target.files?.[0]), (e.target.value = ""))} />
+            </Button>
+          )}
           {canEdit && (
             <Button type="button" size="sm" onClick={save} disabled={pending || !dirty}>
               <SaveIcon /> {pending ? t("automations.saving") : t("common.save")}

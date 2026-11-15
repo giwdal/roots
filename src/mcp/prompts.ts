@@ -67,6 +67,20 @@ Then:
 6. Member area (optional): a welcome block on top of the signed-in portal – PUT /site { portal_html } with {{person.first_name}}, news, links (WhatsApp group, contact). The portal's own tabs (membership, tickets, courses …) stay as they are.
 7. Everything above is a draft. Tell the person to look at the preview under Website in the App (link app_url /website/pages/start) and only on their OK publish with POST /site/publish (roots_danger: it goes live).`,
   },
+  {
+    name: "automation_bauen",
+    title: "Automation bauen oder ändern",
+    description: "Builds a new automation (workflow) or edits an existing one: reads the catalog, drafts the graph JSON, validates it, saves it inactive and switches it on only after the person agreed.",
+    args: [{ name: "goal", description: "What should happen automatically (optional)" }],
+    text: (a) => `Build or change an automation in roots${a.goal ? `: ${a.goal}` : ""}. ${ASK}
+
+1. Read what exists: GET /workflows (name, active); to change one: GET /workflows/{id} (its name, description and graph are what the App exports as JSON; from an exported file send only those three, not the wrapper keys roots/version). Ask what should happen: when (trigger), under which conditions, what (email, tag, change record, notification …), with what delay.
+2. GET /workflows/catalog (with trigger=<event>) for triggers, node types, objects and fields; GET /workflow-templates for ready-made graphs close to the wish – start from one when it fits.
+3. Draft the graph (nodes + edges; positions optional). Texts use placeholders like {contact.first_name}.
+4. POST /workflows/validate until problems is empty; fix every message instead of guessing.
+5. New: POST /workflows (created inactive). Change: PATCH /workflows/{id} { graph }. Do not switch it on yet.
+6. Summarise in plain words (when → if → then) with the app_url link, and say that the person can also load/export the JSON in the editor. Only after their OK: PATCH /workflows/{id} { active: true }.`,
+  },
 ]
 
 export const promptList = () => PROMPTS.map((p) => ({ name: p.name, title: p.title, description: p.description, arguments: (p.args ?? []).map((x) => ({ ...x, required: false })) }))

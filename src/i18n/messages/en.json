@@ -3886,6 +3886,8 @@
     "importFile": "JSON file",
     "importButton": "Import",
     "importInvalid": "That's not a valid exported automation.",
+    "importInto": "Load from file",
+    "importLoaded": "File loaded – check and save.",
     "activate": "Activate",
     "deactivate": "Deactivate",
     "activated": "Automation is on.",

@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { HomeIcon, MenuIcon, SearchIcon } from "lucide-react"
-import { useSidebar } from "@/components/ui/sidebar"
 import { useT } from "@/i18n/client"
 import { APP_HOME, appRoute } from "@/lib/url"
 import { cn } from "@/lib/utils"
@@ -18,7 +17,6 @@ const TAB =
  */
 export function MobileBar() {
   const t = useT()
-  const { setOpenMobile } = useSidebar()
   const home = appRoute(usePathname()) === "/"
   const nav = useRef<HTMLElement>(null)
 
@@ -72,7 +70,7 @@ export function MobileBar() {
           <SearchIcon className="size-5" />
           <span className="group-data-[compact]/bar:hidden">{t("shell.search")}</span>
         </button>
-        <button type="button" onClick={() => setOpenMobile(true)} className={cn(TAB, "text-muted-foreground")}>
+        <button type="button" onClick={() => document.dispatchEvent(new Event("roots:menu"))} className={cn(TAB, "text-muted-foreground")}>
           <MenuIcon className="size-5" />
           <span className="group-data-[compact]/bar:hidden">{t("shell.menu")}</span>
         </button>

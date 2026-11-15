@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator"
 import { ConfirmHost } from "@/components/confirm-submit"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { MobileBar } from "@/components/mobile-bar"
+import { MobileMenu } from "@/components/mobile-menu"
+import { MenuButton } from "@/components/menu-button"
 import { SproutButton, SproutProvider } from "@/components/sprout/context"
 import { SproutPanel } from "@/components/sprout/panel"
 
@@ -38,8 +40,8 @@ export async function AppShell({
       <SidebarInset className={search ? "min-w-0 max-md:[--mobile-bar:calc(4.75rem+env(safe-area-inset-bottom))] md:[--mobile-bar:0px]" : "min-w-0"}>
         <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           {/* Phones: the sidebar is a drawer, so the trigger stays; from md the sidebar's edge toggles it. */}
-          {/* The App's phones have the Menü tab in the bottom bar; the trigger shows only while that bar is hidden. */}
-          <SidebarTrigger className={`-ml-1 md:hidden${search ? " bar-fallback" : ""}`} />
+          {/* The App's phones have the Menü tab in the bottom bar (opens a bottom sheet); the menu button shows only while that bar is hidden. */}
+          {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
           <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
           {bar ?? <PageTitle groups={groups} fallback={title} />}
           {search && <SproutButton />}
@@ -50,6 +52,7 @@ export async function AppShell({
           <ConfirmHost />
         </main>
         {search && <MobileBar />}
+        {search && <MobileMenu header={header} groups={groups} me={me} />}
       </SidebarInset>
       {search && <SproutPanel key={orgId} orgId={orgId ?? ""} />}
     </SidebarProvider>

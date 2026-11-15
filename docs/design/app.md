@@ -41,7 +41,7 @@ name stay sheets and then open the record.
 
 One sheet at a time. Only a confirmation, or a quick create started inside it, may lie on top.
 
-Fixed exceptions: ⌘K search (`CommandDialog`, a centred palette), the phone navigation (the sidebar's own sheet),
+Fixed exceptions: ⌘K search (`CommandDialog`, a centred palette), the phone menu (`<MobileMenu>`, a bottom sheet),
 Sprout (a panel in the layout), `window.confirm` when leaving a page with unsaved changes (must answer synchronously),
 `window.prompt` for link/image URLs in the rich-text and wiki editors (to be replaced by a popover).
 `src/components/overlays.test.mjs` fails when code outside `src/components/ui/` imports `ui/dialog`, `ui/sheet` or Base
@@ -73,7 +73,8 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   its own tab bar. Content scrolls under the glass; space below it comes from `--mobile-bar`. Glass = the `.glass`
   class (`@utility glass` in `globals.css`, derived from the theme tokens), with a solid fallback for "reduce
   transparency". While the bar is hidden by a SaveBar or a page's own tab bar, the top bar shows the menu button
-  (`@utility bar-fallback`), so phones never lose the sidebar.
+  (`@utility bar-fallback`), so phones never lose the menu.
+- **Menü** opens a bottom sheet, not the sidebar: org switcher and search on top, the nav areas as a 3-column tile grid (icon + label, active area tinted), an area with sub-pages drills into big rows (back = ‹ Menü), account rows at the bottom; it opens at the current area's sub-pages. Same `groups` as the sidebar (`<MobileMenu>`), so new modules appear automatically.
 - **Phone-critical flows** (check these at 375px first, with touch): Einlass/Scan, Meine Schichten incl. clock in/out,
   looking up a contact and calling/mailing them, tasks, notifications, Sprout.
 - **Sheets**: full width, from below the top bar; swipe down closes; the focused field stays above the keyboard;

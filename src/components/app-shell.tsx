@@ -1,3 +1,4 @@
+import { CommandSearch } from "@/components/command-search"
 import { cookies } from "next/headers"
 import { AppSidebar, PageTitle, type Me, type SidebarLink } from "@/components/app-sidebar"
 import { Shortcuts } from "@/components/shortcuts"
@@ -53,6 +54,7 @@ export async function AppShell({
           <Shortcuts />
           <ConfirmHost />
         </main>
+        {search && <CommandSearch />}
         {search && <MobileBar />}
         {search && <MobileMenu header={header} switchOrgs={switchOrgs} groups={groups} me={me} />}
       </SidebarInset>

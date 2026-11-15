@@ -7,7 +7,7 @@ import { useState, useTransition } from "react"
 import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon } from "lucide-react"
 import { openMyMemberArea } from "@/app/(app)/actions"
 import { signOut } from "@/app/login/actions"
-import { CommandSearch } from "@/components/command-search"
+import { SearchButton } from "@/components/command-search"
 import { Picture } from "@/components/picture"
 import {
   DropdownMenu,
@@ -79,7 +79,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader>
         {header}
-        {search && <CommandSearch />}
+        {search && <SearchButton />}
       </SidebarHeader>
       <SidebarContent>
         {groups.map((g, i) => (

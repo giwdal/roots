@@ -87,15 +87,6 @@ export function CommandSearch() {
 
   return (
     <>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton tooltip={`${t("search.open")} (⌘K)`} onClick={() => setOpen(true)} className="text-muted-foreground">
-            <SearchIcon />
-            <span>{t("search.open")}</span>
-            <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">⌘K</kbd>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
       <CommandDialog open={open} onOpenChange={setOpen} title={t("search.open")} description={t("search.hint")}>
         <Command shouldFilter={false}>
           <CommandInput value={q} onValueChange={setQ} placeholder={t("search.placeholder")} />
@@ -127,5 +118,21 @@ export function CommandSearch() {
         </Command>
       </CommandDialog>
     </>
+  )
+}
+
+/** The sidebar's search row; the dialog itself lives once in the shell (the phone sidebar is a drawer and isn't mounted while closed). */
+export function SearchButton() {
+  const t = useT()
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={`${t("search.open")} (⌘K)`} onClick={() => document.dispatchEvent(new Event("roots:search"))} className="text-muted-foreground">
+          <SearchIcon />
+          <span>{t("search.open")}</span>
+          <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">⌘K</kbd>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   )
 }

@@ -46,7 +46,7 @@ export default async function AdminBilling({ searchParams }: PageProps<"/admin/b
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-heading text-2xl font-semibold">{t("admin.billing.title")}</h1>
+        <h1 className="sr-only">{t("admin.billing.title")}</h1>
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon-sm" aria-label={t("admin.billing.prev")} render={<Link href={`/admin/billing?month=${shift(month, -1)}`} />} nativeButton={false}>
             <ChevronLeftIcon />

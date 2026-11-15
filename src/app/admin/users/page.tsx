@@ -27,7 +27,7 @@ export default async function AdminUsers({ searchParams }: PageProps<"/admin/use
 
   return (
     <>
-      <h1 className="font-heading text-2xl font-semibold">{t("admin.users.title")}</h1>
+      <h1 className="sr-only">{t("admin.users.title")}</h1>
       <Notice error={!editId ? param(sp, "error") : undefined} ok={!editId ? param(sp, "ok") : undefined} />
       <SearchBox q={q} label={t("common.search")} />
       <DataTable

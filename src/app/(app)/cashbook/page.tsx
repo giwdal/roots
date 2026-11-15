@@ -7,6 +7,7 @@ import { ChevronLeftIcon, ChevronRightIcon, PaperclipIcon, PencilIcon, PlusIcon 
 import { DataTable } from "@/components/data-table"
 import { FileList } from "@/components/file-list"
 import { Notice } from "@/components/notice"
+import { DetailList } from "@/components/detail-list"
 import { SubmitButton } from "@/components/submit-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -355,26 +356,22 @@ async function EntryDrawer({ t, ctx, e, reversedBy, canManage, sp }: { t: T; ctx
     reversedBy === undefined ? ctx.supabase.from("cash_entries").select("number").eq("reverses_id", e.id).maybeSingle() : Promise.resolve({ data: null }),
   ])
   const reversal = reversedBy ?? later?.number
-  const row = (label: string, value: React.ReactNode) => (
-    <>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
-    </>
-  )
   return (
     <UrlSheet params={["edit"]} title={e.description} description={`${e.number} · ${t.money(e.amount_cents)}`}>
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-        {row(t("cashbook.date"), t.date(e.booked_on, { dateStyle: "medium" }))}
-        {row(t("cashbook.amount"), <span className={e.amount_cents < 0 ? "text-destructive tabular-nums" : "tabular-nums"}>{t.money(e.amount_cents)}</span>)}
-        {e.category && row(t("cashbook.category"), e.category)}
-        {e.sphere && row(t("cashbook.sphere"), t.dynamic(`cashbook.spheres.${e.sphere}`))}
-        {e.counterparty && row(t("cashbook.counterparty"), e.counterparty)}
-        {doc && row(t("cashbook.invoice"), <Link href={`/invoices/${doc.id}`} className="underline underline-offset-4">{doc.number}</Link>)}
-        {original && row(t("cashbook.reverses"), original.number)}
-        {reversal && row(t("cashbook.reversedBy"), reversal)}
-        {row(t("cashbook.bookedAt"), t.date(e.created_at, { dateStyle: "medium", timeStyle: "short" }))}
-      </dl>
+      <DetailList
+        items={[
+          { label: t("cashbook.date"), value: t.date(e.booked_on, { dateStyle: "medium" }) },
+          { label: t("cashbook.amount"), value: <span className={e.amount_cents < 0 ? "text-destructive tabular-nums" : "tabular-nums"}>{t.money(e.amount_cents)}</span> },
+          e.category && { label: t("cashbook.category"), value: e.category },
+          e.sphere && { label: t("cashbook.sphere"), value: t.dynamic(`cashbook.spheres.${e.sphere}`) },
+          e.counterparty && { label: t("cashbook.counterparty"), value: e.counterparty },
+          doc && { label: t("cashbook.invoice"), value: <Link href={`/invoices/${doc.id}`} className="underline underline-offset-4">{doc.number}</Link> },
+          original && { label: t("cashbook.reverses"), value: original.number },
+          reversal && { label: t("cashbook.reversedBy"), value: reversal },
+          { label: t("cashbook.bookedAt"), value: t.date(e.created_at, { dateStyle: "medium", timeStyle: "short" }) },
+        ]}
+      />
       <section className="grid gap-2" aria-labelledby="receipts">
         <h3 id="receipts" className="font-medium">
           {t("cashbook.receipts")}

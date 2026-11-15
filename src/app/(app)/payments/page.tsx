@@ -7,6 +7,7 @@ import { Page, PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
 import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
+import { DetailList } from "@/components/detail-list"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -139,30 +140,25 @@ async function OrderSheet({ t, orderId, canRefund, error, ok }: { t: T; orderId:
   return (
     <UrlSheet params={["edit"]} title={`${t("payments.order")} · ${t.money(order.amount_total, order.currency)}`} description={order.customer_email ?? undefined}>
       <Notice error={error} ok={ok} />
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">{t("payments.status")}</dt>
-        <dd><StatusBadge t={t} status={order.status} /></dd>
-        <dt className="text-muted-foreground">{t("payments.what")}</dt>
-        <dd>
-          {order.source_module === "tickets" && order.source_id ? (
-            <Link href={`/events/${order.source_id}/tickets#sold`} className="underline underline-offset-4">
-              {order.pay_order_items[0]?.description.split(" · ")[0] ?? t.dynamic(`payments.sources.${order.source_module}`)}
-            </Link>
-          ) : (
-            t.dynamic(`payments.sources.${order.source_module}`)
-          )}
-        </dd>
-        <dt className="text-muted-foreground">{t("payments.date")}</dt>
-        <dd>{t.date(order.created_at, { dateStyle: "medium", timeStyle: "short" })}</dd>
-        {order.paid_at && (
-          <>
-            <dt className="text-muted-foreground">{t("payments.paidAt")}</dt>
-            <dd>{t.date(order.paid_at, { dateStyle: "medium", timeStyle: "short" })}</dd>
-          </>
-        )}
-        <dt className="text-muted-foreground">{t("payments.fee")}</dt>
-        <dd className="tabular-nums">{t.money(order.application_fee, order.currency)}</dd>
-      </dl>
+      <DetailList
+        items={[
+          { label: t("payments.status"), value: <StatusBadge t={t} status={order.status} /> },
+          {
+            label: t("payments.what"),
+            value:
+              order.source_module === "tickets" && order.source_id ? (
+                <Link href={`/events/${order.source_id}/tickets#sold`} className="underline underline-offset-4">
+                  {order.pay_order_items[0]?.description.split(" · ")[0] ?? t.dynamic(`payments.sources.${order.source_module}`)}
+                </Link>
+              ) : (
+                t.dynamic(`payments.sources.${order.source_module}`)
+              ),
+          },
+          { label: t("payments.date"), value: t.date(order.created_at, { dateStyle: "medium", timeStyle: "short" }) },
+          order.paid_at && { label: t("payments.paidAt"), value: t.date(order.paid_at, { dateStyle: "medium", timeStyle: "short" }) },
+          { label: t("payments.fee"), value: <span className="tabular-nums">{t.money(order.application_fee, order.currency)}</span> },
+        ]}
+      />
 
       <section className="grid gap-2">
         <h3 className="font-medium">{t("payments.items")}</h3>

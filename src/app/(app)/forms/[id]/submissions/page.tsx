@@ -2,6 +2,7 @@ import Link from "next/link"
 import { DataTable, Pager, pageRange, PAGE_SIZE } from "@/components/data-table"
 import { ExportMenu } from "@/components/export-menu"
 import { Notice } from "@/components/notice"
+import { DetailList } from "@/components/detail-list"
 import { SubmitButton } from "@/components/submit-button"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
@@ -98,27 +99,23 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
               </Button>
             )}
           </div>
-          <dl className="grid gap-2 text-sm sm:grid-cols-[auto_1fr]">
-            {Object.entries(sub.data.contact ?? {})
-              .filter(([, v]) => v)
-              .map(([k, v]) => (
-                <Row key={k} label={CONTACT_INPUTS[k] ? t.dynamic(CONTACT_INPUTS[k].label) : k} value={String(v)} />
-              ))}
-            {Object.entries(sub.data.custom ?? {}).map(([k, v]) => (
-              <Row key={k} label={k} value={String(v)} />
-            ))}
-            {sub.data.membership && (
-              <>
-                <Row label={t("forms.fields.membershipType")} value={types?.find((x) => x.id === sub.data.membership!.type_id)?.name ?? "–"} />
-                {sub.data.membership.starts_on && <Row label={t("forms.fields.startsOn")} value={t.date(sub.data.membership.starts_on)} />}
-                {sub.data.membership.iban && <Row label="IBAN" value={sub.data.membership.iban} />}
-                {sub.data.membership.account_holder && <Row label={t("forms.accountHolder")} value={sub.data.membership.account_holder} />}
-              </>
-            )}
-            {sub.data.consents?.map((c, i) => (
-              <Row key={i} label={c.accepted ? "✓" : "✗"} value={c.label} />
-            ))}
-          </dl>
+          <DetailList
+            items={[
+              ...Object.entries(sub.data.contact ?? {})
+                .filter(([, v]) => v)
+                .map(([k, v]) => row(CONTACT_INPUTS[k] ? t.dynamic(CONTACT_INPUTS[k].label) : k, String(v))),
+              ...Object.entries(sub.data.custom ?? {}).map(([k, v]) => row(k, String(v))),
+              ...(sub.data.membership
+                ? [
+                    row(t("forms.fields.membershipType"), types?.find((x) => x.id === sub.data.membership!.type_id)?.name ?? "–"),
+                    sub.data.membership.starts_on && row(t("forms.fields.startsOn"), t.date(sub.data.membership.starts_on)),
+                    sub.data.membership.iban && row("IBAN", sub.data.membership.iban),
+                    sub.data.membership.account_holder && row(t("forms.accountHolder"), sub.data.membership.account_holder),
+                  ]
+                : []),
+              ...(sub.data.consents ?? []).map((c) => row(c.accepted ? "✓" : "✗", c.label)),
+            ]}
+          />
           {canManage && sub.status === "new" && (
             <div className="flex flex-wrap gap-2">
               <form action={acceptSubmission}>
@@ -139,13 +136,8 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="break-words whitespace-pre-line">{value}</dd>
-    </>
-  )
+function row(label: string, value: string) {
+  return { label, value: <span className="whitespace-pre-line">{value}</span> }
 }
 
 export const instant = false

@@ -1,3 +1,4 @@
+import { DetailList } from "@/components/detail-list"
 import Link from "next/link"
 import { ActionsMenu, MenuDownload, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { Page, PageHeader } from "@/components/page"
@@ -149,26 +150,15 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
         </>
       ) : (
         <div className="grid gap-4">
-          <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
-            <dt className="text-muted-foreground">{t("invoices.recipient")}</dt>
-            <dd className="whitespace-pre-line">{[doc.recipient_name, doc.recipient_address].filter(Boolean).join("\n")}</dd>
-            <dt className="text-muted-foreground">{t("invoices.issueDate")}</dt>
-            <dd>{doc.issue_date && t.date(`${doc.issue_date}T12:00:00Z`)}</dd>
-            {doc.due_date && (
-              <>
-                <dt className="text-muted-foreground">{t("invoices.dueDate")}</dt>
-                <dd>{t.date(`${doc.due_date}T12:00:00Z`)}</dd>
-              </>
-            )}
-            {doc.paid_at && (
-              <>
-                <dt className="text-muted-foreground">{t("invoices.paidAt")}</dt>
-                <dd>{t.date(doc.paid_at)}</dd>
-              </>
-            )}
-            <dt className="text-muted-foreground">{t("invoices.gross")}</dt>
-            <dd className="font-semibold">{t.money(doc.gross_total, doc.currency)}</dd>
-          </dl>
+          <DetailList
+            items={[
+              { label: t("invoices.recipient"), value: <span className="whitespace-pre-line">{[doc.recipient_name, doc.recipient_address].filter(Boolean).join("\n")}</span> },
+              { label: t("invoices.issueDate"), value: doc.issue_date && t.date(`${doc.issue_date}T12:00:00Z`) },
+              doc.due_date && { label: t("invoices.dueDate"), value: t.date(`${doc.due_date}T12:00:00Z`) },
+              doc.paid_at && { label: t("invoices.paidAt"), value: t.date(doc.paid_at) },
+              { label: t("invoices.gross"), value: <span className="font-semibold">{t.money(doc.gross_total, doc.currency)}</span> },
+            ]}
+          />
           <ol className="grid gap-1 rounded-lg border p-3 text-sm">
             {items.map((i, n) => (
               <li key={i.id} className="flex justify-between gap-3">

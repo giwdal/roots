@@ -1,3 +1,4 @@
+import { DetailList } from "@/components/detail-list"
 import { SendIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { DataTable } from "@/components/data-table"
@@ -157,14 +158,13 @@ function Placeholders({ t }: { t: T }) {
   return (
     <details className="rounded-lg border p-3 text-sm">
       <summary className="cursor-pointer font-medium">{t("email.templates.placeholders")}</summary>
-      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-        {EVENT_PLACEHOLDERS.map((p) => (
-          <div key={p} className="contents">
-            <dt className="font-mono text-xs">{`{${p}}`}</dt>
-            <dd className="text-muted-foreground">{t.dynamic(`email.eventMail.vars.${p}`)}</dd>
-          </div>
-        ))}
-      </dl>
+      <DetailList
+        className="mt-2"
+        items={EVENT_PLACEHOLDERS.map((p) => ({
+          label: <span className="font-mono text-xs text-foreground">{`{${p}}`}</span>,
+          value: <span className="text-muted-foreground">{t.dynamic(`email.eventMail.vars.${p}`)}</span>,
+        }))}
+      />
     </details>
   )
 }

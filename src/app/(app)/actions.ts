@@ -7,7 +7,8 @@ import { loginTokenForContact } from "@/portal/session"
 
 export async function switchOrg(orgId: string) {
   const ctx = await getContext()
-  if (!ctx.orgs.some((o) => o.id === orgId)) return
+  // Members switch between their orgs; platform admins may open any org (getContext checks it exists).
+  if (!ctx.orgs.some((o) => o.id === orgId) && !(ctx.isPlatformAdmin && /^[0-9a-f-]{36}$/.test(orgId))) return
   await setActiveOrg(orgId)
   redirect(APP_HOME)
 }

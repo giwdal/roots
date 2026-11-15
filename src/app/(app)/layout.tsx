@@ -4,17 +4,19 @@ import { AppShell } from "@/components/app-shell"
 import type { SidebarLink } from "@/components/app-sidebar"
 import { OrgSwitcher } from "@/components/org-switcher"
 import { getT } from "@/i18n/server"
-import { getContext } from "@/lib/context"
+import { getContext, getSession } from "@/lib/context"
 import { visibleNav } from "@/modules/nav"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getContext()
   const t = await getT()
-  const [{ count: unread }, { data: me }, { data: myContact }] = await Promise.all([
+  const [{ count: unread }, { data: me }, { data: myContact }, { data: allOrgs }] = await Promise.all([
     ctx.supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", ctx.userId).is("read_at", null),
     ctx.supabase.from("profiles").select("full_name, avatar_path").eq("id", ctx.userId).maybeSingle(),
     // Linked to a contact of this org → "Mein Mitgliederbereich" in the user menu (members module on).
     ctx.modules.has("members") ? ctx.supabase.from("contacts").select("id").eq("org_id", ctx.org.id).eq("user_id", ctx.userId).is("deleted_at", null).maybeSingle() : Promise.resolve({ data: null }),
+    // Platform admins switch between every org (unscoped session client: no x-org-id).
+    ctx.isPlatformAdmin ? getSession().then((s) => s!.supabase.from("orgs").select("id, name, logo_path").is("deleted_at", null).order("name").limit(500)) : Promise.resolve({ data: null }),
   ])
   // Areas with their sub-pages (src/modules/nav.ts); an area opens its first sub-page.
   const moduleLinks: SidebarLink[] = visibleNav((m) => ctx.modules.has(m), ctx.can).map((a) => ({
@@ -46,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       search
       orgId={ctx.org.id}
-      header={<OrgSwitcher orgs={ctx.orgs} current={ctx.org} />}
+      header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} memberOf={allOrgs ? ctx.orgs.filter((o) => !ctx.viaPlatform || o.id !== ctx.org.id).map((o) => o.id) : undefined} />}
       groups={groups}
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}

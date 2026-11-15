@@ -5,7 +5,7 @@ import { Loader2Icon, PlusIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 import { quickCreateContact, searchContacts } from "@/app/(app)/contacts/search"
 import { Label } from "@/components/ui/label"
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { ContentSheet, ContentSheetTitle } from "@/components/content-sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useT } from "@/i18n/client"
@@ -156,24 +156,19 @@ function QuickCreate({ initial, onClose, onCreated }: { initial: string; onClose
     </div>
   )
   return (
-    <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{t("contacts.new")}</SheetTitle>
-        </SheetHeader>
-        <div className="grid gap-4 overflow-y-auto px-4 sm:grid-cols-2">
-          {field("first_name", t("contacts.firstName"))}
-          {field("last_name", t("contacts.lastName"))}
-          <div className="sm:col-span-2">{field("email", t("contacts.email"), "email")}</div>
-          {field("phone", t("contacts.phone"), "tel")}
-          {field("company", t("contacts.company"))}
-        </div>
-        <SheetFooter>
-          <Button type="button" onClick={save} disabled={saving}>
-            {saving && <Loader2Icon className="animate-spin" />} {t("contacts.quickSave")}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <ContentSheet label={t("contacts.new")} onClose={() => {}} onClosed={onClose} header={<ContentSheetTitle className="text-base font-semibold">{t("contacts.new")}</ContentSheetTitle>}>
+      <div className="grid gap-4 px-6 pt-6 sm:grid-cols-2">
+        {field("first_name", t("contacts.firstName"))}
+        {field("last_name", t("contacts.lastName"))}
+        <div className="sm:col-span-2">{field("email", t("contacts.email"), "email")}</div>
+        {field("phone", t("contacts.phone"), "tel")}
+        {field("company", t("contacts.company"))}
+      </div>
+      <div className="px-6 pt-4 pb-8">
+        <Button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto">
+          {saving && <Loader2Icon className="animate-spin" />} {t("contacts.quickSave")}
+        </Button>
+      </div>
+    </ContentSheet>
   )
 }

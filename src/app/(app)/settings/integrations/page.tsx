@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Notice } from "@/components/notice"
-import { UrlDialog } from "@/components/url-dialog"
+import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -205,7 +205,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
       <NotificationsSection sp={sp} />
 
       {connecting?.fields && (
-        <UrlDialog
+        <UrlSheet
           params={["connect"]}
           title={t("integrations.connectTitle", { name: connecting.name })}
           description={t.dynamic(`integrations.${connecting.key}.description`)}
@@ -247,7 +247,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
             })}
             <SubmitButton>{t("common.save")}</SubmitButton>
           </form>
-        </UrlDialog>
+        </UrlSheet>
       )}
     </div>
   )

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, IdCardIcon, LanguagesIcon, LogOutIcon, SearchIcon, UserIcon } from "lucide-react"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, IdCardIcon, LanguagesIcon, LogOutIcon, UserIcon } from "lucide-react"
 import { openMyMemberArea } from "@/app/(app)/actions"
 import { signOut } from "@/app/login/actions"
 import type { Me, SidebarLink } from "@/components/app-sidebar"
@@ -24,7 +24,7 @@ const ROW = `flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-
 const manyChildren = (n: SidebarLink) => (n.children?.length ?? 0) > 1
 
 /**
- * Phones: the "Menü" tab opens this bottom sheet instead of the sidebar. Level 1 = org switcher, search, the areas as
+ * Phones: the "Menü" tab opens this bottom sheet instead of the sidebar. Level 1 = org switcher, the areas as
  * tiles (same `groups` as the sidebar), account rows; an area with sub-pages drills into level 2 (big rows).
  * Opens on the "roots:menu" event, always at level 1.
  */
@@ -57,11 +57,6 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
 
   if (!open) return null
   const current = area ? items.find((n) => n.href === area) : undefined
-
-  const search = () => {
-    setOpen(false)
-    document.dispatchEvent(new Event("roots:search"))
-  }
 
   return (
     <ContentSheet
@@ -109,9 +104,6 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
             {t("shell.menu")}
           </ContentSheetTitle>
           {switchOrgs && header}
-          <button type="button" onClick={search} className={cn("flex h-11 w-full items-center gap-2 rounded-xl border px-3 text-sm text-muted-foreground", TAP)}>
-            <SearchIcon className="size-4" /> {t("search.open")}
-          </button>
           {groups.map((g, i) => (
             <section key={i} aria-label={g.label ?? t("shell.mainNav")} className="grid gap-2">
               {g.label && <h3 className="px-1 text-xs font-medium text-muted-foreground">{g.label}</h3>}

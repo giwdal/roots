@@ -18,6 +18,7 @@ test("mcp: operation names, risk, confirm payload", () => {
   assert.equal(riskOf("POST", "/contacts"), "write")
   assert.equal(riskOf("DELETE", "/contacts/{id}"), "danger")
   assert.equal(riskOf("POST", "/email/campaigns/{id}/send"), "danger")
+  assert.equal(riskOf("POST", "/contacts/{id}/merge"), "danger")
   assert.equal(riskOf("POST", "/payments/orders/{id}/refund"), "danger")
   assert.equal(riskOf("POST", "/workflows/validate"), "read")
 

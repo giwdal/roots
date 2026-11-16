@@ -86,7 +86,7 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
 - **Bulk actions** (tick boxes + bulk bar) are tablet/desktop only: `<DataTable>` cards on phones have no tick boxes, so anything a bulk action does must also be possible on the single record.
 - **Touch**: nothing only on hover — whatever appears on hover is also in a ⋯ menu or visible; touch targets at least
   `size-8`, bar items and the primary action at least 44px high.
-- **Inputs** keep the shadcn sizes (`text-base` on phones), so iOS doesn't zoom; use `<TypedInput kind>` so phones get
+- **Inputs** keep the shadcn sizes (`text-base` on phones), so iOS doesn't zoom (a global rule in `globals.css` forces 16px on every field on phones as a safety net; never disable zoom via the viewport); use `<TypedInput kind>` so phones get
   the right keyboard (numbers, email, phone).
 - A page with its own bottom tab bar (Einlass) marks it `data-own-tab-bar`; the App bar then hides instead of adding a second one.
 

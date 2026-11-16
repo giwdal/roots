@@ -1194,6 +1194,80 @@ begin
     reset role;
   end;
 
+  -- Contacts merge: everything of D moves to K, D goes to the trash, chosen fields come from D; guards hold
+  declare v_k uuid; v_d uuid; v_x uuid; v_f uuid; v_type uuid; v_doc uuid; v_m uuid; v_wf uuid; v_runs int; v_row record;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.contacts (org_id, first_name, last_name, email, tags) values (org_a, 'Anna', 'Muster', 'k@merge.test', '{a}') returning id into v_k;
+    insert into public.contacts (org_id, first_name, last_name, email, tags, unsubscribed_at) values (org_a, ' anna', 'muster  ', 'd@merge.test', '{A,b}', now()) returning id into v_d;
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'X', 'x@merge.test') returning id into v_x;
+    select count(*) into n from public.contact_duplicates(org_a) where a_id = least(v_k, v_d) and b_id = greatest(v_k, v_d);
+    assert n = 1, 'duplicates by name (case, spaces)';
+    insert into public.contact_notes (org_id, contact_id, body) values (org_a, v_k, 'K'), (org_a, v_d, 'D');
+    v_type := (select id from public.membership_types where org_id = org_a limit 1);
+    insert into public.memberships (org_id, contact_id, type_id, starts_on, ends_on) values (org_a, v_d, v_type, '2022-01-01', '2022-12-31') returning id into v_m;
+    insert into public.memberships (org_id, contact_id, type_id, starts_on, ends_on) values (org_a, v_x, v_type, '2022-06-01', '2022-08-31');
+    insert into public.documents (org_id, kind, contact_id, recipient_name, recipient_address, service_from)
+      values (org_a, 'invoice', v_d, 'Anna D', 'Str. 1\n12345 Ort', current_date) returning id into v_doc;
+    insert into public.document_items (org_id, document_id, position, title, unit, unit_price, tax_rate) values (org_a, v_doc, 0, 'Leistung', 'hour', 5000, 19);
+    perform public.issue_document(v_doc);
+    insert into public.workflows (org_id, name, active, trigger_type, graph) values (org_a, 'Merge', true, 'record:memberships:update', '{"nodes": [], "edges": []}') returning id into v_wf;
+    reset role;
+    update public.contacts set member_code = 'ABCDEFGHJKLM' where id = v_d;
+    insert into public.contacts (org_id, email) values (org_b, 'f@merge.test') returning id into v_f;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.merge_contacts(v_x, v_d);
+      assert false, 'overlapping memberships must stop the merge';
+    exception when raise_exception then assert sqlerrm = 'membership_overlap', 'overlap: ' || sqlerrm; end;
+    begin
+      perform public.merge_contacts(v_k, v_k);
+      assert false, 'merge with itself';
+    exception when raise_exception then assert sqlerrm = 'merge_same', 'same: ' || sqlerrm; end;
+    begin
+      perform public.merge_contacts(v_k, v_f);
+      assert false, 'merge with a contact of another org';
+    exception when raise_exception then assert sqlerrm = 'merge_not_found', 'foreign: ' || sqlerrm; end;
+    reset role;
+    select deleted_at is null as live, (select count(*) from public.contact_notes where contact_id = v_d) as notes into v_row from public.contacts where id = v_d;
+    assert v_row.live and v_row.notes = 1, 'a failed merge changes nothing';
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.merge_contacts(v_k, v_d);
+      assert false, 'B must not merge contacts of A';
+    exception when raise_exception then assert sqlerrm = 'not_allowed', 'B: ' || sqlerrm; end;
+    select count(*) into n from public.contact_duplicates(org_a);               assert n = 0, 'B sees duplicates of A';
+    reset role;
+    select count(*) into v_runs from public.workflow_runs where workflow_id = v_wf;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    assert public.merge_contacts(v_k, v_d, '{email,member_code}', 'Zusammengeführt') = v_k, 'merge returns the kept contact';
+    reset role;
+    select count(*) into n from public.contact_notes where contact_id = v_k;    assert n = 3, 'notes moved + merge note';
+    select count(*) into n from public.memberships where id = v_m and contact_id = v_k; assert n = 1, 'membership moved';
+    select * into v_row from public.contacts where id = v_d;
+    assert v_row.deleted_at is not null and v_row.member_code is null and v_row.email = 'd@merge.test', 'dropped contact in the trash, card code freed';
+    select * into v_row from public.contacts where id = v_k;
+    assert v_row.email = 'd@merge.test' and v_row.member_code = 'ABCDEFGHJKLM', 'taken email + card code';
+    assert v_row.tags = '{a,b}', 'tags united: ' || v_row.tags::text;
+    assert v_row.unsubscribed_at is not null and v_row.first_name = 'Anna', 'opt-out wins, untaken fields stay';
+    select * into v_row from public.documents where id = v_doc;
+    assert v_row.contact_id = v_k and v_row.recipient_name = 'Anna D', 'issued invoice moves, recipient frozen';
+    select count(*) into n from public.workflow_runs where workflow_id = v_wf;  assert n = v_runs, 'merge starts no workflow runs';
+    select count(*) into n from public.contact_duplicates(org_a) where v_k in (a_id, b_id); assert n = 0, 'merged pair is no duplicate any more';
+    perform set_config('roots.merging', '', true); -- set for the rest of the transaction (one RPC = one transaction)
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      update public.documents set contact_id = v_x where id = v_doc;
+      assert false, 'issued invoice link stays frozen outside a merge';
+    exception when raise_exception then null; end;
+    reset role;
+  end;
+
   -- API keys: the service role gets org rights only with a live key of that org (x-api-key-hash + x-org-id),
   -- only for the key's permissions that its creator (A, owner) still has; never owner rights.
   reset role;

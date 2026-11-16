@@ -2705,6 +2705,14 @@ isOneToOne: false
               "actor_id": string,"at": string,"new": Json,"old": Json,"via": string
             }[]
                            },
+"contact_duplicates":
+{ Args: { "p_limit"?: number,"p_offset"?: number,"p_org": string }; Returns: {
+              "a_id": string,"b_id": string
+            }[]
+                           },
+"contact_refs":
+{ Args: { "p_contact": string }; Returns: Json
+                           },
 "contact_tags":
 { Args: { "p_org": string }; Returns: string[]
                            },
@@ -2846,6 +2854,9 @@ isOneToOne: false
                            },
 "members_with_perm":
 { Args: { "p_org": string,"p_perm": string }; Returns: string[]
+                           },
+"merge_contacts":
+{ Args: { "p_drop": string,"p_keep": string,"p_note"?: string,"p_take"?: (string)[] }; Returns: string
                            },
 "module_enabled":
 { Args: { "p_key": string,"p_org": string }; Returns: boolean

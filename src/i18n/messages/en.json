@@ -742,6 +742,7 @@
     "not_signed_in": "Please sign in first.",
     "owner_only": "Only owners can change who is an owner.",
     "last_owner": "An organisation needs at least one owner.",
+    "event_cancelled": "This event is cancelled – no admission.",
     "invite_invalid": "This invite is invalid or has expired.",
     "invite_wrong_email": "This invite was sent to {detail}. Sign in with that email to accept it.",
     "unknown_module": "Unknown module.",

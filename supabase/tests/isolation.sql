@@ -390,6 +390,20 @@ begin
     select result into v_res from public.check_in_ticket(v_ev, v_code);        assert v_res = 'used', 'second scan says used';
     select result into v_res from public.check_in_ticket(v_ev, 'ZZZZZZZZZZ');  assert v_res = 'invalid', 'unknown code invalid';
     reset role;
+    -- a cancelled event lets nobody in (B1): the other ticket of the order is still valid
+    declare v_was text;
+    begin
+      select status into v_was from public.events where id = v_ev;
+      update public.events set status = 'cancelled' where id = v_ev;
+      select code into v_code from public.tickets where order_id = v_order and status = 'valid';
+      set local role authenticated;
+      begin
+        perform public.check_in_ticket(v_ev, v_code);
+        assert false, 'checked in at a cancelled event';
+      exception when raise_exception then assert sqlerrm = 'event_cancelled', 'cancelled event: ' || sqlerrm; end;
+      reset role;
+      update public.events set status = v_was where id = v_ev;
+    end;
     -- Tiers: Early (1 left) → Regular; codes: -50 %, max 1 use, unlocks the hidden Crew type
     declare v_vip uuid; v_crew uuid; v_order2 uuid; v_price int; v_tier text;
     begin

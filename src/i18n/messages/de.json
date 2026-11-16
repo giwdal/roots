@@ -742,6 +742,7 @@
     "not_signed_in": "Bitte melde dich zuerst an.",
     "owner_only": "Nur Inhaber können ändern, wer Inhaber ist.",
     "last_owner": "Eine Organisation braucht mindestens einen Inhaber.",
+    "event_cancelled": "Das Event ist abgesagt – kein Einlass.",
     "invite_invalid": "Diese Einladung ist ungültig oder abgelaufen.",
     "invite_wrong_email": "Diese Einladung ging an {detail}. Melde dich mit dieser E-Mail an, um sie anzunehmen.",
     "unknown_module": "Unbekanntes Modul.",

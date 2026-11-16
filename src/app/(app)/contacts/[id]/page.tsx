@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { FileTextIcon, MailIcon, PhoneIcon, Trash2Icon } from "lucide-react"
+import { FileTextIcon, MailIcon, MergeIcon, PhoneIcon, Trash2Icon } from "lucide-react"
 import { FileList } from "@/components/file-list"
 import { Notice } from "@/components/notice"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
@@ -63,9 +63,14 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   ])
   if (!c) notFound()
   // Team access: the linked account, and (for managers) the team members who could be linked.
-  const [{ data: team }, { data: linkedElsewhere }] = await Promise.all([
+  // Same first + last name = possible duplicate (managers can merge it); % and _ are literal here.
+  const like = (v: string) => v.trim().replace(/[\\%_]/g, "\\$&")
+  const [{ data: team }, { data: linkedElsewhere }, { data: sameName }] = await Promise.all([
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
+    canManage && !c.deleted_at && c.first_name?.trim() && c.last_name?.trim()
+      ? ctx.supabase.from("contacts").select("id, first_name, last_name, company, email").eq("org_id", ctx.org.id).is("deleted_at", null).neq("id", c.id).ilike("first_name", like(c.first_name)).ilike("last_name", like(c.last_name)).limit(3)
+      : Promise.resolve({ data: [] }),
   ])
   const { data: people } = team?.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", team.map((m) => m.user_id)) : { data: [] }
   const linked = people?.find((p) => p.id === c.user_id)
@@ -119,6 +124,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
               )}
               {canManage && (
                 <>
+                  <MenuLink href={`/contacts/${c.id}/merge`} icon={<MergeIcon />}>
+                    {t("contacts.merge.action")}
+                  </MenuLink>
                   <MenuSeparator />
                   <MenuSubmit form="trash-contact" icon={<Trash2Icon />} destructive>
                     {t("contacts.toTrash")}
@@ -152,6 +160,13 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         <RecordLayout
           aside={
             <>
+            {!!sameName?.length && (
+              <Section id="duplicate" title={t("contacts.merge.duplicate")}>
+                <Rows
+                  rows={sameName.map((o) => ({ key: o.id, href: `/contacts/${c.id}/merge?with=${o.id}`, title: contactName(o), detail: o.email ?? "", badge: t("contacts.duplicates.merge") }))}
+                />
+              </Section>
+            )}
             {(linked || canManage) && (
               <Section id="team" title={t("contacts.team.title")}>
                 {linked ? (

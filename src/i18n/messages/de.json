@@ -1424,6 +1424,8 @@
       "swap": "Tauschen",
       "into": "{drop} wird in {keep} übernommen. {drop} kommt danach in den Papierkorb.",
       "choose": "Welcher Wert bleibt?",
+      "keepThis": "dieser Kontakt",
+      "takeOther": "anderer Kontakt",
       "chooseHint": "Nur Felder, die bei beiden ausgefüllt sind und sich unterscheiden. Leere Felder füllt der andere Kontakt automatisch.",
       "noChoice": "Keine widersprüchlichen Felder: leere Felder werden aus dem anderen Kontakt ergänzt.",
       "address": "Adresse",

@@ -1424,6 +1424,8 @@
       "swap": "Swap",
       "into": "{drop} is merged into {keep}. {drop} then goes to the trash.",
       "choose": "Which value stays?",
+      "keepThis": "this contact",
+      "takeOther": "other contact",
       "chooseHint": "Only fields both have filled in differently. Empty fields are filled from the other contact automatically.",
       "noChoice": "No conflicting fields: empty fields are filled from the other contact.",
       "address": "Address",

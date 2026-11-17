@@ -390,6 +390,20 @@ begin
     select result into v_res from public.check_in_ticket(v_ev, v_code);        assert v_res = 'used', 'second scan says used';
     select result into v_res from public.check_in_ticket(v_ev, 'ZZZZZZZZZZ');  assert v_res = 'invalid', 'unknown code invalid';
     reset role;
+    -- a cancelled event lets nobody in (B1): the other ticket of the order is still valid
+    declare v_was text;
+    begin
+      select status into v_was from public.events where id = v_ev;
+      update public.events set status = 'cancelled' where id = v_ev;
+      select code into v_code from public.tickets where order_id = v_order and status = 'valid';
+      set local role authenticated;
+      begin
+        perform public.check_in_ticket(v_ev, v_code);
+        assert false, 'checked in at a cancelled event';
+      exception when raise_exception then assert sqlerrm = 'event_cancelled', 'cancelled event: ' || sqlerrm; end;
+      reset role;
+      update public.events set status = v_was where id = v_ev;
+    end;
     -- Tiers: Early (1 left) → Regular; codes: -50 %, max 1 use, unlocks the hidden Crew type
     declare v_vip uuid; v_crew uuid; v_order2 uuid; v_price int; v_tier text;
     begin
@@ -1002,7 +1016,7 @@ begin
   end;
 
   -- Guest lists of an event get their own hidden ticket type; every entry a ticket (QR, counts against capacity)
-  declare v_ev uuid; v_list uuid; v_type uuid; v_active boolean;
+  declare v_ev uuid; v_list uuid; v_type uuid; v_active boolean; v_entry uuid; v_code text; v_res text;
   begin
     insert into public.org_modules (org_id, module_key) values (org_a, 'guestlists') on conflict do nothing;
     insert into public.events (org_id, title, slug, starts_at) values (org_a, 'GL Party', 'gl-party', now() + interval '3 days') returning id into v_ev;
@@ -1015,6 +1029,17 @@ begin
     select count(*) into n from public.tickets where type_id = v_type and status = 'valid';  assert n = 1, 'each guest gets a ticket';
     update public.guest_lists set name = 'Crew' where id = v_list;
     select count(*) into n from public.ticket_types where id = v_type and name = 'Gästeliste: Crew';  assert n = 1, 'renaming the list renames its type';
+
+    -- One admission per guest (#32): checking in by name uses up the QR ticket, a scan records the name check-in
+    select k.guest_entry_id, k.code into v_entry, v_code from public.tickets k where k.type_id = v_type and k.status = 'valid';
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.guest_checkins (org_id, entry_id, event_id) values (org_a, v_entry, v_ev);
+    select result into v_res from public.check_in_ticket(v_ev, v_code);  assert v_res = 'used', 'scan after name check-in: ' || v_res;
+    delete from public.guest_checkins where entry_id = v_entry and event_id = v_ev;
+    select result into v_res from public.check_in_ticket(v_ev, v_code);  assert v_res = 'ok', 'undo makes the ticket valid again: ' || v_res;
+    select count(*) into n from public.guest_checkins where entry_id = v_entry and event_id = v_ev;  assert n = 1, 'a scan records the guest check-in';
+    reset role;
   end;
 
   -- Assistant: chats and AI keys are private to their person (not even teammates in the same org see them)

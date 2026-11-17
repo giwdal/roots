@@ -449,7 +449,7 @@ export const endpoints: Endpoint[] = [
     permission: "tickets.scan",
     tag: "Tickets",
     summary: "Check in a ticket by its code",
-    description: "Same as the door scanner: `ok` = let in (now marked used), `used` = already checked in (at `checked_in_at`), `invalid` = unknown, unpaid or void code.",
+    description: "Same as the door scanner: `ok` = let in (now marked used), `used` = already checked in (at `checked_in_at`), `invalid` = unknown, unpaid or void code. A cancelled event lets nobody in: 422 `event_cancelled`.",
     body: z.object({ code: z.string().min(1).max(40) }).strict(),
     response: z.object({
       result: z.enum(["ok", "used", "invalid"]),

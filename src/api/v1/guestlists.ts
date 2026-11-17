@@ -390,7 +390,7 @@ export const endpoints: Endpoint[] = [
     permission: "guestlists.checkin",
     tag: TAG,
     summary: "Check a guest in",
-    description: "At the list's event; entries of permanent lists need `event_id`. Fails with 409 if already checked in at that event.",
+    description: "At the list's event; entries of permanent lists need `event_id`. Fails with 409 if already checked in at that event, with 422 `event_cancelled` if the event is cancelled.",
     body: z.object({ event_id: uuid.optional() }).strict(),
     response: Checkin,
     status: 201,

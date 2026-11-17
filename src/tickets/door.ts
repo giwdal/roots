@@ -15,13 +15,13 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 /** What the door can sell: shop types (hidden ones too) at today's price, seats left, the event's payment methods. */
 export async function doorOffer(orgId: string, eventId: string) {
   const [{ data: ev }, { data: types }, { data: offer }, { data: left }, can] = await Promise.all([
-    db().from("events").select("id, title, door").eq("id", eventId).eq("org_id", orgId).is("deleted_at", null).maybeSingle(),
+    db().from("events").select("id, title, door, status").eq("id", eventId).eq("org_id", orgId).is("deleted_at", null).maybeSingle(),
     db().from("ticket_types").select("id, name, price, currency, active").eq("event_id", eventId).eq("org_id", orgId).is("guest_list_id", null).eq("for_members", false).eq("active", true).order("position").order("created_at"),
     db().rpc("ticket_offer", { p_event: eventId }),
     db().rpc("event_left", { p_event: eventId }),
     posMethods(orgId),
   ])
-  if (!ev) return null
+  if (!ev || ev.status === "cancelled") return null
   const settings = readDoor(ev.door)
   const now = new Map((offer ?? []).map((o) => [o.type_id, o]))
   return {

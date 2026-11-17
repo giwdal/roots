@@ -7,7 +7,7 @@ import { Notice } from "@/components/notice"
 import { FormCard, Page, PageHeader } from "@/components/page"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
-import { conflicts, defaultTake, mergeValue, type MergeContact } from "@/contacts/merge"
+import { conflicts, mergeValue, type MergeContact } from "@/contacts/merge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
@@ -85,7 +85,6 @@ export default async function MergeContactPage({ params, searchParams }: { param
     return v
   }
   const choose = conflicts(k, d, customKeys)
-  const auto = defaultTake(k, d, customKeys)
   const moves = Object.entries((refs ?? {}) as Record<string, number>).filter(([, n]) => n > 0)
 
   return (
@@ -101,9 +100,6 @@ export default async function MergeContactPage({ params, searchParams }: { param
       <form action={mergeContact} className="grid gap-6">
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="drop" value={drop.id} />
-        {auto.map((key) => (
-          <input key={key} type="hidden" name={`take.${key}`} value="drop" />
-        ))}
         <FormCard title={t("contacts.merge.choose")} description={choose.length ? t("contacts.merge.chooseHint") : t("contacts.merge.noChoice")}>
           <div className="grid gap-5">
             {choose.map((key) => (

@@ -39,6 +39,13 @@ export const defaultTake = (keep: MergeContact, drop: MergeContact, customKeys: 
 export const conflicts = (keep: MergeContact, drop: MergeContact, customKeys: string[]) =>
   keysOf(customKeys).filter((k) => mergeValue(keep, k) && mergeValue(drop, k) && mergeValue(keep, k) !== mergeValue(drop, k))
 
+// What a merge takes from the dropped contact: the caller's choice plus every field the kept one has empty, so the
+// App, the API, MCP and Sprout merge the same way. null = invalid choice.
+export function takeFor(keep: MergeContact, drop: MergeContact, raw: unknown, customKeys: string[]): string[] | null {
+  const take = readTake(raw, customKeys)
+  return take && [...new Set([...take, ...defaultTake(keep, drop, customKeys)])]
+}
+
 export function readTake(raw: unknown, customKeys: string[]): string[] | null {
   if (!Array.isArray(raw)) return null
   const allowed = new Set(keysOf(customKeys))

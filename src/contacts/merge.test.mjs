@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { conflicts, defaultTake, mergeValue, readTake } from "./merge.ts"
+import { conflicts, defaultTake, mergeValue, readTake, takeFor } from "./merge.ts"
 
 const empty = {
   first_name: null, last_name: null, company: null, email: null, phone: null, street: null, postal_code: null,
@@ -35,4 +35,12 @@ test("readTake rejects unknown", () => {
   assert.equal(readTake("email", []), null)
   assert.deepEqual(readTake(["email", "email"], []), ["email"])
   assert.deepEqual(readTake(["custom.dj_name", "address"], ["dj_name"]), ["custom.dj_name", "address"])
+})
+
+test("takeFor fills empty fields for every caller (API passes nothing)", () => {
+  const k = c({ email: "k@x.de" })
+  const d = c({ email: "d@x.de", phone: "030 1" })
+  assert.deepEqual(takeFor(k, d, [], []), ["phone"])
+  assert.deepEqual(takeFor(k, d, ["email"], []), ["email", "phone"])
+  assert.equal(takeFor(k, d, ["nope"], []), null)
 })

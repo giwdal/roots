@@ -1195,7 +1195,7 @@ begin
   end;
 
   -- Contacts merge: everything of D moves to K, D goes to the trash, chosen fields come from D; guards hold
-  declare v_k uuid; v_d uuid; v_x uuid; v_f uuid; v_type uuid; v_doc uuid; v_m uuid; v_wf uuid; v_runs int; v_row record;
+  declare v_k uuid; v_d uuid; v_x uuid; v_f uuid; v_z uuid; v_type uuid; v_doc uuid; v_m uuid; v_wf uuid; v_runs int; v_row record; v_course uuid; v_obj uuid; v_rent uuid;
   begin
     perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
     set local role authenticated;
@@ -1213,6 +1213,15 @@ begin
     insert into public.document_items (org_id, document_id, position, title, unit, unit_price, tax_rate) values (org_a, v_doc, 0, 'Leistung', 'hour', 5000, 19);
     perform public.issue_document(v_doc);
     insert into public.workflows (org_id, name, active, trigger_type, graph) values (org_a, 'Merge', true, 'record:memberships:update', '{"nodes": [], "edges": []}') returning id into v_wf;
+    -- Same person twice in a full course (D has the place, Z and then K wait) and on one rental (D main tenant, K member)
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'Z', 'z@merge.test') returning id into v_z;
+    insert into public.courses (org_id, title, capacity) values (org_a, 'Merge-Kurs', 1) returning id into v_course;
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_d);
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_z); -- waits longer than K
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_k);
+    insert into public.rental_objects (org_id, kind, name, rentable) values (org_a, 'room', 'Merge-Raum', true) returning id into v_obj;
+    insert into public.rentals (org_id, object_id, starts_at) values (org_a, v_obj, '2027-01-01') returning id into v_rent;
+    insert into public.rental_contacts (org_id, rental_id, contact_id, role) values (org_a, v_rent, v_d, 'main'), (org_a, v_rent, v_k, 'member');
     reset role;
     update public.contacts set member_code = 'ABCDEFGHJKLM' where id = v_d;
     insert into public.contacts (org_id, email) values (org_b, 'f@merge.test') returning id into v_f;
@@ -1258,7 +1267,10 @@ begin
     assert v_row.contact_id = v_k and v_row.recipient_name = 'Anna D', 'issued invoice moves, recipient frozen';
     select count(*) into n from public.workflow_runs where workflow_id = v_wf;  assert n = v_runs, 'merge starts no workflow runs';
     select count(*) into n from public.contact_duplicates(org_a) where v_k in (a_id, b_id); assert n = 0, 'merged pair is no duplicate any more';
-    perform set_config('roots.merging', '', true); -- set for the rest of the transaction (one RPC = one transaction)
+    select count(*) into n from public.course_participants where course_id = v_course and contact_id = v_k and status = 'enrolled'; assert n = 1, 'merge keeps the better course place';
+    select count(*) into n from public.course_participants where course_id = v_course and contact_id = v_z and status = 'waiting'; assert n = 1, 'merge moves nobody else up';
+    select count(*) into n from public.hub_events where org_id = org_a and type = 'course.moved_up' and payload->>'contact_id' = v_z::text; assert n = 0, 'merge mails nobody a course place';
+    select count(*) into n from public.rental_contacts where rental_id = v_rent and contact_id = v_k and role = 'main'; assert n = 1, 'merge keeps the main tenant';
     perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
     set local role authenticated;
     begin

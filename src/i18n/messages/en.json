@@ -819,7 +819,9 @@
       "code": "Error code: {code}"
     },
     "not_found": "Not found.",
-    "stock_negative": "That would take the stock below zero."
+    "stock_negative": "That would take the stock below zero.",
+    "merge_same": "A contact can't be merged with itself.",
+    "merge_not_found": "One of the two contacts wasn't found (deleted or from another organisation)."
   },
   "admin": {
     "title": "Platform",
@@ -1413,7 +1415,58 @@
     "personHint": "A name or a company is enough.",
     "create": "Create contact",
     "viaApi": "via API",
-    "viaAi": "via AI app"
+    "viaAi": "via AI app",
+    "merge": {
+      "title": "Merge",
+      "action": "Merge with another contact",
+      "pick": "Which contact is the same person?",
+      "next": "Next",
+      "swap": "Swap",
+      "into": "{drop} is merged into {keep}. {drop} then goes to the trash.",
+      "choose": "Which value stays?",
+      "keepThis": "this contact",
+      "takeOther": "other contact",
+      "chooseHint": "Only fields both have filled in differently. Empty fields are filled from the other contact automatically.",
+      "noChoice": "No conflicting fields: empty fields are filled from the other contact.",
+      "address": "Address",
+      "memberCode": "Member card (QR)",
+      "userId": "App login",
+      "linked": "linked",
+      "always": "Tags are combined; if either one unsubscribed from emails, that stays.",
+      "moves": "Moves over",
+      "nothingMoves": "Nothing is attached to the other contact.",
+      "cardWarning": "Both have a member card. Only the chosen one stays valid.",
+      "submit": "Merge",
+      "confirm": "Merge the contacts?",
+      "confirmHint": "The other contact goes to the trash; everything on it is then on this one.",
+      "done": "Contacts merged",
+      "note": "Merged with {name} ({email})",
+      "duplicate": "Possible duplicate",
+      "duplicateHint": "Same name as {name}.",
+      "refs": {
+        "memberships": "Memberships",
+        "tickets": "Tickets",
+        "notes": "Notes",
+        "files": "Files",
+        "documents": "Invoices & quotes",
+        "shop_orders": "Shop orders",
+        "form_submissions": "Form submissions",
+        "courses": "Courses",
+        "rentals": "Rentals",
+        "email_sends": "Sent emails",
+        "cash_entries": "Cash book entries",
+        "artists": "Line-up artists",
+        "staff": "Shift staff"
+      }
+    },
+    "duplicates": {
+      "nav": "Duplicates",
+      "a": "Contact",
+      "b": "Same name",
+      "merge": "Merge",
+      "empty": "No possible duplicates",
+      "emptyText": "Contacts with the same first and last name show up here."
+    }
   },
   "fields": {
     "intro": "Your own fields for your data, e.g. member number or shirt size on contacts. They show up in forms and in the CSV import.",

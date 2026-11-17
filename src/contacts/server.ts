@@ -1,7 +1,8 @@
 // Contacts logic shared by the App's Server Actions and the API. Takes any Supabase client + the org; the caller has
 // checked the permission. Messages in `t`'s language (App: the user's, API: English).
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { CONTACT_FIELDS, MAX_IMPORT_ROWS, readContact, type ContactRow } from "@/app/(app)/contacts/fields"
+import { CONTACT_FIELDS, MAX_IMPORT_ROWS, contactName, readContact, type ContactRow } from "@/app/(app)/contacts/fields"
+import { takeFor, type MergeContact } from "@/contacts/merge"
 import type { ImportOutcome } from "@/components/csv-import"
 import { dbError, type T } from "@/i18n/translate"
 import { loadFields } from "@/lib/custom-fields"
@@ -92,4 +93,18 @@ export async function importContactRows(db: Db, orgId: string, input: { rows: Re
     }
   }
   return { inserted, updated, skipped, errors: errors.sort((a, b) => a.line - b.line) }
+}
+
+// Merge `dropId` into `keepId` (#27): the DB function moves everything and trashes the dropped contact; `take` =
+// fields whose value comes from the dropped one; fields the kept one has empty are always filled (takeFor). `code` = the DB's error code for the API.
+export async function mergeContacts(db: Db, orgId: string, input: { keepId: string; dropId: string; take: unknown }, t: T): Promise<{ error: string; code?: string } | { id: string }> {
+  const one = (id: string) => db.from("contacts").select("first_name, last_name, company, email, phone, street, postal_code, city, country, birthday, member_code, user_id, custom").eq("id", id).eq("org_id", orgId).is("deleted_at", null).maybeSingle()
+  const [defs, { data: keep }, { data: drop }] = await Promise.all([loadFields(db, orgId, "contacts"), one(input.keepId), one(input.dropId)])
+  if (!keep || !drop) return { error: t("errors.merge_not_found"), code: "merge_not_found" }
+  const take = takeFor(keep as MergeContact, drop as MergeContact, input.take ?? [], defs.map((d) => d.key))
+  if (!take) return { error: t("errors.invalid_input"), code: "invalid_input" }
+  const note = t("contacts.merge.note", { name: contactName(drop), email: drop.email ?? "–" })
+  const { data, error } = await db.rpc("merge_contacts", { p_keep: input.keepId, p_drop: input.dropId, p_take: take, p_note: note })
+  if (error) return { error: dbError(t, error), code: error.message }
+  return { id: data }
 }

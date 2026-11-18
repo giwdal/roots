@@ -60,7 +60,7 @@ export async function AppShell({
           <ConfirmHost />
           <KeyboardInset />
         </main>
-        {search && <CommandSearch />}
+        {search && <CommandSearch areas={groups.flatMap((g) => g.items).filter((i) => i.href !== "/" && i.href !== "/notifications")} />}
         {search && <MobileBar unread={groups.flatMap((g) => g.items).find((i) => i.href === "/notifications")?.count ?? 0} />}
         {search && <MobileMenu header={header} switchOrgs={switchOrgs} groups={groups} me={me} />}
       </SidebarInset>

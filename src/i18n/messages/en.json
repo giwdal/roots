@@ -3930,6 +3930,8 @@
     }
   },
   "search": {
+    "quick": "Quick actions",
+    "actions": {"newContact": "New contact", "newEvent": "New event", "scan": "Open the door", "newMembership": "New membership", "newInvoice": "New invoice", "newOrder": "New order", "newProject": "New project", "newCampaign": "New campaign"},
     "goTo": "Go to",
     "keysMove": "select",
     "keysOpen": "open",
@@ -4246,7 +4248,6 @@
     "startsAt": "from {date}",
     "active": "active",
     "editPrivate": "Edit personal data",
-    "editDetails": "Edit role & contract",
     "vacationLeftStat": "Holiday left {year}",
     "ofDays": "of {total} days",
     "sickStat": "Sick {year}",
@@ -4256,7 +4257,11 @@
     "inCalendar": "In the calendar",
     "address": "Address",
     "iban": "IBAN",
-    "bic": "BIC"
+    "bic": "BIC",
+    "properties": "Properties",
+    "assignment": "Reporting & team",
+    "change": "Change",
+    "linkedHidden": "linked"
   },
   "courses": {
     "nav": "Courses",

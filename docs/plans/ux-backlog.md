@@ -78,7 +78,7 @@ Today there is no manifest, no app icons, no service worker.
       back not blocked, links to other origins open in the browser.
 
 ## J. Search + Sprout on phones (quick access)
-- [ ] J1 Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
+- [~] J1 (quick actions + Gehe zu + recents done; direct row actions like call/mail still open) Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
       Neue Bestellung, Zeit erfassen … — only modules that are on and permitted) shown before typing; results grouped by
       area with AreaIcon, records first, then pages, then actions; a result row can act directly where safe
       (call/mail a contact, open the scanner).
@@ -105,6 +105,16 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       RLS check that the comment policy covers contacts), then contacts use L1; drop `contact_notes` later.
 - [ ] L3 Offer it on every record with real content: contacts, members, events, shop orders, invoices, rentals,
       courses, HR people (switch per module via props, not copies).
+
+## M. Performance (fast like a native app)
+- [ ] M1 Measure: per area count DB round trips per request (target ≤ 2: context, then layout ∥ page), find
+      sequential awaits and N+1 loops; every area has a `loading.tsx` skeleton that matches the page.
+- [ ] M2 Caching: what can be cached per org (nav/module lists, settings, custom field defs, statuses) with
+      `"use cache"` + tags invalidated by the actions; public pages already cached (`public-cache.ts`).
+- [ ] M3 Client: prefetch tab bar + sidebar targets, keep JS small on phones (no heavy libs in the shell, dynamic
+      import for editors/calendars/canvas), images via next/image sizes, fonts preloaded once.
+- [ ] M4 Perceived speed: optimistic UI for toggles/inline edits/checklists, instant pressed states, skeletons
+      instead of spinners, View Transitions between list and record.
 
 ## H. Code
 - [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,

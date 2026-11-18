@@ -3930,6 +3930,8 @@
     }
   },
   "search": {
+    "quick": "Schnellaktionen",
+    "actions": {"newContact": "Neuer Kontakt", "newEvent": "Neues Event", "scan": "Einlass öffnen", "newMembership": "Neue Mitgliedschaft", "newInvoice": "Neue Rechnung", "newOrder": "Neue Bestellung", "newProject": "Neues Projekt", "newCampaign": "Neue Kampagne"},
     "goTo": "Gehe zu",
     "keysMove": "auswählen",
     "keysOpen": "öffnen",
@@ -4246,7 +4248,6 @@
     "startsAt": "ab {date}",
     "active": "aktiv",
     "editPrivate": "Persönliche Daten bearbeiten",
-    "editDetails": "Rolle & Vertrag bearbeiten",
     "vacationLeftStat": "Urlaub übrig {year}",
     "ofDays": "von {total} Tagen",
     "sickStat": "Krank {year}",
@@ -4256,7 +4257,11 @@
     "inCalendar": "Im Kalender",
     "address": "Adresse",
     "iban": "IBAN",
-    "bic": "BIC"
+    "bic": "BIC",
+    "properties": "Eigenschaften",
+    "assignment": "Zuordnung",
+    "change": "Ändern",
+    "linkedHidden": "verknüpft"
   },
   "courses": {
     "nav": "Kurse",

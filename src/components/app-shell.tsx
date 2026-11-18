@@ -22,6 +22,7 @@ export async function AppShell({
   search,
   orgId,
   bar,
+  quick = [],
   switchOrgs = false,
   children,
 }: {
@@ -33,6 +34,7 @@ export async function AppShell({
   search?: boolean // ⌘K search over the active org (App only); also turns on Sprout, the assistant panel
   orgId?: string // the active org: Sprout starts fresh (setup, chat) when it changes
   bar?: React.ReactNode // replaces the page title in the top bar
+  quick?: { href: string; label: string }[] // the search's quick actions (create …, open the door)
   children: React.ReactNode
 }) {
   // Open/collapsed is remembered in the sidebar_state cookie (set by the shadcn sidebar).
@@ -60,7 +62,7 @@ export async function AppShell({
           <ConfirmHost />
           <KeyboardInset />
         </main>
-        {search && <CommandSearch areas={groups.flatMap((g) => g.items).filter((i) => i.href !== "/" && i.href !== "/notifications")} />}
+        {search && <CommandSearch quick={quick} areas={groups.flatMap((g) => g.items).filter((i) => i.href !== "/" && i.href !== "/notifications")} />}
         {search && <MobileBar unread={groups.flatMap((g) => g.items).find((i) => i.href === "/notifications")?.count ?? 0} />}
         {search && <MobileMenu header={header} switchOrgs={switchOrgs} groups={groups} me={me} />}
       </SidebarInset>

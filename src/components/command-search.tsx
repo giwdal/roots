@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { FileIcon, FileTextIcon, LayoutGridIcon, Loader2Icon, SearchIcon, type LucideIcon } from "lucide-react"
+import { FileIcon, FileTextIcon, LayoutGridIcon, Loader2Icon, PlusIcon, ScanLineIcon, SearchIcon, type LucideIcon } from "lucide-react"
 import { AreaIcon } from "@/components/area-icon"
 import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components/content-sheet"
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -69,7 +69,7 @@ function mark(text: string, q: string) {
  * Global search over pages + records of the active org (server search as you type). From md: the ⌘K palette.
  * Phones (the tab bar's "Suche"): a sheet with the field on top, recent records below it, results grouped by area.
  */
-export function CommandSearch({ areas = [] }: { areas?: { href: string; label: string; icon: React.ReactNode }[] }) {
+export function CommandSearch({ areas = [], quick = [] }: { areas?: { href: string; label: string; icon: React.ReactNode }[]; quick?: { href: string; label: string }[] }) {
   const t = useT()
   const router = useRouter()
   const phone = usePhone()
@@ -148,6 +148,16 @@ export function CommandSearch({ areas = [] }: { areas?: { href: string; label: s
               {recent.map((it) => (
                 <CommandItem key={it.href} value={`recent-${it.href}`} onSelect={() => go(it)} className={row}>
                   {hit(it, it.group)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {quick.length > 0 && (
+            <CommandGroup heading={t("search.quick")}>
+              {quick.map((a) => (
+                <CommandItem key={a.href} value={`quick-${a.href}`} onSelect={() => (setOpen(false), reset(), router.push(a.href))} className={row}>
+                  <span className="grid size-5 shrink-0 place-items-center rounded-[0.35rem] bg-muted text-muted-foreground">{a.href === "/scan" ? <ScanLineIcon className="size-3.5" /> : <PlusIcon className="size-3.5" />}</span>
+                  <span className="truncate">{a.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

@@ -26,6 +26,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     icon: <AreaIcon area={a.key} icon={a.icon} />,
     children: a.children.filter((c) => !c.gear).map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
   }))
+  // Quick actions in the search (before typing): create the common things, open the door — only what this org and person can.
+  const quick = [
+    { module: "crm", perm: "crm.manage", href: "/contacts/new", key: "newContact" },
+    { module: "events", perm: "events.manage", href: "/events/new", key: "newEvent" },
+    { module: "tickets", perm: "tickets.scan", href: "/scan", key: "scan" },
+    { module: "members", perm: "members.manage", href: "/members/new", key: "newMembership" },
+    { module: "invoices", perm: "invoices.manage", href: "/invoices/new", key: "newInvoice" },
+    { module: "shop", perm: "shop.manage", href: "/shop/orders/new", key: "newOrder" },
+    { module: "projects", perm: "projects.manage", href: "/projects/new", key: "newProject" },
+    { module: "email", perm: "email.manage", href: "/email/new", key: "newCampaign" },
+  ]
+    .filter((a) => ctx.modules.has(a.module) && ctx.can(a.perm))
+    .map((a) => ({ href: a.href, label: t.dynamic(`search.actions.${a.key}`) }))
   const groups = [
     {
       items: [
@@ -52,6 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} />}
       switchOrgs={(allOrgs ?? ctx.orgs).length > 1}
       groups={groups}
+      quick={quick}
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}
     >

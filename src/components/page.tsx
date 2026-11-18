@@ -17,7 +17,8 @@ const WIDTH = { list: "max-w-6xl", record: "max-w-6xl", form: "max-w-3xl" }
 
 /** list = lists, boards, calendars · record = a record's page (content + details column) · form = forms, setup, new. */
 export function Page({ size = "list", className, children }: { size?: keyof typeof WIDTH; className?: string; children: React.ReactNode }) {
-  return <div className={cn("grid gap-6", WIDTH[size], className)}>{children}</div>
+  // min-w-0 on every block: one wide child (a table, a calendar header) can never stretch the page past the screen.
+  return <div className={cn("grid min-w-0 gap-6 *:min-w-0", WIDTH[size], className)}>{children}</div>
 }
 
 /**

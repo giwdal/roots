@@ -124,22 +124,25 @@ export function PhoneCalendar({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
+      {/* Two rows so it fits 320 px: month + arrows, then Heute and the Woche · Monat switch. */}
       <div className="flex items-center gap-1">
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold">{format(sel, "MMMM yyyy", { locale })}</h2>
         <Button variant="ghost" size="icon-sm" aria-label={t(month ? "calendar.prevMonth" : "calendar.prevWeek")} onClick={() => step(-1)}>
           <ChevronLeftIcon />
         </Button>
-        <Button variant="outline" size="sm" onClick={() => pick(new Date())}>
-          {t("calendar.today")}
-        </Button>
         <Button variant="ghost" size="icon-sm" aria-label={t(month ? "calendar.nextMonth" : "calendar.nextWeek")} onClick={() => step(1)}>
           <ChevronRightIcon />
         </Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => pick(new Date())}>
+          {t("calendar.today")}
+        </Button>
         {canMonth && (
-          <div role="group" aria-label={t("calendar.viewLabel")} className="flex rounded-lg bg-muted p-0.5">
+          <div role="group" aria-label={t("calendar.viewLabel")} className="ml-auto flex rounded-lg bg-muted p-0.5">
             {[false, true].map((m) => (
-              <button key={String(m)} type="button" aria-pressed={month === m} onClick={() => onMonth(m)} className="h-(--control-sm) rounded-md px-2.5 text-sm text-muted-foreground aria-pressed:bg-background aria-pressed:font-medium aria-pressed:text-foreground aria-pressed:shadow-sm">
+              <button key={String(m)} type="button" aria-pressed={month === m} onClick={() => onMonth(m)} className="h-[calc(var(--control-sm)-0.25rem)] rounded-md px-3 text-sm text-muted-foreground aria-pressed:bg-background aria-pressed:font-medium aria-pressed:text-foreground aria-pressed:shadow-sm">
                 {t(m ? "calendar.month" : "calendar.week")}
               </button>
             ))}

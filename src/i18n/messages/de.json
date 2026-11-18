@@ -833,7 +833,6 @@
     "nav": "Plattform-Navigation",
     "backToApp": "Zur App",
     "roleName": "Plattform-Admin",
-    "banner": "Du bist in {org} als Plattform-Admin.",
     "link": "Plattform",
     "orgs": {
       "title": "Organisationen",

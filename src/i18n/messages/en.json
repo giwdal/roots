@@ -833,7 +833,6 @@
     "nav": "Platform navigation",
     "backToApp": "Back to app",
     "roleName": "Platform admin",
-    "banner": "You're in {org} as a platform admin.",
     "link": "Platform",
     "orgs": {
       "title": "Organisations",

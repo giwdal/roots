@@ -60,6 +60,8 @@ Readability: prose max ~70 characters (`max-w-prose`), never all caps for more t
   warm, low-chroma grey (chroma 0.004, hue 75), never blue-leaning; icons small (16 px), fewer of them.
 
 ## Taken from Linear's system (adapted, not copied)
+- **Kept on purpose:** the coloured area icons (`<AreaIcon>`) — unlike Linear's removed team colours, they are how
+  people find a module at a glance (user decision, 19 Nov 2026).
 - One accent, used scarcely: our primary is neutral; colour = `--link` / focus ring (blue) and status/area colours only.
 - Surface ladder instead of shadows: background → card → popover/dialog, 1 px low-contrast hairlines; no drop
   shadows except floating layers.

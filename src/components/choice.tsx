@@ -45,7 +45,7 @@ export function SegmentGroup({ id, label, className, children }: { id?: string; 
 /** One option of a <SegmentGroup>: uncontrolled with `defaultChecked`, controlled with `checked` + `onPick`. */
 export function Segment({ name, value, label, checked, defaultChecked, onPick, disabled, required }: { name: string; value: string; label: React.ReactNode; checked?: boolean; defaultChecked?: boolean; onPick?: (value: string) => void; disabled?: boolean; required?: boolean }) {
   return (
-    <label className="relative flex min-h-7 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors select-none hover:text-foreground has-checked:bg-background has-checked:font-medium has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring/50 has-disabled:cursor-default [&_svg]:size-4">
+    <label className="relative flex min-h-[calc(var(--control)-0.5rem)] cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors select-none hover:text-foreground has-checked:bg-background has-checked:font-medium has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring/50 has-disabled:cursor-default [&_svg]:size-4">
       <input type="radio" name={name} value={value} checked={checked} defaultChecked={defaultChecked} onChange={onPick && (() => onPick(value))} disabled={disabled} required={required} className="sr-only" />
       {label}
     </label>

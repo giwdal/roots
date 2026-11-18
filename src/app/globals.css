@@ -6,6 +6,19 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Type scale: the small sizes most of the App uses, one notch larger than Tailwind's default (12/14 → 13/15 px). */
+/* Control sizes (docs/design/system.md): one height for every field, filter, segment row and default button in a
+   context; phones get iOS-sized touch targets (44 / 36 px), from md the denser desktop sizes (36 / 32 px). */
+:root {
+  --control: 2.75rem;
+  --control-sm: 2.25rem;
+}
+@media (min-width: 768px) {
+  :root {
+    --control: 2.25rem;
+    --control-sm: 2rem;
+  }
+}
+
 @theme {
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.35;

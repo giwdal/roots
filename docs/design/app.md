@@ -11,6 +11,7 @@ Binding for every screen in the App and `/admin`. Read it before any UI change; 
 - Accessible basics: labels on inputs, focus rings intact, real `<button>`/`<a>`.
 - No hand-rolled widgets (`role="listbox|combobox|radio|toolbar|menu…"` on divs/buttons): search pickers are Base UI's Combobox (`ui/combobox`, as in `<MultiSelect>` / `<ContactPicker>`), one-of-few is `<SegmentGroup>` + `<Segment>` (`choice.tsx`, native radios: arrow keys, one tab stop), button rows are Base UI's `Toolbar`.
 
+Sizes, spacing, type, icons and buttons for phone / tablet / desktop: `docs/design/system.md` (binding).
 Where what goes, how each kind of information and input is shown, and when a menu is needed: `docs/design/patterns.md` (binding).
 
 ## Look (references: `docs/design/references/dashboard-*.png`)

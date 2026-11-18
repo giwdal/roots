@@ -27,7 +27,7 @@ export function FilterMenu({ param, label, options, allLabel }: { param: string;
   const active = options.find((o) => o.value === current)
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button size="sm" variant={active ? "secondary" : "outline"} className="shrink-0" />}>
+      <DropdownMenuTrigger render={<Button variant={active ? "secondary" : "outline"} className="shrink-0" />}>
         {active ? `${label}: ${active.label}` : label}
         <ChevronDownIcon className="opacity-60" />
       </DropdownMenuTrigger>

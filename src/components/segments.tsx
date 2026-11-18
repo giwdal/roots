@@ -14,7 +14,7 @@ export function Segments({ label, items, className }: { label: string; items: { 
           href={it.href}
           scroll={false}
           aria-current={it.current ? "true" : undefined}
-          className="inline-flex min-h-7 shrink-0 touch-manipulation items-center gap-1.5 rounded-md px-3 whitespace-nowrap max-md:min-h-8 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm [&_svg]:size-3.5"
+          className="inline-flex h-[calc(var(--control)-0.5rem)] shrink-0 touch-manipulation items-center gap-1.5 rounded-md px-3 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm [&_svg]:size-4"
         >
           {it.label}
         </Link>

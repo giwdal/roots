@@ -17,7 +17,7 @@ export function SectionNav({ label, items }: { label: string; items: { href: str
           key={i.href}
           href={i.href}
           aria-current={i.href === current ? "page" : undefined}
-          className="inline-flex min-h-8 shrink-0 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+          className="inline-flex h-(--control-sm) shrink-0 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground"
         >
           {i.label}
         </Link>

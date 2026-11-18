@@ -4,15 +4,15 @@ Open tasks from the review of the first redesigned areas. `[ ]` open, `[x]` done
 file too; shared items are done once in shared components.
 
 ## A. One look for every control (shared components)
-- [ ] A1 One control height per context: toolbars and forms `h-9` (inputs, selects, filter triggers, segments,
+- [x] A1 (system.md, `--control` tokens in globals.css; button/input/select/combobox/segments/filter/export) One control height per context: toolbars and forms `h-9` (inputs, selects, filter triggers, segments,
       search, buttons), top bar `h-8` (⋯, primary, Sprout); phones `h-11` for form fields. Today input/select h-8,
       button sm h-7, filter trigger sm, segments min-h-7 → they don't line up.
-- [ ] A2 Button variants with fixed roles: primary (one per screen), outline (secondary), ghost (toolbar/icon),
+- [x] A2 (system.md §Buttons) Button variants with fixed roles: primary (one per screen), outline (secondary), ghost (toolbar/icon),
       link (inline text links: `--link`, no underline, underline on hover), destructive (only in confirms/menus).
       Same font size (`text-sm`) and icon size (16 px) in every button.
-- [ ] A3 Type scale used everywhere: page/record title `text-xl font-semibold`, section heading `text-sm font-medium`,
+- [x] A3 (system.md §Type) Type scale used everywhere: page/record title `text-xl font-semibold`, section heading `text-sm font-medium`,
       body `text-sm`, meta/labels `text-xs text-muted-foreground`, numbers `tabular-nums`. One font (Geist).
-- [ ] A4 Icon sizes: 16 px in buttons/rows/menus, 20 px tab bar, AreaIcon 20 px tile; lucide only, stroke default.
+- [x] A4 (system.md §Icons) Icon sizes: 16 px in buttons/rows/menus, 20 px tab bar, AreaIcon 20 px tile; lucide only, stroke default.
 - [ ] A5 Contact data and inline links not underlined in bright white (contact page e-mail): `--link` colour or plain
       text with a small action icon.
 - [ ] A6 Pictures: one `<PictureField>` (tap the picture / "+" tile → upload at once, ⋯ remove) replaces

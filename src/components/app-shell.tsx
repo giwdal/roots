@@ -54,7 +54,7 @@ export async function AppShell({
           <div id="topbar-actions" className="flex shrink-0 items-center gap-2 empty:hidden" />
           {search && <SproutButton />}
         </header>
-        <main className={`min-w-0 flex-1 max-md:overflow-x-clip px-4 pt-4 pb-6 md:px-8 md:pt-6 md:pb-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>
+        <main className={`min-w-0 flex-1 max-md:overflow-x-clip px-4 pt-4 pb-6 md:px-6 md:pt-6 md:pb-8 lg:px-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>
           {children}
           <Shortcuts />
           <ConfirmHost />

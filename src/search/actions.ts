@@ -1,6 +1,7 @@
 "use server"
 
 import { getT } from "@/i18n/server"
+import { contactSearch } from "@/contacts/search"
 import { getContext } from "@/lib/context"
 import { APP_HOME } from "@/lib/url"
 import { visibleNav } from "@/modules/nav"
@@ -73,7 +74,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
           .select("id, first_name, last_name, company, email")
           .eq("org_id", org)
           .is("deleted_at", null)
-          .or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.${like}`).join(","))
+          .or(contactSearch(q))
           .limit(PER_GROUP)
       : none,
     on("members", "members.view")

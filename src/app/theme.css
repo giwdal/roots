@@ -1,5 +1,6 @@
 /*
- * The look of roots: colors, radius, shadows (light + .dark).
+ * The look of roots: colors, radius, shadows (light + .dark). A neutral SaaS look: primary is near-black / near-white,
+ * colour only where it means something (area colours, status, --link, focus ring).
  * To switch themes, replace this file with a tweakcn / shadcn theme export (:root + .dark blocks).
  * Fonts come from next/font in src/app/layout.tsx, so --font-* lines from exports are not needed here.
  */
@@ -10,8 +11,8 @@
   --card-foreground: oklch(0.20 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.20 0 0);
-  --primary: oklch(0.83 0.13 160.91);
-  --primary-foreground: oklch(0.26 0.01 166.46);
+  --primary: oklch(0.21 0 0);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.99 0 0);
   --secondary-foreground: oklch(0.20 0 0);
   --muted: oklch(0.965 0 0);
@@ -21,20 +22,20 @@
   --destructive: oklch(0.55 0.19 32.73);
   --border: oklch(0.92 0 0);
   --input: oklch(0.86 0 0);
-  --ring: oklch(0.83 0.13 160.91);
-  --chart-1: oklch(0.83 0.13 160.91);
+  --ring: oklch(0.55 0.12 255);
+  --chart-1: oklch(0.55 0.17 255);
   --chart-2: oklch(0.62 0.19 259.81);
   --chart-3: oklch(0.61 0.22 292.72);
   --chart-4: oklch(0.77 0.16 70.08);
-  --chart-5: oklch(0.70 0.15 162.48);
+  --chart-5: oklch(0.66 0.13 200);
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.40 0 0);
-  --sidebar-primary: oklch(0.83 0.13 160.91);
-  --sidebar-primary-foreground: oklch(0.26 0.01 166.46);
+  --sidebar-primary: oklch(0.21 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.94 0 0);
   --sidebar-accent-foreground: oklch(0.24 0 0);
   --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.83 0.13 160.91);
+  --sidebar-ring: oklch(0.55 0.12 255);
   --radius: 0.625rem;
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
@@ -53,8 +54,8 @@
   --card-foreground: oklch(0.93 0.01 255.51);
   --popover: oklch(0.24 0 0);
   --popover-foreground: oklch(0.90 0 0);
-  --primary: oklch(0.44 0.10 156.76);
-  --primary-foreground: oklch(0.92 0.01 167.16);
+  --primary: oklch(0.93 0 0);
+  --primary-foreground: oklch(0.21 0 0);
   --secondary: oklch(0.26 0 0);
   --secondary-foreground: oklch(0.99 0 0);
   --muted: oklch(0.255 0 0);
@@ -66,20 +67,20 @@
   --border: oklch(0.275 0 0);
   /* Was 0.26 = --popover: input borders vanished in drawers. 0.55 = ≥ 3:1 against popover, card, background (theme.test.mjs). */
   --input: oklch(0.55 0 0);
-  --ring: oklch(0.80 0.18 151.71);
-  --chart-1: oklch(0.80 0.18 151.71);
+  --ring: oklch(0.68 0.13 255);
+  --chart-1: oklch(0.70 0.15 255);
   --chart-2: oklch(0.71 0.14 254.62);
   --chart-3: oklch(0.71 0.16 293.54);
   --chart-4: oklch(0.84 0.16 84.43);
-  --chart-5: oklch(0.78 0.13 181.91);
+  --chart-5: oklch(0.74 0.12 200);
   --sidebar: oklch(0.19 0 0);
   --sidebar-foreground: oklch(0.80 0 0);
-  --sidebar-primary: oklch(0.44 0.10 156.76);
-  --sidebar-primary-foreground: oklch(0.92 0.01 167.16);
+  --sidebar-primary: oklch(0.93 0 0);
+  --sidebar-primary-foreground: oklch(0.21 0 0);
   --sidebar-accent: oklch(0.26 0 0);
   --sidebar-accent-foreground: oklch(0.99 0 0);
   --sidebar-border: oklch(0.255 0 0);
-  --sidebar-ring: oklch(0.80 0.18 151.71);
+  --sidebar-ring: oklch(0.68 0.13 255);
 }
 
 /* Area colours (AreaIcon): one per nav area, grouped by family so related areas look related.
@@ -87,6 +88,9 @@
    Talking: communication · Work: projects, wiki, automations · Places: rentals, website. Also --link for "+ Add" rows. */
 :root {
   --link: oklch(0.55 0.17 255);
+  --success: oklch(0.55 0.14 155);
+  --warning: oklch(0.62 0.15 65);
+  --info: oklch(0.55 0.17 255);
   --area-contacts: oklch(0.70 0.16 45);
   --area-members: oklch(0.66 0.18 25);
   --area-hr: oklch(0.68 0.14 70);
@@ -106,4 +110,7 @@
 }
 .dark {
   --link: oklch(0.70 0.15 255);
+  --success: oklch(0.74 0.15 155);
+  --warning: oklch(0.80 0.14 75);
+  --info: oklch(0.72 0.14 255);
 }

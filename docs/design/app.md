@@ -14,7 +14,8 @@ Binding for every screen in the App and `/admin`. Read it before any UI change; 
 Where what goes, how each kind of information and input is shown, and when a menu is needed: `docs/design/patterns.md` (binding).
 
 ## Look (references: `docs/design/references/dashboard-*.png`)
-Calm, neutral, dense but airy — like Linear / the reference dashboards:
+Calm, neutral, dense but airy — a SaaS look like Linear / Vercel / the reference dashboards. **Primary is neutral**
+(near-black in light, near-white in dark), never a brand green; colour only carries meaning:
 - **Neutral greys** (`theme.css`), colour only where it carries meaning: area colours, status, links. No coloured
   backgrounds for whole sections, no heavy shadows; separation by 1px `border-border` lines and spacing, not boxes in boxes.
 - **Area colours**: every nav area has `--area-<key>`; show it with `<AreaIcon area icon>` (sidebar, phone menu, top

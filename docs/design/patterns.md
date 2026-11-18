@@ -52,7 +52,7 @@ Benachrichtigungen
 
 | Information | Show as |
 |---|---|
-| The state of a record (status, paid, published) | `badge` in the header; colour only for state (green done, amber waiting, red problem, grey draft) |
+| The state of a record (status, paid, published) | `badge` in the header; colour only for state: `<Badge variant="success">` done/paid/live, `warning` waiting/open, `destructive` problem/overdue, `info` scheduled/in progress, `secondary`/`outline` draft/neutral. Never `default` (black) for a status |
 | A few key numbers | `<Stats>` tiles (2–4) |
 | Facts (dates, people, amounts, references) | `<DetailList>` (label above value on phones, two columns from sm) |
 | Several similar items (tickets, positions, payments) | `<DataTable>` (cards on phones) or a row list `icon · label · muted detail · ›` |

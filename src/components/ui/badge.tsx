@@ -11,6 +11,10 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+        // Status colours (docs/design/patterns.md §3): done / waiting / informational, soft tints like destructive.
+        success: "bg-[var(--success)]/12 text-[var(--success)] [a]:hover:bg-[var(--success)]/20",
+        warning: "bg-[var(--warning)]/14 text-[var(--warning)] [a]:hover:bg-[var(--warning)]/22",
+        info: "bg-[var(--info)]/12 text-[var(--info)] [a]:hover:bg-[var(--info)]/20",
         destructive:
           "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         outline:

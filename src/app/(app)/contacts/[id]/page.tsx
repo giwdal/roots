@@ -469,7 +469,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 rows={subs.map((s) => ({
                   key: s.id,
                   icon: ClipboardListIcon,
-                  href: `/forms/${s.form_id}/submissions?sub=${s.id}`,
+                  href: `/forms/${s.form_id}/submissions?edit=${s.id}`,
                   title: s.forms?.title ?? "–",
                   detail: day(s.created_at),
                   badge: <Badge variant={s.status === "accepted" ? "success" : s.status === "new" ? "warning" : "secondary"}>{t.dynamic(`forms.subStatus.${s.status}`)}</Badge>,

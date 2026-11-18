@@ -193,7 +193,32 @@
         "Primary 'Neue Mitgliedschaft' silently disappears when no types exist; the reason is a muted notice above the toolbar.",
         "Import requires crm.manage in addition to members.manage, without telling a members-only manager.",
         "Only bulk action is export; marking paid/reminding lives on /members/dues."
-      ]
+      ],
+      "redesign": {
+        "job": "See who is a member right now and who is behind on fees; open a member; admit a new one.",
+        "phone": "Top bar: Mitglieder, ⋯ (gear Einstellungen, Importieren, Exportieren, Papierkorb), round + = Neue Mitgliedschaft. Toolbar: search, then a scroll row: Segments Aktiv · Ausgetreten · Alle, Mitgliedsart filter. Cards: name + status badge, Nr · type, Bezahlt bis (red when behind).",
+        "desktop": "<ListToolbar> search · Segments · Mitgliedsart. Table: Name (+ Nr, Team badge, other periods), Mitgliedsart, Mitglied seit, Status badge, Bezahlt bis. Bulk: Exportieren.",
+        "moves": [
+          "meta '{count} aktive Mitgliedschaften' → unchanged",
+          "gear → /members/settings (unchanged)",
+          "⋯ Importieren (?import=1) → unchanged; now shown to members.manage, the sheet explains when crm.manage is missing",
+          "⋯ Exportieren › xlsx / csv → unchanged",
+          "⋯ Papierkorb / Aktiv: ?status=trash → ?trash=1 (old ?status=trash redirects); toggles back to the list",
+          "primary Neue Mitgliedschaft → unchanged; without types: EmptyState 'Lege zuerst eine Mitgliedsart an' with the action 'Neue Mitgliedsart' (→ /members/settings?new=type) instead of the muted notice",
+          "no-types notice + link Mitgliedsarten → EmptyState (above)",
+          "SearchBox → <ListToolbar> search",
+          "status chips (hand-built nav) → <Segments> Aktiv · Ausgetreten · Alle",
+          "type FilterMenu → unchanged (when > 1 type)",
+          "columns Name (+ Team badge, Nr, other periods <details>), Mitgliedsart, Mitglied seit → unchanged",
+          "column Status → badge with state colours (success Aktiv, warning Pausiert, info Endet am / Ab, secondary Ausgetreten)",
+          "column Bezahlt bis (red when behind) → unchanged",
+          "bulk Exportieren → unchanged",
+          "?import sheet (CsvImport, mapping, mode) → unchanged",
+          "legacy ?edit=<id> / ?new (+contact) → redirects (unchanged)",
+          "empty 'Noch keine Mitgliedschaften.' → <EmptyState> with Neue Mitgliedschaft; filtered empty → short text"
+        ],
+        "kept": "Marking paid / reminding stays on Beiträge (the treasurer's list); the member page has them per member."
+      }
     },
     {
       "route": "/members/new",
@@ -407,7 +432,23 @@
         "Five cards (~15 inputs) for a new member; fee, mandate and custom fields are all optional but shown expanded.",
         "Type and interval/payment method use NativeSelect, not <Choice> as the design guide asks for ≤ 15 options.",
         "Crumb says 'Mitgliedschaften' while the sidebar entry and list title say 'Mitglieder'."
-      ]
+      ],
+      "redesign": {
+        "job": "Admit a member: who (existing contact or a new person), which type, from when. Fee, mandate and notes only when needed.",
+        "phone": "‹ Mitglieder · Neue Mitgliedschaft. Person (contact picker; 'Neue Person anlegen' opens name + email fields), Mitgliedschaft (type as Choice, start date), then 'Beitrag, Lastschrift und Notiz' collapsed (optional), SaveBar 'Aufnehmen' always.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "crumb 'Mitgliedschaften' → 'Mitglieder' (area label everywhere)",
+          "contact_id ContactPicker → unchanged (first in Person)",
+          "hint 'Oder neue Person…' + first_name, last_name, email → inside a <details> 'Neue Person anlegen' under the picker (a picked contact wins, as before)",
+          "type_id NativeSelect → <Choice required> (segments for ≤ 5 types)",
+          "starts_on → unchanged (DateInput)",
+          "Beitrag card (fee money, fee_interval, payment_method, fee_free_until) → collapsed section 'Beitrag, Lastschrift und Notiz (optional)'; interval + payment method as <Choice> with the 'automatic / as type' option labelled",
+          "SEPA mandate card (account_holder, iban, bic, mandate_ref, mandate_signed_on) → same collapsed section",
+          "Weitere Angaben (custom fields, note) → same collapsed section; required custom fields open it by default",
+          "SaveBar 'Aufnehmen' (saveMembership) → unchanged; ?contact= preselects; ?error notice unchanged"
+        ]
+      }
     },
     {
       "route": "/members/[id]",
@@ -615,7 +656,37 @@
         "Dues on a phone sit below 5 form cards; status of payments is only summarised in the meta line.",
         "Pause and cancel are separate cards with own submit buttons next to a SaveBar form – three save mechanisms on one page.",
         "No 'storniert' (cancel a due) button in the UI although the action accepts status=cancelled."
-      ]
+      ],
+      "redesign": {
+        "job": "One membership at a glance: state, open dues, paid until, the next step (collect / mark paid); settle dues; pause, cancel, card.",
+        "phone": "‹ Mitglieder · name. Header: state badge, meta Nr · type. Stats (2 per row): Offen, Bezahlt bis, Mitglied seit, Beitrag. Round/primary = next step (Bezahlt for the oldest open due, or Lastschrift when it is collected by SEPA, else Bearbeiten). Then Beiträge (rows: text, due, amount, status; Bezahlt button + row ⋯), Angaben (DetailList), Person, Mitgliedskarte, other memberships, Dateien. ⋯ holds Zum Kontakt, Bearbeiten, Pausieren / Pause beenden, Kündigen, Erinnern, Neue Karte, Papierkorb.",
+        "desktop": "RecordLayout: left = Stats, Beiträge, Angaben; right = Person (contact link, mail, phone), Mitgliedskarte, Weitere Mitgliedschaften, Dateien. Header: Zum Kontakt + Bearbeiten (outline), ⋯, primary next step.",
+        "moves": [
+          "crumb 'Mitgliedschaften' → 'Mitglieder'",
+          "badge Papierkorb → unchanged; new state badge (Aktiv / Pausiert / Endet am / Ab / Ausgetreten)",
+          "meta Nr · type · bezahlt bis → meta Nr · type; bezahlt bis moves into Stats",
+          "Zum Kontakt (outline) → unchanged",
+          "⋯ In den Papierkorb (only without dues) → unchanged rule, last + red, confirm",
+          "MembershipFields form (type, starts_on, ends_on, fee, interval, payment method, fee_free_until, mandate, custom, note) + SaveBar → 'Bearbeiten' sheet ?edit=details, one form + one SaveBar; the page shows the values as <DetailList> 'Angaben'",
+          "Mitgliedskarte (IdCard) → right column, unchanged",
+          "Neue Karte (alte wird ungültig) → ⋯, asks first (membership.confirmCardReset)",
+          "Beiträge list → main column 'Beiträge' with status colours (success paid, warning open, destructive overdue / Rücklastschrift, secondary cancelled), up to 100",
+          "row Bezahlt → row button, asks first (membership.confirmPaid)",
+          "row Erinnern (open + overdue) → row ⋯, asks first (sends a mail)",
+          "row Rücklastschrift (paid, confirm) → row ⋯ (confirm unchanged)",
+          "row Wieder offen (paid by hand) → row ⋯",
+          "new: row Stornieren (open) → row ⋯, asks first (setDueStatus cancelled)",
+          "Pausieren card (paused_from, paused_until, pause_reason) → ⋯ Pausieren → sheet ?new=pause (SaveBar always 'Pausieren'); paused state shows in the badge + Angaben",
+          "Pause beenden → ⋯ item",
+          "Kündigen card (ends_on optional, hint with the earliest end) → ⋯ Kündigen → sheet ?new=cancel (hint, date, SaveBar always 'Kündigen' with confirm)",
+          "new: primary next step (oldest open due → Bezahlt with confirm; SEPA payer → Lastschrift → /members/dues?new=sepa)",
+          "new: Erinnern (all overdue of this member) → ⋯ with confirm",
+          "Dateien → right column",
+          "Wiederherstellen (deleted) → unchanged notice + button",
+          "?ok / ?error → toast; ?edit=details, ?new=pause|cancel sheets"
+        ],
+        "kept": "Trash stays possible only without dues (money is never deleted); the ⋯ explains nothing extra, the membership can be ended instead."
+      }
     },
     {
       "route": "/members/dues",
@@ -882,7 +953,32 @@
         "Header holds 3 outline actions + primary + ⋯; 'Beiträge erzeugen' (primary) vs 'Umlage' vs 'SEPA-Lastschrift' are all 'create' flows in sheets that use a plain SubmitButton, not SaveBar.",
         "'Verwerfen' of a SEPA run has no confirm while 'Als eingezogen markieren' has.",
         "No settings gear here, although members and types pages have one; SEPA creditor data needed for runs lives in /members/settings."
-      ]
+      ],
+      "redesign": {
+        "job": "Treasurer: what is open / overdue, collect it (SEPA file → bank → mark collected), mark paid, remind; once a year generate the period fees.",
+        "phone": "Top bar: Beiträge, ⋯ (gear, SEPA-Lastschrift, Erinnern, Umlage, Export), round + = Beiträge erzeugen. Stats: Offen, Überfällig, Rücklastschriften. Open SEPA runs as step cards (1 XML herunterladen · 2 bei der Bank hochladen · 3 Als eingezogen markieren). Toolbar: search, Segments Offen · Rücklastschrift · Bezahlt · Storniert · Alle. Cards: name + status, text, due date, amount.",
+        "desktop": "Header: gear, SEPA-Lastschrift + Erinnern (outline), ⋯ (Umlage, Export), primary Beiträge erzeugen. Stats row, SEPA runs section (open runs as steps, earlier runs as a compact list), <ListToolbar> search · Segments. Table: Name (+ text), Fällig am, Status, Betrag (right). Bulk: Bezahlt, Erinnern, Export (all confirm except export).",
+        "moves": [
+          "meta 'Offen: … · davon überfällig: …' → <Stats> Offen, Überfällig (warn), Rücklastschriften (→ ?status=failed)",
+          "new: settings gear → /members/settings",
+          "Erinnerung an alle Überfälligen (confirm with count + amount) → outline action 'Erinnern' (same confirm)",
+          "Umlage (?new=levy) → ⋯",
+          "SEPA-Lastschrift (?new=sepa) → outline action",
+          "⋯ Exportieren → unchanged (applies status + q)",
+          "primary Beiträge erzeugen (?new=generate) → unchanged",
+          "Lastschriftdateien card → section 'Lastschriften': open runs as numbered steps (XML herunterladen, Im Online-Banking hochladen, Als eingezogen markieren with confirm), Verwerfen in the run's ⋯ with confirm (new); collected / discarded runs as a compact list with XML",
+          "status chips (hand-built, right-aligned) → <Segments> in the <ListToolbar>",
+          "new: SearchBox ?q= (member name / email)",
+          "columns Name (+ description), Fällig am, Betrag, Status → Name, Fällig am, Status, Betrag (right, tabular); status badge colours (destructive overdue / Rücklastschrift, warning open, success paid, secondary cancelled)",
+          "row → /members/<membership> → /members/<membership>#dues",
+          "bulk Bezahlt (confirm), Erinnern (confirm), Exportieren → unchanged",
+          "?new=generate sheet (from, to DateInput, hint) → SaveBar always 'Beiträge erzeugen'",
+          "?new=levy sheet (description, amount money, due_on, tag NativeSelect) → tag as <Choice> ('Alle aktiven Mitglieder' or one tag), SaveBar always 'Umlage anlegen'",
+          "?new=sepa sheet (collection_on, hint) → SaveBar always 'Lastschriftdatei erstellen'; notice + link to Einstellungen when the creditor data is missing",
+          "?run=<id> highlight → unchanged",
+          "empty 'Keine Beiträge.' → <EmptyState> 'Noch keine Beiträge' + Beiträge erzeugen; filtered → short text"
+        ]
+      }
     },
     {
       "route": "/members/types",
@@ -1021,7 +1117,22 @@
         "Create sheet title is 'Hinzufügen' (a verb) while the primary says 'Neue Mitgliedsart'.",
         "Area page shows a description sentence although the guide says area pages show no description.",
         "Settings gear points to /members/settings which is also the next sidebar item."
-      ]
+      ],
+      "redesign": {
+        "job": "Old address: types live in Mitglieder › Einstellungen.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "page → redirect /members/settings (keeps ?new=type / ?edit=<id>, which open the type sheet there)",
+          "sidebar entry Mitgliedsarten → removed (gear → Einstellungen › Mitgliedsarten)",
+          "DataTable Name (+ anteilig · Mindestbeitrag), Beitrag, Aufnahme, Frist, Mitglieder, Status → settings rows: name + 'fee / interval · Aufnahme · Frist', active-member count, Inaktiv badge, ›",
+          "description sentence → removed (rows say it)",
+          "primary Neue Mitgliedsart → AddLink 'Neue Mitgliedsart' at the end of the rows (?new=type)",
+          "sheet fields name, fee, interval (NativeSelect → Choice), entry_fee, notice_months, prorate, fee_is_minimum, active → unchanged in the sheet; create sheet titled 'Neue Mitgliedsart', SaveBar 'Mitgliedsart anlegen'",
+          "Mitgliedsart löschen (red ghost button, no confirm) → sheet ⋯ destructive item with confirm",
+          "EmptyState → the rows' empty line + the add link"
+        ]
+      }
     },
     {
       "route": "/members/settings",
@@ -1151,7 +1262,19 @@
       "uxNotes": [
         "Two save mechanisms on one page: SaveBar for SEPA, an inline 'Speichern' button for number range.",
         "Membership types are not here but a sibling sidebar page; legacy ?new/?edit links redirect there."
-      ]
+      ],
+      "redesign": {
+        "job": "Set up once: membership types, SEPA creditor data, member numbers, the member area address.",
+        "phone": "‹ Mitglieder · Einstellungen. Mitgliedsarten (rows › sheet, + Neue Mitgliedsart), one form with SEPA-Lastschrift and Mitgliedsnummern (one SaveBar), Mitgliederbereich (address + Kopieren).",
+        "desktop": "Same, form width.",
+        "moves": [
+          "crumb 'Mitgliedschaften' → 'Mitglieder'",
+          "new: Mitgliedsarten group (from /members/types), ?new=type / ?edit=<id> sheets here instead of redirecting away",
+          "SEPA card (creditor_name, creditor_id, iban, bic, due_day) + SaveBar → same fields in the one form",
+          "Mitgliedsnummern NumberRangeForm with own Speichern → <NumberRangeFields> in the same form; saveSettings saves both (saveMemberRange merged)",
+          "Mitgliederbereich URL + Kopieren → unchanged"
+        ]
+      }
     },
     {
       "route": "/members/setup",
@@ -1160,7 +1283,15 @@
       "purpose": "Legacy route → /members/settings.",
       "links": [
         "/members/settings"
-      ]
+      ],
+      "redesign": {
+        "job": "Old address.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /members/settings (unchanged)"
+        ]
+      }
     },
     {
       "route": "/members/import",
@@ -1169,7 +1300,20 @@
       "purpose": "Legacy route → /members?import=1.",
       "links": [
         "/members?import=1"
-      ]
+      ],
+      "redesign": {
+        "job": "Old address.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /members?import=1 (unchanged)"
+        ]
+      }
     }
-  ]
+  ],
+  "research": "easyVerein / campai / Wild Apricot: the member record opens on status, membership type, balance (open fees) and payment method; fees are a list with per-row mark-paid; the direct-debit flow is a wizard (pick open fees → create SEPA XML → mark as collected after the bank ran it); membership levels and creditor data are setup pages. Taken: state + Stats + next step on the member, the SEPA run as three explicit steps, types + creditor data + numbers under one Einstellungen (gear).",
+  "navRedesign": {
+    "sidebar": "Mitglieder · Beiträge; Mitgliedsarten (now in Einstellungen) + Einstellungen → gear (nav child gear: true)",
+    "label": "area 'Mitglieder' everywhere (membership.nav), one period = 'Mitgliedschaft'"
+  }
 }

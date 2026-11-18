@@ -209,7 +209,31 @@
         "No sort options; list sorted by last name, first name, company.",
         "Trash view rows still link to the contact page; restore happens there (no restore button in the list), unlike /forms trash which restores inline.",
         "Email/phone cells in the list are plain text, not mailto:/tel: (row is a link)."
-      ]
+      ],
+      "redesign": {
+        "job": "Find a person fast (search, tag), open them; now and then import, export, tag or trash many.",
+        "phone": "Top bar: Kontakte, ⋯ (Importieren, Exportieren, Papierkorb), round + = Neuer Kontakt. Toolbar: search full width, then the Tags filter in the scroll row. Cards: name (+ company) as title, email · phone as muted lines. Empty: EmptyState with Neuer Kontakt + Importieren.",
+        "desktop": "<ListToolbar> search · Tags. Table: Name (+ company), E-Mail, Telefon, Ort, Tags. Tick boxes → bulk bar: tags via <TagSelect> (add / remove), Exportieren, In den Papierkorb (confirm).",
+        "moves": [
+          "⋯ Importieren (?import=1, crm.manage) → unchanged",
+          "⋯ Exportieren › xlsx / csv (applies q + tag) → unchanged",
+          "⋯ Papierkorb / Alle (?trash=1) → unchanged",
+          "primary Neuer Kontakt → unchanged (round + on phones), hidden in trash",
+          "?q / ?tag / ?trash / ?page → unchanged",
+          "?import=1 sheet → unchanged (wide UrlSheet, CsvImport: file, column mapping, existing-email mode, import.submit + result panel)",
+          "legacy ?edit=<id> → redirect /contacts/<id> (unchanged); legacy ?new → /contacts/new (unchanged)",
+          "?ok / ?error → <Notice> toast (unchanged)",
+          "toolbar SearchBox + Tags FilterMenu → <ListToolbar> (phone scroll row); hidden while the org has no contacts",
+          "columns Name (+ company), E-Mail, Telefon, Ort, Tags → unchanged (the row opens the contact, where mail/phone are tappable links)",
+          "trash hint contacts.trashHint → unchanged",
+          "bulk Tag hinzufügen / Tag entfernen: free-text Input + datalist → <TagSelect creatable> (several tags at once) + the two buttons",
+          "bulk Exportieren (xlsx) → unchanged",
+          "bulk In den Papierkorb (confirm common.confirmTrashMany) → unchanged",
+          "empty: EmptyState + Neuer Kontakt → EmptyState with Neuer Kontakt and Importieren (the text mentions both)",
+          "filtered empty 'Keine Kontakte gefunden.' / trash empty → unchanged"
+        ],
+        "kept": "Trash rows open the contact page, which shows the deleted notice with Wiederherstellen (one place to restore). No sort options: name order is what people expect in an address book. Bulk export stays xlsx (the header offers CSV)."
+      }
     },
     {
       "route": "/contacts/new",
@@ -374,7 +398,22 @@
       "uxNotes": [
         "No field is marked required; validation (name/company/email) only reported on submit.",
         "On error the page reloads via redirect, so typed values are lost (plain form post, no useActionState)."
-      ]
+      ],
+      "redesign": {
+        "job": "Add a person or company quickly; only a name, company or email is needed.",
+        "phone": "Top bar: ‹ Kontakte · Neuer Kontakt. One column: Person, Erreichbarkeit, Adresse, Tags & eigene Felder; SaveBar 'Kontakt anlegen' always at the bottom.",
+        "desktop": "Same cards in the form width (Page form), SaveBar at the bottom.",
+        "moves": [
+          "crumbs Kontakte › Neuer Kontakt → unchanged (NewPage)",
+          "Person card (first_name, last_name, company, birthday) → unchanged, hint 'Name oder Firma reicht.'",
+          "Erreichbarkeit (email TypedInput email, phone TypedInput phone) → unchanged",
+          "Adresse (street, postal_code, city, country Choice) → unchanged",
+          "Tags & eigene Felder (TagSelect creatable, CustomFieldInputs) → unchanged",
+          "SaveBar 'Kontakt anlegen' (createContact) → unchanged; on error the SaveBar puts the typed values back (form snapshot)",
+          "?error → NewPage notice (unchanged)"
+        ],
+        "kept": "uxNote 1: nothing is required on its own (name OR company OR email), the card hint says so. uxNote 2 is solved by the SaveBar's snapshot restore."
+      }
     },
     {
       "route": "/contacts/import",
@@ -384,7 +423,15 @@
       "permission": null,
       "links": [
         "/contacts?import=1"
-      ]
+      ],
+      "redesign": {
+        "job": "Old address.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /contacts?import=1 (unchanged)"
+        ]
+      }
     },
     {
       "route": "/contacts/[id]",
@@ -600,7 +647,44 @@
         "Membership link goes through a legacy redirect (/members?new=1&contact=) instead of /members/new?contact= directly.",
         "No way to create an invoice, ticket or membership from here other than the membership button and 'Brief erstellen'.",
         "Uses NativeSelect for the team picker instead of a server-search picker."
-      ]
+      ],
+      "redesign": {
+        "job": "The Person hub: who is this (status, tags, how to reach them) and everything connected to them in the modules that are on; act from here (mail, call, invoice, membership, letter).",
+        "phone": "Top bar: ‹ Kontakte · name, ⋯ (E-Mail, Anrufen, Neue Rechnung, Als Mitglied aufnehmen, Brief erstellen, Papierkorb). Header: status badges (Mitglied / Ehemaliges Mitglied, Team, Abgemeldet) + meta (company, tags). Round button = Bearbeiten (sheet). Then Kontaktdaten (DetailList: email mailto, phone tel, address, birthday, custom fields), then the connections as sections with <LinkRows> (Mitgliedschaft + open dues, Tickets & Gästelisten, Bestellungen, Rechnungen & Angebote, Zahlungen, Kurse, Vermietung, Formulare, E-Mails, Schichten & Personal), Dateien, Teamzugang, Verlauf (note form + timeline) last.",
+        "desktop": "RecordLayout: left = Kontaktdaten + connections + Dateien; right = Teamzugang + Verlauf (activity column like Attio/HubSpot). Header: E-Mail, Anrufen (outline), ⋯, primary Bearbeiten → ?edit=details sheet with the grouped ContactForm + SaveBar.",
+        "moves": [
+          "crumbs Kontakte › name → unchanged (phone back chevron)",
+          "badge Papierkorb (deleted) → unchanged; new status badges: Mitglied (success) / Ehemaliges Mitglied (secondary), Team (info, linked App account), Abgemeldet (warning, unsubscribed_at)",
+          "meta company + tag badges → unchanged",
+          "header E-Mail (mailto) → unchanged (outline; phone ⋯), plus the email is a mailto link in Kontaktdaten",
+          "header Telefon (tel) → 'Anrufen' (outline; phone ⋯), plus the number is a tel link in Kontaktdaten",
+          "⋯ Brief erstellen → unchanged",
+          "⋯ In den Papierkorb (confirm) → unchanged, last + red",
+          "new: ⋯ Neue Rechnung → /invoices/new?contact=<id> (invoices.manage)",
+          "new: ⋯ Als Mitglied aufnehmen → /members/new?contact=<id> directly (no legacy redirect), when no current membership",
+          "ContactForm cards (Person, Erreichbarkeit, Adresse, Tags & eigene Felder) + SaveBar (updateContact) → 'Bearbeiten' sheet ?edit=details (UrlSheet, same form, SaveBar); errors come back to the open sheet",
+          "readOnly line (no crm.manage) → removed: the page is read-only by nature now (no Bearbeiten button without crm.manage)",
+          "new: Kontaktdaten section → <DetailList> (E-Mail, Telefon, Adresse, Geburtstag, custom fields, Abgemeldet seit)",
+          "Verlauf (note Textarea + Notiz speichern, notes, field changes, creation) → right column on desktop, last on phones; unchanged entries",
+          "Notiz löschen (icon button with tooltip) → unchanged, now asks first (contacts.confirmDeleteNote)",
+          "Teamzugang (linked person + Verknüpfung lösen / NativeSelect + Verknüpfen, hint) → section in the right column; Verknüpfung lösen asks first",
+          "Mitgliedschaften card (latest membership link / Als Mitglied aufnehmen / Kein Mitglied) → section 'Mitgliedschaft': <LinkRows> of the memberships (type · Nr, since/ends, state badge) + an 'Offene Beiträge' row (sum, count, overdue) linking to the membership's #dues; AddLink 'Als Mitglied aufnehmen' when none; 'Kein Mitglied.' removed (section hidden for viewers without data)",
+          "Tickets (→ /events/<event>/tickets) → section 'Tickets & Gästelisten': ticket rows open the ticket's order (/payments?edit=<order>) when payments are visible, else the event's tickets; new: guest-list entries (by email) → /guestlists/<list>",
+          "Vermietung (→ /rentals/r/<id>) → <LinkRows> (unchanged target)",
+          "Bestellungen (shop) + Alle anzeigen (/shop/orders?contact=) → <LinkRows> (unchanged targets)",
+          "Rechnungen & Angebote (→ /invoices/<id>) + Alle anzeigen (/invoices?contact=) → <LinkRows> with document status colours",
+          "Zahlungen (→ /payments?contact=&edit=) + Alle anzeigen → <LinkRows> with payment status colours",
+          "Formulare (→ /forms/<form>/submissions?sub=<id>) → <LinkRows> (unchanged target)",
+          "E-Mails (campaign/automation sends, every row → /email/log) → every mail to the contact's address from the send log (email_history: campaigns, automations, shop, tickets, invoices…); rows and 'Alle anzeigen' → /email/log?contact=<id> (new filter + chip there)",
+          "new: Kurse → course places (course_participants) → /courses/<id>",
+          "new: Schichten & Personal → shift profile (staff.contact_id) → /shifts/team?edit=<staff>, employee (employees.staff_id) → /hr/<id>",
+          "Dateien (FileList) → left column after the connections",
+          "Wiederherstellen (deleted contact: notice + button) → unchanged",
+          "?ok / ?error → toast (unchanged); new ?edit=details opens the edit sheet"
+        ],
+        "kept": "Team picker stays a small select: it lists only the org's team accounts (a handful), not contacts. Sections are hidden when their module is off, not permitted or empty (Mitgliedschaft shows the add link for members.manage)."
+      }
     }
-  ]
+  ],
+  "research": "HubSpot / Attio / Folk: a contact opens on identity (name, company, tags) with quick actions (email, call) and the person's properties in a compact list; associations (deals, tickets, companies) as small linked lists; activity as its own column/tab; editing properties happens inline or in a panel, never as the page body. Taken: header identity + status chips, Kontaktdaten as a fact list, every module as a short linked list, activity on the right, editing in a sheet."
 }

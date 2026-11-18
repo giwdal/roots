@@ -12,7 +12,7 @@ import { loadFields, readCustom } from "@/lib/custom-fields"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 import { checkEvent, EVENT_STATUSES, insertEvent } from "./fields"
-import { readEventType } from "./type-fields"
+import { readEventType, withTypeDefaults } from "./type-fields"
 import { readEventLinks } from "@/site/blocks"
 
 const PATH = "/events"
@@ -70,7 +70,14 @@ export async function createEvent(fd: FormData) {
   if ("error" in r) back(`${PATH}/new`, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
   if ("error" in c) back(`${PATH}/new`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  const res = await insertEvent(ctx.supabase, { ...r.row!, custom: c.custom, org_id: ctx.org.id }, r.slug ?? null)
+  // The form prefills from the type in the browser; a plain form post (no JS, or members module off) gets the same from here.
+  let row = r.row!
+  if (row.event_type_id) {
+    const { data: type } = await ctx.supabase.from("event_types").select("counts_visit, capacity, active").eq("id", row.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
+    if (!type?.active) back(`${PATH}/new`, { error: t("errors.invalid_input") })
+    row = withTypeDefaults(type, fd.has("capacity") ? row : { ...row, capacity: undefined }) as typeof row // capacity undefined = not posted, the type fills it
+  }
+  const res = await insertEvent(ctx.supabase, { ...row, custom: c.custom, org_id: ctx.org.id }, r.slug ?? null)
   if (res.error) back(`${PATH}/new`, { error: res.error.code === "23505" ? t("errors.slug_taken") : dbError(t, res.error) })
   refreshPublic(ctx.org.id) // public pages show this
   back(`${PATH}/${res.data!.id}`, { ok: t("eventsPage.created") })
@@ -165,7 +172,7 @@ export async function saveEventType(fd: FormData) {
   const id = String(fd.get("id") ?? "")
   const { data: others } = await ctx.supabase.from("event_types").select("id, slug").eq("org_id", ctx.org.id)
   const r = readEventType(
-    { name: fd.get("name"), slug: fd.get("slug"), color: fd.get("color"), capacity: fd.get("capacity"), counts_visit: fd.getAll("counts_visit").includes("on"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
+    { name: fd.get("name"), slug: String(fd.get("slug") ?? "").trim() || (others ?? []).find((o) => o.id === id)?.slug, color: fd.get("color"), capacity: fd.get("capacity"), counts_visit: fd.getAll("counts_visit").includes("on"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
     (others ?? []).filter((o) => o.id !== id).map((o) => o.slug),
   )
   if ("error" in r) back(SETTINGS, { error: t.dynamic(r.error) })

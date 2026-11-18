@@ -100,7 +100,7 @@ export const endpoints: Endpoint[] = [
     async handler({ db, orgId, params, body }) {
       const { data: old } = await db.from("event_types").select(COLS).eq("id", params.id).eq("org_id", orgId).maybeSingle()
       if (!old) throw notFound()
-      const row = await read(db, orgId, { ...old, ...body }, params.id)
+      const row = await read(db, orgId, { ...old, ...body, slug: body.slug || old.slug }, params.id) // an empty slug keeps the old one
       const { data, error } = await db.from("event_types").update(row).eq("id", params.id).eq("org_id", orgId).select(COLS).single()
       if (error) throw error.code === "23505" ? slugTaken() : dbError(error)
       return data

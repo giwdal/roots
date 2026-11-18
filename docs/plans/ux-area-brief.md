@@ -74,6 +74,17 @@ node_modules/next/dist/docs/ when unsure.
   in place (`<AutosaveForm action={patch…}>` with hidden `id` + `field` and a `RichTextEditor name="value"`), the task
   panel's property rows (label · control in one autosave form; `ProjectField` = a RecordPicker that counts as input),
   `patchProject` (custom fields via `customInlineItems` too), `?edit=links` with ✕ that asks (`projects.confirmUnlink`).
+- From Vermietung + Kurse: courses/attendance-list.tsx (tap a name = present, each tap saves through a client server
+  action, optimistic with revert + toast, "Alle da", counter), courses/session-sheet.tsx (one sheet for a small child
+  record used from two pages, `from` says where to go back; its ⋯ items + hidden forms exported separately so a page
+  header can reuse them), ‹ › to the neighbouring records in a toolbar row, a record page's primary that changes with
+  the state (Bestätigen as a header form button, Kündigung eintragen as a link, Zurücknehmen with confirm; Anwesenheit
+  for today's date, else Termine anlegen, else Person hinzufügen), `rentalWith()` in rentals/actions.ts (the stored
+  record in form format + the changed fields → the module's `read…()` checks the whole record; used by patchRental and
+  saveTermAction), rentals/views.tsx (a list and its calendar as sibling routes under one sidebar entry:
+  `/rentals/list` + `/rentals/list/calendar`, old route redirects), rentals/badges.tsx (rental state + object Frei /
+  Vergeben / Verloren → colour), `?object=` + `?contact=` filter chips on Vergaben, `searchObjects` (rental objects
+  picker), an optional "first child" card on a create page (`<details>` open when the calendar sent a day).
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

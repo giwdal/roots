@@ -34,7 +34,8 @@ file too; shared items are done once in shared components.
 - [ ] B6 Remove repetition: titles that repeat the top bar, descriptions that explain the obvious; self-explanatory,
       minimal, clear decisions for the user.
 - [ ] B5 Adopt inline editing in the other record pages: hr/[id] is the first (`patchEmployee` + `<InlineField>`);
-      the shift sheet and the team sheet are small records and stay `?edit=` sheets.
+      the shift sheet and the team sheet are small records and stay `?edit=` sheets. Done since: contacts, projects,
+      rental objects (`patchRentalObject`), rentals (`patchRental`), courses (`patchCourse`).
 
 ## C. Overlays on desktop
 - [x] C1 (content-sheet.tsx: centred dialog from md, compact/normal/wide widths, darker backdrop) Desktop: forms/quick creates/confirms as a centred dialog (sizes: compact / default / wide), phones keep the
@@ -61,7 +62,7 @@ file too; shared items are done once in shared components.
 - [ ] E4 Research per component (calendar, table, board, timeline, picker) and note the chosen pattern in mobile.md.
 - [x] E5 (phones always get the week strip + day list, any consumer) `<CalendarView>` opens on week on phones too (Schichten › Plan, Abwesenheiten); mobile.md §3 wants list/day
       as the phone default — a phone default view in the shared component (found in the Schichten pass).
-- [ ] E6 Kurse: /courses/new takes no date yet; the calendar's "Neu am …" sheet links to it without the day (Kurse pass:
+- [x] E6 (Vermietung + Kurse pass: /courses/new?start= pre-fills an optional first date, the calendar sends it) Kurse: /courses/new takes no date yet; the calendar's "Neu am …" sheet links to it without the day (Kurse pass:
       accept ?start= for the first session). Drag & drop on phones (board cards, calendar entries) isn't offered: status
       and dates change in the task panel / record instead.
 
@@ -146,6 +147,17 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       (`src/app/site/`) and, where it fits, to the org public pages (`src/app/s/`), together with `public.json`'s
       uxNotes (checkout keeps typed values, waitlist feedback, shorter shop checkout, way back to the org site).
       The skill itself says dashboards are out of its scope: the App follows system.md / patterns.md instead.
+
+## V. Found in the Vermietung + Kurse pass (not fixed there)
+- [ ] V1 Kurse: "Leitung" is free text; link it to an HR person / shift-team member (picker) once both exist.
+- [ ] V2 Kurse list: no Laufend · Vergangen filter and no export (needs a "has upcoming dates" column or SQL view to
+      filter + paginate on the server); participants export per course exists.
+- [ ] V3 Neue Vergabe: the period fields (date vs. date + time, term) follow the object's first rate; picking another
+      rate in the form doesn't switch them (needs a small client form).
+- [ ] V4 Belegung: bookings can't be moved by drag (CalendarView supports `onMove`; needs a `moveRental` action with the
+      same overlap checks).
+- [ ] V5 Objekte: all objects load at once (≤ 1000, filtered in JS); paginate on the server when orgs grow.
+- [ ] V6 Comments (L3) on rentals and courses once `<Comments>` exists.
 
 ## Z. To discuss tomorrow
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key

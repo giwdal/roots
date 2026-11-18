@@ -73,6 +73,9 @@ One shared way, so pages don't build two UIs (`usePhone()` in `src/lib/use-phone
   tap = jump, the active one marked; `projects/board.tsx`); calendars are `<PhoneCalendar>` inside `<CalendarView>`
   (iOS / Google Calendar: week strip Mo–So with dots, swipe or arrows, Woche · Monat with a dotted month grid, the
   selected day's entries below, "+" creates on that day through the page's `newHref`); timelines scroll in their own box.
+- **Check-lists on the go** (attendance, later guest lists at a table): one big row per person (≥ 48 px), a tap
+  toggles and saves at once (no save button), a counter "8 von 12 da" + "Alle da" above, ‹ › to the previous / next
+  date in a toolbar row (`courses/attendance-list.tsx`).
 - **Wide content** (tables with many columns, previews) scrolls inside its own box; the page never scrolls sideways.
 
 ## 4. Touch rules

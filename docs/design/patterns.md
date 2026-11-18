@@ -132,12 +132,12 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Events | Events · Gästelisten · Einlass | |
 | Schichten ✓ | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
 | Personal ✓ | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
-| Kurse | – | |
+| Kurse ✓ | – | |
 | Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
 | Kommunikation ✓ | E-Mails · Formulare | Automationen, Versand → segments on E-Mails (Kampagnen · Automationen · Versand); E-Mail-Vorlagen → E-Mail-Einstellungen (gear) |
 | Automationen | – | |
 | Projekte ✓ | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
-| Vermietung | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben |
+| Vermietung ✓ | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben (`/rentals/list/calendar`); no area settings, no gear |
 | Shop ✓ | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
 | Wissen, Auswertungen | – | |
 | Website | Seiten | Marke, Domain → gear (Website-Einstellungen) |

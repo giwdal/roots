@@ -217,8 +217,15 @@
           "legacy ?edit=<id> / ?new (+contact) → redirects (unchanged)",
           "empty 'Noch keine Mitgliedschaften.' → <EmptyState> with Neue Mitgliedschaft; filtered empty → short text"
         ],
-        "kept": "Marking paid / reminding stays on Beiträge (the treasurer's list); the member page has them per member."
-      }
+        "kept": "uxNote 4 kept: marking paid / reminding stays on Beiträge and on the member page.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     },
     {
       "route": "/members/new",
@@ -447,8 +454,15 @@
           "SEPA mandate card (account_holder, iban, bic, mandate_ref, mandate_signed_on) → same collapsed section",
           "Weitere Angaben (custom fields, note) → same collapsed section; required custom fields open it by default",
           "SaveBar 'Aufnehmen' (saveMembership) → unchanged; ?contact= preselects; ?error notice unchanged"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     },
     {
       "route": "/members/[id]",
@@ -685,8 +699,15 @@
           "Wiederherstellen (deleted) → unchanged notice + button",
           "?ok / ?error → toast; ?edit=details, ?new=pause|cancel sheets"
         ],
-        "kept": "Trash stays possible only without dues (money is never deleted); the ⋯ explains nothing extra, the membership can be ended instead."
-      }
+        "kept": "uxNote 1 kept: trash stays possible only without dues (money is never deleted); a membership with dues is ended (Kündigen) instead.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        2,
+        3,
+        4
+      ]
     },
     {
       "route": "/members/dues",
@@ -977,8 +998,16 @@
           "?new=sepa sheet (collection_on, hint) → SaveBar always 'Lastschriftdatei erstellen'; notice + link to Einstellungen when the creditor data is missing",
           "?run=<id> highlight → unchanged",
           "empty 'Keine Beiträge.' → <EmptyState> 'Noch keine Beiträge' + Beiträge erzeugen; filtered → short text"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
     },
     {
       "route": "/members/types",
@@ -1131,8 +1160,15 @@
           "sheet fields name, fee, interval (NativeSelect → Choice), entry_fee, notice_months, prorate, fee_is_minimum, active → unchanged in the sheet; create sheet titled 'Neue Mitgliedsart', SaveBar 'Mitgliedsart anlegen'",
           "Mitgliedsart löschen (red ghost button, no confirm) → sheet ⋯ destructive item with confirm",
           "EmptyState → the rows' empty line + the add link"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     },
     {
       "route": "/members/settings",
@@ -1273,8 +1309,13 @@
           "SEPA card (creditor_name, creditor_id, iban, bic, due_day) + SaveBar → same fields in the one form",
           "Mitgliedsnummern NumberRangeForm with own Speichern → <NumberRangeFields> in the same form; saveSettings saves both (saveMemberRange merged)",
           "Mitgliederbereich URL + Kopieren → unchanged"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ]
     },
     {
       "route": "/members/setup",
@@ -1290,7 +1331,8 @@
         "desktop": "–",
         "moves": [
           "redirect → /members/settings (unchanged)"
-        ]
+        ],
+        "built": true
       }
     },
     {
@@ -1307,7 +1349,8 @@
         "desktop": "–",
         "moves": [
           "redirect → /members?import=1 (unchanged)"
-        ]
+        ],
+        "built": true
       }
     }
   ],

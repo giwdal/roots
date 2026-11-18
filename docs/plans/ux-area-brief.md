@@ -29,6 +29,13 @@ node_modules/next/dist/docs/ when unsure.
   invoices/badges.tsx (payment / document status → colour), a header form button that submits the page's form with
   `form="<id>" formAction={…}` (Ausstellen = save + issue), invoices/new (the record's editor on /new, created on save),
   `<NumberRangeFields suffix>` (number ranges inside a bigger form), reports/period-menu.tsx (presets as a dropdown).
+- From Kontakte + Mitglieder: the contact page as the Person hub (add your module's rows there as a `<Section>` with
+  `<LinkRows>`, hidden when off/empty), members/badges.tsx (membership state + due status → colour),
+  components/custom-field-details.tsx (`customDetails()`: custom field values as DetailList items), `<Choice emptyLabel>`
+  (the "automatic / as the type" option named), a `<details>` "… (optional)" section on /new pages for rarely needed
+  cards, a record's own fields in a `?edit=details` sheet with errors sent back to `?edit=details`, record row actions as
+  one visible button + a row `<ActionsMenu>` of `MenuSubmit`s on hidden forms, a money flow as numbered steps
+  (Beiträge › Lastschriften), `/email/log?contact=`.
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

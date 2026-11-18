@@ -127,8 +127,8 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Area | Sidebar children | Moves out of the sidebar |
 |---|---|---|
 | Kalender | – | |
-| Kontakte | – | |
-| Mitglieder | Mitglieder · Beiträge | Mitgliedsarten, Einstellungen → gear |
+| Kontakte ✓ | – | |
+| Mitglieder ✓ | Mitglieder · Beiträge | Mitgliedsarten (a group in Einstellungen), Einstellungen → gear |
 | Events | Events · Einlass | |
 | Schichten | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
 | Personal | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |

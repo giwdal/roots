@@ -26,6 +26,7 @@ test("required fields, consents, mandate and type are enforced", () => {
   assert.equal(read({ ...base, iban: "123" }).error, "errors.invalid_iban")
   const consent = els.find((e) => e.kind === "consent")
   assert.equal(read({ ...base, [`consent.${consent.id}`]: "" }).error, "errors.consent_required")
+  assert.equal(read({ ...base, [`consent.${consent.id}`]: "1", mandate_ok: "1" }).error, undefined) // documented API value
 })
 
 test("fields not on the form are ignored", () => {

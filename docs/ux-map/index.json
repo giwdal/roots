@@ -549,6 +549,9 @@
         "uxNotes": [
           "No Benachrichtigungen tab: the unread count is only visible as a small badge on the Menü sheet tile (not on the Menü tab itself).",
           "Pages whose primary is a form button (e.g. automation Aktivieren) or a section button (Team 'Einladen', Fields 'Neues Feld', admin 'Neue Organisation') get no round + on phones."
+        ],
+        "uxNotesDone": [
+          0
         ]
       },
       {
@@ -643,6 +646,9 @@
           "Deleting a chat has no confirm and the delete icon only appears on hover/focus (app.md: nothing only on hover).",
           "Danger operations ask through Sprout's own approval card, not ConfirmHost – a second confirm pattern.",
           "Home's SproutAsk box is a second entry point that opens the panel with a new chat."
+        ],
+        "uxNotesDone": [
+          0
         ]
       },
       {
@@ -693,6 +699,20 @@
           "Count only refreshes on navigation (server layout), no live update; opening a notification can switch the active org."
         ]
       }
-    ]
+    ],
+    "redesign": {
+      "done": "2026-11-18: phone shell pass (docs/design/mobile.md §1, §2, §6.1)",
+      "job": "On a phone the App feels like a native iOS app; desktop unchanged.",
+      "phone": "Top bar: ‹ back (nearest crumb / parent nav page) · one-line title · ⋯ (PhoneMenu: form primary, gear, header actions, ActionsMenu items, Abbrechen) · Sprout. Tab bar: Start · Suche · Menü (dot while the inbox has unread items) + round primary. Suche = search sheet (field + Abbrechen, recents, results with area tiles). Menü sheet: inbox row first, then org switcher, tiles, account. Every DropdownMenu = action sheet; picker popovers (date, wiki icon/share, product image) = bottom sheets. Segments scroll sideways; body overflow-x clip; SaveBar above the keyboard (--keyboard).",
+      "desktop": "Unchanged: crumbs / area › page in the top bar, gear · actions · ⋯ · primary there, ⌘K palette (now with recents and area tiles), dropdowns and popovers anchored.",
+      "moves": [
+        "Top bar gear / actions / ⋯ / form primary (phones) → one ⋯ action sheet (PhoneMenu)",
+        "Top bar crumbs (phones) → ‹ back + last crumb as title",
+        "PageTitle area › sub (phones) → sub-page only",
+        "Menü tile Benachrichtigungen → first row of the Menü sheet with count; dot on the Menü tab",
+        "⌘K CommandDialog (phones) → search ContentSheet",
+        "Active tints text-primary/bg-primary in tab bar + Menü sheet → neutral muted"
+      ]
+    }
   }
 }

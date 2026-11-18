@@ -23,6 +23,21 @@ sheet with area tiles and drill-down). What changes:
   recent records below it, results grouped by area with `<AreaIcon>`. The keyboard never pushes the page sideways.
 - **Toasts** at the top (already), never covered by the tab bar or the keyboard.
 
+How it is built (done, shell pass):
+- Back + title: `<TopbarTitle>` (`topbar-crumbs.tsx`). A page gets its back target from `<PageHeader crumbs>` (the
+  nearest crumb with an `href` before the last); without crumbs, a path deeper than a nav page (`/shop/orders/<id>`)
+  goes back to that page. Give record pages `crumbs` with hrefs; nothing else is needed.
+- The ⋯: `<PageHeader>` renders `<PhoneMenu>` below md through `<HeaderActions phone>`. Header `actions` become
+  full-width rows (buttons, links, forms keep their behaviour; labels hidden with `max-md:sr-only` show again), the
+  `<ActionsMenu>` items render as rows through a context (`MenuLink` / `MenuSubmit` / `MenuDownload` / `MenuGroup` /
+  `MenuExport` / `MenuSeparator` only – no raw `DropdownMenuItem` in an `ActionsMenu`). Controls that are not actions
+  (a month switcher) belong in the page toolbar, not in `actions`.
+- Search: `<CommandSearch>` renders a `<ContentSheet>` on phones (field + Abbrechen on top, recents from this browser,
+  results with the area's `<AreaIcon>`); the Suche tab focuses a stand-in field during the tap so iOS opens the
+  keyboard. `body { overflow-x: clip }` on phones stops the sideways shift.
+- Keyboard: `<KeyboardInset>` writes the keyboard's height into `--keyboard`; the page SaveBar sits at
+  `bottom: var(--keyboard)` and `scroll-padding-bottom` keeps the focused field above it.
+
 ## 2. Overlays on phones
 
 | Desktop | Phone |
@@ -34,8 +49,14 @@ sheet with area tiles and drill-down). What changes:
 | tooltip | nothing (labels must be visible or in `aria-label`) |
 | ConfirmHost | compact sheet, buttons stacked full width, the action at the bottom |
 
-One shared way: menus and popovers get a phone variant that renders through `<ContentSheet compact>` below `md`
-(`useIsPhone()` / the same media query as `<HeaderActions>`), so pages don't build two UIs.
+One shared way, so pages don't build two UIs (`usePhone()` in `src/lib/use-phone.ts` when code must differ):
+- Every `DropdownMenuContent` is an action sheet below `md` by itself (CSS `[data-phone-sheet]` in `globals.css`:
+  pinned to the bottom, dim backdrop, grab handle, rows `min-h-12`, "Abbrechen" added at the end). Same Base UI
+  menu, so items, `data-confirm` and `MenuSubmit` work unchanged. `title` heads the sheet (FilterMenu passes its
+  label); `sheet={false}` opts out (the round primary button's small glass menu).
+- Pickers: `<PopoverContent sheet title>` (date input, wiki icon + share, product image pick). Popovers that are not
+  pickers stay anchored.
+- The header's ⋯ is a `<ContentSheet compact>` (`<PhoneMenu>`), because it also holds arbitrary header actions.
 
 ## 3. Screens
 
@@ -72,7 +93,9 @@ every overlay closes by swipe/back, the top bar shows where you are and how to g
 
 ## 6. Work
 
-1. Shell (one pass): top bar back chevron + phone ⋯ collecting `<HeaderActions>`, search sheet, Menü dot + inbox row,
-   phone variants for `ActionsMenu`/`DropdownMenu`/`Popover`/`FilterMenu` as action sheets, list toolbar scroll row,
-   `overflow-x: clip`, hover-only fixes in shared components.
+1. Shell (one pass, done): top bar back chevron + phone ⋯ collecting `<HeaderActions>`, search sheet, Menü dot + inbox
+   row, phone variants for `ActionsMenu`/`DropdownMenu`/`Popover`/`FilterMenu` as action sheets, list toolbar scroll
+   row (`<Segments>` scrolls itself; `<ListToolbar>` for whole toolbars, adopted per area), `overflow-x: clip`,
+   hover-only fixes in shared components. Not done here: swipe-to-close on dropdown sheets (backdrop / Abbrechen close
+   them), "Mehr laden" pagination, DataTable card redesign (area passes, §3).
 2. Every area pass of `docs/plans/ux-overhaul.md` applies §3–§5 to its screens.

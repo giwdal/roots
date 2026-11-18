@@ -17,9 +17,11 @@ const errorText = (t: T, e: unknown) => {
 }
 const euros = (v: FormDataEntryValue | null) => moneyCents(String(v ?? "")) ?? NaN
 
-export async function refund(orderId: string, formData: FormData) {
+export async function refund(formData: FormData) {
   const ctx = await requirePerm("payments.refund")
   const t = await getT()
+  const orderId = String(formData.get("id") ?? "")
+  if (!/^[0-9a-f-]{36}$/.test(orderId)) back(PATH, { error: t("errors.not_allowed") })
   // Make sure the order belongs to the active org (RLS on the scoped client), the service itself runs as service role.
   const { data: order } = await ctx.supabase.from("pay_orders").select("id").eq("id", orderId).eq("org_id", ctx.org.id).maybeSingle()
   if (!order || !ctx.modules.has("payments")) back(PATH, { error: t("errors.not_allowed") })

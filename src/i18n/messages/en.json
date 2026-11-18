@@ -1607,7 +1607,7 @@
     "codePlaceholder": "Enter code",
     "checkIn": "Check in",
     "scanResult": {
-      "ok": "✓ Valid – let in",
+      "ok": "✓ Valid – checked in",
       "used": "Already checked in",
       "invalid": "✗ Invalid",
       "error": "Error"
@@ -2177,8 +2177,8 @@
     "list": "List",
     "noGuests": "No guests found.",
     "noTickets": "No tickets found.",
-    "checkIn": "Let in",
-    "checkedIn": "{name} is in.",
+    "checkIn": "Check in",
+    "checkedIn": "{name} is checked in.",
     "already": "Already checked in.",
     "undo": "Undo",
     "undone": "Check-in undone.",
@@ -2187,8 +2187,8 @@
     "inside": "Inside: {count}",
     "member": {
       "member": "Member",
-      "ok": "Let in",
-      "already": "Already inside",
+      "ok": "Checked in",
+      "already": "Already checked in",
       "full": "Event is full",
       "not_member": "Not a member",
       "invalid": "Unknown card",
@@ -2206,8 +2206,8 @@
         "other": "{count} visits"
       },
       "lastVisit": "Last visit: {date}",
-      "admit": "Let in",
-      "admitting": "Letting in …",
+      "admit": "Check in",
+      "admitting": "Checking in …",
       "noneFound": "No member found."
     },
     "sale": {
@@ -2295,7 +2295,9 @@
       "members": "Members",
       "atDoor": "of which door sales",
       "leftOnline": "left online"
-    }
+    },
+    "settingsLink": "Door settings of this event",
+    "lookup": "Look up"
   },
   "shifts": {
     "nav": "Shifts",

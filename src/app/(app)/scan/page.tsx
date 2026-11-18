@@ -1,5 +1,8 @@
 import Link from "next/link"
-import { Page } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
+import { Segments } from "@/components/segments"
+import { cn } from "@/lib/utils"
+import { FilterMenu } from "@/components/filter-menu"
 import { notFound } from "next/navigation"
 import { SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
@@ -13,11 +16,11 @@ import { guestCheckIn, memberDoorCheckIn, ticketDoorCheckIn } from "./actions"
 import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
 import { IdCardIcon, ScanLineIcon, ShoppingCartIcon, TicketIcon, UsersIcon } from "lucide-react"
-
-const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, tickets: TicketIcon, members: IdCardIcon, guests: UsersIcon } as const
 import { DoorSale } from "./door-sale"
 import { doorOffer, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
+
+const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, tickets: TicketIcon, members: IdCardIcon, guests: UsersIcon } as const
 
 // Door: pick the event (today's first), then scan QR codes, check guest lists, or look up tickets by name.
 export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
@@ -42,20 +45,18 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const stats = current && canScan ? await doorStats(ctx.org.id, current.id) : null
   const tabs = [...(canScan ? ["scan", "sale", "tickets"] : []), ...(canMembers ? ["members"] : []), ...(canGuests ? ["guests"] : [])]
   const tab = tabs.find((x) => x === param(sp, "tab")) ?? tabs[0]
+  // Phones show one view (`tab`, bottom tab bar). Desktop is a door dashboard: an action panel (Scannen · Verkauf)
+  // next to the live numbers and a lookup panel (Tickets · Gäste · Mitglieder, `look`), all at once.
+  const actions: string[] = tabs.filter((x) => x === "scan" || x === "sale")
+  const lookups = tabs.filter((x) => !actions.includes(x))
+  const action = actions.includes(tab) ? tab : actions[0]
+  const look = lookups.find((x) => x === param(sp, "look")) ?? (lookups.includes(tab) ? tab : lookups[0])
+  // Desktop panels keep each other's state in the URL; phone links set both so a resize shows the same view.
+  const href = (next: { tab?: string; look?: string }) =>
+    `/scan?${new URLSearchParams({ event: current?.id ?? "", tab: next.tab ?? tab, look: next.look ?? look ?? "" })}`
   const q = param(sp, "q")
     ?.replace(/[%,()*]/g, "")
     .trim()
-  const chip = (href: string, active: boolean, label: string) => (
-    <Link
-      key={href}
-      href={href}
-      aria-current={active ? "true" : undefined}
-      className="inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm"
-    >
-      {label}
-    </Link>
-  )
-
   const eventChip = (href: string, active: boolean, label: string) => (
     <Link
       key={href}
@@ -67,47 +68,79 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
     </Link>
   )
 
+  // Door settings (methods, terminal, cash book) are the event's ticket settings: the gear goes there.
+  const settingsHref = current && ctx.modules.has("tickets") && ctx.can("tickets.manage") ? `/events/${current.id}/tickets?edit=settings#door` : undefined
   return (
-    <Page size="form">
+    <Page size="list">
+      <PageHeader
+        area="events"
+        title={t("tickets.scanNav")}
+        settings={settingsHref ? { href: settingsHref, label: t("door.settingsLink") } : false}
+      />
       <div className="grid gap-4 pb-24 md:pb-0">
       {!events?.length ? (
         <p className="text-sm text-muted-foreground">{t("tickets.noEventsToScan")}</p>
       ) : (
         <nav aria-label={t("tickets.pickEvent")} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1 pb-1">
-          {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}`, e.id === current?.id, `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
+          {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}${look ? `&look=${look}` : ""}`, e.id === current?.id, `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
         </nav>
       )}
       {current && (
         <>
-          {/* Remounts when the server's numbers change (list check-ins re-render the page). */}
-          <DoorStats key={`${current.id}-${stats?.checkedIn}-${stats?.expected}`} eventId={current.id} initial={stats} />
-          {/* Door mode: a bottom tab bar on phones (thumb reach), a big segmented bar from md. */}
+          <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+          {/* Live numbers on every view; remounts when the server's numbers change (list check-ins re-render the page). */}
+          {canScan && <DoorStats key={`${current.id}-${stats?.checkedIn}-${stats?.expected}`} eventId={current.id} initial={stats} />}
+          {/* Phones: one view at a time, switched by the bottom tab bar (thumb reach). Hidden from md. */}
           <nav
             aria-label={t("door.tabs")}
             data-own-tab-bar
-            className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:static md:gap-1 md:rounded-xl md:border md:bg-muted md:p-1"
+            className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
           >
             {tabs.map((x) => {
               const Icon = TAB_ICONS[x as keyof typeof TAB_ICONS]
               return (
                 <Link
                   key={x}
-                  href={`/scan?event=${current.id}&tab=${x}`}
+                  href={href({ tab: x, look: lookups.includes(x) ? x : undefined })}
                   aria-current={x === tab ? "page" : undefined}
-                  className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs text-muted-foreground aria-[current=page]:font-medium aria-[current=page]:text-primary md:min-h-11 md:flex-row md:gap-2 md:rounded-lg md:text-sm md:aria-[current=page]:bg-background md:aria-[current=page]:text-foreground md:aria-[current=page]:shadow-sm"
+                  className="flex min-h-14 flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 text-xs text-muted-foreground active:bg-muted aria-[current=page]:font-medium aria-[current=page]:text-primary"
                 >
-                  <Icon className="size-5 md:size-4" />
+                  <Icon className="size-5" />
                   {t.dynamic(`door.tab.${x}`)}
                 </Link>
               )
             })}
           </nav>
-          <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-          {tab === "scan" && <Scanner key={current.id} eventId={current.id} />}
-          {tab === "guests" && <Guests eventId={current.id} q={q} list={param(sp, "list")} sp={sp} chip={chip} />}
-          {tab === "sale" && <Sale eventId={current.id} />}
-          {tab === "tickets" && <Tickets eventId={current.id} q={q} />}
-          {tab === "members" && <Members eventId={current.id} q={q} who={param(sp, "who")} sp={sp} />}
+          <div className={cn("grid gap-6", action && look && "md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start")}>
+            {action && (
+              <div className={cn("grid min-w-0 gap-4", !actions.includes(tab) && "max-md:hidden")}>
+                {actions.length > 1 && (
+                  <Segments
+                    label={t("door.tabs")}
+                    className="justify-self-start max-md:hidden"
+                    items={actions.map((x) => ({ href: href({ tab: x }), label: t.dynamic(`door.tab.${x}`), current: x === action }))}
+                  />
+                )}
+                {action === "scan" && <Scanner key={current.id} eventId={current.id} />}
+                {action === "sale" && <Sale eventId={current.id} settingsHref={settingsHref} />}
+                <div className={cn(action !== "sale" && "max-md:hidden")}>
+                  <DoorCash eventId={current.id} />
+                </div>
+              </div>
+            )}
+            <div className={cn("grid min-w-0 gap-4", actions.includes(tab) && "max-md:hidden", !action && "md:col-span-2")}>
+              {lookups.length > 1 && (
+                <Segments
+                  label={t("door.lookup")}
+                  className="justify-self-start max-md:hidden"
+                  items={lookups.map((x) => ({ href: href({ look: x }), label: t.dynamic(`door.tab.${x}`), current: x === look }))}
+                />
+              )}
+              {look === "guests" && <Guests eventId={current.id} q={q} list={param(sp, "list")} />}
+              {look === "tickets" && <Tickets eventId={current.id} q={q} />}
+              {look === "members" && <Members eventId={current.id} q={q} who={param(sp, "who")} sp={sp} />}
+            </div>
+          </div>
         </>
       )}
       </div>
@@ -115,19 +148,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   )
 }
 
-async function Guests({
-  eventId,
-  q,
-  list,
-  sp,
-  chip,
-}: {
-  eventId: string
-  q?: string
-  list?: string
-  sp: Record<string, string | string[] | undefined>
-  chip: (href: string, active: boolean, label: string) => React.ReactNode
-}) {
+async function Guests({ eventId, q, list }: { eventId: string; q?: string; list?: string }) {
   const ctx = await getContext()
   const t = await getT()
   // Lists of this event + permanent lists (valid at every event).
@@ -155,12 +176,9 @@ async function Guests({
     <section className="grid gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox size="lg" q={q} label={t("door.searchGuests")} keep={{ event: eventId, tab: "guests", ...(list ? { list } : {}) }} />
-        <span className="text-sm text-muted-foreground">{t("door.guestCount", { in: inCount, total: rows.length })}</span>
+        {(lists?.length ?? 0) > 1 && <FilterMenu param="list" label={t("door.list")} allLabel={t("door.allLists")} options={(lists ?? []).map((l) => ({ value: l.id, label: l.name }))} />}
+        <span className="text-sm text-muted-foreground md:ml-auto">{t("door.guestCount", { in: inCount, total: rows.length })}</span>
       </div>
-      <nav aria-label={t("door.lists")} className="flex w-fit max-w-full flex-wrap gap-1 justify-self-end rounded-lg bg-muted p-1">
-        {chip(withParams(sp, { list: undefined }), !list, t("door.allLists"))}
-        {lists?.map((l) => chip(withParams(sp, { list: l.id }), l.id === list, l.name))}
-      </nav>
       <ul className="grid gap-2">
         {rows.map((r) => (
           <DoorRow key={r.id} title={r.name} meta={[r.list.name, r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")} done={!!r.at}>
@@ -190,30 +208,48 @@ async function Guests({
   )
 }
 
-// Abendkasse: sell tickets / free amounts, then the night's door sales per payment method (for counting the till).
-async function Sale({ eventId }: { eventId: string }) {
+// Abendkasse: sell tickets / free amounts.
+async function Sale({ eventId, settingsHref }: { eventId: string; settingsHref?: string }) {
   const ctx = await getContext()
-  const t = await getT()
-  const [offer, sum, stats] = await Promise.all([doorOffer(ctx.org.id, eventId), doorSummary(ctx.org.id, eventId), doorStats(ctx.org.id, eventId)])
+  const [offer, stats] = await Promise.all([doorOffer(ctx.org.id, eventId), doorStats(ctx.org.id, eventId)])
   if (!offer) return null
   return (
-    <section className="grid gap-6">
-      <DoorSale key={eventId} eventId={eventId} types={offer.types.map((ty) => ({ ...ty, left: stats?.capacity ? null : (stats?.left[ty.id] ?? null) }))} methods={offer.methods} provider={offer.provider} left={offer.left} currency={offer.types[0]?.currency ?? "eur"} />
-      <div className="grid gap-2 rounded-xl border p-4 text-sm">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="font-medium">{t("door.sale.summary")}</h3>
-          <span className="text-muted-foreground">{t("door.sale.summaryMeta", { sales: sum.sales, tickets: sum.tickets })}</span>
+    <DoorSale
+      key={eventId}
+      eventId={eventId}
+      types={offer.types.map((ty) => ({ ...ty, left: stats?.capacity ? null : (stats?.left[ty.id] ?? null) }))}
+      methods={offer.methods}
+      provider={offer.provider}
+      left={offer.left}
+      currency={offer.types[0]?.currency ?? "eur"}
+      settingsHref={settingsHref}
+    />
+  )
+}
+
+// The night's door sales per payment method (for counting the till).
+async function DoorCash({ eventId }: { eventId: string }) {
+  const ctx = await getContext()
+  const t = await getT()
+  const sum = await doorSummary(ctx.org.id, eventId)
+  if (!sum.sales) return null
+  return (
+    <section className="grid gap-2 rounded-xl bg-muted p-4 text-sm" aria-label={t("door.sale.summary")}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-medium">{t("door.sale.summary")}</h3>
+        <span className="text-xs text-muted-foreground">{t("door.sale.summaryMeta", { sales: sum.sales, tickets: sum.tickets })}</span>
+      </div>
+      {Object.entries(sum.byMethod).map(([m, x]) => (
+        <div key={m} className="flex justify-between gap-2">
+          <span>
+            {t.dynamic(`door.sale.method.${m}`)} · {x.count}
+          </span>
+          <span className="tabular-nums">{t.money(x.total)}</span>
         </div>
-        {Object.entries(sum.byMethod).map(([m, x]) => (
-          <div key={m} className="flex justify-between gap-2">
-            <span>{t.dynamic(`door.sale.method.${m}`)} · {x.count}</span>
-            <span className="tabular-nums">{t.money(x.total)}</span>
-          </div>
-        ))}
-        <div className="flex justify-between gap-2 border-t pt-2 font-medium">
-          <span>{t("door.sale.total")}</span>
-          <span className="tabular-nums">{t.money(sum.total)}</span>
-        </div>
+      ))}
+      <div className="flex justify-between gap-2 border-t pt-2 font-medium">
+        <span>{t("door.sale.total")}</span>
+        <span className="tabular-nums">{t.money(sum.total)}</span>
       </div>
     </section>
   )

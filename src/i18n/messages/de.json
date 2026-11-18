@@ -1607,7 +1607,7 @@
     "codePlaceholder": "Code eingeben",
     "checkIn": "Einchecken",
     "scanResult": {
-      "ok": "✓ Gültig – Einlass",
+      "ok": "✓ Gültig – eingecheckt",
       "used": "Schon eingecheckt",
       "invalid": "✗ Ungültig",
       "error": "Fehler"
@@ -2177,8 +2177,8 @@
     "list": "Liste",
     "noGuests": "Keine Gäste gefunden.",
     "noTickets": "Keine Tickets gefunden.",
-    "checkIn": "Einlass",
-    "checkedIn": "{name} ist drin.",
+    "checkIn": "Einchecken",
+    "checkedIn": "{name} ist eingecheckt.",
     "already": "Schon eingecheckt.",
     "undo": "Rückgängig",
     "undone": "Check-in zurückgenommen.",
@@ -2187,8 +2187,8 @@
     "inside": "Drin: {count}",
     "member": {
       "member": "Mitglied",
-      "ok": "Eingelassen",
-      "already": "Schon drin",
+      "ok": "Eingecheckt",
+      "already": "Schon eingecheckt",
       "full": "Veranstaltung ist voll",
       "not_member": "Kein Mitglied",
       "invalid": "Unbekannte Karte",
@@ -2206,8 +2206,8 @@
         "other": "{count} Besuche"
       },
       "lastVisit": "Zuletzt da: {date}",
-      "admit": "Einlassen",
-      "admitting": "Einlassen …",
+      "admit": "Einchecken",
+      "admitting": "Checkt ein …",
       "noneFound": "Kein Mitglied gefunden."
     },
     "sale": {
@@ -2295,7 +2295,9 @@
       "members": "Mitglieder",
       "atDoor": "davon Abendkasse",
       "leftOnline": "online noch frei"
-    }
+    },
+    "settingsLink": "Abendkasse-Einstellungen dieses Events",
+    "lookup": "Nachschlagen"
   },
   "shifts": {
     "nav": "Schichten",

@@ -46,9 +46,11 @@ export function Scanner({ eventId }: { eventId: string }) {
       localStorage.setItem("roots-scan-camera", on ? "1" : "")
     } catch {}
   }
+  // Only when the scanner is on screen (phones render the door's other views next to it, hidden).
+  const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     try {
-      if (localStorage.getItem("roots-scan-camera")) Promise.resolve().then(() => setCamera(true))
+      if (localStorage.getItem("roots-scan-camera") && root.current?.offsetParent) Promise.resolve().then(() => setCamera(true))
     } catch {}
   }, [])
   const [last, setLast] = useState<(ScanResult & { code: string }) | null>(null)
@@ -222,7 +224,7 @@ export function Scanner({ eventId }: { eventId: string }) {
     })
   }
   return (
-    <div className="grid gap-4">
+    <div ref={root} className="grid gap-4">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         {!online && (
           <span className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-2 py-0.5 text-destructive">

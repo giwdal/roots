@@ -2196,10 +2196,7 @@
       "limit": "Besuchslimit erreicht",
       "limitHint": "Alle Besuche dieser Mitgliedsart sind aufgebraucht.",
       "override": "Trotzdem einlassen",
-      "visitsOf": {
-        "one": "{count} von {limit} Besuch genutzt",
-        "other": "{count} von {limit} Besuchen genutzt"
-      },
+      "visitsOf": "{count} von {limit} Besuchen genutzt",
       "notCounting": "Zählt nicht als Besuch"
     },
     "sale": {

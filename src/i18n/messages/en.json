@@ -2196,10 +2196,7 @@
       "limit": "Visit limit reached",
       "limitHint": "All visits of this membership type are used up.",
       "override": "Let in anyway",
-      "visitsOf": {
-        "one": "{count} of {limit} visit used",
-        "other": "{count} of {limit} visits used"
-      },
+      "visitsOf": "{count} of {limit} visits used",
       "notCounting": "Doesn't count as a visit"
     },
     "sale": {

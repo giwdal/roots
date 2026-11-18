@@ -11,6 +11,21 @@ Binding for every screen in the App and `/admin`. Read it before any UI change; 
 - Accessible basics: labels on inputs, focus rings intact, real `<button>`/`<a>`.
 - No hand-rolled widgets (`role="listbox|combobox|radio|toolbar|menu…"` on divs/buttons): search pickers are Base UI's Combobox (`ui/combobox`, as in `<MultiSelect>` / `<ContactPicker>`), one-of-few is `<SegmentGroup>` + `<Segment>` (`choice.tsx`, native radios: arrow keys, one tab stop), button rows are Base UI's `Toolbar`.
 
+## Look (references: `docs/design/references/dashboard-*.png`)
+Calm, neutral, dense but airy — like Linear / the reference dashboards:
+- **Neutral greys** (`theme.css`), colour only where it carries meaning: area colours, status, links. No coloured
+  backgrounds for whole sections, no heavy shadows; separation by 1px `border-border` lines and spacing, not boxes in boxes.
+- **Area colours**: every nav area has `--area-<key>`; show it with `<AreaIcon area icon>` (sidebar, phone menu, top
+  bar, record-type lists, ⌘K hits). The same colour marks that area's records wherever they appear (calendar, links).
+- **Sections over cards**: a record page or side panel is a stack of sections (small heading `text-sm font-medium`,
+  content, a full-width divider), not a pile of bordered cards. Cards are for things you can click/act on
+  (suggestions, tiles), with `rounded-xl border bg-card`.
+- **Stat tiles** (`<Stats>`): filled `bg-muted`, no border, small muted label, value `text-lg` — information, not decoration.
+- **Lists inside sections**: icon + label + muted detail on one line (`Daily brief · Every day at 08:00`); the add row
+  at the end is a quiet link "+ Hinzufügen" in `text-[var(--link)]` with a `PlusCircleIcon`, not a big button.
+- **Small type**: body `text-sm`, details `text-xs text-muted-foreground`, titles `font-medium` (semibold only for the
+  page title). Centered segmented pills (`<Segments>`) to switch a panel's mode.
+
 ## Page anatomy (same on every screen, see /style/app)
 - **Record pages open on their state** (`docs/plans/ux-overhaul.md` §1): header `badge`/`meta`, then `<Stats>`/`<Stat>` (`src/components/stats.tsx`) or a `<DetailList>`, then the next step as the primary action, then related lists. Editing the record's own fields is a "Bearbeiten" `<UrlSheet params={["edit"]}>` or a card further down, never the bulk of the page.
 - **Big-table pickers** (events, projects, staff, objects, invoices …): `<RecordPicker search={serverAction}>` (`src/components/record-picker.tsx`, ≤ 20 results per query), `<ContactPicker>` for contacts. Never a select with hundreds of rows.

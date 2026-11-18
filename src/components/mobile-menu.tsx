@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 type Group = { label?: string; items: SidebarLink[] }
 
 const TAP = "touch-manipulation [-webkit-tap-highlight-color:transparent] transition active:scale-95"
-const TILE = `relative flex h-[4.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-xs [&_svg]:size-5 ${TAP}`
+const TILE = `relative flex h-[4.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-xs [&_svg]:size-5 [&_[data-slot=area-icon]]:size-8 [&_[data-slot=area-icon]]:rounded-lg ${TAP}`
 const ACTIVE = "border-primary/20 bg-primary/10 [&_svg]:text-primary"
 const ROW = `flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm active:bg-muted [&_svg]:size-5 [&_svg]:text-muted-foreground ${TAP}`
 
@@ -70,7 +70,7 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
             <button type="button" aria-label={t("shell.menu")} onClick={() => setArea(null)} className="-ml-2 flex h-9 shrink-0 items-center rounded-lg pr-2 text-sm text-muted-foreground active:bg-muted [&_svg]:size-5">
               <ChevronLeftIcon /> {t("shell.menu")}
             </button>
-            <ContentSheetTitle ref={heading} tabIndex={-1} className="flex min-w-0 items-center gap-2 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-primary">
+            <ContentSheetTitle ref={heading} tabIndex={-1} className="flex min-w-0 items-center gap-2 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-primary [&_[data-slot=area-icon]]:size-6">
               {current.icon} <span className="truncate">{current.label}</span>
             </ContentSheetTitle>
           </div>

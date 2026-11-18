@@ -1,6 +1,7 @@
 import { APP_HOME } from "@/lib/url"
 import { FolderIcon, HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
+import { AreaIcon } from "@/components/area-icon"
 import type { SidebarLink } from "@/components/app-sidebar"
 import { OrgSwitcher } from "@/components/org-switcher"
 import { getT } from "@/i18n/server"
@@ -22,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const moduleLinks: SidebarLink[] = visibleNav((m) => ctx.modules.has(m), ctx.can).map((a) => ({
     href: a.children[0].href,
     label: t.dynamic(a.label),
-    icon: <a.icon />,
+    icon: <AreaIcon area={a.key} icon={a.icon} />,
     children: a.children.map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
   }))
   const groups = [

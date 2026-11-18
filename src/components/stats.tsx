@@ -13,13 +13,13 @@ export function Stat({ label, value, hint, href, tone }: { label: string; value:
   const body = (
     <>
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-xl font-semibold tabular-nums", tone === "warn" && "text-destructive", tone === "good" && "text-primary")}>{value}</span>
+      <span className={cn("text-lg font-medium tabular-nums", tone === "warn" && "text-destructive", tone === "good" && "text-[var(--area-finance)]")}>{value}</span>
       {hint && <span className="truncate text-xs text-muted-foreground">{hint}</span>}
     </>
   )
-  const box = "grid min-w-0 content-start gap-0.5 rounded-xl border bg-card p-3"
+  const box = "grid min-w-0 content-start gap-0.5 rounded-lg bg-muted/70 px-3 py-2.5"
   return href ? (
-    <Link href={href} className={cn(box, "transition-colors hover:bg-muted/50")}>
+    <Link href={href} className={cn(box, "transition-colors hover:bg-muted")}>
       {body}
     </Link>
   ) : (

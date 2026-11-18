@@ -63,7 +63,7 @@ node_modules/next/dist/docs/ when unsure.
    patterns.md §7 (update src/modules/nav.ts for your area only; old URLs redirect); `?edit=`/`?new=` params, trash
    `?trash=1`; connections per ux-overhaul.md §6b in both directions (a filter param on the other list + a link is fine).
 4. Keep server actions, src/api endpoints, MCP and DB behaviour working; no schema change unless unavoidable
-   (AGENTS.md migration rules); no new dependencies.
+   (AGENTS.md migration rules); new dependencies are fine when they clearly make the UX/UI better (well-known, maintained, small); say why in the commit.
 
 ## Rules
 No hardcoded UI text (de.json + en.json). Comments describe what code does (no changelog comments). No AI attribution.

@@ -2,6 +2,7 @@
   "area": "calendar",
   "label": "Kalender",
   "module": null,
+  "research": "iOS Calendar / Google Calendar / Fantastical on phones: a week strip (Mo–So, dots on days with entries, swipe for the next week, today highlighted) above the selected day's agenda; month = compact grid with dots, the selected day's list below; '+' creates on the selected day; filters (calendars) as a list of toggles with colours that double as the legend. Desktop keeps week/month grids. Notion Calendar / Cron: click an empty slot → create there. Taken: the phone pattern inside the shared <CalendarView> (so Schichten, Abwesenheiten, Vermietung, Aufgaben get it too), sources as a chip row with colour dots (several at once), a 'Neu am …' sheet that picks the module and passes the day.",
   "moduleNote": "Shown when any of events, shifts, projects, rentals, courses is on and the person has its .view permission (nav entry + sourcesFor()).",
   "nav": [
     { "label": "Kalender", "key": "calendar.nav", "href": "/calendar", "permission": "events.view | shifts.view | projects.view | rentals.view | courses.view" }
@@ -9,6 +10,7 @@
   "pages": [
     {
       "route": "/calendar",
+      "redesign": {"job": "What is happening when, across everything the person may see; open it; add something on a day.", "phone": "Top bar 'Kalender' (round + = Neu → ?new=entry for the selected day). Chip row of sources (colour dot = legend, tap toggles). Month title with ‹ › and Heute, Woche · Monat switch. Week strip Mo–So (dots, today ring, selected filled; swipe or arrows = next week) or the month grid with dots. Below: the selected day's entries (colour bar, title, time or 'Ganztägig', › opens the record) and '+ Neu am Fr, 20. Nov.'", "desktop": "Header: primary 'Neu' (?new=entry). Source chips in the toolbar. CalendarView month/week/day/list grids; an empty slot opens ?new=entry for that day.", "moves": ["FilterMenu Bereich (one source) → chip row of toggles (?src=events,shifts …), colour dot per source as the legend", "primary 'Neues Event' + more (Schicht, Projekt, Kurs, Vergabe) → primary 'Neu' → ?new=entry sheet: one row per module the person may create in, each carrying the selected day (Event ?start=, Schicht ?start/&end, Aufgabe ?due=, Projekt ?start=, Vergabe ?start/&end, Kurs without date)", "CalendarView month/week/day/agenda (read-only) → kept on desktop; phones get the week strip / month dots + day list (shared CalendarView)", "empty slot click (none) → ?new=entry for that day", "entry click → the record (kept: events, shifts, tasks, projects, rentals, courses)", "new source: Abwesenheiten (hr module, hr.view) → /hr/absences?edit=<id>"]},
       "file": "src/app/(app)/calendar/page.tsx",
       "title": "Kalender",
       "purpose": "One read-only calendar over everything dated the person may see (events, shifts, tasks, projects, rentals, courses), coloured by source; a click opens the record.",

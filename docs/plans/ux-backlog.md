@@ -137,8 +137,8 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] G2 Re-check every redesigned area on phones (Events, Einlass, Shop, Finanzen, Kontakte, Mitglieder, E-Mails,
       Formulare, Gästelisten) against mobile.md §5.
 
-## P. Public & marketing pages (later pass)
-- [ ] P1 Apply `docs/design/references/taste-skill.md` (anti-slop rules for landing pages: hero discipline, no
+## P. Public & marketing pages — on hold (user: skip for now)
+- [ ] P1 (not now) Apply `docs/design/references/taste-skill.md` (anti-slop rules for landing pages: hero discipline, no
       em-dashes, eyebrow limits, real images, one verb per action, full state cycle) to the roots website
       (`src/app/site/`) and, where it fits, to the org public pages (`src/app/s/`), together with `public.json`'s
       uxNotes (checkout keeps typed values, waitlist feedback, shorter shop checkout, way back to the org site).

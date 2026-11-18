@@ -39,10 +39,15 @@ import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
 import { localeNames, locales } from "@/i18n/config"
 
-// The item's icon, or a spinner while its page loads (instant feedback on click, before the server answers).
+// The item's icon with a spinner over it while its page loads (instant feedback on click; the area's colour tile stays).
 function NavIcon({ icon }: { icon: React.ReactNode }) {
   const { pending } = useLinkStatus()
-  return pending ? <Loader2Icon className="animate-spin" /> : icon
+  return (
+    <span className="relative grid shrink-0 place-items-center">
+      <span className={pending ? "opacity-40" : undefined}>{icon}</span>
+      {pending && <Loader2Icon className="absolute animate-spin" />}
+    </span>
+  )
 }
 
 export type SidebarLink = { href: string; label: string; icon: React.ReactNode; count?: number; newTab?: boolean; children?: { href: string; label: string }[] } // children: sub-pages (the area opens the first)

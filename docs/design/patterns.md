@@ -102,3 +102,44 @@ with \*), errors under the field in red, the form keeps what was typed on any er
 - Buttons say what happens: "Rechnung ausstellen", not "OK" / "Weiter" / "Absenden".
 - Section headings are nouns ("Adresse", "Zahlung"), hints are one short sentence, no intro paragraphs on overviews.
 - Numbers with units ("3 Monate", "12 / 200 verkauft"), dates relative when near ("heute 18:00", "morgen").
+
+## 7. Navigation: sub-pages, sidebar, sheets or one page
+
+Decide for every piece of content where it lives, with this test:
+
+| The content is … | It lives … |
+|---|---|
+| a different **job** people come to do (sell at the door, approve hours, pay out) or a different **list of things** they work through daily | its own **sub-page in the sidebar** (max 3 per area) |
+| another **view of the same things** (calendar vs list, board vs list, mine vs all, org chart vs list, log of the same mails) | a `<Segments>` switch **on the page**, not in the sidebar |
+| **setup** you do once and rarely touch (types, positions, templates, number ranges, door settings, team setup) | the area's **Einstellungen**, reached by the gear in the header — never a sidebar entry |
+| one **record** with real content | its own page `/<area>/<id>` (not in the sidebar) |
+| a record's **own fields**, a quick create, a small record | a `<UrlSheet>` |
+| a **sub-view of a record** (Event › Tickets) | a path sub-page linked by `<Segments>` under the record header |
+| **personal** things (my shifts, my tasks, my hours) | the person's **Start** page ("Für dich") + a "Meine" segment on the list; for people who only have the personal permission the area opens on it |
+| a **report** about an area | `<Stats>` on that area's overview; the global Auswertungen only for cross-area numbers |
+
+Rules: an area with one page has no children in the sidebar; "Übersicht" is never a label (the first child is named
+after what it lists: "Events", "Bestellungen"); "Einstellungen" is never a sidebar child (gear, and all of them listed
+in Settings › Bereiche); the sidebar shows only what this person may open.
+
+### Target sidebar (to build in the area passes)
+
+| Area | Sidebar children | Moves out of the sidebar |
+|---|---|---|
+| Kalender | – | |
+| Kontakte | – | |
+| Mitglieder | Mitglieder · Beiträge | Mitgliedsarten, Einstellungen → gear |
+| Events | Events · Einlass | |
+| Schichten | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
+| Personal | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
+| Kurse | – | |
+| Finanzen | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
+| Kommunikation | E-Mails · Formulare | Automationen → segment on E-Mails (Kampagnen · Automationen · Versand); Vorlagen → E-Mail Einstellungen |
+| Automationen | – | |
+| Projekte | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
+| Vermietung | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben |
+| Shop | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
+| Wissen, Auswertungen | – | |
+| Website | Seiten | Marke, Domain → gear (Website-Einstellungen) |
+
+Old URLs keep working (redirect to the new place).

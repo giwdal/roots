@@ -39,7 +39,7 @@ Calm, neutral, dense but airy — like Linear / the reference dashboards:
 - **Saving**: no save buttons on edit forms. Put `<SaveBar />` inside the form: a full-width bar appears at the bottom once something changed (Abbrechen · Speichern) and leaving asks first. Create forms: `<SaveBar label="… anlegen" always />`. Small inline things (status, checklist, tasks) autosave. Exception: lists of inline-editable rows (positions, columns, locations) keep a small button per row.
 - **Inputs**: `<TypedInput kind="iban|bic|postcode|phone|email|url|money|number|date">` (keyboard, autofill, placeholder, width, format + check on leaving; money posts "1.234,50" → `moneyCents()`), the server checks again with `src/lib/inputs.ts` (`ibanValid` with check digits, `bicValid`, `moneyCents`). One value from a list: `<Choice>` (≤ 5 segments, ≤ 15 dropdown, more = search). Booleans in forms: checkbox (`accent-primary`).
 - **Lists**: toolbar = `<SearchBox>` + `<FilterMenu>` dropdowns (tags, status, type, event…) + `<Segments>` for ≤ 5 views (Kommend · Vergangen · Alle, Board · Liste). Views and filters stay in this toolbar (view switches on the right, `ml-auto`), never in the top bar: the top bar holds actions only (gear, buttons, ⋯, primary). Trash is a ⋯ item, not a filter chip. Lists that have never had a row show `<EmptyState area title text action>`.
-- **Area settings**: always the area's last sidebar item "Einstellungen" (`common.settings`) at `/<area>/settings`; Settings › Bereiche lists them all. Org-wide settings only under `/settings`.
+- **Area settings** at `/<area>/settings`, reached by the gear in the page header (never a sidebar item, see `patterns.md` §7); Settings › Bereiche lists them all. Org-wide settings only under `/settings`.
 
 ## Overlays
 

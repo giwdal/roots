@@ -137,6 +137,13 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] G2 Re-check every redesigned area on phones (Events, Einlass, Shop, Finanzen, Kontakte, Mitglieder, E-Mails,
       Formulare, Gästelisten) against mobile.md §5.
 
+## P. Public & marketing pages (later pass)
+- [ ] P1 Apply `docs/design/references/taste-skill.md` (anti-slop rules for landing pages: hero discipline, no
+      em-dashes, eyebrow limits, real images, one verb per action, full state cycle) to the roots website
+      (`src/app/site/`) and, where it fits, to the org public pages (`src/app/s/`), together with `public.json`'s
+      uxNotes (checkout keeps typed values, waitlist feedback, shorter shop checkout, way back to the org site).
+      The skill itself says dashboards are out of its scope: the App follows system.md / patterns.md instead.
+
 ## Z. To discuss tomorrow
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
   org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed

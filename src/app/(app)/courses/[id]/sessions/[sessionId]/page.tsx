@@ -86,6 +86,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
         <p className="text-sm text-muted-foreground">{t("courses.noParticipants")}</p>
       ) : (
         <AttendanceList
+          key={sessionId}
           sessionId={sessionId}
           people={people.map((p) => ({ id: p.id, name: p.contacts ? contactName(p.contacts) : "–" }))}
           present={(marks ?? []).filter((m) => m.present).map((m) => m.participant_id)}

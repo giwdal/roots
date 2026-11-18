@@ -49,6 +49,20 @@ node_modules/next/dist/docs/ when unsure.
   `searchListArtists` (guestlists), `?edit=list` vs `?edit=<row id>` on one record page (record fields vs a row's
   sheet), the area settings page as RowGroups of record rows › + AddLink (email/settings), Settings › Bereiche lists
   nav children with `gear: true`.
+- From Schichten + Personal: components/time-input.tsx (`<TimeInput>`: 24 h time of day, typed, posts "HH:MM"),
+  `<MenuSubmit count>` (a server-known number in the ⋯ item's confirm: "Serie und 12 zukünftige Schichten löschen?"),
+  components/time-entries.tsx `<TimeEntrySheet>` (one sheet for an entity used on several pages: params, SaveBar,
+  delete in ⋯), hr/absence-sheet.tsx (same, with a read-only mode for view-only people), shifts/views.tsx +
+  hr/views.tsx (a personal view "Meine" / another view "Organigramm" as Segments), the Jetzt card on Schichten › Meine
+  (the phone's one main action as a big full-width button in the page, not the round +), a next-step row with the
+  confirm count (Stunden › Person: "3 Einträge offen · Monat freigeben"), shifts/settings/position-rows.tsx (inline
+  rows posted by index like tier-rows, one SaveBar, ✕ asks for saved rows), weekday toggles (checkboxes styled as one
+  segmented row), server-search pickers with a bound argument (`searchStaff.bind(null, positionId)` marks people not
+  set up for the position), `searchTeamCandidates` / `searchMembers` (org members not yet on the team / in HR),
+  `searchEmployees`, `searchProjects`, `searchShiftEvents`; the first record page on patterns.md §8: hr/[id] with
+  Eigenschaften as `<InlineField>`s + `patchEmployee` (one field checked with the whole record's `read…()` rules), a
+  small `?edit=links` sheet for relations and `?edit=private` for a compound value; `?user=<id>` pre-picks a member
+  in create sheets (Meine → "Mich zum Team hinzufügen", HR → "Zum Schicht-Team hinzufügen").
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

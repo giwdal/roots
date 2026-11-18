@@ -65,8 +65,10 @@
           "Pager → unchanged",
           "empty text → <EmptyState> with Neue Person; filtered empty → short text",
           "?new= legacy redirect → unchanged"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3]
     },
     {
       "route": "/hr/new",
@@ -132,8 +134,10 @@
           "fields Wochenstunden / Urlaubstage → <TypedInput kind=number>",
           "field Notizen → unchanged",
           "SaveBar 'Anlegen' → 'Person anlegen' (always)"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 2, 3]
     },
     {
       "route": "/hr/[id]",
@@ -205,27 +209,29 @@
       ],
       "redesign": {
         "job": "One person: their terms, holiday left, absences, this month's hours and pay, documents; record an absence.",
-        "phone": "Top bar: ‹ Personen · Name; ⋯ (Bearbeiten, Persönliche Daten, In den Papierkorb). Badge: aktiv / ausgeschieden / ab <Datum>; meta: Beschäftigung · Funktion · Abteilung. Stats (2 per row): Urlaub übrig, Krank {year}, Stunden <Monat>, Brutto ca. Round + = Abwesenheit eintragen (sheet on this page). Sections: Vertrag (DetailList), Person & Rolle (DetailList, tel/mailto), Abwesenheiten {year} (rows → sheet), Stunden & Lohn (hours, unapproved hint → Stunden, warnings; not linked → Verknüpfen / Zum Schicht-Team hinzufügen), Persönliche Daten (hr.manage), Verknüpft (Kontakt, Schicht-Team, Stunden), Dokumente.",
-        "desktop": "RecordLayout: main = Stats, Vertrag, Person & Rolle, Abwesenheiten, Persönliche Daten; aside = Stunden & Lohn, Verknüpft, Dokumente. Header: Bearbeiten (outline) + ⋯ + primary Abwesenheit eintragen.",
+        "phone": "Top bar: ‹ Personen · Name; ⋯ (Persönliche Daten bearbeiten, In den Papierkorb). Identity in the page: name + state badge (aktiv / ausgeschieden / ab <Datum>), meta Beschäftigung · Funktion · Abteilung. Stats (2 per row): Urlaub übrig, Krank {year}, Stunden <Monat>, Brutto ca. Round + = Abwesenheit eintragen (sheet on this page). Then one column (patterns.md §8): Eigenschaften (each value edited in place), Zuordnung (Berichtet an, Schicht-Team › ?edit=links), Abwesenheiten {year} (rows → sheet), Stunden & Lohn (hours, unapproved → Stunden, warnings; not linked → Verknüpfen / Zum Schicht-Team hinzufügen), Persönliche Daten (hr.manage, Ändern → ?edit=private), Verknüpft (Kontakt, Schicht-Team, Stunden), Dokumente.",
+        "desktop": "patterns.md §8: identity + Stats on top; main column = Abwesenheiten, Stunden & Lohn, Persönliche Daten; right rail = Eigenschaften (InlineField per value), Zuordnung, Verknüpft, Dokumente. Header: ⋯ + primary Abwesenheit eintragen; no whole-record 'Bearbeiten'.",
         "moves": [
           "header badge (employment type, secondary) → state badge (aktiv success / ausgeschieden secondary / ab <date> info); employment type → meta",
           "header meta job title → meta 'Beschäftigung · Funktion · Abteilung'",
           "header ⋯ Abwesenheit eintragen (→ /hr/absences) → header primary, sheet on this page (?new=absence)",
           "header ⋯ In den Papierkorb → unchanged (red, confirm)",
-          "EmployeeForm Person & Rolle + Vertrag + Notizen (page form, SaveBar) → facts as <DetailList> sections; editing in ?edit=details sheet (one form, one SaveBar), header action 'Bearbeiten'",
-          "Konto (read-only) → Person & Rolle DetailList (email as mailto, phone as tel)",
-          "Berichtet an NativeSelect → <RecordPicker> in the edit sheet; fact links to the manager",
-          "new: field 'Schicht-Team' (RecordPicker of the shift team, shifts.view) in the edit sheet → sets employees.staff_id",
-          "Persönliche Daten + Bank/Steuer form (second SaveBar) → section Persönliche Daten (DetailList, hr.manage) + ?edit=private sheet with one form + one SaveBar; ⋯ 'Persönliche Daten bearbeiten'",
+          "EmployeeForm Person & Rolle + Vertrag + Notizen (page form, SaveBar) → Eigenschaften rail: Beschäftigung, Vergütung, Stundenlohn | Monatsgehalt (only the one that applies), Wochenstunden, Urlaubstage, Beginn, Ende, Funktion, Abteilung, Telefon, Notizen each edited in place (<InlineField>, patchEmployee validates with readEmployee and saves that column)",
+          "Konto (read-only) → Eigenschaften 'Konto' (email as mailto); phone shows as tel:",
+          "Berichtet an NativeSelect → Zuordnung section, 'Ändern' → ?edit=links sheet with a <RecordPicker> (searchEmployees); the fact links to the manager",
+          "new: Schicht-Team link (employees.staff_id) → Zuordnung, same ?edit=links sheet (RecordPicker of the team, shifts.view)",
+          "Persönliche Daten + Bank/Steuer form (second SaveBar) → section Persönliche Daten (DetailList, hr.manage) + ?edit=private sheet (a compound value) with one form + one SaveBar; ⋯ 'Persönliche Daten bearbeiten'",
           "IBAN / BIC hardcoded labels → hr.iban / hr.bic keys",
           "Steuerklasse NativeSelect → <Choice> (6 = dropdown)",
-          "aside Abwesenheiten (read-only list + card button) → section Abwesenheiten {year}: rows open ?edit=<absence id> (sheet with delete in ⋯), AddLink → ?new=absence; 'Urlaub noch x von y' → Stat",
-          "aside Dieser Monat → section 'Stunden & Lohn' + Stats; link 'Zu den Zeiten' → /shifts/hours/<staff>; unapproved hint links there; dead-end 'mit dem Schicht-Team verknüpfen' → button 'Verknüpfen' (same account on the team) or link 'Zum Schicht-Team hinzufügen' (shifts.manage)",
-          "aside Dokumente (FileList) → unchanged (aside)",
+          "aside Abwesenheiten (read-only list + card button) → main section Abwesenheiten {year}: rows open ?edit=<absence id> (sheet, delete in ⋯ asks; read-only for hr.view), AddLink → ?new=absence, 'Im Kalender' → /hr/absences?person=<id>; 'Urlaub noch x von y' → Stat",
+          "aside Dieser Monat → main section 'Stunden & Lohn' + Stats; unapproved hint links to /shifts/hours/<staff>; dead-end 'mit dem Schicht-Team verknüpfen' → button 'Verknüpfen' (same account on the team) or 'Zum Schicht-Team hinzufügen' (shifts.manage)",
+          "aside Dokumente (FileList) → right rail, unchanged",
           "new: Verknüpft <LinkRows>: Kontakt (contacts.user_id = account), Schicht-Team (/shifts/team?edit=<staff>), Stunden",
           "trashed person: hint + Wiederherstellen → unchanged"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4]
     },
     {
       "route": "/hr/absences",
@@ -296,8 +302,10 @@
           "sheet Löschen (outline, no confirm) → sheet ⋯ red item with confirm (hr.confirmDeleteAbsence)",
           "new: sheet action 'Zur Person' (link /hr/<id>)",
           "hr.view without manage → read-only sheet (DetailList)"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4]
     },
     {
       "route": "/hr/chart",
@@ -323,8 +331,10 @@
           "header description chartHint → small muted line under the chart (area pages have no intro)",
           "nested cards → unchanged",
           "EmptyState (no action) → EmptyState with Neue Person"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1]
     },
     {
       "route": "/hr/payroll",
@@ -363,8 +373,10 @@
           "columns Stunden, Satz, Brutto, Abwesenheiten → unchanged",
           "column Hinweise → badges (warnings destructive, '{count} offen' warning)",
           "empty → <EmptyState> with Neue Person (hr.manage)"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2]
     }
   ]
 }

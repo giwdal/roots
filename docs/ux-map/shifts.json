@@ -128,8 +128,10 @@
           "sheet 'Person einteilen' NativeSelect + button → <RecordPicker> server search of the team (searchStaff, 'nicht für diese Position' as detail) + 'Einteilen' button",
           "sheet 'Schicht löschen' ghost button → sheet ⋯ red item with confirm (shifts.confirmDeleteShift)",
           "sheet without shifts.manage → read-only facts (<DetailList>) + Besetzung list"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5, 6]
     },
     {
       "route": "/shifts/me",
@@ -236,8 +238,10 @@
           "time sheet 'Eintrag löschen' outline button → sheet ⋯ red item with confirm (time.confirmDelete)",
           "not-in-team EmptyState (no action) → EmptyState with text how to get on the team; managers get 'Mich zum Team hinzufügen' (→ /shifts/team?new=staff&user=<me>)",
           "new: Segments Plan · Meine when the person has shifts.view"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5, 6]
     },
     {
       "route": "/shifts/hours",
@@ -290,8 +294,10 @@
           "column Status → badges with colour (offen warning, freigegeben success, Hinweise destructive)",
           "new: header action 'Alle freigeben' (shifts.approve, data-confirm-count = open entries) → approveAll",
           "empty 'Noch niemand im Team.' → <EmptyState> with 'Team einrichten' (shifts.manage)"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1]
     },
     {
       "route": "/shifts/hours/[staffId]",
@@ -356,8 +362,10 @@
           "new: header badge month state; ⋯ links to the HR record (hr.view) and the team sheet (shifts.manage)",
           "entries DataTable → unchanged, rows → ?edit=<id>",
           "time sheet → shared TimeEntrySheet (SaveBar, delete in ⋯ with confirm) and now with the project picker"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2]
     },
     {
       "route": "/shifts/team",
@@ -417,8 +425,10 @@
           "new: sheet 'Verknüpft' <LinkRows>: Personalakte (hr.view), Stunden this month, Kontakt (contacts.user_id)",
           "creating a team member links the HR record of the same account (employees.staff_id)",
           "removing someone from the team → not added: deleting a team member deletes their time entries (cascade); 'Aktiv' off is the way"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [1, 2]
     },
     {
       "route": "/shifts/settings",
@@ -512,8 +522,10 @@
           "series sheet generateHint + SaveBar → SaveBar asks first when editing (shifts.confirmSeriesSave: future shifts are rebuilt); create = 'Serie anlegen' always",
           "series sheet 'Serie und zukünftige Schichten löschen' ghost button → sheet ⋯ red item, confirm names the count of future shifts",
           "new: RowGroup Team with a row › /shifts/team ('{n} Personen')"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5]
     },
     {
       "route": "/shifts/setup",
@@ -527,7 +539,8 @@
         "desktop": "–",
         "moves": [
           "redirect → /shifts/settings (unchanged)"
-        ]
+        ],
+        "built": true
       }
     }
   ]

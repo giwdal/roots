@@ -130,8 +130,8 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Kontakte ✓ | – | |
 | Mitglieder ✓ | Mitglieder · Beiträge | Mitgliedsarten (a group in Einstellungen), Einstellungen → gear |
 | Events | Events · Gästelisten · Einlass | |
-| Schichten | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
-| Personal | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
+| Schichten ✓ | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
+| Personal ✓ | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
 | Kurse | – | |
 | Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
 | Kommunikation ✓ | E-Mails · Formulare | Automationen, Versand → segments on E-Mails (Kampagnen · Automationen · Versand); E-Mail-Vorlagen → E-Mail-Einstellungen (gear) |

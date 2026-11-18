@@ -8,7 +8,7 @@ import { visibleNav } from "@/modules/nav"
 export default async function AreaSettings() {
   const ctx = await getContext()
   const t = await getT()
-  const areas = visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) => a.children.filter((c) => c.label === "common.settings").map((c) => ({ ...a, href: c.href })))
+  const areas = visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) => a.children.filter((c) => c.gear || c.label === "common.settings").map((c) => ({ ...a, href: c.href })))
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">{t("settings.areasIntro")}</p>

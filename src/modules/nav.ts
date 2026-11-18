@@ -56,6 +56,7 @@ export const NAV: Area[] = [
     icon: CalendarDaysIcon,
     children: [
       { href: "/events", label: "eventsPage.nav", module: "events", permission: "events.view" },
+      { href: "/guestlists", label: "guestlists.nav", module: "guestlists", permission: "guestlists.view" },
       { href: "/scan", label: "tickets.scanNav", module: ["tickets", "guestlists"], permission: ["tickets.scan", "guestlists.checkin"] },
     ],
   },
@@ -99,11 +100,9 @@ export const NAV: Area[] = [
     label: "nav.communication",
     icon: MessagesSquareIcon,
     children: [
-      { href: "/email", label: "nav.campaigns", module: "email", permission: "email.view" },
-      { href: "/email/automations", label: "nav.emailAutomations", module: "email", permission: "email.view" },
-      { href: "/email/templates", label: "nav.emailTemplates", module: "email", permission: "email.view" },
-      { href: "/email/log", label: "nav.emailLog", module: "email", permission: "email.view" },
+      { href: "/email", label: "nav.emails", module: "email", permission: "email.view" },
       { href: "/forms", label: "forms.nav", module: "forms", permission: "forms.view" },
+      { href: "/email/settings", label: "email.settings.title", module: "email", permission: "email.view", gear: true },
     ],
   },
   { key: "automations", label: "automations.nav", icon: WorkflowIcon, children: [{ href: "/automations", label: "automations.nav", module: "automations", permission: "automations.view" }] },

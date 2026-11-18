@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { CalendarClockIcon, CheckCircle2Icon, CircleIcon, ExternalLinkIcon, FolderKanbanIcon, ListChecksIcon, PlusIcon, ReceiptIcon, ScanLineIcon, WalletIcon, type LucideIcon } from "lucide-react"
+import { CalendarClockIcon, CheckCircle2Icon, CircleIcon, ExternalLinkIcon, FolderKanbanIcon, ListChecksIcon, MailIcon, PlusIcon, ReceiptIcon, ScanLineIcon, WalletIcon, type LucideIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
@@ -31,7 +31,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   const tickets = ctx.modules.has("tickets") && ctx.can("tickets.view")
   const none = Promise.resolve({ data: null, count: null })
   const on = (m: string, p: string) => ctx.modules.has(m) && ctx.can(p)
-  const [{ data: ev }, { data: sold }, { data: types }, { count: waiting }, { data: slots }, defs, { count: orders }, { count: shifts }, { count: lists }, { data: projects }] = await Promise.all([
+  const [{ data: ev }, { data: sold }, { data: types }, { count: waiting }, { data: slots }, defs, { count: orders }, { count: shifts }, { count: lists }, { data: projects }, { count: campaigns }] = await Promise.all([
     ctx.supabase.from("events").select("*, locations(name, address), email_templates(name)").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
     tickets ? ctx.supabase.from("tickets").select("type_id, status, price").eq("event_id", eventId).in("status", ["valid", "used"]) : none,
     tickets ? ctx.supabase.from("ticket_types").select("id, guest_list_id, for_members").eq("event_id", eventId) : none,
@@ -50,6 +50,10 @@ export default async function EventPage({ params, searchParams }: { params: Prom
       : none,
     on("projects", "projects.view")
       ? ctx.supabase.from("project_links").select("projects(id, name)").eq("org_id", ctx.org.id).eq("entity", "events").eq("entity_id", eventId)
+      : none,
+    // Campaigns to this event's buyers (audience.event).
+    tickets && on("email", "email.view")
+      ? ctx.supabase.from("email_campaigns").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).is("deleted_at", null).eq("audience->>event", eventId)
       : none,
   ])
   if (!ev) notFound()
@@ -80,6 +84,18 @@ export default async function EventPage({ params, searchParams }: { params: Prom
     ...(on("payments", "payments.view") ? [{ area: "finance", icon: ReceiptIcon, label: t("eventsPage.linked.orders"), detail: orders ?? 0, href: `/payments?event=${ev.id}` }] : []),
     ...(on("guestlists", "guestlists.view")
       ? [{ area: "events", icon: ListChecksIcon, label: t("guestlists.title"), detail: lists ?? 0, href: `${base}/guestlists`, add: ctx.can("guestlists.manage") ? { href: `/guestlists/new?event=${ev.id}`, label: t("guestlists.new") } : undefined }]
+      : []),
+    ...(tickets && on("email", "email.view")
+      ? [
+          {
+            area: "communication",
+            icon: MailIcon,
+            label: t("eventsPage.linked.campaigns"),
+            detail: campaigns ?? 0,
+            href: `/email?event=${ev.id}`,
+            add: ctx.can("email.manage") ? { href: `/email/new?event=${ev.id}`, label: t("eventsPage.linked.campaignToBuyers") } : undefined,
+          },
+        ]
       : []),
     ...(on("shifts", "shifts.view")
       ? [

@@ -1412,7 +1412,9 @@
       "title": "Linked",
       "orders": "Orders",
       "planShifts": "Plan shifts",
-      "cashbook": "Cash book (door)"
+      "cashbook": "Cash book (door)",
+      "campaigns": "Email campaigns",
+      "campaignToBuyers": "Campaign to buyers"
     }
   },
   "contacts": {
@@ -3000,7 +3002,6 @@
       "log": "Sent"
     },
     "newCampaign": "New campaign",
-    "create": "Create",
     "name": "Name",
     "namePlaceholder": "e.g. October newsletter",
     "nameRequired": "The name can't be empty.",
@@ -3019,7 +3020,7 @@
     "audience": "Recipients",
     "audienceTags": "Contacts with any of these tags",
     "audienceMembers": "All active members",
-    "audienceHint": "Pick tags and/or active members. Unsubscribed contacts are never emailed.",
+    "audienceHint": "Pick tags, active members and/or an event's buyers – chosen conditions apply together. Unsubscribed contacts are never emailed.",
     "reach": {
       "one": "Goes to {count} person.",
       "other": "Goes to {count} people."
@@ -3035,7 +3036,7 @@
     "testSent": "Test sent to {email}.",
     "noProvider": "No email sending set up (Settings → Integrations).",
     "subjectBodyRequired": "Subject and text are required.",
-    "audienceRequired": "Pick recipients (tags or members).",
+    "audienceRequired": "Choose recipients (tags, members or an event).",
     "scheduleInvalid": "The time must be in the future.",
     "scheduled": "Campaign scheduled.",
     "unscheduled": "Schedule removed.",
@@ -3104,11 +3105,11 @@
     "immediately": "immediately",
     "paused": "paused",
     "noAutomations": "No automations yet.",
-    "emptyCampaignsText": "A campaign is one email to many: to tags or all active members, now or scheduled.",
+    "emptyCampaignsText": "A campaign is a newsletter to many: to tags, active members or an event's buyers – now or scheduled.",
     "templates": {
-      "title": "Templates",
+      "title": "Email templates",
       "hint": "How ticket, guest-list and waiting-list mails look. One template fits all three; the default applies to every event that doesn't pick its own.",
-      "new": "New template",
+      "new": "New email template",
       "default": "Default",
       "makeDefault": "Default template for all events",
       "namePlaceholder": "e.g. Summer look",
@@ -3123,7 +3124,8 @@
       "copyName": "My event mail",
       "shopMails": "Shop mails",
       "shopMailsHint": "What buyers get after an order – in the design of the default template above. Which mails go out and their texts are set in the shop.",
-      "shopMailsLink": "Shop mails in the shop settings"
+      "shopMailsLink": "Shop mails in the shop settings",
+      "create": "Create email template"
     },
     "eventMail": {
       "greeting": "Hello {name},",
@@ -3193,7 +3195,57 @@
       "all": "All",
       "system": "System mails",
       "bulk": "Campaigns & automations"
-    }
+    },
+    "settings": {
+      "title": "Email settings",
+      "provider": "Sending",
+      "providerHint": "Which provider sends your emails.",
+      "providerLink": "Email provider in Integrations"
+    },
+    "audienceEvent": "Buyers of an event",
+    "audienceEventPlaceholder": "Search events …",
+    "audienceEventHint": "Everyone with a valid or used ticket for this event.",
+    "sendingHint": "Test it to yourself first, then schedule – or “Send now” above.",
+    "confirmSend": {
+      "one": "Send to {count} person?",
+      "other": "Send to {count} people?"
+    },
+    "confirmSendHint": "The email goes out right away and can't be recalled. Changed recipients are saved and counted again first.",
+    "confirmSchedule": {
+      "one": "Schedule for {count} person?",
+      "other": "Schedule for {count} people?"
+    },
+    "confirmScheduleHint": "At the chosen time the email goes to everyone who matches the recipients then.",
+    "createCampaign": "Create campaign",
+    "created": "Campaign created.",
+    "scheduledFor": "Goes out on {date}",
+    "lastSaved": "Last saved {date}",
+    "sentTo": {
+      "one": "Sent to {count} person",
+      "other": "Sent to {count} people"
+    },
+    "viewLog": "View sends",
+    "statsSent": "Sent",
+    "statsQueued": {
+      "one": "{count} waiting",
+      "other": "{count} waiting"
+    },
+    "statsSkipped": "{count} skipped",
+    "statsDelivered": "Delivered",
+    "statsProblems": "Problems",
+    "statsProblemsHint": "{failed} failed · {bounced} bounced · {complained} spam",
+    "buyersName": "Buyers: {event}",
+    "buyersOf": "Buyers: {event}",
+    "trash": "Trash",
+    "trashHint": "Campaigns in the trash are deleted for good after {days} days.",
+    "emptyTrash": "The trash is empty.",
+    "noMatch": "No campaign matches.",
+    "restore": "Restore",
+    "restored": "Campaign restored.",
+    "changed": "Changed",
+    "createAutomation": "Create automation",
+    "confirmDeleteAutomation": "Delete automation?",
+    "confirmDeleteAutomationHint": "Mails of this automation that are still waiting won't go out."
   },
   "editor": {
     "toolbar": "Formatting",
@@ -5160,10 +5212,7 @@
     "events": "Events",
     "finance": "Finance",
     "communication": "Communication",
-    "campaigns": "Email campaigns",
-    "emailAutomations": "Email automations",
-    "emailLog": "Email log",
-    "emailTemplates": "Email templates"
+    "emails": "Emails"
   },
   "projects": {
     "nav": "Projects",

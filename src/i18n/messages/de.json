@@ -1412,7 +1412,9 @@
       "title": "Verknüpft",
       "orders": "Bestellungen",
       "planShifts": "Schichten planen",
-      "cashbook": "Kassenbuch (Abendkasse)"
+      "cashbook": "Kassenbuch (Abendkasse)",
+      "campaigns": "E-Mail-Kampagnen",
+      "campaignToBuyers": "Kampagne an Käufer:innen"
     }
   },
   "contacts": {
@@ -3000,7 +3002,6 @@
       "log": "Versand"
     },
     "newCampaign": "Neue Kampagne",
-    "create": "Anlegen",
     "name": "Name",
     "namePlaceholder": "z. B. Newsletter Oktober",
     "nameRequired": "Der Name darf nicht leer sein.",
@@ -3019,7 +3020,7 @@
     "audience": "Empfänger:innen",
     "audienceTags": "Kontakte mit einem dieser Tags",
     "audienceMembers": "Alle aktiven Mitglieder",
-    "audienceHint": "Wähle Tags und/oder aktive Mitglieder. Abgemeldete Kontakte werden nie angeschrieben.",
+    "audienceHint": "Wähle Tags, aktive Mitglieder und/oder die Käufer:innen eines Events – gewählte Bedingungen gelten zusammen. Abgemeldete Kontakte werden nie angeschrieben.",
     "reach": {
       "one": "Geht an {count} Person.",
       "other": "Geht an {count} Personen."
@@ -3035,7 +3036,7 @@
     "testSent": "Test an {email} verschickt.",
     "noProvider": "Kein E-Mail-Versand eingerichtet (Einstellungen → Integrationen).",
     "subjectBodyRequired": "Betreff und Text sind nötig.",
-    "audienceRequired": "Wähle Empfänger:innen (Tags oder Mitglieder).",
+    "audienceRequired": "Wähle Empfänger:innen (Tags, Mitglieder oder ein Event).",
     "scheduleInvalid": "Der Zeitpunkt muss in der Zukunft liegen.",
     "scheduled": "Kampagne geplant.",
     "unscheduled": "Planung aufgehoben.",
@@ -3104,11 +3105,11 @@
     "immediately": "sofort",
     "paused": "pausiert",
     "noAutomations": "Noch keine Automationen.",
-    "emptyCampaignsText": "Eine Kampagne ist eine E-Mail an viele: an Tags oder alle aktiven Mitglieder, sofort oder geplant.",
+    "emptyCampaignsText": "Eine Kampagne ist ein Newsletter an viele: an Tags, aktive Mitglieder oder die Käufer:innen eines Events – sofort oder geplant.",
     "templates": {
-      "title": "Vorlagen",
+      "title": "E-Mail-Vorlagen",
       "hint": "Wie Ticket-, Gästelisten- und Wartelisten-Mails aussehen. Eine Vorlage passt für alle drei; die Standardvorlage gilt für jedes Event, das keine eigene wählt.",
-      "new": "Neue Vorlage",
+      "new": "Neue E-Mail-Vorlage",
       "default": "Standard",
       "makeDefault": "Standardvorlage für alle Events",
       "namePlaceholder": "z. B. Sommer-Look",
@@ -3123,7 +3124,8 @@
       "copyName": "Meine Event-Mail",
       "shopMails": "Shop-Mails",
       "shopMailsHint": "Was Käufer:innen nach einer Bestellung bekommen – im Design der Standardvorlage oben. Welche Mails rausgehen und ihre Texte stellst du im Shop ein.",
-      "shopMailsLink": "Shop-Mails in den Shop-Einstellungen"
+      "shopMailsLink": "Shop-Mails in den Shop-Einstellungen",
+      "create": "E-Mail-Vorlage anlegen"
     },
     "eventMail": {
       "greeting": "Hallo {name},",
@@ -3193,7 +3195,57 @@
       "all": "Alle",
       "system": "System-Mails",
       "bulk": "Kampagnen & Automationen"
-    }
+    },
+    "settings": {
+      "title": "E-Mail-Einstellungen",
+      "provider": "Versand",
+      "providerHint": "Über welchen Anbieter eure E-Mails rausgehen.",
+      "providerLink": "E-Mail-Anbieter in den Integrationen"
+    },
+    "audienceEvent": "Käufer:innen eines Events",
+    "audienceEventPlaceholder": "Event suchen …",
+    "audienceEventHint": "Alle mit einem gültigen oder genutzten Ticket für dieses Event.",
+    "sendingHint": "Erst an dich testen, dann planen – oder oben „Jetzt senden“.",
+    "confirmSend": {
+      "one": "An {count} Person senden?",
+      "other": "An {count} Personen senden?"
+    },
+    "confirmSendHint": "Die E-Mail geht sofort raus und lässt sich nicht zurückholen. Geänderte Empfänger:innen werden vorher gespeichert und neu gezählt.",
+    "confirmSchedule": {
+      "one": "Für {count} Person planen?",
+      "other": "Für {count} Personen planen?"
+    },
+    "confirmScheduleHint": "Zum gewählten Zeitpunkt geht die E-Mail an alle, die dann zu den Empfänger:innen gehören.",
+    "createCampaign": "Kampagne anlegen",
+    "created": "Kampagne angelegt.",
+    "scheduledFor": "Geht am {date} raus",
+    "lastSaved": "Zuletzt gespeichert {date}",
+    "sentTo": {
+      "one": "An {count} Person versendet",
+      "other": "An {count} Personen versendet"
+    },
+    "viewLog": "Versand ansehen",
+    "statsSent": "Versendet",
+    "statsQueued": {
+      "one": "{count} wartet",
+      "other": "{count} wartend"
+    },
+    "statsSkipped": "{count} übersprungen",
+    "statsDelivered": "Zugestellt",
+    "statsProblems": "Probleme",
+    "statsProblemsHint": "{failed} fehlgeschlagen · {bounced} unzustellbar · {complained} Spam",
+    "buyersName": "Käufer:innen: {event}",
+    "buyersOf": "Käufer:innen: {event}",
+    "trash": "Papierkorb",
+    "trashHint": "Kampagnen im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "emptyTrash": "Der Papierkorb ist leer.",
+    "noMatch": "Keine Kampagne passt dazu.",
+    "restore": "Wiederherstellen",
+    "restored": "Kampagne wiederhergestellt.",
+    "changed": "Geändert",
+    "createAutomation": "Automation anlegen",
+    "confirmDeleteAutomation": "Automation löschen?",
+    "confirmDeleteAutomationHint": "Mails dieser Automation, die noch warten, gehen nicht mehr raus."
   },
   "editor": {
     "toolbar": "Formatierung",
@@ -5160,10 +5212,7 @@
     "events": "Events",
     "finance": "Finanzen",
     "communication": "Kommunikation",
-    "campaigns": "E-Mail-Kampagnen",
-    "emailAutomations": "E-Mail-Automationen",
-    "emailLog": "E-Mail-Versand",
-    "emailTemplates": "E-Mail-Vorlagen"
+    "emails": "E-Mails"
   },
   "projects": {
     "nav": "Projekte",

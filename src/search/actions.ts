@@ -66,7 +66,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
 
   const none = Promise.resolve({ data: [] as never[] })
   const day = (v: string | null) => (v ? t.date(v, { dateStyle: "medium" }) : undefined)
-  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders] = await Promise.all([
+  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists] = await Promise.all([
     on("crm", "crm.view")
       ? db
           .from("contacts")
@@ -110,6 +110,9 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     on("shop", "shop.view")
       ? db.from("shop_orders").select("id, number, name").eq("org_id", org).not("placed_at", "is", null).or(/^\d+$/.test(q.trim()) ? `number.eq.${q.trim()}` : `name.ilike.${like}`).order("placed_at", { ascending: false }).limit(PER_GROUP)
       : none,
+    on("guestlists", "guestlists.view")
+      ? db.from("guest_lists").select("id, name, events(title, starts_at)").eq("org_id", org).is("deleted_at", null).ilike("name", like).order("created_at", { ascending: false }).limit(PER_GROUP)
+      : none,
   ])
 
   const person = (c: { first_name: string | null; last_name: string | null; company: string | null } | null) =>
@@ -137,10 +140,20 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
         href: `/invoices/${d.id}`,
       })),
     },
+    {
+      key: "guestlists",
+      label: t("guestlists.nav"),
+      items: (guestLists.data ?? []).map((g) => ({
+        id: g.id,
+        title: g.name,
+        detail: g.events ? `${g.events.title} · ${day(g.events.starts_at)}` : t("guestlists.permanent"),
+        href: `/guestlists/${g.id}`,
+      })),
+    },
     { key: "forms", label: t("forms.nav"), items: (forms.data ?? []).map((f) => ({ id: f.id, title: f.title, href: `/forms/${f.id}` })) },
     { key: "email", label: t("email.nav"), items: [
         ...(campaigns.data ?? []).map((c) => ({ id: c.id, title: c.name, href: `/email/${c.id}` })),
-        ...(mailTemplates.data ?? []).map((c) => ({ id: c.id, title: c.name, detail: t("email.templates.title"), href: `/email/templates?edit=${c.id}` })),
+        ...(mailTemplates.data ?? []).map((c) => ({ id: c.id, title: c.name, detail: t("email.templates.title"), href: `/email/settings?edit=${c.id}` })),
       ] },
     { key: "files", label: t("files.title"), items: (files.data ?? []).map((f) => ({ id: f.id, title: f.name, detail: f.folder ?? undefined, href: `/files?edit=${f.id}` })) },
     { key: "wiki", label: t("wiki.title"), items: (wiki.data ?? []).map((w) => ({ id: w.id, title: w.title, href: `/wiki/${w.id}` })) },

@@ -4,7 +4,7 @@ import { titled } from "@/lib/title"
 
 export const generateMetadata = titled("email.nav")
 
-// Campaigns, automations and the send log are sub-items in the sidebar (src/modules/nav.ts).
+// E-Mails: campaigns, automations and the send log are views of one page (<EmailViews>); templates under the gear.
 export default async function EmailLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePerm("email.view")
   if (!ctx.modules.has("email")) notFound()

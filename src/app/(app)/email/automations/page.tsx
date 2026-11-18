@@ -1,14 +1,17 @@
-import { Trash2Icon } from "lucide-react"
-import { DataTable } from "@/components/data-table"
+import Link from "next/link"
+import { PlusIcon, Trash2Icon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { Choice } from "@/components/choice"
+import { DataTable, ListToolbar } from "@/components/data-table"
+import { TypedInput } from "@/components/typed-input"
+import { Button } from "@/components/ui/button"
 import { EmptyState, PageHeader } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Notice } from "@/components/notice"
-import { SubmitButton } from "@/components/submit-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { EmailBodyField } from "@/components/email-body-field"
 import { AUTOMATION_EVENTS } from "@/email/events"
 import { BASE_PLACEHOLDERS, type Format } from "@/email/render"
@@ -18,6 +21,7 @@ import { requirePerm } from "@/lib/context"
 import type { Tables } from "@/lib/supabase/types"
 import { param } from "@/lib/url"
 import { deleteAutomation, saveAutomation } from "../actions"
+import { EmailViews } from "../views"
 
 // Automations: event + delay → email to the person it's about. Several on the same event with different delays
 // make a sequence ("welcome now, info after 7 days, survey after 30").
@@ -35,13 +39,34 @@ export default async function AutomationsPage({ searchParams }: PageProps<"/emai
   const delayText = (m: number) => (m === 0 ? t("email.immediately") : m % 1440 === 0 ? `${m / 1440} ${t("email.units.days")}` : m % 60 === 0 ? `${m / 60} ${t("email.units.hours")}` : `${m} ${t("email.units.minutes")}`)
   return (
     <>
-      <PageHeader area="communication" title={t("email.tabs.automations")} description={t("email.automationsHint")} primary={canManage ? { href: "/email/automations?new=1", label: t("email.newAutomation") } : undefined} />
+      <PageHeader
+        area="communication"
+        title={t("email.tabs.automations")}
+        settings={{ href: "/email/settings", label: t("email.settings.title") }}
+        primary={canManage ? { href: "/email/automations?new=1", label: t("email.newAutomation") } : undefined}
+      />
       <Notice error={!editing && !creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
+      <ListToolbar>
+        <EmailViews t={t} current="automations" />
+      </ListToolbar>
       <DataTable
         rows={data ?? []}
         rowKey={(a) => a.id}
         rowHref={(a) => `/email/automations?edit=${a.id}`}
-        empty={<EmptyState area="communication" title={t("email.noAutomations")} />}
+        empty={
+          <EmptyState
+            area="communication"
+            title={t("email.noAutomations")}
+            text={t("email.automationsHint")}
+            action={
+              canManage && (
+                <Button render={<Link href="/email/automations?new=1" scroll={false} />} nativeButton={false} size="sm">
+                  <PlusIcon /> {t("email.newAutomation")}
+                </Button>
+              )
+            }
+          />
+        }
         columns={[
           {
             header: t("email.name"),
@@ -54,13 +79,31 @@ export default async function AutomationsPage({ searchParams }: PageProps<"/emai
           },
           { header: t("email.trigger"), cell: (a) => t.dynamic(`events.types.${a.event_type}`) },
           { header: t("email.delay"), cell: (a) => delayText(a.delay_minutes), className: "whitespace-nowrap" },
-          { header: t("email.status"), cell: (a) => <Badge variant={a.active ? "default" : "outline"}>{a.active ? t("email.active") : t("email.paused")}</Badge> },
+          { header: t("email.status"), cell: (a) => <Badge variant={a.active ? "success" : "secondary"}>{a.active ? t("email.active") : t("email.paused")}</Badge> },
         ]}
       />
       {(editing || creating) && (
-        <UrlSheet params={["edit", "new"]} title={editing?.name ?? t("email.newAutomation")} wide>
+        <UrlSheet
+          params={["edit", "new"]}
+          title={editing?.name ?? t("email.newAutomation")}
+          wide
+          menu={
+            editing && canManage ? (
+              <ActionsMenu>
+                <MenuSubmit form="automation-delete" icon={<Trash2Icon />} destructive confirm="email.confirmDeleteAutomation">
+                  {t("email.delete")}
+                </MenuSubmit>
+              </ActionsMenu>
+            ) : undefined
+          }
+        >
           <Notice error={param(sp, "error")} />
           <AutomationForm t={t} a={editing} events={events} disabled={!canManage} />
+          {editing && canManage && (
+            <form id="automation-delete" action={deleteAutomation} hidden>
+              <input type="hidden" name="id" value={editing.id} />
+            </form>
+          )}
         </UrlSheet>
       )}
     </>
@@ -81,30 +124,21 @@ function AutomationForm({ t, a, events, disabled }: { t: T; a?: Tables<"email_au
             <Field id={`a-name-${key}`} name="name" label={t("email.name")} required maxLength={200} defaultValue={a?.name ?? ""} placeholder={t("email.automationPlaceholder")} />
             <div className="grid gap-2">
               <Label htmlFor={`a-ev-${key}`}>{t("email.trigger")}</Label>
-              <NativeSelect id={`a-ev-${key}`} name="event_type" defaultValue={a?.event_type ?? events[0]?.type} className="w-full">
-                {events.map((e) => (
-                  <NativeSelectOption key={e.type} value={e.type}>
-                    {t.dynamic(`events.types.${e.type}`)}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+              <Choice id={`a-ev-${key}`} name="event_type" label={t("email.trigger")} required defaultValue={a?.event_type ?? events[0]?.type} options={events.map((e) => ({ value: e.type, label: t.dynamic(`events.types.${e.type}`) }))} />
             </div>
-            <Field id={`a-delay-${key}`} name="delay" type="number" min={0} label={t("email.delay")} defaultValue={delay} />
+            <div className="grid gap-2">
+              <Label htmlFor={`a-delay-${key}`}>{t("email.delay")}</Label>
+              <TypedInput kind="number" id={`a-delay-${key}`} name="delay" min={0} step={1} defaultValue={delay} />
+            </div>
             <div className="grid gap-2">
               <Label htmlFor={`a-unit-${key}`}>{t("email.unit")}</Label>
-              <NativeSelect id={`a-unit-${key}`} name="unit" defaultValue={unit} className="w-full">
-                {(["minutes", "hours", "days"] as const).map((u) => (
-                  <NativeSelectOption key={u} value={u}>
-                    {t(`email.units.${u}`)}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+              <Choice id={`a-unit-${key}`} name="unit" label={t("email.unit")} required defaultValue={unit} options={(["minutes", "hours", "days"] as const).map((u) => ({ value: u, label: t(`email.units.${u}`) }))} />
             </div>
           </div>
           <Field id={`a-subject-${key}`} name="subject" label={t("email.subject")} required maxLength={300} defaultValue={a?.subject ?? ""} />
           <EmailBodyField
             id={`a-body-${key}`}
-            format={(a?.format ?? "text") as Format}
+            format={(a?.format ?? "rich") as Format}
             body={a?.body ?? ""}
             placeholders={[...BASE_PLACEHOLDERS, ...(ev?.vars ?? [])]}
             disabled={disabled}
@@ -115,18 +149,10 @@ function AutomationForm({ t, a, events, disabled }: { t: T; a?: Tables<"email_au
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="active" defaultChecked={a?.active ?? true} className="size-4 accent-primary" /> {t("email.active")}
             </label>
-            <SaveBar label={a ? undefined : t("email.create")} always={!a} />
+            <SaveBar label={a ? undefined : t("email.createAutomation")} always={!a} />
           </>
         )}
       </form>
-      {a && !disabled && (
-        <form action={deleteAutomation} className="border-t pt-4">
-          <input type="hidden" name="id" value={a.id} />
-          <SubmitButton size="sm" variant="ghost" className="text-destructive">
-            <Trash2Icon /> {t("email.delete")}
-          </SubmitButton>
-        </form>
-      )}
     </div>
   )
 }

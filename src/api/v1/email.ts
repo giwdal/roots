@@ -20,6 +20,7 @@ const AudienceSchema = z
   .object({
     tags: z.array(z.string().max(40)).max(20).default([]).describe("Contacts with any of these tags"),
     members: z.enum(["active"]).nullable().default(null).describe('"active" = contacts with an active membership (members module)'),
+    event: uuid.nullable().default(null).describe("Event id: contacts with a valid or used ticket of this event (tickets module). Conditions that are set all apply together"),
   })
   .strict()
 const CampaignStatus = z.enum(["draft", "scheduled", "sending", "sent"])
@@ -37,7 +38,7 @@ const CAMPAIGN_COLS = "id, name, subject, status, send_at, recipients, created_a
 const CampaignDetail = Campaign.extend({
   body: z.string(),
   format: Format,
-  audience: z.object({ tags: z.array(z.string()), members: z.enum(["active"]).nullable() }),
+  audience: z.object({ tags: z.array(z.string()), members: z.enum(["active"]).nullable(), event: uuid.nullable() }),
   deleted_at: ts.nullable(),
   stats: z
     .object({
@@ -105,10 +106,14 @@ const TemplateFields = z.object({
   is_default: z.boolean().describe("Make it the org's default (takes it from the previous default)"),
 })
 const membersOn = async (db: Db, orgId: string) => (await db.rpc("module_enabled", { p_org: orgId, p_key: "members" })).data === true
-// Normalised like the App's tag picker; the members audience needs the members module.
+// Normalised like the App's tag picker; the members audience needs the members module, the event one an event of the org.
 async function audienceOf(db: Db, orgId: string, a: z.infer<typeof AudienceSchema>): Promise<Audience> {
   if (a.members && !(await membersOn(db, orgId))) throw new ApiError(422, "module_disabled", "The members audience needs the members module.")
-  return { tags: parseTags(a.tags.join(",")).slice(0, 20), members: a.members }
+  if (a.event) {
+    const { data } = await db.from("events").select("id").eq("id", a.event).eq("org_id", orgId).is("deleted_at", null).maybeSingle()
+    if (!data) throw new ApiError(422, "unknown_event", "The audience's event does not exist in this org.")
+  }
+  return { tags: parseTags(a.tags.join(",")).slice(0, 20), members: a.members, event: a.event }
 }
 
 async function getCampaign(db: Db, orgId: string, id: string, deleted = false) {
@@ -117,7 +122,7 @@ async function getCampaign(db: Db, orgId: string, id: string, deleted = false) {
   const { data } = await q.maybeSingle()
   if (!data) throw notFound()
   const audience = data.audience as Audience
-  return { ...data, audience: { tags: audience.tags ?? [], members: audience.members ?? null } }
+  return { ...data, audience: { tags: audience.tags ?? [], members: audience.members ?? null, event: audience.event ?? null } }
 }
 // The campaign as returned: delivery statistics once sending started (counted like the App's campaign page).
 async function campaign(db: Db, orgId: string, id: string) {
@@ -155,13 +160,14 @@ export const endpoints: Endpoint[] = [
     permission: "email.view",
     tag: "Email",
     summary: "List campaigns",
-    description: "Last changed first. `deleted=true` lists the trash instead.",
-    query: page.extend({ status: CampaignStatus.optional(), deleted: z.stringbool().default(false) }),
+    description: "Last changed first. `deleted=true` lists the trash instead; `event` = campaigns to that event's buyers.",
+    query: page.extend({ status: CampaignStatus.optional(), event: uuid.optional(), deleted: z.stringbool().default(false) }),
     response: list(Campaign),
     async handler({ db, orgId, query }) {
       let q = db.from("email_campaigns").select(CAMPAIGN_COLS).eq("org_id", orgId).order("updated_at", { ascending: false }).range(query.offset, query.offset + query.limit)
       q = query.deleted ? q.not("deleted_at", "is", null) : q.is("deleted_at", null)
       if (query.status) q = q.eq("status", query.status)
+      if (query.event) q = q.eq("audience->>event", query.event)
       const { data } = await q
       return paged(data, query)
     },
@@ -333,15 +339,16 @@ export const endpoints: Endpoint[] = [
     permission: "email.view",
     tag: "Email",
     summary: "Count an audience",
-    description: "How many people a campaign with this audience would reach right now (contacts with an email, not unsubscribed, each address once).",
+    description: "How many people a campaign with this audience would reach right now (contacts with an email, not unsubscribed, each address once; tags, members and event combine).",
     query: z.object({
       tags: z.string().max(1000).optional().describe("Comma-separated tags"),
       members: z.enum(["active"]).optional(),
+      event: uuid.optional().describe("Buyers of this event"),
     }),
     response: z.object({ count: z.number().int() }),
     async handler({ db, orgId, query }) {
-      const audience = await audienceOf(db, orgId, { tags: query.tags ? query.tags.split(",") : [], members: query.members ?? null })
-      if (!audience.tags?.length && !audience.members) return { count: 0 }
+      const audience = await audienceOf(db, orgId, { tags: query.tags ? query.tags.split(",") : [], members: query.members ?? null, event: query.event ?? null })
+      if (!audience.tags?.length && !audience.members && !audience.event) return { count: 0 }
       return { count: (await resolveAudience(db, orgId, audience)).length }
     },
   }),

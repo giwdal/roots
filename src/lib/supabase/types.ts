@@ -761,6 +761,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_types": {
+                  Row: {
+                    "active": boolean,"capacity": number | null,"color": string | null,"counts_visit": boolean,"created_at": string,"created_by": string | null,"id": string,"name": string,"org_id": string,"slug": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"capacity"?: number | null,"color"?: string | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"org_id": string,"slug": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "active"?: boolean,"capacity"?: number | null,"color"?: string | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"slug"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_types_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_waitlist": {
                   Row: {
                     "created_at": string,"created_by": string | null,"email": string,"event_id": string,"id": string,"name": string,"offered_until": string | null,"org_id": string,"quantity": number,"status": string,"token": string | null,"updated_at": string,"updated_by": string | null
@@ -789,14 +809,14 @@ isOneToOne: false
                   ]
                 },"events": {
                   Row: {
-                    "capacity": number | null,"counts_visit": boolean,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"door": NonNullable<Json>,"email_template_id": string | null,"ends_at": string | null,"id": string,"image_path": string | null,"links": NonNullable<Json>,"location_id": string | null,"max_tickets_per_order": number,"org_id": string,"published_at": string | null,"show_code_field": boolean,"slug": string,"starts_at": string,"status": string,"ticket_names": string,"title": string,"updated_at": string,"updated_by": string | null,"venue_address": string | null,"venue_name": string | null
+                    "capacity": number | null,"counts_visit": boolean,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"door": NonNullable<Json>,"email_template_id": string | null,"ends_at": string | null,"event_type_id": string | null,"id": string,"image_path": string | null,"links": NonNullable<Json>,"location_id": string | null,"max_tickets_per_order": number,"org_id": string,"published_at": string | null,"show_code_field": boolean,"slug": string,"starts_at": string,"status": string,"ticket_names": string,"title": string,"updated_at": string,"updated_by": string | null,"venue_address": string | null,"venue_name": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id": string,"published_at"?: string | null,"show_code_field"?: boolean,"slug": string,"starts_at": string,"status"?: string,"ticket_names"?: string,"title": string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
+                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"event_type_id"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id": string,"published_at"?: string | null,"show_code_field"?: boolean,"slug": string,"starts_at": string,"status"?: string,"ticket_names"?: string,"title": string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
                   }
                   Update: {
-                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id"?: string,"published_at"?: string | null,"show_code_field"?: boolean,"slug"?: string,"starts_at"?: string,"status"?: string,"ticket_names"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
+                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"event_type_id"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id"?: string,"published_at"?: string | null,"show_code_field"?: boolean,"slug"?: string,"starts_at"?: string,"status"?: string,"ticket_names"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
                   }
                   Relationships: [
                     {
@@ -804,6 +824,12 @@ isOneToOne: false
       columns: ["email_template_id","org_id"]
 isOneToOne: false
       referencedRelation: "email_templates"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "events_event_type"
+      columns: ["event_type_id","org_id"]
+isOneToOne: false
+      referencedRelation: "event_types"
       referencedColumns: ["id","org_id"]
     },{
       foreignKeyName: "events_location_id_fkey"

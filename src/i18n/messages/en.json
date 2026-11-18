@@ -665,6 +665,7 @@
       "shift_assignments": "Shift assignments",
       "files": "Files",
       "membership_types": "Membership types",
+      "event_types": "Event types",
       "memberships": "Memberships",
       "member_dues": "Member dues",
       "sepa_runs": "Direct debit files",
@@ -1299,7 +1300,7 @@
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
-    "countsVisit": "Counts as a visit",
+    "countsVisit": "Counts towards visit limits",
     "countsVisitHint": "Off = member check-ins don't count towards visit limits (e.g. club night). They still count as attendees.",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
@@ -4127,6 +4128,7 @@
       "note": "Note",
       "membership": "Membership",
       "membership_type": "Membership type",
+      "event_type": "Event type",
       "due": "Due",
       "event": "Event",
       "slot": "Timetable slot",
@@ -4189,6 +4191,12 @@
         "ends_on": "End",
         "note": "Note"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Short name",
+        "counts_visit": "Counts towards visit limits",
+        "capacity": "Capacity"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Fee (cents)",
@@ -4213,7 +4221,7 @@
         "ends_at": "End",
         "venue_name": "Venue",
         "capacity": "Capacity",
-        "counts_visit": "Counts as a visit"
+        "counts_visit": "Counts towards visit limits"
       },
       "slot": {
         "title": "Title",

@@ -70,6 +70,7 @@ export const OBJECTS = {
     // An open item on the run's membership (first payment, card fee …): amount in cents, may be calculated ("{x}*3").
     create: { fields: ["description", "amount_cents", "due_on", "kind"], parents: { membership_id: "membership" } },
   },
+  event_type: { table: "event_types", module: "events", fields: [text("name"), text("slug"), bool("counts_visit"), num("capacity")] },
   event: {
     table: "events", remove: "soft",
     module: "events",

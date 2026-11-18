@@ -1421,5 +1421,40 @@ begin
     assert not has_function_privilege('anon', 'public.member_door(uuid, text, uuid, boolean, boolean)', 'execute'), 'anon must not run member_door';
   end;
 
+  -- Event types: per org, an event may only use its own org's type, a type in use can't be deleted
+  declare v_ta uuid; v_tx uuid; v_x uuid; v_e uuid;
+  begin
+    insert into public.orgs (name, slug) values ('Org X', 'iso-org-x') returning id into v_x;
+    insert into public.event_types (org_id, name, slug, counts_visit, capacity) values (org_a, 'Klubnacht', 'klubnacht', false, 300) returning id into v_ta;
+    insert into public.event_types (org_id, name, slug) values (v_x, 'Fremd', 'fremd') returning id into v_tx;
+    begin insert into public.event_types (org_id, name, slug) values (org_a, 'Dup', 'klubnacht'); assert false, 'slug unique per org';
+    exception when unique_violation then null; end;
+    begin insert into public.events (org_id, title, slug, starts_at, event_type_id) values (org_a, 'X', 'et-x', now(), v_tx); assert false, 'foreign type rejected';
+    exception when foreign_key_violation then null; end;
+    insert into public.events (org_id, title, slug, starts_at, event_type_id) values (org_a, 'Mit Typ', 'et-ok', now(), v_ta) returning id into v_e;
+    begin delete from public.event_types where id = v_ta; assert false, 'type in use must not be deleted';
+    exception when foreign_key_violation then null; end;
+    select count(*) into n from public.events where id = v_e and counts_visit; assert n = 1, 'the DB does not apply type defaults (the app does)';
+    update public.org_members set role_id = (select id from public.roles where org_id is null and name ->> 'en' = 'Member') where org_id = org_a and user_id = c;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true); -- plain Member: no events.manage
+    set local role authenticated;
+    begin insert into public.event_types (org_id, name, slug) values (org_a, 'Member', 'member-x'); assert false, 'plain member wrote a type';
+    exception when insufficient_privilege then null; end;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true); -- the owner writes through the policies
+    set local role authenticated;
+    select count(*) into n from public.event_types where org_id = v_x; assert n = 0, 'owner of A sees types of another org';
+    begin insert into public.event_types (org_id, name, slug) values (v_x, 'Hack', 'hack'); assert false, 'A wrote a type into another org';
+    exception when insufficient_privilege then null; end;
+    insert into public.event_types (org_id, name, slug) values (org_a, 'Owner', 'owner-typ');
+    update public.event_types set name = 'Owner 2' where org_id = org_a and slug = 'owner-typ';
+    get diagnostics n = row_count;                                             assert n = 1, 'owner edits a type';
+    delete from public.event_types where org_id = org_a and slug = 'owner-typ';
+    get diagnostics n = row_count;                                             assert n = 1, 'owner deletes an unused type';
+    reset role;
+    assert not has_table_privilege('anon', 'public.event_types', 'select'), 'anon sees no types';
+    assert not has_column_privilege('anon', 'public.events', 'event_type_id', 'select'), 'anon must not read events.event_type_id';
+  end;
+
   raise exception 'isolation: all checks passed';
 end $$;

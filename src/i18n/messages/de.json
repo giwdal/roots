@@ -665,6 +665,7 @@
       "shift_assignments": "Schicht-Einteilungen",
       "files": "Dateien",
       "membership_types": "Mitgliedsarten",
+      "event_types": "Event-Typen",
       "memberships": "Mitgliedschaften",
       "member_dues": "Mitgliedsbeiträge",
       "sepa_runs": "Lastschriftdateien",
@@ -1299,7 +1300,7 @@
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
-    "countsVisit": "Zählt als Besuch",
+    "countsVisit": "Zählt für Besuchslimits",
     "countsVisitHint": "Aus = Check-ins von Mitgliedern zählen nicht für Besuchslimits (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen.",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
@@ -4127,6 +4128,7 @@
       "note": "Notiz",
       "membership": "Mitgliedschaft",
       "membership_type": "Mitgliedsart",
+      "event_type": "Event-Typ",
       "due": "Beitrag",
       "event": "Event",
       "slot": "Timetable-Slot",
@@ -4189,6 +4191,12 @@
         "ends_on": "Ende",
         "note": "Notiz"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Kurzname",
+        "counts_visit": "Zählt für Besuchslimits",
+        "capacity": "Kapazität"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Beitrag (Cent)",
@@ -4213,7 +4221,7 @@
         "ends_at": "Ende",
         "venue_name": "Ort",
         "capacity": "Kapazität",
-        "counts_visit": "Zählt als Besuch"
+        "counts_visit": "Zählt für Besuchslimits"
       },
       "slot": {
         "title": "Titel",

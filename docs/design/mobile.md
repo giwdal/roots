@@ -4,6 +4,11 @@ Binding for every App screen below `md` (768 px). Complements `docs/design/app.m
 iOS apps (Mail, Things, Linear mobile, Shopify mobile): one thing per screen, big touch targets, sheets from the
 bottom, the thumb does everything, nothing jumps.
 
+## 0. Phone and desktop are designed separately
+
+When a screen's job differs by device, build each layout for its device (see `ux-overhaul.md` §1b, Einlass as the
+example). A desktop page must not carry phone-only workarounds, and a phone screen must not be a shrunken desktop.
+
 ## 1. The shell (keep what works)
 
 The tab bar + Menü sheet stay as they are in spirit (capsule Start · Suche · Menü + the round primary button; the Menü

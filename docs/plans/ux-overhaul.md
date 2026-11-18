@@ -37,6 +37,21 @@ that, not around the table columns or the edit form.
 - **Few modules or many:** an org may have 3 modules or 15. Nothing may assume another module is on: links, cards,
   ⌘K sources, start page tiles and empty states check `ctx.modules`. The start page shows what *this* org uses.
 
+## 1b. Rethink every page — phone and desktop each at their best
+
+UX and UI come first. Every page is designed from scratch for its job, **separately for phone and desktop** when the
+job differs: a phone layout is not a squeezed desktop, a desktop layout is not a stretched phone screen. Same data and
+server actions, different arrangement (`md:` variants, or two components chosen by breakpoint when the structures
+really differ). Example: **Einlass** on a phone is a scanner app (camera, big result, one-tap undo, sale in two taps,
+tab bar at the bottom); on desktop it is a door dashboard (live check-ins and capacity, search a guest, the sales
+list, the door's cash) with no fake phone layout.
+
+**Nothing gets lost.** Each area pass starts with a written spec before code: for every page in the area's
+`docs/ux-map/<area>.json`, add a `redesign` object to that page with
+`{ "job": "…", "phone": "layout top to bottom", "desktop": "layout", "moves": [ { "item": "<every field / action /
+overlay / link from the map>", "to": "where it lives now (or 'removed: reason')" } ] }`. Every field, button, input,
+menu item and overlay of the map must appear in `moves`. Then build it; then check the list off.
+
 ## 2. Overlays, pages, tabs
 
 As in `docs/design/app.md` (unchanged, now enforced everywhere):

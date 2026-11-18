@@ -146,21 +146,21 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
 
       {canManage && !trash && (
-        <BulkBar form="bulk-contacts">
+        <BulkBar form="bulk-contacts" action={bulkContacts}>
           <input type="hidden" name="back" value={`/contacts${withParams(sp, {})}`} />
           <div className="w-56" aria-label={t("contacts.tags")}>
             <TagSelect name="bulk_tag" options={tags} creatable />
           </div>
-          <SubmitButton size="sm" variant="outline" formAction={bulkContacts} name="intent" value="tag-add">
+          <SubmitButton size="sm" variant="outline" name="intent" value="tag-add">
             <TagIcon /> {t("common.addTag")}
           </SubmitButton>
-          <SubmitButton size="sm" variant="ghost" formAction={bulkContacts} name="intent" value="tag-remove">
+          <SubmitButton size="sm" variant="ghost" name="intent" value="tag-remove">
             {t("common.removeTag")}
           </SubmitButton>
           <Button type="submit" size="sm" variant="outline" formAction="/export/contacts" formMethod="get" name="format" value="xlsx">
             <DownloadIcon /> {t("common.exportSelected")}
           </Button>
-          <SubmitButton size="sm" variant="ghost" formAction={bulkContacts} name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
+          <SubmitButton size="sm" variant="ghost" name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
             <Trash2Icon /> {t("common.toTrash")}
           </SubmitButton>
         </BulkBar>

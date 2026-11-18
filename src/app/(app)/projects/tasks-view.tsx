@@ -222,7 +222,7 @@ export async function TasksView({
       )}
 
       {canManage && view === "list" && (
-        <BulkBar form="bulk-tasks">
+        <BulkBar form="bulk-tasks" action={bulkTasks}>
           <input type="hidden" name="back" value={here} />
           <NativeSelect name="status_id" aria-label={t("projects.status")} defaultValue={statuses[0]?.id} className="w-40">
             {statuses.map((x) => (
@@ -231,10 +231,10 @@ export async function TasksView({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          <SubmitButton size="sm" variant="outline" formAction={bulkTasks} name="intent" value="move">
+          <SubmitButton size="sm" variant="outline" name="intent" value="move">
             <ArrowRightIcon /> {t("projects.moveTo")}
           </SubmitButton>
-          <SubmitButton size="sm" variant="ghost" formAction={bulkTasks} name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
+          <SubmitButton size="sm" variant="ghost" name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
             <Trash2Icon /> {t("common.toTrash")}
           </SubmitButton>
         </BulkBar>

@@ -249,12 +249,12 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
       {canManage && (
-        <BulkBar form="bulk-dues">
+        <BulkBar form="bulk-dues" action={bulkDues}>
           <input type="hidden" name="back" value={`/members/dues${withParams(sp, {})}`} />
-          <SubmitButton size="sm" variant="outline" formAction={bulkDues} name="intent" value="paid" data-confirm="membership.confirmBulkPaid">
+          <SubmitButton size="sm" variant="outline" name="intent" value="paid" data-confirm="membership.confirmBulkPaid">
             <CheckIcon /> {t("membership.markPaid")}
           </SubmitButton>
-          <SubmitButton size="sm" variant="outline" formAction={bulkDues} name="intent" value="remind" data-confirm="membership.confirmBulkRemind">
+          <SubmitButton size="sm" variant="outline" name="intent" value="remind" data-confirm="membership.confirmBulkRemind">
             <BellIcon /> {t("membership.remind")}
           </SubmitButton>
           <Button type="submit" size="sm" variant="ghost" formAction="/export/dues" formMethod="get" name="format" value="xlsx">

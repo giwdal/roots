@@ -11,7 +11,9 @@ import { useT } from "@/i18n/client"
  * "3 ausgewählt" with the list's actions as children (<SubmitButton formAction={serverAction}>, inputs). Server
  * actions read fd.getAll("ids"). After a submit the ticks are cleared.
  */
-export function BulkBar({ form, children }: { form: string; children: React.ReactNode }) {
+// `action`: the one server action of the bar; its buttons only carry name="intent" value=… (a button that has both a
+// formAction and a name gets its name rewritten by React, which breaks hydration).
+export function BulkBar({ form, action, children }: { form: string; action?: (fd: FormData) => Promise<void>; children: React.ReactNode }) {
   const t = useT()
   const [count, setCount] = useState(0)
   // Phone cards and the desktop table both render each row; only the visible copy counts.
@@ -48,6 +50,7 @@ export function BulkBar({ form, children }: { form: string; children: React.Reac
   return (
     <form
       id={form}
+      action={action}
       hidden={!count}
       // The ticked ids are collected after this handler, so clear them on the next tick.
       onSubmit={() => setTimeout(clear, 0)}

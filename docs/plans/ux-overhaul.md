@@ -134,7 +134,7 @@ Rules:
 - A link goes to the record, or to the other module's list *filtered* to this record (`?event=`, `?contact=`), never an unfiltered list. Add the filter param to the target list when it's missing.
 - Never show a dead link or empty card for a module that is off or not permitted (`ctx.modules`, `ctx.can`).
 - Same entity, one place to edit it: buyer mail texts, stock, door settings each live in exactly one module; the others link there.
-- Gaps found in the map (to close in the area passes): Kontakte has no shop orders, courses, payments, shifts/HR; Zahlungen ↔ Rechnungen not linked; Mitglieder → Beiträge → Zahlungen not linked; Events ↔ Kampagnen/Formulare/Projekte/Schichten one-way or missing; HR ↔ Kontakte/Schichten-Team link not settable; Kurse/Vermietung → Rechnungen missing.
+- Gaps found in the map (to close in the area passes): Kontakte has no courses, payments, shifts/HR; Zahlungen ↔ Rechnungen not linked; Mitglieder → Beiträge → Zahlungen not linked; Events ↔ Kampagnen/Formulare/Projekte/Schichten one-way or missing; HR ↔ Kontakte/Schichten-Team link not settable; Kurse/Vermietung → Rechnungen missing.
 
 ## 7. Phones (native-app feel)
 
@@ -153,7 +153,7 @@ screens, touch rules, checks. Short version:
 1. Foundation: ConfirmHost for client buttons, `<RecordPicker>`, `<Stats>`, look + area colours (done).
 1b. Phone shell (`docs/design/mobile.md` §6.1): top bar back + phone ⋯, search sheet, menus/popovers as action sheets.
 2. Events (overview, tickets, lineup, guest lists, Einlass settings) · Einlass
-3. Shop (products, orders, Lager, settings)
+3. Shop (products, orders, Lager, settings) (done)
 4. Finanzen (Rechnungen, Zahlungen, Kasse, Berichte)
 5. Kontakte · Mitglieder (incl. Beiträge, SEPA)
 6. Kommunikation (E-Mail, Formulare) · Gästelisten

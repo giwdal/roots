@@ -138,8 +138,9 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Automationen | – | |
 | Projekte | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
 | Vermietung | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben |
-| Shop | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
+| Shop ✓ | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
 | Wissen, Auswertungen | – | |
 | Website | Seiten | Marke, Domain → gear (Website-Einstellungen) |
 
-Old URLs keep working (redirect to the new place).
+Old URLs keep working (redirect to the new place). An area's Einstellungen stays in `src/modules/nav.ts` with
+`gear: true`: not in the sidebar or the Menü sheet, but in ⌘K and Settings › Bereiche (Shop is the first area using it).

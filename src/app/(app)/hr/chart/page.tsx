@@ -1,12 +1,17 @@
 import Link from "next/link"
+import { PlusIcon } from "lucide-react"
+import { ListToolbar } from "@/components/data-table"
 import { EmptyState, Page, PageHeader } from "@/components/page"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
+import { PeopleViews } from "../views"
 
 type Person = { id: string; name: string; job_title: string | null; department: string | null; manager_id: string | null }
 
 // Org chart from "reports to" (employees.manager_id): people without a manager are the top; cycles can't
-// recurse forever (each person is shown once). Nested lists = readable on phones and for screen readers.
+// recurse forever (each person is shown once). Nested lists = readable on phones and for screen readers. A view of
+// Personen (Liste · Organigramm).
 export default async function ChartPage() {
   const ctx = await requirePerm("hr.view")
   const t = await getT()
@@ -46,15 +51,32 @@ export default async function ChartPage() {
   const top = reports(null)
   return (
     <Page>
-      <PageHeader area="hr" title={t("hr.tabs.chart")} description={t("hr.chartHint")} />
+      <PageHeader area="hr" title={t("hr.tabs.chart")} />
+      <ListToolbar>
+        <PeopleViews t={t} current="chart" />
+      </ListToolbar>
       {people.length === 0 ? (
-        <EmptyState area="hr" title={t("hr.empty")} />
+        <EmptyState
+          area="hr"
+          title={t("hr.empty")}
+          text={t("hr.emptyText")}
+          action={
+            ctx.can("hr.manage") && (
+              <Button render={<Link href="/hr/new" />} nativeButton={false} size="sm">
+                <PlusIcon /> {t("hr.new")}
+              </Button>
+            )
+          }
+        />
       ) : (
-        <ul className="grid gap-3">
-          {(top.length ? top : people.slice(0, 1)).map((p) => (
-            <Node key={p.id} p={p} />
-          ))}
-        </ul>
+        <>
+          <ul className="grid gap-3 overflow-x-auto">
+            {(top.length ? top : people.slice(0, 1)).map((p) => (
+              <Node key={p.id} p={p} />
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">{t("hr.chartHint")}</p>
+        </>
       )}
     </Page>
   )

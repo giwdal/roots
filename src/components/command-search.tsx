@@ -27,6 +27,7 @@ const AREA: Record<string, string> = {
   rentals: "rentals",
   products: "shop",
   shop_orders: "shop",
+  employees: "hr",
 }
 const OWN: Record<string, LucideIcon> = { pages: LayoutGridIcon, files: FileIcon, templates: FileTextIcon }
 
@@ -51,11 +52,24 @@ const remember = (hit: Recent) => {
   } catch {}
 }
 
+// The typed part of a title in bold, so people see why a row matched.
+function mark(text: string, q: string) {
+  const i = q ? text.toLocaleLowerCase().indexOf(q.toLocaleLowerCase()) : -1
+  if (i < 0) return text
+  return (
+    <>
+      {text.slice(0, i)}
+      <span className="font-semibold text-foreground">{text.slice(i, i + q.length)}</span>
+      {text.slice(i + q.length)}
+    </>
+  )
+}
+
 /**
  * Global search over pages + records of the active org (server search as you type). From md: the ⌘K palette.
  * Phones (the tab bar's "Suche"): a sheet with the field on top, recent records below it, results grouped by area.
  */
-export function CommandSearch() {
+export function CommandSearch({ areas = [] }: { areas?: { href: string; label: string; icon: React.ReactNode }[] }) {
   const t = useT()
   const router = useRouter()
   const phone = usePhone()
@@ -115,24 +129,41 @@ export function CommandSearch() {
     router.push(hit.href)
   }
   const shown = q.trim() ? groups : []
-  const row = phone ? "min-h-12 gap-3 text-base" : undefined
+  const row = phone ? "min-h-12 text-base" : undefined
+  // One result row: area tile, the title with the typed part in bold, a muted detail on the right.
+  const hit = (it: SearchItem, group: string) => (
+    <>
+      <GroupIcon group={group} />
+      <span className="min-w-0 truncate">{mark(it.title, q.trim())}</span>
+      {it.detail && <span className="ml-auto max-w-[45%] shrink-0 truncate text-xs text-muted-foreground">{it.detail}</span>}
+    </>
+  )
 
   const body = (
     <CommandList className={phone ? "max-h-none flex-1 px-1 pb-4" : undefined}>
       {!q.trim() ? (
-        recent.length ? (
-          <CommandGroup heading={t("search.recent")}>
-            {recent.map((it) => (
-              <CommandItem key={it.href} value={`recent-${it.href}`} onSelect={() => go(it)} className={row}>
-                <GroupIcon group={it.group} />
-                <span className="truncate">{it.title}</span>
-                {it.detail && <span className="ml-auto truncate text-xs text-muted-foreground">{it.detail}</span>}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        ) : (
-          <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("search.hint")}</p>
-        )
+        <>
+          {recent.length > 0 && (
+            <CommandGroup heading={t("search.recent")}>
+              {recent.map((it) => (
+                <CommandItem key={it.href} value={`recent-${it.href}`} onSelect={() => go(it)} className={row}>
+                  {hit(it, it.group)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {/* Before typing: where you can go (the areas this person has), like a launcher. */}
+          {areas.length > 0 && (
+            <CommandGroup heading={t("search.goTo")}>
+              {areas.map((a) => (
+                <CommandItem key={a.href} value={`area-${a.href}`} onSelect={() => go({ id: a.href, title: a.label, href: a.href, group: "pages" })} className={row}>
+                  <span className="grid size-5 shrink-0 place-items-center [&_svg]:size-4">{a.icon}</span>
+                  <span className="truncate">{a.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </>
       ) : pending && !shown.length ? (
         <p className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
           <Loader2Icon className="size-4 animate-spin" /> {t("search.loading")}
@@ -144,9 +175,7 @@ export function CommandSearch() {
         <CommandGroup key={g.key} heading={g.label}>
           {g.items.map((it) => (
             <CommandItem key={`${g.key}-${it.id}`} value={`${g.key}-${it.id}`} onSelect={() => go({ ...it, group: g.key })} className={row}>
-              <GroupIcon group={g.key} />
-              <span className="truncate">{it.title}</span>
-              {it.detail && <span className="ml-auto truncate text-xs text-muted-foreground">{it.detail}</span>}
+              {hit(it, g.key)}
             </CommandItem>
           ))}
         </CommandGroup>
@@ -171,10 +200,21 @@ export function CommandSearch() {
     ) : null
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title={t("search.open")} description={t("search.hint")}>
+    <CommandDialog open={open} onOpenChange={setOpen} title={t("search.open")} description={t("search.hint")} className="top-[12vh] sm:max-w-[40rem]">
       <Command shouldFilter={false}>
         <CommandInput value={q} onValueChange={setQ} placeholder={t("search.placeholder")} />
-        {body}
+        <div className="[&_[data-slot=command-list]]:max-h-[min(60vh,28rem)]">{body}</div>
+        <div className="flex items-center gap-4 border-t px-4 py-2 text-xs text-muted-foreground [&_kbd]:rounded [&_kbd]:border [&_kbd]:bg-muted [&_kbd]:px-1 [&_kbd]:font-mono [&_kbd]:text-[10px]">
+          <span>
+            <kbd>↑</kbd> <kbd>↓</kbd> {t("search.keysMove")}
+          </span>
+          <span>
+            <kbd>↵</kbd> {t("search.keysOpen")}
+          </span>
+          <span className="ml-auto">
+            <kbd>esc</kbd> {t("common.close")}
+          </span>
+        </div>
       </Command>
     </CommandDialog>
   )

@@ -310,16 +310,22 @@ export const EXPORTERS: Record<string, Exporter> = {
     perm: "hr.view",
     module: "hr",
     name: "employees",
-    async load(ctx, t) {
-      const rows = await all((from, to) =>
-        ctx.supabase
+    async load(ctx, t, sp) {
+      // The list's filters: search (name, job title, department, email) and employment type.
+      const q = clean(sp.get("q"))
+      const type = sp.get("type")
+      const rows = await all((from, to) => {
+        let query = ctx.supabase
           .from("employees")
           .select("name, email, phone, job_title, department, employment_type, starts_on, ends_on, pay_type, hourly_rate_cents, monthly_salary_cents, weekly_hours, vacation_days, manager:manager_id(name)")
           .eq("org_id", ctx.org.id)
           .is("deleted_at", null)
           .order("name")
-          .range(from, to),
-      )
+          .range(from, to)
+        if (q) query = query.or(`name.ilike.%${q}%,job_title.ilike.%${q}%,department.ilike.%${q}%,email.ilike.%${q}%`)
+        if (type) query = query.eq("employment_type", type)
+        return query
+      })
       return {
         headers: [t("hr.name"), t("hr.email"), t("hr.phone"), t("hr.jobTitle"), t("hr.department"), t("hr.manager"), t("hr.employmentType"), t("hr.startsOn"), t("hr.endsOn"), t("hr.payType"), t("hr.hourlyRate"), t("hr.monthlySalary"), t("hr.weeklyHours"), t("hr.vacationDays")],
         rows: rows.map((e) => [

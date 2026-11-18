@@ -1,42 +1,49 @@
+import Link from "next/link"
+import { XIcon } from "lucide-react"
 import { CalendarView, type CalendarItem } from "@/components/calendar-view"
-import { SaveBar } from "@/components/save-bar"
-import { Page, PageHeader } from "@/components/page"
+import { ListToolbar } from "@/components/data-table"
+import { FilterMenu } from "@/components/filter-menu"
 import { Notice } from "@/components/notice"
-import { SubmitButton } from "@/components/submit-button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { UrlSheet } from "@/components/url-sheet"
+import { Page, PageHeader } from "@/components/page"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { ABSENCE_KINDS } from "@/hr/fields"
-import { absenceDays } from "@/hr/pay"
 import { requirePerm } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
-import { deleteAbsence, saveAbsence } from "../actions"
-import { DateInput } from "@/components/date-input"
+import { AbsenceSheet } from "../absence-sheet"
 
 const COLORS: Record<string, string> = { vacation: "var(--chart-1)", sick: "var(--destructive)", unpaid: "var(--chart-4)", other: "var(--chart-3)" }
 const addDays = (d: string, n: number) => new Date(new Date(`${d}T12:00:00Z`).getTime() + n * 86_400_000).toISOString().slice(0, 10)
+const UUID = /^[0-9a-f-]{36}$/
 
-// Who's away when: holiday, sick, unpaid, other. Calendar (month/list); click a day or drag → new absence.
+// Personal › Abwesenheiten: who's away when (holiday, sick, unpaid, other) as a calendar, filtered by kind or one
+// person (?person=). Click a day or drag → new absence; an entry opens its sheet (read-only without hr.manage).
 export default async function AbsencesPage({ searchParams }: PageProps<"/hr/absences">) {
   const ctx = await requirePerm("hr.view")
   const t = await getT()
   const sp = await searchParams
   const canManage = ctx.can("hr.manage")
-  const focus = /^\d{4}-\d{2}-\d{2}$/.test(param(sp, "date") ?? "") ? param(sp, "date")! : new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
+  const focus = /^\d{4}-\d{2}-\d{2}$/.test(param(sp, "date") ?? "") ? param(sp, "date")! : today
   const editId = param(sp, "edit")
+  const kind = ABSENCE_KINDS.find((k) => k === param(sp, "kind"))
+  const personId = UUID.test(param(sp, "person") ?? "") ? param(sp, "person")! : null
+  const prefillId = UUID.test(param(sp, "employee") ?? "") ? param(sp, "employee")! : null
   const creating = canManage && param(sp, "new") === "absence"
-  const [{ data: rows }, { data: people }, { data: editing }] = await Promise.all([
-    ctx.supabase
-      .from("absences")
-      .select("id, kind, starts_on, ends_on, half_day, note, employee_id, employees(name)")
-      .eq("org_id", ctx.org.id)
-      .lte("starts_on", addDays(focus, 45))
-      .gte("ends_on", addDays(focus, -45))
-      .order("starts_on"),
-    canManage ? ctx.supabase.from("employees").select("id, name").eq("org_id", ctx.org.id).is("deleted_at", null).order("name").limit(500) : Promise.resolve({ data: null }),
-    canManage && editId ? ctx.supabase.from("absences").select("*").eq("id", editId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
+  let query = ctx.supabase
+    .from("absences")
+    .select("id, kind, starts_on, ends_on, half_day, note, employee_id, employees(name)")
+    .eq("org_id", ctx.org.id)
+    .lte("starts_on", addDays(focus, 45))
+    .gte("ends_on", addDays(focus, -45))
+    .order("starts_on")
+  if (kind) query = query.eq("kind", kind)
+  if (personId) query = query.eq("employee_id", personId)
+  const [{ data: rows }, { data: editing }, { data: person }, { data: prefill }] = await Promise.all([
+    query,
+    editId && UUID.test(editId) ? ctx.supabase.from("absences").select("*, employees(name)").eq("id", editId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
+    personId ? ctx.supabase.from("employees").select("id, name").eq("id", personId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
+    creating && prefillId ? ctx.supabase.from("employees").select("id, name").eq("id", prefillId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
   ])
   const items: CalendarItem[] = (rows ?? []).map((a) => ({
     id: a.id,
@@ -44,10 +51,11 @@ export default async function AbsencesPage({ searchParams }: PageProps<"/hr/abse
     start: `${a.starts_on}T00:00:00`,
     end: `${addDays(a.ends_on, 1)}T00:00:00`,
     color: COLORS[a.kind],
-    href: canManage ? withParams(sp, { edit: a.id, new: undefined }) : undefined,
+    href: withParams(sp, { edit: a.id, new: undefined }),
     readOnly: true,
   }))
-  const here = `/hr/absences${withParams(sp, { edit: undefined, new: undefined, start: undefined, end: undefined })}`
+  const away = [...new Set((rows ?? []).filter((a) => a.starts_on <= today && a.ends_on >= today).map((a) => a.employees?.name).filter(Boolean))]
+  const here = `/hr/absences${withParams(sp, { edit: undefined, new: undefined, start: undefined, end: undefined, employee: undefined })}`
   const start = param(sp, "start")?.slice(0, 10) ?? ""
   const endRaw = param(sp, "end")
   // A drag/click ends at the next day's midnight: the absence's last day is the day before.
@@ -55,69 +63,33 @@ export default async function AbsencesPage({ searchParams }: PageProps<"/hr/abse
 
   return (
     <Page>
-      <PageHeader area="hr" title={t("hr.tabs.absences")} primary={canManage ? { href: withParams(sp, { new: "absence", edit: undefined }), label: t("hr.addAbsence") } : undefined} />
-      <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+      <PageHeader
+        area="hr"
+        title={t("hr.tabs.absences")}
+        meta={away.length ? t("hr.awayToday", { names: t.list(away as string[]) }) : t("hr.nobodyAway")}
+        primary={canManage ? { href: withParams(sp, { new: "absence", edit: undefined }), label: t("hr.addAbsence") } : undefined}
+      />
+      <Notice error={!editing && !creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
+      <ListToolbar>
+        {person && (
+          <Button render={<Link href={`/hr/absences${withParams(sp, { person: undefined })}`} aria-label={`${person.name} – ${t("common.clear")}`} />} nativeButton={false} size="sm" variant="secondary">
+            {person.name} <XIcon />
+          </Button>
+        )}
+        <FilterMenu param="kind" label={t("hr.kind")} allLabel={t("hr.allKinds")} options={ABSENCE_KINDS.map((k) => ({ value: k, label: t.dynamic(`hr.kinds.${k}`) }))} />
+      </ListToolbar>
       <CalendarView events={items} views={["month", "agenda"]} defaultView="month" newHref={canManage ? withParams(sp, { new: "absence", edit: undefined }) : undefined} newMinutes={24 * 60} />
       {(creating || editing) && (
-        <UrlSheet params={["new", "edit", "start", "end", "employee"]} title={editing ? t("hr.editAbsence") : t("hr.addAbsence")}>
-          <Notice error={param(sp, "error")} />
-          <form action={saveAbsence} className="grid gap-4">
-            {editing && <input type="hidden" name="id" value={editing.id} />}
-            <input type="hidden" name="return" value={here} />
-            <div className="grid gap-2">
-              <Label htmlFor="ab-emp">{t("hr.employee")}</Label>
-              <NativeSelect id="ab-emp" name="employee_id" required defaultValue={editing?.employee_id ?? param(sp, "employee") ?? ""} className="w-full">
-                <NativeSelectOption value="" disabled>
-                  {t("hr.pickEmployee")}
-                </NativeSelectOption>
-                {(people ?? []).map((p) => (
-                  <NativeSelectOption key={p.id} value={p.id}>
-                    {p.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ab-kind">{t("hr.kind")}</Label>
-              <NativeSelect id="ab-kind" name="kind" defaultValue={editing?.kind ?? "vacation"} className="w-full">
-                {ABSENCE_KINDS.map((k) => (
-                  <NativeSelectOption key={k} value={k}>
-                    {t.dynamic(`hr.kinds.${k}`)}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="ab-start">{t("hr.from")}</Label>
-                <DateInput id="ab-start" name="starts_on" type="date" required defaultValue={editing?.starts_on ?? start} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="ab-end">{t("hr.to")}</Label>
-                <DateInput id="ab-end" name="ends_on" type="date" defaultValue={editing?.ends_on ?? end} />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="half_day" value="1" defaultChecked={editing?.half_day ?? false} className="size-4" />
-              {t("hr.halfDayLabel")}
-            </label>
-            <div className="grid gap-2">
-              <Label htmlFor="ab-note">{t("hr.note")}</Label>
-              <Input id="ab-note" name="note" maxLength={500} defaultValue={editing?.note ?? ""} />
-            </div>
-            {editing && <p className="text-sm text-muted-foreground">{t("hr.days", { count: absenceDays(editing) })}</p>}
-            <SaveBar />
-          </form>
-          {editing && (
-            <form action={deleteAbsence}>
-              <input type="hidden" name="id" value={editing.id} />
-              <input type="hidden" name="return" value={here} />
-              <SubmitButton variant="outline" size="sm">
-                {t("hr.deleteAbsence")}
-              </SubmitButton>
-            </form>
-          )}
-        </UrlSheet>
+        <AbsenceSheet
+          t={t}
+          absence={editing}
+          employee={editing ? { id: editing.employee_id, name: editing.employees?.name ?? "" } : (prefill ?? person ?? null)}
+          pick
+          canManage={canManage}
+          returnTo={here}
+          defaults={{ start, end }}
+          error={param(sp, "error")}
+        />
       )}
     </Page>
   )

@@ -1,103 +1,115 @@
+import Link from "next/link"
 import { Choice } from "@/components/choice"
+import { DateInput } from "@/components/date-input"
 import { FormCard } from "@/components/page"
+import { RecordPicker, type PickerOption } from "@/components/record-picker"
 import { SaveBar } from "@/components/save-bar"
+import { searchStaff } from "@/app/(app)/shifts/actions"
 import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 import type { T } from "@/i18n/translate"
 import { EMPLOYMENT_TYPES, PAY_TYPES } from "@/hr/fields"
 import type { Tables } from "@/lib/supabase/types"
 import { priceInput } from "@/tickets/price"
-import { saveEmployee } from "./actions"
+import { saveEmployee, searchEmployees, searchMembers } from "./actions"
+import { PayFields } from "./pay-fields"
 
 type Employee = Tables<"employees">
-type Option = { id: string; name: string }
 
-// General data + contract. Read-only (disabled) for hr.view. Manager and shift-team pickers list the org's people.
-// ponytail: plain selects; switch to a server-side picker if an org has hundreds of employees.
-// New: pick an org member (not yet an employee); the person's name and email come from their profile.
-export function EmployeeForm({ t, e, managers, members = [], disabled }: { t: T; e?: Employee | null; managers: Option[]; members?: Option[]; disabled?: boolean }) {
+// Role + contract of a person, one form with one SaveBar: on /hr/new (cards; pick the org member, name and email come
+// from their profile) and in the person page's ?edit=details sheet (plain groups). Big pickers search on the server.
+// `staff`: the linked shift-team member; `pickStaff` shows the picker (only for people who see the team).
+export function EmployeeForm({ t, e, member, manager, staff, pickStaff, cards }: { t: T; e?: Employee | null; member?: PickerOption | null; manager?: PickerOption | null; staff?: PickerOption | null; pickStaff?: boolean; cards?: boolean }) {
+  const group = (id: string, title: string, children: React.ReactNode) =>
+    cards ? (
+      <FormCard id={id} title={title}>
+        {children}
+      </FormCard>
+    ) : (
+      <section className="grid gap-3" aria-labelledby={`${id}-h`}>
+        <h3 id={`${id}-h`} className="text-sm font-medium">
+          {title}
+        </h3>
+        {children}
+      </section>
+    )
   const field = (name: string, label: string, props: React.ComponentProps<typeof Input> = {}) => (
-    <div className="grid gap-2">
-      <Label htmlFor={`emp-${name}`}>{label}</Label>
-      <Input id={`emp-${name}`} name={name} disabled={disabled} {...props} />
-    </div>
-  )
-  const select = (name: string, label: string, value: string, options: { value: string; label: string }[], empty?: string) => (
-    <div className="grid gap-2">
-      <Label htmlFor={`emp-${name}`}>{label}</Label>
-      <NativeSelect id={`emp-${name}`} name={name} defaultValue={value} disabled={disabled} className="w-full">
-        {empty !== undefined && <NativeSelectOption value="">{empty}</NativeSelectOption>}
-        {options.map((o) => (
-          <NativeSelectOption key={o.value} value={o.value}>
-            {o.label}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
-    </div>
-  )
-  const money = (name: string, label: string, cents: number | null | undefined) => (
     <div className="grid content-start gap-2">
       <Label htmlFor={`emp-${name}`}>{label}</Label>
-      <TypedInput kind="money" id={`emp-${name}`} name={name} disabled={disabled} defaultValue={cents != null ? priceInput(cents) : ""} />
+      <Input id={`emp-${name}`} name={name} {...props} />
     </div>
   )
   const date = (name: string, label: string, value: string | null | undefined) => (
     <div className="grid content-start gap-2">
       <Label htmlFor={`emp-${name}`}>{label}</Label>
-      <TypedInput kind="date" id={`emp-${name}`} name={name} disabled={disabled} defaultValue={value ?? ""} />
+      <DateInput id={`emp-${name}`} name={name} type="date" defaultValue={value ?? ""} />
     </div>
   )
   return (
     <form action={saveEmployee} className="grid gap-6">
       {e && <input type="hidden" name="id" value={e.id} />}
-      <FormCard id="role" title={t("hr.roleCard")}>
+      {e && <input type="hidden" name="name" value={e.name} />}
+      {group(
+        "role",
+        t("hr.roleCard"),
         <div className="grid gap-4 sm:grid-cols-2">
-          {e ? (
+          {!e && (
             <div className="grid gap-1 sm:col-span-2">
-              <input type="hidden" name="name" value={e.name} />
-              <span className="text-sm font-medium">{t("hr.account")}</span>
-              <span className="text-sm text-muted-foreground">
-                {e.name}
-                {e.email && ` · ${e.email}`}
-              </span>
-            </div>
-          ) : (
-            <div className="sm:col-span-2">
-              {select("user_id", t("hr.member"), "", members.map((m) => ({ value: m.id, label: m.name })), t("hr.pickMember"))}
-              <p className="mt-1 text-xs text-muted-foreground">{t("hr.memberHint")}</p>
+              <RecordPicker name="user_id" label={t("hr.member")} search={searchMembers} initial={member} required />
+              <p className="text-xs text-muted-foreground">
+                {t("hr.memberHint")}{" "}
+                <Link href="/settings/team" className="text-[var(--link)] hover:underline">
+                  {t("hr.inviteLink")}
+                </Link>
+              </p>
             </div>
           )}
           {field("job_title", t("hr.jobTitle"), { maxLength: 100, defaultValue: e?.job_title ?? "" })}
           {field("department", t("hr.department"), { maxLength: 100, defaultValue: e?.department ?? "" })}
           <div className="grid content-start gap-2">
             <Label htmlFor="emp-phone">{t("hr.phone")}</Label>
-            <TypedInput kind="phone" id="emp-phone" name="phone" disabled={disabled} defaultValue={e?.phone ?? ""} />
+            <TypedInput kind="phone" id="emp-phone" name="phone" defaultValue={e?.phone ?? ""} />
           </div>
-          {select("manager_id", t("hr.manager"), e?.manager_id ?? "", managers.filter((m) => m.id !== e?.id).map((m) => ({ value: m.id, label: m.name })), "–")}
-        </div>
-      </FormCard>
-      <FormCard id="contract" title={t("hr.contract")}>
+          <RecordPicker name="manager_id" label={t("hr.manager")} search={searchEmployees} initial={manager} placeholder={t("hr.noManager")} />
+          {pickStaff && (
+            <div className="grid gap-1 sm:col-span-2">
+              <RecordPicker name="staff_id" label={t("hr.shiftTeam")} search={searchStaff.bind(null, "")} initial={staff} placeholder={t("hr.noShiftTeam")} />
+              <p className="text-xs text-muted-foreground">{t("hr.shiftTeamHint")}</p>
+            </div>
+          )}
+        </div>,
+      )}
+      {group(
+        "contract",
+        t("hr.contract"),
         <div className="grid gap-4 sm:grid-cols-2">
-          {select("employment_type", t("hr.employmentType"), e?.employment_type ?? "part_time", EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) })))}
-          <div className="grid content-start gap-2">
-            <Label htmlFor="emp-pay_type">{t("hr.payType")}</Label>
-            <Choice id="emp-pay_type" name="pay_type" label={t("hr.payType")} required disabled={disabled} defaultValue={e?.pay_type ?? "hourly"} options={PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) }))} />
+          <div className="grid content-start gap-2 sm:col-span-2">
+            <Label htmlFor="emp-employment_type">{t("hr.employmentType")}</Label>
+            <Choice id="emp-employment_type" name="employment_type" label={t("hr.employmentType")} required defaultValue={e?.employment_type ?? "part_time"} options={EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) }))} />
           </div>
+          <PayFields
+            labels={{ pay: t("hr.payType"), hourly: t("hr.hourlyRate"), monthly: t("hr.monthlySalary") }}
+            options={PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) }))}
+            defaultType={e?.pay_type ?? "hourly"}
+            hourly={e?.hourly_rate_cents != null ? priceInput(e.hourly_rate_cents) : ""}
+            monthly={e?.monthly_salary_cents != null ? priceInput(e.monthly_salary_cents) : ""}
+          />
           {date("starts_on", t("hr.startsOn"), e?.starts_on)}
           {date("ends_on", t("hr.endsOn"), e?.ends_on)}
-          {money("hourly_rate", t("hr.hourlyRate"), e?.hourly_rate_cents)}
-          {money("monthly_salary", t("hr.monthlySalary"), e?.monthly_salary_cents)}
-          {field("weekly_hours", t("hr.weeklyHours"), { inputMode: "decimal", defaultValue: e?.weekly_hours ?? "", className: "max-w-32" })}
-          {field("vacation_days", t("hr.vacationDays"), { inputMode: "decimal", defaultValue: e?.vacation_days ?? "", className: "max-w-32" })}
-        </div>
-      </FormCard>
-      <FormCard id="notes" title={t("hr.notes")}>
-        <Textarea id="emp-notes" name="notes" rows={3} maxLength={5000} disabled={disabled} defaultValue={e?.notes ?? ""} aria-label={t("hr.notes")} />
-      </FormCard>
-      {!disabled && <SaveBar label={e ? undefined : t("hr.create")} always={!e} />}
+          <div className="grid content-start gap-2">
+            <Label htmlFor="emp-weekly_hours">{t("hr.weeklyHours")}</Label>
+            <TypedInput kind="number" id="emp-weekly_hours" name="weekly_hours" min={0} max={80} step="any" defaultValue={e?.weekly_hours ?? ""} />
+          </div>
+          <div className="grid content-start gap-2">
+            <Label htmlFor="emp-vacation_days">{t("hr.vacationDays")}</Label>
+            <TypedInput kind="number" id="emp-vacation_days" name="vacation_days" min={0} max={365} step="any" defaultValue={e?.vacation_days ?? ""} />
+          </div>
+        </div>,
+      )}
+      {group("notes", t("hr.notes"), <Textarea id="emp-notes" name="notes" rows={3} maxLength={5000} defaultValue={e?.notes ?? ""} aria-label={t("hr.notes")} />)}
+      <SaveBar label={e ? undefined : t("hr.create")} always={!e} />
     </form>
   )
 }

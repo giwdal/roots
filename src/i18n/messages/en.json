@@ -3930,6 +3930,9 @@
     }
   },
   "search": {
+    "goTo": "Go to",
+    "keysMove": "select",
+    "keysOpen": "open",
     "open": "Search",
     "placeholder": "Contacts, events, invoices, pages …",
     "pages": "Pages",

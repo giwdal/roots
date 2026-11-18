@@ -55,6 +55,9 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
         ]
       : []),
     ...(on("crm", "crm.manage") ? [{ id: "contacts-import", title: t("contacts.import"), detail: t("contacts.title"), href: "/contacts/import" }] : []),
+    // Views that aren't sidebar entries: Schichten › Meine, Personen › Organigramm.
+    ...(on("shifts", "shifts.self") ? [{ id: "shifts-me", title: t("shifts.tabs.me"), detail: t("shifts.nav"), href: "/shifts/me" }] : []),
+    ...(on("hr", "hr.view") ? [{ id: "hr-chart", title: t("hr.views.chart"), detail: t("hr.nav"), href: "/hr/chart" }] : []),
     ...SETTINGS.filter((s) => !s.permission || ctx.can(s.permission)).map((s) => ({
       id: `settings-${s.key}`,
       title: t.dynamic(`settings.tabs.${s.key}`),
@@ -66,7 +69,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
 
   const none = Promise.resolve({ data: [] as never[] })
   const day = (v: string | null) => (v ? t.date(v, { dateStyle: "medium" }) : undefined)
-  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists] = await Promise.all([
+  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists, employees] = await Promise.all([
     on("crm", "crm.view")
       ? db
           .from("contacts")
@@ -113,6 +116,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     on("guestlists", "guestlists.view")
       ? db.from("guest_lists").select("id, name, events(title, starts_at)").eq("org_id", org).is("deleted_at", null).ilike("name", like).order("created_at", { ascending: false }).limit(PER_GROUP)
       : none,
+    on("hr", "hr.view") ? db.from("employees").select("id, name, job_title").eq("org_id", org).is("deleted_at", null).or(`name.ilike.${like},job_title.ilike.${like}`).order("name").limit(PER_GROUP) : none,
   ])
 
   const person = (c: { first_name: string | null; last_name: string | null; company: string | null } | null) =>
@@ -150,6 +154,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
         href: `/guestlists/${g.id}`,
       })),
     },
+    { key: "employees", label: t("hr.tabs.people"), items: (employees.data ?? []).map((x) => ({ id: x.id, title: x.name, detail: x.job_title ?? undefined, href: `/hr/${x.id}` })) },
     { key: "forms", label: t("forms.nav"), items: (forms.data ?? []).map((f) => ({ id: f.id, title: f.title, href: `/forms/${f.id}` })) },
     { key: "email", label: t("email.nav"), items: [
         ...(campaigns.data ?? []).map((c) => ({ id: c.id, title: c.name, href: `/email/${c.id}` })),

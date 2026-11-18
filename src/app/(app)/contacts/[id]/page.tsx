@@ -107,7 +107,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const email = c.email ? ilikeExact(c.email) : null
   // Team access: the linked account and (for managers) the team members who could be linked. Payments, mails and
   // guest-list entries don't point at contacts: the contact's email links them (same rule as Zahlungen › ?contact=).
-  const [{ data: team }, { data: linkedElsewhere }, { data: payments }, { data: mails }, { data: guests }] = await Promise.all([
+  // Shift team + HR record: by contact, else by the contact's linked account (both are org members' records).
+  const byAccount = !staff?.length && c.user_id
+  const [{ data: team }, { data: linkedElsewhere }, { data: payments }, { data: mails }, { data: guests }, { data: staffOfUser }, { data: employeeOfUser }] = await Promise.all([
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
     on("payments", "payments.view") && email
@@ -119,6 +121,8 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     on("guestlists", "guestlists.view") && email
       ? ctx.supabase.from("guest_entries").select("id, created_at, list_id, guest_lists!inner(name, deleted_at, events(title))").eq("org_id", ctx.org.id).ilike("email", email).is("guest_lists.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
       : none,
+    byAccount && on("shifts", "shifts.manage") ? ctx.supabase.from("staff").select("id, name, active, role_label, employees(id, job_title, deleted_at)").eq("org_id", ctx.org.id).eq("user_id", c.user_id!).limit(1) : none,
+    c.user_id && on("hr", "hr.view") ? ctx.supabase.from("employees").select("id, job_title, name").eq("org_id", ctx.org.id).eq("user_id", c.user_id).is("deleted_at", null).limit(1) : none,
   ])
   const { data: people } = team?.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", team.map((m) => m.user_id)) : { data: [] }
   const linked = people?.find((p) => p.id === c.user_id)
@@ -155,16 +159,14 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
       detail: [t("contacts.hub.guestOn", { list: g.guest_lists.name }), day(g.created_at)].join(" · "),
     })),
   ]
-  const staffRow = staff?.[0]
-  const employee = staffRow?.employees.find((e) => !e.deleted_at)
-  const workRows: LinkRow[] = staffRow
-    ? [
-        ...(on("shifts", "shifts.manage")
-          ? [{ key: "staff", icon: CalendarClockIcon, href: `/shifts/team?edit=${staffRow.id}`, title: t("contacts.hub.shiftProfile"), detail: staffRow.role_label ?? staffRow.name, badge: !staffRow.active && <Badge variant="secondary">{t("contacts.hub.inactive")}</Badge> }]
-          : []),
-        ...(employee && on("hr", "hr.view") ? [{ key: "employee", icon: BriefcaseBusinessIcon, href: `/hr/${employee.id}`, title: t("contacts.hub.employee"), detail: employee.job_title ?? staffRow.name }] : []),
-      ]
-    : []
+  const staffRow = staff?.[0] ?? staffOfUser?.[0]
+  const employee = staffRow?.employees.find((e) => !e.deleted_at) ?? employeeOfUser?.[0]
+  const workRows: LinkRow[] = [
+    ...(staffRow && on("shifts", "shifts.manage")
+      ? [{ key: "staff", icon: CalendarClockIcon, href: `/shifts/team?edit=${staffRow.id}`, title: t("contacts.hub.shiftProfile"), detail: staffRow.role_label ?? staffRow.name, badge: !staffRow.active && <Badge variant="secondary">{t("contacts.hub.inactive")}</Badge> }]
+      : []),
+    ...(employee && on("hr", "hr.view") ? [{ key: "employee", icon: BriefcaseBusinessIcon, href: `/hr/${employee.id}`, title: t("contacts.hub.employee"), detail: employee.job_title ?? staffRow?.name }] : []),
+  ]
 
   return (
     <Page size="record">

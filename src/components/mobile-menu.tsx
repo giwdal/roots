@@ -10,7 +10,7 @@ import type { Me, SidebarLink } from "@/components/app-sidebar"
 import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components/content-sheet"
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
-import { localeNames, locales } from "@/i18n/config"
+import { localeNames, locales } from "@/i18n/locales"
 import { activeChildHref, appRoute, within } from "@/lib/url"
 import { cn } from "@/lib/utils"
 

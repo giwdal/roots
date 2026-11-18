@@ -3,7 +3,8 @@
 import { createContext, useContext, useMemo, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { localeNames, locales, type Locale, type Messages } from "./config"
+import type { Messages } from "./config"
+import { localeNames, locales, type Locale } from "./locales"
 import { setLocale } from "./actions"
 import { createT, type T } from "./translate"
 

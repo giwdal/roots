@@ -10,9 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
-import { ChatView, type Model } from "./chat"
+import dynamic from "next/dynamic"
+import type { Model } from "./chat"
 import { useSprout } from "./context"
 import { SproutOrb } from "./sprout-orb"
+
+// The chat (AI SDK, markdown rendering) loads on first open, not with every App page.
+const ChatView = dynamic(() => import("./chat").then((m) => m.ChatView), { ssr: false })
 
 type Setup = Awaited<ReturnType<typeof sproutSetup>>
 type Chat = { id: string; messages: UIMessage[]; title: string; starred: boolean; saved: boolean; prompt?: string }

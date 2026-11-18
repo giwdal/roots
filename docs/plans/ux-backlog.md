@@ -114,11 +114,11 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       courses, HR people (switch per module via props, not copies).
 
 ## M. Performance (fast like a native app)
-- [ ] M1 Measure: per area count DB round trips per request (target ≤ 2: context, then layout ∥ page), find
+- [x] M1 (docs/plans/performance-review.md; skeletons added for every area + record-shaped ones for [id] pages) Measure: per area count DB round trips per request (target ≤ 2: context, then layout ∥ page), find
       sequential awaits and N+1 loops; every area has a `loading.tsx` skeleton that matches the page.
 - [ ] M2 Caching: what can be cached per org (nav/module lists, settings, custom field defs, statuses) with
       `"use cache"` + tags invalidated by the actions; public pages already cached (`public-cache.ts`).
-- [ ] M3 Client: prefetch tab bar + sidebar targets, keep JS small on phones (no heavy libs in the shell, dynamic
+- [~] M3 (done: locale names without the message JSON in client code, Sprout chat loaded on first open; open: cmdk + date picker lazy, de.json per namespace to the client) Client: prefetch tab bar + sidebar targets, keep JS small on phones (no heavy libs in the shell, dynamic
       import for editors/calendars/canvas), images via next/image sizes, fonts preloaded once.
 - [ ] M4 Perceived speed: optimistic UI for toggles/inline edits/checklists, instant pressed states, skeletons
       instead of spinners, View Transitions between list and record.
@@ -138,6 +138,12 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       Formulare, Gästelisten) against mobile.md §5.
 
 ## Z. To discuss tomorrow
+- Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
+  org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed
+  from at most 1 000 rows in JS — **#3 is also a correctness bug** (event revenue, check-ins, overdue dues, project
+  progress, new submissions are wrong past 1 000 rows). OK to run these migrations?
+- Caching the per-user context (#2, saves ~70 ms on every request) changes how fast role/module changes apply
+  (tags invalidate it; still RLS-safe). OK?
 - The manifest is global, so public org pages could also be "installed" as roots. Limit it to the App (only link it
   from the App layout), or give orgs their own manifest later?
 - Inline editing needs one `patch<Entity>` server action per record type (validated per field) — fine to add to the

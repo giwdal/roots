@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/sidebar"
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
-import { localeNames, locales } from "@/i18n/config"
+import { localeNames, locales } from "@/i18n/locales"
 
 // The item's icon with a spinner over it while its page loads (instant feedback on click; the area's colour tile stays).
 function NavIcon({ icon }: { icon: React.ReactNode }) {

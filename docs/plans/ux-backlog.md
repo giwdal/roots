@@ -50,7 +50,10 @@ file too; shared items are done once in shared components.
       iOS 12.2 (don't block it); keep the parent fallback for deep links.
 
 ## E. Complex components on phones
-- [ ] E1 Calendar: list/day view on phones; week grid only from md.
+- [~] E1 (done: 24 h times + German dates in both languages, phones open on the list view) Calendar on phones —
+      still to build in the Kalender pass: a week strip (Mo–So with dots for days that have entries, swipe for the next
+      week) above the day's agenda, like iOS Calendar / Google Calendar; filters ("Bereich") as a chip row; "+" creates
+      on the selected day; month = compact grid with dots + the day's list below. Desktop keeps week/month grids.
 - [ ] E2 Tables: cards on phones (done in DataTable); wide editors (positions, variants) as cards.
 - [ ] E3 Boards/timelines: one column at a time with snap / own scroll box.
 - [ ] E4 Research per component (calendar, table, board, timeline, picker) and note the chosen pattern in mobile.md.

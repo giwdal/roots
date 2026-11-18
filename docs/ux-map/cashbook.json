@@ -3,10 +3,27 @@
   "label": "Kassenbuch",
   "module": "cashbook",
   "nav": [
-    { "label": "Rechnungen", "key": "invoices.nav", "href": "/invoices" },
-    { "label": "Kassenbuch", "key": "cashbook.nav", "href": "/cashbook" },
-    { "label": "Zahlungen", "key": "payments.nav", "href": "/payments" },
-    { "label": "Einstellungen", "key": "common.settings", "href": "/invoices/settings", "permission": "invoices.manage" }
+    {
+      "label": "Rechnungen",
+      "key": "invoices.nav",
+      "href": "/invoices"
+    },
+    {
+      "label": "Kassenbuch",
+      "key": "cashbook.nav",
+      "href": "/cashbook"
+    },
+    {
+      "label": "Zahlungen",
+      "key": "payments.nav",
+      "href": "/payments"
+    },
+    {
+      "label": "Einstellungen",
+      "key": "common.settings",
+      "href": "/invoices/settings",
+      "permission": "invoices.manage"
+    }
   ],
   "pages": [
     {
@@ -20,27 +37,75 @@
         "area": "finance",
         "meta": "badge 'Abgeschlossen' when the shown month is closed",
         "actions": [
-          { "label": "Konto bearbeiten", "key": "cashbook.editAccount", "target": "?edit_account=<id>", "permission": "cashbook.manage", "notes": "ghost button with pencil" }
+          {
+            "label": "Konto bearbeiten",
+            "key": "cashbook.editAccount",
+            "target": "?edit_account=<id>",
+            "permission": "cashbook.manage",
+            "notes": "ghost button with pencil"
+          }
         ],
         "menu": [
-          { "label": "Kasse / Konto", "key": "cashbook.newAccount", "target": "?new=account", "permission": "cashbook.manage" },
-          { "label": "Exportieren (MenuExport)", "key": "export.button", "target": "/export/cash_entries?account=<id>&month=<YYYY-MM>&format=xlsx|csv", "permission": "cashbook.view" }
+          {
+            "label": "Kasse / Konto",
+            "key": "cashbook.newAccount",
+            "target": "?new=account",
+            "permission": "cashbook.manage"
+          },
+          {
+            "label": "Exportieren (MenuExport)",
+            "key": "export.button",
+            "target": "/export/cash_entries?account=<id>&month=<YYYY-MM>&format=xlsx|csv",
+            "permission": "cashbook.view"
+          }
         ],
-        "primary": { "label": "Buchung", "key": "cashbook.newEntry", "href": "/cashbook?new=entry", "permission": "cashbook.manage", "notes": "hidden when the month is closed or there is no account" }
+        "primary": {
+          "label": "Buchung",
+          "key": "cashbook.newEntry",
+          "href": "/cashbook?new=entry",
+          "permission": "cashbook.manage",
+          "notes": "hidden when the month is closed or there is no account"
+        }
       },
       "urlState": [
-        { "param": "account", "meaning": "account id (default: first active account)" },
-        { "param": "month", "meaning": "YYYY-MM (default: current month, Europe/Berlin)" },
-        { "param": "new", "meaning": "entry = booking sheet; account = new account sheet" },
-        { "param": "edit_account", "meaning": "<account id> = edit account sheet" },
-        { "param": "edit", "meaning": "<entry id> = entry detail sheet" },
-        { "param": "ok / error", "meaning": "toast" }
+        {
+          "param": "account",
+          "meaning": "account id (default: first active account)"
+        },
+        {
+          "param": "month",
+          "meaning": "YYYY-MM (default: current month, Europe/Berlin)"
+        },
+        {
+          "param": "new",
+          "meaning": "entry = booking sheet; account = new account sheet"
+        },
+        {
+          "param": "edit_account",
+          "meaning": "<account id> = edit account sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "<entry id> = entry detail sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
       ],
       "sections": [
         {
           "title": "Kassen & Konten",
           "kind": "custom",
-          "fields": [{ "name": "account", "label": "<account name> (· inaktiv)", "key": "cashbook.accounts", "type": "segments", "component": "hand-built chip nav (justify-self-end)" }]
+          "fields": [
+            {
+              "name": "account",
+              "label": "<account name> (· inaktiv)",
+              "key": "cashbook.accounts",
+              "type": "segments",
+              "component": "hand-built chip nav (justify-self-end)"
+            }
+          ]
         },
         {
           "title": "Monat",
@@ -55,7 +120,12 @@
         {
           "title": "Buchungen",
           "kind": "DataTable",
-          "columns": ["Buchung (description + 'number · date · counterparty', link → ?edit=<id>)", "Kategorie", "Bereich (sphere)", "Betrag (red when negative, paperclip if receipts, badge 'Storno' / 'storniert')"],
+          "columns": [
+            "Buchung (description + 'number · date · counterparty', link → ?edit=<id>)",
+            "Kategorie",
+            "Bereich (sphere)",
+            "Betrag (red when negative, paperclip if receipts, badge 'Storno' / 'storniert')"
+          ],
           "notes": "No rowHref: only the first cell is a link."
         },
         {
@@ -63,14 +133,36 @@
           "anchor": "#closing",
           "kind": "custom",
           "fields": [
-            { "name": "counted", "label": "Gezählter Bestand (Kassensturz, €)", "key": "cashbook.counted", "type": "money", "component": "Input inputMode=decimal", "notes": "cash accounts only" },
-            { "name": "note", "label": "Notiz", "key": "cashbook.note", "type": "text", "component": "Input" }
+            {
+              "name": "counted",
+              "label": "Gezählter Bestand (Kassensturz, €)",
+              "key": "cashbook.counted",
+              "type": "money",
+              "component": "Input inputMode=decimal",
+              "notes": "cash accounts only"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "cashbook.note",
+              "type": "text",
+              "component": "Input"
+            }
           ],
           "notes": "Closed: 'Abgeschlossen am …, Endbestand …' (+ counted/diff, note). Current month: 'Abschließen geht, sobald der Monat vorbei ist.' Past month: hint with balance + form + 'Monat abschließen'. View-only: 'Noch nicht abgeschlossen.'"
         }
       ],
       "actions": [
-        { "label": "Monat abschließen", "key": "cashbook.closeMonth", "where": "section", "kind": "serverAction", "target": "closeCashMonth (cashbook/actions.ts)", "permission": "cashbook.manage", "confirm": false, "result": "toast 'Monat abgeschlossen.'; month takes no more entries" }
+        {
+          "label": "Monat abschließen",
+          "key": "cashbook.closeMonth",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "closeCashMonth (cashbook/actions.ts)",
+          "permission": "cashbook.manage",
+          "confirm": false,
+          "result": "toast 'Monat abgeschlossen.'; month takes no more entries"
+        }
       ],
       "overlays": [
         {
@@ -78,17 +170,81 @@
           "component": "UrlSheet",
           "title": "Buchung",
           "fields": [
-            { "name": "direction", "label": "Einnahme / Ausgabe", "key": "cashbook.directions.*", "type": "radio", "component": "native radio", "notes": "default Ausgabe; legend sr-only 'Art der Buchung'" },
-            { "name": "amount", "label": "Betrag", "key": "cashbook.amount", "type": "money", "component": "TypedInput:money", "required": true },
-            { "name": "booked_on", "label": "Datum", "key": "cashbook.date", "type": "date", "component": "DateInput:date", "required": true, "notes": "default today" },
-            { "name": "description", "label": "Beschreibung", "key": "cashbook.description", "type": "text", "component": "Input", "required": true },
-            { "name": "category", "label": "Kategorie", "key": "cashbook.category", "type": "text", "component": "Input + datalist (last used, max 100)" },
-            { "name": "sphere", "label": "Bereich", "key": "cashbook.sphere", "type": "select", "component": "NativeSelect", "notes": "Ideeller Bereich / Vermögensverwaltung / Zweckbetrieb / Wirtschaftlicher Geschäftsbetrieb" },
-            { "name": "counterparty", "label": "Von / an", "key": "cashbook.counterparty", "type": "text", "component": "Input" },
-            { "name": "document_id", "label": "Bezahlt Rechnung", "key": "cashbook.invoice", "type": "select", "component": "NativeSelect", "notes": "invoices module; last 100 sent invoices; hint cashbook.invoiceHint" }
+            {
+              "name": "direction",
+              "label": "Einnahme / Ausgabe",
+              "key": "cashbook.directions.*",
+              "type": "radio",
+              "component": "native radio",
+              "notes": "default Ausgabe; legend sr-only 'Art der Buchung'"
+            },
+            {
+              "name": "amount",
+              "label": "Betrag",
+              "key": "cashbook.amount",
+              "type": "money",
+              "component": "TypedInput:money",
+              "required": true
+            },
+            {
+              "name": "booked_on",
+              "label": "Datum",
+              "key": "cashbook.date",
+              "type": "date",
+              "component": "DateInput:date",
+              "required": true,
+              "notes": "default today"
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "cashbook.description",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "Kategorie",
+              "key": "cashbook.category",
+              "type": "text",
+              "component": "Input + datalist (last used, max 100)"
+            },
+            {
+              "name": "sphere",
+              "label": "Bereich",
+              "key": "cashbook.sphere",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Ideeller Bereich / Vermögensverwaltung / Zweckbetrieb / Wirtschaftlicher Geschäftsbetrieb"
+            },
+            {
+              "name": "counterparty",
+              "label": "Von / an",
+              "key": "cashbook.counterparty",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "document_id",
+              "label": "Bezahlt Rechnung",
+              "key": "cashbook.invoice",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "invoices module; last 100 sent invoices; hint cashbook.invoiceHint"
+            }
           ],
           "actions": [
-            { "label": "Buchen", "key": "cashbook.book", "where": "sheet", "kind": "serverAction", "target": "bookCashEntry", "permission": "cashbook.manage", "confirm": false, "result": "opens the new entry (?edit=<id>), toast 'Gebucht als <number>.'" }
+            {
+              "label": "Buchen",
+              "key": "cashbook.book",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "bookCashEntry",
+              "permission": "cashbook.manage",
+              "confirm": false,
+              "result": "opens the new entry (?edit=<id>), toast 'Gebucht als <number>.'"
+            }
           ],
           "notes": "description = account name; hint cashbook.bookHint (immutable after booking, receipts after booking)."
         },
@@ -97,14 +253,56 @@
           "component": "UrlSheet",
           "title": "Kasse / Konto | Konto bearbeiten",
           "fields": [
-            { "name": "name", "label": "Name", "key": "cashbook.accountName", "type": "text", "component": "Input", "required": true },
-            { "name": "kind", "label": "Art", "key": "cashbook.accountKind", "type": "select", "component": "NativeSelect", "notes": "Bargeldkasse / Bankkonto" },
-            { "name": "opening", "label": "Anfangsbestand (€)", "key": "cashbook.opening", "type": "money", "component": "Input inputMode=decimal" },
-            { "name": "opening_on", "label": "Stand vom", "key": "cashbook.openingOn", "type": "date", "component": "DateInput:date" },
-            { "name": "active", "label": "Aktiv", "key": "cashbook.accountActive", "type": "checkbox", "component": "checkbox", "notes": "edit only" }
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "cashbook.accountName",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "kind",
+              "label": "Art",
+              "key": "cashbook.accountKind",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Bargeldkasse / Bankkonto"
+            },
+            {
+              "name": "opening",
+              "label": "Anfangsbestand (€)",
+              "key": "cashbook.opening",
+              "type": "money",
+              "component": "Input inputMode=decimal"
+            },
+            {
+              "name": "opening_on",
+              "label": "Stand vom",
+              "key": "cashbook.openingOn",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "active",
+              "label": "Aktiv",
+              "key": "cashbook.accountActive",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "edit only"
+            }
           ],
           "actions": [
-            { "label": "Speichern", "key": "common.save", "where": "sheet", "kind": "serverAction", "target": "saveAccount", "permission": "cashbook.manage", "confirm": false, "result": "toast 'Gespeichert.'" }
+            {
+              "label": "Speichern",
+              "key": "common.save",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "saveAccount",
+              "permission": "cashbook.manage",
+              "confirm": false,
+              "result": "toast 'Gespeichert.'"
+            }
           ]
         },
         {
@@ -113,13 +311,31 @@
           "title": "<description>",
           "fields": [],
           "actions": [
-            { "label": "<invoice number>", "where": "sheet", "kind": "link", "target": "/invoices/<id>" },
-            { "label": "Stornieren", "key": "cashbook.reverse", "where": "sheet", "kind": "serverAction", "target": "reverseCashEntry", "permission": "cashbook.manage", "confirm": false, "result": "opens the reversal entry, toast 'Storniert mit <number>.'", "notes": "hint cashbook.reverseHint; hidden for reversals and reversed entries" }
+            {
+              "label": "<invoice number>",
+              "where": "sheet",
+              "kind": "link",
+              "target": "/invoices/<id>"
+            },
+            {
+              "label": "Stornieren",
+              "key": "cashbook.reverse",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "reverseCashEntry",
+              "permission": "cashbook.manage",
+              "confirm": false,
+              "result": "opens the reversal entry, toast 'Storniert mit <number>.'",
+              "notes": "hint cashbook.reverseHint; hidden for reversals and reversed entries"
+            }
           ],
           "notes": "description '<number> · <amount>'. DetailList: Datum, Betrag, Kategorie, Bereich, Von / an, Bezahlt Rechnung, Storno von, Storniert durch, Gebucht am. Belege: FileList (receipts)."
         }
       ],
-      "links": ["/invoices/[id]", "/export/cash_entries"],
+      "links": [
+        "/invoices/[id]",
+        "/export/cash_entries"
+      ],
       "empty": "No account: EmptyState 'Noch keine Kasse – leg zuerst eine Kasse oder ein Konto an (z. B. „Barkasse“ oder „Abendkasse“).' + button 'Kasse / Konto'. Month without entries: 'Keine Buchungen in diesem Monat.'",
       "phone": "Tiles 2×2; table as cards (first column is the link); month arrows are icon-sm.",
       "uxNotes": [
@@ -132,7 +348,29 @@
         "Category is free text with a datalist (same pattern contacts uses for bulk tags) – easy to create near-duplicates.",
         "Rows only open via the first cell's link (no rowHref), unlike other DataTables where the whole row opens.",
         "No account delete; 'Konto bearbeiten' is a ghost header button while creating an account is in the ⋯ menu."
-      ]
+      ],
+      "redesign": {
+        "job": "Book cash in/out for one account and month, see the balance, close a finished month with a cash count.",
+        "phone": "Top bar: Kassenbuch, ⋯ (Monat abschließen when due, Kasse bearbeiten, Neue Kasse, Export). Toolbar: account Segments (or a filter menu when more than 4 accounts), month ‹ März 2026 › row. Stats 2×2. Cards: description + amount, line 2 number · date · counterparty, Storno badge. Round + = Neue Buchung. Month close: callout card with the button when the month is over.",
+        "desktop": "Toolbar: month ‹ › left, account switch right. Stats: Anfangsbestand · Einnahmen · Ausgaben · Endbestand. Table (whole row opens ?edit=): Buchung, Kategorie, Bereich, Betrag. Monatsabschluss section at the end (state or callout + button → sheet).",
+        "moves": [
+          "badge 'Abgeschlossen' in meta → header badge (success)",
+          "header ghost 'Konto bearbeiten' → ⋯ 'Kasse bearbeiten'",
+          "⋯ 'Kasse / Konto' → ⋯ 'Neue Kasse'",
+          "⋯ Export → ⋯ (unchanged)",
+          "primary 'Buchung' → 'Neue Buchung' (hidden when month closed / no account, unchanged)",
+          "account hand-built chip nav → <Segments> (≤ 4 accounts) or <FilterMenu>-style links in the toolbar",
+          "month ‹ › icon buttons → toolbar, size-8 targets",
+          "4 hand-made tiles → <Stats>",
+          "entries table, link only in first cell → rowHref (whole row/card opens ?edit=<id>)",
+          "Monatsabschluss inline form (counted Input decimal, note, 'Monat abschließen' without confirm) → section shows state; when the month is over: callout + 'Monat abschließen' → sheet ?new=closing with counted as TypedInput money (cash accounts), note, SaveBar 'Monat abschließen' with confirm cashbook.confirmClose + Hint",
+          "closeLater / closedInfo / notClosed texts → section (unchanged)",
+          "EmptyState no account + button → EmptyState with 'Neue Kasse' (unchanged)",
+          "?new=entry sheet: direction native radios → <SegmentGroup> Einnahme · Ausgabe; amount TypedInput money, date, description, category (datalist kept: suggestions without a new table), sphere NativeSelect → <Choice> (4 → segments), counterparty, invoice NativeSelect (100) → <RecordPicker> with server search of open invoices; bookHint kept; 'Buchen' SubmitButton → <SaveBar label='Buchen' always> with confirm cashbook.confirmBook",
+          "?new=account / ?edit_account sheet: name, kind NativeSelect → <Choice> segments, opening Input decimal → TypedInput money, opening_on, active checkbox; 'Speichern' → SaveBar (create: 'Kasse anlegen' always)",
+          "?edit=<entry> sheet: DetailList (unchanged) + invoice link, Belege FileList (unchanged), 'Stornieren' → sheet header action with confirm cashbook.confirmReverse + Hint"
+        ]
+      }
     }
   ]
 }

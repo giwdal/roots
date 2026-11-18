@@ -2,7 +2,13 @@
   "area": "reports",
   "label": "Auswertungen",
   "module": "reports",
-  "nav": [{ "label": "Auswertungen", "key": "reports.nav", "href": "/reports" }],
+  "nav": [
+    {
+      "label": "Auswertungen",
+      "key": "reports.nav",
+      "href": "/reports"
+    }
+  ],
   "pages": [
     {
       "route": "/reports",
@@ -11,19 +17,46 @@
       "purpose": "Read KPIs per area for a period (members, events & door, revenue, invoices, cash book, shifts, more), each section only for those who may see it.",
       "permission": "reports.view (module reports)",
       "size": "list",
-      "header": { "area": "reports", "meta": "'<from> – <to>' (reports.range)" },
+      "header": {
+        "area": "reports",
+        "meta": "'<from> – <to>' (reports.range)"
+      },
       "urlState": [
-        { "param": "p", "meaning": "preset: 30d | month | last_month | quarter | year | last_year" },
-        { "param": "from / to", "meaning": "own date range (GET form)" }
+        {
+          "param": "p",
+          "meaning": "preset: 30d | month | last_month | quarter | year | last_year"
+        },
+        {
+          "param": "from / to",
+          "meaning": "own date range (GET form)"
+        }
       ],
       "sections": [
         {
           "title": "Zeitraum",
           "kind": "custom",
           "fields": [
-            { "name": "p", "label": "Letzte 30 Tage · Dieser Monat · Letzter Monat · Dieses Quartal · Dieses Jahr · Letztes Jahr", "key": "reports.presets.*", "type": "segments", "component": "hand-built chip nav (6 items)" },
-            { "name": "from", "label": "Von", "key": "reports.from", "type": "date", "component": "DateInput:date" },
-            { "name": "to", "label": "Bis", "key": "reports.to", "type": "date", "component": "DateInput:date" }
+            {
+              "name": "p",
+              "label": "Letzte 30 Tage · Dieser Monat · Letzter Monat · Dieses Quartal · Dieses Jahr · Letztes Jahr",
+              "key": "reports.presets.*",
+              "type": "segments",
+              "component": "hand-built chip nav (6 items)"
+            },
+            {
+              "name": "from",
+              "label": "Von",
+              "key": "reports.from",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "to",
+              "label": "Bis",
+              "key": "reports.to",
+              "type": "date",
+              "component": "DateInput:date"
+            }
           ],
           "notes": "Button 'Anzeigen' (reports.show) submits a GET form to /reports."
         },
@@ -37,7 +70,15 @@
           "title": "Veranstaltungen & Einlass",
           "anchor": "#events",
           "kind": "DataTable",
-          "columns": ["Veranstaltung (title + date, link → /events/<id>)", "Tickets verkauft", "Ticketumsatz", "mit Ticket", "Mitglieder", "Gäste", "Auslastung"],
+          "columns": [
+            "Veranstaltung (title + date, link → /events/<id>)",
+            "Tickets verkauft",
+            "Ticketumsatz",
+            "mit Ticket",
+            "Mitglieder",
+            "Gäste",
+            "Auslastung"
+          ],
           "notes": "KPI tiles: Veranstaltungen, Tickets verkauft, Ticketumsatz, Eingelassen, mit Ticket / Mitglieder / Gäste; bars 'Eingelassene Mitglieder nach Mitgliedsart'; stacked bars 'Eingelassen pro Veranstaltung'. Empty: 'Keine Veranstaltungen in diesem Zeitraum.' Columns depend on tickets/guestlists modules."
         },
         {
@@ -72,9 +113,18 @@
         }
       ],
       "actions": [
-        { "label": "Anzeigen", "key": "reports.show", "where": "toolbar", "kind": "link", "target": "/reports?from=…&to=…", "confirm": false }
+        {
+          "label": "Anzeigen",
+          "key": "reports.show",
+          "where": "toolbar",
+          "kind": "link",
+          "target": "/reports?from=…&to=…",
+          "confirm": false
+        }
       ],
-      "links": ["/events/[eventId]"],
+      "links": [
+        "/events/[eventId]"
+      ],
       "phone": "Tiles in 2 columns; charts and event table stack; 6 preset chips wrap over several lines.",
       "uxNotes": [
         "Six presets in a hand-built chip nav; docs/design/app.md caps <Segments> at 5 items.",
@@ -83,7 +133,25 @@
         "Sections are FormCards (form groups) used as report panels; no export of any report.",
         "Custom range uses a SubmitButton (spinner) for a plain GET navigation.",
         "Section order and naming differ from the nav: 'Umsatz' summarises Zahlungen, 'Veranstaltungen & Einlass' vs nav 'Events'."
-      ]
+      ],
+      "redesign": {
+        "job": "Read the key numbers of a period across areas and jump to the list behind any number.",
+        "phone": "Toolbar: Zeitraum dropdown (6 presets as an action sheet), then Von/Bis + Anzeigen wrapping below. Sections with small headings; Stats 2 per row, each tile a link; charts full width; event table as cards.",
+        "desktop": "Toolbar: Zeitraum dropdown · Von · Bis · Anzeigen. Sections (Section component, not form cards) with <Stats> rows; charts side by side; event table.",
+        "moves": [
+          "meta '<from> – <to>' → unchanged",
+          "6 preset chips → Zeitraum dropdown (DropdownMenu of links, action sheet on phones), label = current preset or 'Eigener Zeitraum'",
+          "from / to DateInputs → toolbar (unchanged)",
+          "'Anzeigen' SubmitButton (spinner) → plain submit Button (GET form)",
+          "section cards (FormCard) → <Section> blocks",
+          "Kpi tiles → <Stat> with href where a list exists: members → /members, dues open/overdue → /members/dues, events → /events, payments → /payments?status=paid (per source ?source=), invoices issued → /invoices?kind=invoice, open → ?status=sent, overdue → ?status=overdue, paid → ?status=paid, cash book → /cashbook, shifts → /shifts, hours → /shifts/hours, contacts → /contacts, forms → /forms, courses → /courses, email → /email/log; only when the module is on and the person may open it",
+          "payment source labels: raw keys ('shop', 'test') → human labels (davon Shop, davon Testzahlungen; unknown keys fall back to payments.sources.*)",
+          "'Veranstaltungen & Einlass' → 'Events & Einlass' (glossary)",
+          "charts (members by type, joined/left per month, admitted per event, cash book by sphere) → unchanged",
+          "event table (link → /events/<id>) → rowHref instead of a link inside the first cell",
+          "Weitere Zahlen tiles → unchanged content, linked"
+        ]
+      }
     }
   ]
 }

@@ -175,7 +175,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     { key: "files", label: t("files.title"), items: (files.data ?? []).map((f) => ({ id: f.id, title: f.name, detail: f.folder ?? undefined, href: `/files?edit=${f.id}` })) },
     { key: "wiki", label: t("wiki.title"), items: (wiki.data ?? []).map((w) => ({ id: w.id, title: w.title, href: `/wiki/${w.id}` })) },
     { key: "projects", label: t("projects.title"), items: (projects.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/projects/${x.id}` })) },
-    { key: "tasks", label: t("projects.allTasks"), items: (tasks.data ?? []).map((x) => ({ id: x.id, title: x.title, detail: day(x.due_on), href: `/projects/tasks?task=${x.id}` })) },
+    { key: "tasks", label: t("projects.tasks"), items: (tasks.data ?? []).map((x) => ({ id: x.id, title: x.title, detail: day(x.due_on), href: `/projects/tasks?task=${x.id}` })) },
     { key: "rentals", label: t("rentals.title"), items: (objects.data ?? []).map((x) => ({ id: x.id, title: x.name, detail: t.has(`rentals.kinds.${x.kind}`) ? t.dynamic(`rentals.kinds.${x.kind}`) : x.kind, href: `/rentals/${x.id}` })) },
     { key: "products", label: t("store.products"), items: (products.data ?? []).map((x) => ({ id: x.id, title: x.name, detail: x.category ?? undefined, href: `/shop/${x.id}` })) },
     { key: "shop_orders", label: t("store.orders"), items: (shopOrders.data ?? []).map((x) => ({ id: x.id, title: `#${x.number} · ${x.name}`, href: `/shop/orders/${x.id}` })) },

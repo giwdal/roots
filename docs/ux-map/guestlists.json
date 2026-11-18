@@ -70,7 +70,23 @@
         "Not reachable from the sidebar or ⌘K page list (not in nav.ts) – effectively an orphan overview.",
         "Past events' lists disappear from the default view with no 'Vergangen' segment to find them again (only via the event filter for events up to 2 days back).",
         "No <EmptyState>, no search, no trash view (lists are soft-deleted)."
-      ]
+      ],
+      "redesign": {
+        "job": "Find a guest list (this weekend's or a permanent one), see how full it is, open it.",
+        "phone": "Top bar: Events › Gästelisten, ⋯ (Papierkorb). Round + = Neue Gästeliste. Toolbar: search, scroll row: event chip, Segments Kommend · Vergangen · Alle. Cards: name + Link badge, event · date, entries.",
+        "desktop": "ListToolbar search · chip · Segments right. Table: Name (+ artist), Event, Einträge, Abendkasse, Link.",
+        "moves": [
+          "not in nav → sidebar child 'Gästelisten' under Events + ⌘K source",
+          "event FilterMenu (upcoming only) → ?event= chip (from links; clears with ✕) + search ?q=",
+          "default view upcoming + permanent → Segments Kommend (default) · Vergangen · Alle",
+          "primary Neue Gästeliste → unchanged",
+          "columns → unchanged; 'dauerhaft' badge secondary, Link aktiv badge success",
+          "empty 'Noch keine Gästelisten.' → <EmptyState> with Neue Gästeliste",
+          "new: ⋯ Papierkorb → ?trash=1 with Wiederherstellen per row (tickets re-issued)",
+          "legacy ?new → /guestlists/new (unchanged)"
+        ],
+        "built": false
+      }
     },
     {
       "route": "/guestlists/new",
@@ -185,7 +201,27 @@
         "SaveBar label reuses 'Neue Gästeliste' instead of an '… anlegen' verb like other create pages.",
         "Flat form without FormCards; validation errors are a generic 'invalid input' without naming the field.",
         "Artist picker is a NativeSelect of up to 500 rows (guide: pickers search on the server)."
-      ]
+      ],
+      "redesign": {
+        "job": "Create a guest list for an event (or a permanent one) in a few fields.",
+        "phone": "Top bar: ‹ back to the event's Gästelisten (or Gästelisten) · Neue Gästeliste. Cards: Liste (Name, Event picker, Artist picker), Eintragen (Preis an der Tür, Max. Einträge, Namen pro Link-Eintrag, Link schließt am), Notiz. SaveBar 'Gästeliste anlegen'.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "crumb always Gästelisten → with ?event: Events › <event> (→ its Gästelisten) › Neue Gästeliste",
+          "flat form → FormCards Liste · Eintragen · Notiz",
+          "Name → unchanged",
+          "Event NativeSelect (50 rows) → <RecordPicker> server search over events; empty = dauerhaft (hint)",
+          "Preis an der Tür (Input decimal) → <TypedInput kind=money>",
+          "Max. Einträge, Namen pro Link-Eintrag (Input number) → <TypedInput kind=number>",
+          "Artist NativeSelect (500 rows) → <RecordPicker> server search",
+          "Link schließt am → unchanged DateInput",
+          "Notiz (intern) → unchanged",
+          "auto-ticket hint → under the event picker (event lists)",
+          "SaveBar label 'Neue Gästeliste' → 'Gästeliste anlegen'",
+          "generic invalid_input error → errors naming the field (price, quota, names per entry)"
+        ],
+        "built": false
+      }
     },
     {
       "route": "/guestlists/[id]",
@@ -343,7 +379,34 @@
         "Public link can only be opened, not copied (no CopyButton, unlike /members/settings portal link).",
         "Crumbs differ by list type: event lists → Events › event, permanent lists → Gästelisten; after trashing, every list lands on /guestlists (not back on the event).",
         "Header 'Einstellungen' is an outline button with a pencil icon, not the gear `settings` slot."
-      ]
+      ],
+      "redesign": {
+        "job": "Get names onto the list (by hand or by the share link), see who is in, fix a name.",
+        "phone": "Top bar: ‹ event's Gästelisten (or Gästelisten) · list name, ⋯ (Bearbeiten, Papierkorb). Header: Link badge, meta event · date · artist · price. Stats: Gäste n/quota, Drin, per Link. Round + = Gäste hinzufügen. Section Öffentlicher Link: URL + copy, Deaktivieren / Neuer Link (asks). Gäste: cards (name + Drin badge, via · ticket), tap → guest sheet (rename, ⋯ Entfernen).",
+        "desktop": "Same; header actions Bearbeiten, ⋯, primary 'Gäste hinzufügen'. Guests table full width.",
+        "moves": [
+          "header action Einstellungen (pencil, ?edit=1) → action 'Bearbeiten' → ?edit=list (old ?edit=1 redirects)",
+          "settings sheet ListForm → unchanged fields (pickers, TypedInputs) + SaveBar",
+          "settings sheet Gefahrenzone + Liste in den Papierkorb (no confirm) → header ⋯ red item with confirm guestlists.confirmTrash (+ hint: tickets become invalid)",
+          "meta → unchanged",
+          "new: Stats Gäste (n / quota), Drin, Per Link",
+          "Öffentlicher Link: badge, hint, unpublished warning + Zur Veranstaltung → unchanged",
+          "link URL (open only) → URL + CopyButton + open",
+          "Link aktivieren / deaktivieren → unchanged buttons in the section (deactivate asks first)",
+          "Neuen Link erzeugen (no confirm) → confirm guestlists.confirmRenew",
+          "Namen hinzufügen textarea + Hinzufügen → primary 'Gäste hinzufügen' → ?new=guests sheet (textarea + SaveBar 'Hinzufügen')",
+          "entries table: always-on rename Input + Speichern per row → plain name (+ email); tap row → ?edit=<entry> sheet with Name + SaveBar",
+          "row remove icon (no confirm, no tooltip) → guest sheet ⋯ 'Entfernen' red with confirm guestlists.confirmRemove (ticket voided)",
+          "columns Eingetragen, Ticket, Drin → unchanged; Drin badge success",
+          "crumbs (event lists → Events › event; permanent → Gästelisten) → event lists: Events › event › Gästelisten link to the event's tab (unchanged); after trashing an event list → back to the event's Gästelisten"
+        ],
+        "built": false
+      }
     }
-  ]
+  ],
+  "research": "Luma / Eventbrite guest lists: a list opens on its numbers (guests, checked in) with 'Add guests' as the main action; a share link with copy; guests in a searchable table, one tap opens a guest to rename or remove (asks first); past events stay reachable by a Past/Upcoming switch. Taken: Stats + 'Gäste hinzufügen' as primary, link section with copy and confirms, guest rows open a sheet, Kommend · Vergangen · Alle.",
+  "navRedesign": {
+    "sidebar": "Events = Events · Gästelisten · Einlass (a list of things door staff and promoters work through; permanent lists have no event). ⌘K source for guest lists.",
+    "label": "Gästelisten"
+  }
 }

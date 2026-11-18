@@ -117,7 +117,27 @@
         "Two-option purpose uses NativeSelect instead of <Choice> segments.",
         "Create sheet button is left-aligned SubmitButton (justify-self-start) while email's create sheet aligns right (justify-self-end).",
         "Default purpose is 'Mitgliedsantrag' whenever the members module is on."
-      ]
+      ],
+      "redesign": {
+        "job": "Find a form, see which have new submissions, create one.",
+        "phone": "Top bar: Kommunikation › Formulare, ⋯ (Papierkorb). Round + = Neues Formular. Toolbar: search + Status filter. Cards: title + status badge, purpose · 'n neu'.",
+        "desktop": "ListToolbar search · Status. Table: Titel (+ Zweck), Status badge, Neue Einsendungen (warning badge).",
+        "moves": [
+          "⋯ Papierkorb / Alle → unchanged (?trash=1)",
+          "primary Neues Formular → unchanged (?new=1 sheet: a quick create that then opens the form)",
+          "sheet Titel → unchanged",
+          "sheet Zweck NativeSelect → <Choice> segments (Kontaktformular · Mitgliedsantrag), hint unchanged",
+          "sheet Anlegen (left SubmitButton) → <SaveBar label='Formular anlegen' always>",
+          "column Titel → Titel + Zweck muted; column Zweck merged",
+          "column Status → badge colours (Veröffentlicht success, Entwurf secondary, Geschlossen outline)",
+          "column Neue Einsendungen → warning badge with count",
+          "trash Wiederherstellen per row → unchanged; trash hint unchanged",
+          "empty 'Noch keine Formulare.' → <EmptyState> with Neues Formular",
+          "new: search ?q=, Status FilterMenu ?status="
+        ],
+        "kept": "uxNote 4 (membership as default purpose) kept: most orgs using forms collect member applications.",
+        "built": false
+      }
     },
     {
       "route": "/forms/[id]",
@@ -332,7 +352,29 @@
         "Reordering is one server round-trip per step (↑/↓), no drag.",
         "Public link only appears when published; no copy button, and the slug field shows no full URL.",
         "Text elements and consent are plain textareas, not the RichTextEditor used in email."
-      ]
+      ],
+      "redesign": {
+        "job": "Build the form (fields, texts, consents) and its settings, then publish it.",
+        "phone": "Top bar: ‹ Formulare · title, ⋯ (Öffentliche Seite, Einsendungen exportieren, Papierkorb). Header: status badge, meta purpose · public link + copy. Segments Aufbau · Einsendungen (n). Element rows full width (kind, name, ↑ ↓ ✕, inputs), '+ Element hinzufügen' (action sheet), then the settings card, SaveBar at the bottom.",
+        "desktop": "Header with 'Veröffentlichen' as primary for drafts (saves + publishes). Segments under the header. RecordLayout: elements left, Einstellungen right; one form, one SaveBar.",
+        "moves": [
+          "layout tab bar (NavLinks Aufbau · Einsendungen) → <Segments> under the header (record sub-views), Einsendungen with the count of new ones",
+          "header action Öffentliche Seite → meta link (+ CopyButton) and ⋯ item; only when published",
+          "element rows (kind, name) → unchanged look, rows of <ElementRows> inside the one form",
+          "row ↑ / ↓ (one server round trip each) → client buttons, saved with the SaveBar",
+          "row Entfernen (no confirm) → ✕ with confirm forms.confirmRemoveElement, saved with the SaveBar",
+          "row inputs Beschriftung, Hinweis, Text der Einwilligung, Text, Pflichtfeld → unchanged inside the row",
+          "row Speichern per element → removed: everything saves with the one SaveBar (saveForm)",
+          "Hinzufügen NativeSelect + button → '+ Element hinzufügen' dropdown (fields not used yet, Text, Einwilligung, Lastschriftmandat), added client-side",
+          "Einstellungen card: Titel, Slug, Status (Choice), Einleitung, Text nach dem Absenden, Tags → unchanged, in the same form",
+          "SaveBar (settings only) → one SaveBar for elements + settings",
+          "Formular in den Papierkorb (outline button at the bottom, no confirm) → ⋯ red item with confirm forms.confirmTrash",
+          "new: primary 'Veröffentlichen' for drafts (submits the form with publish=1)",
+          "new: ⋯ Einsendungen exportieren (moved from the submissions toolbar)"
+        ],
+        "kept": "uxNote 7 (rich text for text elements) kept: public form renders plain text; changing it is a public-page change.",
+        "built": false
+      }
     },
     {
       "route": "/forms/[id]/submissions",
@@ -436,7 +478,29 @@
         "Accept/Reject (creates a membership or rejects an applicant) have no confirmation; buttons are plain side by side, main action not at the thumb on phones.",
         "Custom field values in the sheet are labelled by their raw key, not the field label.",
         "Status filter is a hand-built chip nav; export uses <ExportMenu> in the toolbar while other lists put export in the header ⋯."
-      ]
+      ],
+      "redesign": {
+        "job": "Work through new submissions: read one, accept or reject it.",
+        "phone": "Same header + Segments. Toolbar: Segments Neu · Angenommen · Abgelehnt · Alle. Cards: person + status badge, email, date. Sheet: badge, Verknüpft rows (Kontakt, Mitgliedschaft), DetailList of answers by label, buttons stacked full width at the bottom (Annehmen at the thumb).",
+        "desktop": "Toolbar Segments; table Person, E-Mail, Eingegangen, Status; sheet with actions in the title row.",
+        "moves": [
+          "status chips (hand-built) → <Segments>; default 'Neu' when there are new ones, else Alle (?status=all keeps Alle)",
+          "ExportMenu in the toolbar → header ⋯ Exportieren",
+          "columns → unchanged; status badge colours (Neu warning, Angenommen success, Abgelehnt secondary)",
+          "sheet badge → sheet meta",
+          "sheet Zum Kontakt / Zur Mitgliedschaft buttons → <LinkRows> 'Verknüpft'",
+          "sheet DetailList: custom values by raw key → by the field's label",
+          "sheet Annehmen / Als Mitglied aufnehmen → confirm (forms.confirmAccept / confirmAcceptMember), main action at the bottom on phones",
+          "sheet Ablehnen → confirm forms.confirmReject",
+          "Pager → unchanged"
+        ],
+        "built": false
+      }
     }
-  ]
+  ],
+  "research": "Tally / Typeform / Fillout: the builder is one canvas of blocks you edit in place, add with '+' (or '/'), reorder and delete per block (asks first when it has answers); publish is the main button; Results/Submissions is a tab with 'new' marked; one submission opens in a side panel with every answer by its label. Taken: Aufbau · Einsendungen as record Segments, elements as inline rows saved with one SaveBar, '+ Element' menu, 'Veröffentlichen' as the primary of a draft, submissions open on 'Neu'.",
+  "navRedesign": {
+    "sidebar": "Kommunikation = E-Mails · Formulare (unchanged entry)",
+    "label": "Formulare"
+  }
 }

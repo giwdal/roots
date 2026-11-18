@@ -2,6 +2,11 @@
   "area": "shifts",
   "label": "Schichten",
   "module": "shifts",
+  "research": "Planday / Deputy / When I Work / Papershift: managers plan on a week grid (rows = people or positions, an 'open shifts' row, colour = coverage), a shift opens a side panel with who is on it, applications to approve and a delete in its menu. Staff use the phone app: the home screen is the next shift as a big card with one 'Clock in' button, then upcoming shifts and an 'Open shifts' list to claim; the time clock and shift check-in are the same button. Timesheets: a list per pay period with hours vs target and an 'Approve' step (approve all, with a count), corrections in a small sheet. Taken: Plan · Meine as views of one area (Meine = the staff home: Jetzt card with one big Einstempeln/Ausstempeln button, then Meine Schichten, Offene Schichten, Zeiten), the shift sheet opens on its Besetzung (assign / accept / clock as immediate actions, delete in ⋯), Stunden with month in the toolbar, Stats and 'Alle freigeben' (count in the confirm), positions/series/team under the gear.",
+  "navRedesign": {
+    "sidebar": "Schichten = Plan · Stunden. Plan (/shifts, permission shifts.view or shifts.self) opens the week plan; people with only shifts.self land on /shifts/me. 'Meine' is a <Segments> view on Plan (/shifts/me keeps its URL; Start keeps its 'Meine Schichten' card). Einstellungen (/shifts/settings, gear: true) holds Team (row › /shifts/team, also gear: true for ⌘K and Settings › Bereiche), Positionen and Wiederkehrende Schichten. /shifts/setup keeps redirecting.",
+    "label": "Plan (not Übersicht); one word for the time clock: Einstempeln / Ausstempeln (free time and a shift's check-in are the same action, 'Einchecken' stays Einlass); 'Beschäftigung' for the employment kind everywhere (was 'Art' on the team)."
+  },
   "nav": [
     { "label": "Übersicht", "key": "nav.overview", "href": "/shifts", "permission": "shifts.view" },
     { "label": "Meine Schichten", "key": "shifts.tabs.me", "href": "/shifts/me", "permission": "shifts.self" },
@@ -92,7 +97,39 @@
         "Event filter label 'Ganze Woche (alle)' while it actually means 'no event filter' and the view may be month/agenda.",
         "Event, position, location and staff are NativeSelects; event list capped at 100 (no server-search picker).",
         "Coverage meta always reflects the focused week, even in month or agenda view."
-      ]
+      ],
+      "redesign": {
+        "job": "Managers see the week's shifts with coverage at a glance, fill gaps (assign, accept applications) and create or move shifts.",
+        "phone": "Top bar: Schichten › Plan, ⋯ (gear Einstellungen). Round + = Neue Schicht. Meta line: 'Woche ab <Mo>: 12 von 20 Plätzen besetzt · 3 Bewerbungen'. Toolbar scroll row: Event filter, Ort filter, Segments Plan · Meine (when the person is on the team). Calendar (agenda/day are the useful phone views; view in the URL). Tap a shift → sheet (full width): Besetzung first (people with status, Annehmen / Einstempeln / Ausstempeln / ✕), 'Person einteilen' search picker, then the shift's fields with the SaveBar.",
+        "desktop": "Toolbar: Event FilterMenu ('Alle Events'), Ort FilterMenu, Segments Plan · Meine on the right. CalendarView week grid (week/day/month/agenda/per person), drag to move, drag on empty space to create. Sheet over the content area as on phones.",
+        "moves": [
+          "header meta coverage → 'Woche ab {date}: {filled} von {needed} Plätzen besetzt' (or '{event}: …' with ?event) + applications count; says what it counts",
+          "header settings gear → unchanged (/shifts/settings)",
+          "header primary Neue Schicht (?new=shift) → unchanged",
+          "toolbar Event FilterMenu ('Ganze Woche (alle)') → FilterMenu with allLabel 'Alle Events', in <ListToolbar>",
+          "toolbar Ort FilterMenu → unchanged, in <ListToolbar>",
+          "new: Segments Plan · Meine (Meine = /shifts/me) when the person has shifts.self",
+          "Calendar (views, colours, click → sheet, empty-slot click/drag → ?new=shift, drag & drop moveShift, per-person view) → unchanged; entry href ?edit=<id>",
+          "?shift=<id> → ?edit=<id> (old ?shift= redirects; notification + calendar links updated)",
+          "sheet field Position (NativeSelect) → <Choice> (segments ≤ 5, dropdown ≤ 15, search above)",
+          "sheet field Bezeichnung → unchanged",
+          "sheet fields Beginn / Ende (DateInput datetime) → unchanged",
+          "sheet field Benötigt → <TypedInput kind=number>",
+          "sheet field Event (NativeSelect, 100 events) → <RecordPicker> server search (searchShiftEvents)",
+          "sheet field Ort (NativeSelect) → <Choice>",
+          "sheet field 'Offen: Team kann sich bewerben' → checkbox (accent-primary), unchanged meaning",
+          "sheet field Notiz → unchanged",
+          "sheet SaveBar Speichern | Neue Schicht → SaveBar ('Schicht anlegen' always on create)",
+          "sheet hint 'Wird {name} zugeteilt.' (?resource) → unchanged",
+          "sheet section Besetzung {count}/{needed} → first section of the sheet (state before fields), rows with status badge (beworben = warning, eingeteilt, times)",
+          "sheet row Annehmen → unchanged (immediate)",
+          "sheet row Einchecken / Auschecken → 'Einstempeln' / 'Ausstempeln' (same word as the time clock), immediate",
+          "sheet row Entfernen → ✕ icon button with confirm (shifts.confirmRemovePerson)",
+          "sheet 'Person einteilen' NativeSelect + button → <RecordPicker> server search of the team (searchStaff, 'nicht für diese Position' as detail) + 'Einteilen' button",
+          "sheet 'Schicht löschen' ghost button → sheet ⋯ red item with confirm (shifts.confirmDeleteShift)",
+          "sheet without shifts.manage → read-only facts (<DetailList>) + Besetzung list"
+        ]
+      }
     },
     {
       "route": "/shifts/me",
@@ -177,7 +214,30 @@
         "Two clock concepts with similar wording: 'Einstempeln/Ausstempeln' (free time) vs 'Einchecken/Auschecken' (shift).",
         "Project picker is a NativeSelect of up to 300 projects (code comment: ponytail, search picker if it grows).",
         "Empty state for people not in the team has no action or link (dead end); adding someone happens in /shifts/team by a manager."
-      ]
+      ],
+      "redesign": {
+        "job": "A team member checks in and out of today's shift (or clocks free time), sees what's next, takes open shifts and fixes own times.",
+        "phone": "Top bar: Schichten › Plan (Meine selected in the Segments row when the person also plans). 'Jetzt' card at the top: running → 'Eingestempelt seit 18:02 · Bar 1' + big full-width 'Ausstempeln'; a shift starting within 2 h → its title/time + big 'Einstempeln'; otherwise the next shift ('Nächste Schicht: Fr 18:00') and a big 'Ohne Schicht einstempeln' with an optional project picker. Stats: Diesen Monat · Soll. Meine Schichten (rows: day/time, what, status, Zurückziehen for applications). Offene Schichten (rows + 'Bewerben'). Zeiten: month switch in the section toolbar, entries as cards, '+ Zeit nachtragen'. Round + = Zeit nachtragen.",
+        "desktop": "Jetzt card full width, Stats beside it; then Meine Schichten | Offene Schichten as two columns; Zeiten table full width with the month switch in its toolbar.",
+        "moves": [
+          "header primary Zeit nachtragen (?new=time) → unchanged (round + on phones)",
+          "clock box Einstempeln / Ausstempeln → the 'Jetzt' card's big button; a shift within its check-in window takes the button (Einstempeln on the shift via selfAction), else free time (clock)",
+          "clock box project NativeSelect (300 projects) → <RecordPicker> server search (searchProjects), optional, only before clocking in free time",
+          "clock box hint texts (time.clockHint / time.since) → card subtitle (running since / next shift / free clock hint)",
+          "clock box ghost '+ Zeit nachtragen' → removed (duplicate of the primary); AddLink at the end of Zeiten stays",
+          "MonthNav next to Zeiterfassung heading → Zeiten section toolbar",
+          "'Arbeitszeit diesen Monat' line → Stat 'Gearbeitet <Monat>' (follows ?month)",
+          "ShiftSelfView 'Diesen Monat gearbeitet · Soll' line → removed (one total: the Stat above; Soll = second Stat)",
+          "Zeiteinträge DataTable → section Zeiten, rows open ?edit=<id> unless approved",
+          "Meine Schichten list (status badges, Zurückziehen, Einchecken/Auschecken) → section Meine Schichten; badges coloured (beworben warning, eingeteilt info, fertig success); check-in/out moved to the Jetzt card for the current shift, rows keep it for others in the window",
+          "Offene Schichten list + Bewerben → section Offene Schichten (unchanged actions)",
+          "time sheet (?new=time | ?edit=<id>): fields Projekt (→ RecordPicker), Beginn, Ende, Pause (→ TypedInput number), Notiz → unchanged order",
+          "time sheet SubmitButton Speichern → <SaveBar> ('Zeit eintragen' always on create)",
+          "time sheet 'Eintrag löschen' outline button → sheet ⋯ red item with confirm (time.confirmDelete)",
+          "not-in-team EmptyState (no action) → EmptyState with text how to get on the team; managers get 'Mich zum Team hinzufügen' (→ /shifts/team?new=staff&user=<me>)",
+          "new: Segments Plan · Meine when the person has shifts.view"
+        ]
+      }
     },
     {
       "route": "/shifts/hours",
@@ -215,7 +275,23 @@
       "uxNotes": [
         "Month navigation sits in the header actions (top bar) although docs/design/app.md puts views/filters in the list toolbar, never the top bar.",
         "No approve action on the list; approval only on the person page."
-      ]
+      ],
+      "redesign": {
+        "job": "Before payroll: see each person's month (planned vs worked vs target), spot warnings, approve the month and export.",
+        "phone": "Top bar: Schichten › Stunden, ⋯ (Alle freigeben, Export Summen / Einträge). Toolbar: ‹ Monat ›. Stats: Gearbeitet · Offen zur Freigabe · Hinweise. Cards: name + status badge, worked / planned, balance.",
+        "desktop": "Toolbar month switch; Stats; table Name (+ Soll), Geplant, Gearbeitet, Saldo, Status (offen warning / freigegeben success + Hinweise destructive). Header: 'Alle freigeben' (count in the confirm) + ⋯ export.",
+        "moves": [
+          "header actions MonthNav → page toolbar (<ListToolbar>)",
+          "header ⋯ Summen pro Person / Alle Einträge → unchanged (MenuExport)",
+          "hint shifts.hoursHint + exportOnlyApproved → Stat hints (Gearbeitet: what counts; Offen: 'fehlen im Export')",
+          "column Name (link) → title column (row link), muted 'Soll {h} h' underneath",
+          "columns Schichten + Soll-Stunden → folded: Geplant shows '{h} h · {n} Schichten', Soll under the name",
+          "columns Geplant / Gearbeitet / Saldo → unchanged",
+          "column Status → badges with colour (offen warning, freigegeben success, Hinweise destructive)",
+          "new: header action 'Alle freigeben' (shifts.approve, data-confirm-count = open entries) → approveAll",
+          "empty 'Noch niemand im Team.' → <EmptyState> with 'Team einrichten' (shifts.manage)"
+        ]
+      }
     },
     {
       "route": "/shifts/hours/[staffId]",
@@ -266,7 +342,22 @@
         "Approving a whole month has no confirm.",
         "Entry form here has no project picker (unlike /shifts/me), so a manager can't set/correct the project of an entry.",
         "Action buttons placed in a page row, not in the header (other record pages use header actions)."
-      ]
+      ],
+      "redesign": {
+        "job": "One person's month: check entries and warnings, correct or add, then approve the month.",
+        "phone": "Top bar: ‹ Stunden · Name; ⋯ (Freigabe aufheben, Personalakte, Im Team bearbeiten). Badge: freigegeben / N offen. Toolbar ‹ Monat ›. Stats: Gearbeitet · Soll · Saldo · Geplant. Next-step row 'N Einträge offen · Monat freigeben' (confirm). Entries as cards → sheet. Round + = Zeit nachtragen.",
+        "desktop": "Same order; table of entries; the next-step row above it.",
+        "moves": [
+          "header actions MonthNav → page toolbar",
+          "summary line 'Arbeitszeit … · Soll' → Stats (Gearbeitet, Soll, Saldo, Geplant)",
+          "button '+ Zeit nachtragen' → header primary (round + on phones)",
+          "button '{count} Einträge freigeben' → next-step row under the Stats, with confirm (time.confirmApprove, count)",
+          "button 'Freigabe aufheben' → header ⋯ with confirm (time.confirmReopen)",
+          "new: header badge month state; ⋯ links to the HR record (hr.view) and the team sheet (shifts.manage)",
+          "entries DataTable → unchanged, rows → ?edit=<id>",
+          "time sheet → shared TimeEntrySheet (SaveBar, delete in ⋯ with confirm) and now with the project picker"
+        ]
+      }
     },
     {
       "route": "/shifts/team",
@@ -308,7 +399,26 @@
         "No way to remove a person from the team, only 'Aktiv' off.",
         "'Art' (shifts.roleLabel) vs 'Beschäftigung' (time.roleLabel) vs HR employment type: three names for the employment kind.",
         "Name/e-mail come from the profile and can't be edited here; staff ↔ HR employee link lives in HR (staff_id), not visible here."
-      ]
+      ],
+      "redesign": {
+        "job": "Who can be planned: add org members to the team, set employment, target hours, positions, active.",
+        "phone": "Top bar: ‹ Einstellungen · Team. Round + = Person hinzufügen. Cards: name + inactive badge, Beschäftigung, Positionen, Soll. Sheet: fields + Verknüpft rows (Personalakte, Stunden, Kontakt).",
+        "desktop": "Crumbs Schichten › Einstellungen › Team; table as now; sheet.",
+        "moves": [
+          "sidebar Team → gear (Einstellungen › Team row); nav child gear: true so ⌘K + Settings › Bereiche list it",
+          "header primary Neue Person → 'Person hinzufügen' (?new=staff), unchanged sheet param",
+          "table columns Name, Art, Positionen, Soll → unchanged; 'Art' renamed 'Beschäftigung'",
+          "sheet field Mitglied (NativeSelect) → <RecordPicker> server search of org members not on the team (searchTeamCandidates); ?user=<id> pre-fills (from Meine / HR)",
+          "sheet field Art → 'Beschäftigung' (same text field)",
+          "sheet field Soll-Stunden → <TypedInput kind=number>",
+          "sheet field Positionen checkboxes → <MultiSelect> chips (search)",
+          "sheet field Aktiv → checkbox with hint 'Inaktive bleiben in Stunden und Export'",
+          "sheet SaveBar → unchanged ('Person hinzufügen' always on create)",
+          "new: sheet 'Verknüpft' <LinkRows>: Personalakte (hr.view), Stunden this month, Kontakt (contacts.user_id)",
+          "creating a team member links the HR record of the same account (employees.staff_id)",
+          "removing someone from the team → not added: deleting a team member deletes their time entries (cascade); 'Aktiv' off is the way"
+        ]
+      }
     },
     {
       "route": "/shifts/settings",
@@ -379,14 +489,46 @@
         "Start/end time use native <input type=time> (browser locale: may show AM/PM), against the DateInput rule.",
         "Saving a series silently re-creates future shifts (only a small hint text).",
         "Weekday and fixed-people pickers are long checkbox lists rather than chips/segments."
-      ]
+      ],
+      "redesign": {
+        "job": "Set up planning once: team, positions, recurring shifts, locations.",
+        "phone": "Top bar: ‹ Schichten · Einstellungen. RowGroups: Team (row 'Team · N Personen' ›), Positionen (inline rows: name, Benötigt, Ort, ✕; '+ Position hinzufügen'; one SaveBar), Wiederkehrende Schichten (rows: name · rhythm › sheet; '+ Neue wiederkehrende Schicht'), Orte (row › /settings/locations).",
+        "desktop": "Same, form width.",
+        "moves": [
+          "Positionen inline forms (one form + button per row) → <PositionRows> in one form with one SaveBar (savePositions); removing a saved position asks first",
+          "position trash icon (no confirm) → ✕ with confirm (shifts.confirmDeletePosition)",
+          "locations hint + 'Orte verwalten' link → RowGroup Orte with a row › /settings/locations",
+          "Wiederkehrende Schichten DataTable + '+ Neue …' card button → RowGroup of rows › ?edit=<id> + AddLink ?new=series",
+          "?series=<id> → ?edit=<id> (old param redirects)",
+          "series sheet field Position (NativeSelect) → <Choice>",
+          "series sheet field Bezeichnung → unchanged",
+          "series sheet Wochentage checkboxes → compact toggle row (Mo–So)",
+          "series sheet Wiederholung NativeSelect → <Choice> (jede Woche, alle 2/3/4 Wochen)",
+          "series sheet Von / Bis (native type=time) → <TimeInput> (24 h, typed)",
+          "series sheet Ab / Bis DateInputs → unchanged",
+          "series sheet Benötigt → <TypedInput kind=number>",
+          "series sheet Ort NativeSelect → <Choice>",
+          "series sheet Feste Personen checkboxes → <MultiSelect> chips with search",
+          "series sheet generateHint + SaveBar → SaveBar asks first when editing (shifts.confirmSeriesSave: future shifts are rebuilt); create = 'Serie anlegen' always",
+          "series sheet 'Serie und zukünftige Schichten löschen' ghost button → sheet ⋯ red item, confirm names the count of future shifts",
+          "new: RowGroup Team with a row › /shifts/team ('{n} Personen')"
+        ]
+      }
     },
     {
       "route": "/shifts/setup",
       "file": "src/app/(app)/shifts/setup/page.tsx",
       "title": "(redirect)",
       "purpose": "Old address; redirects to /shifts/settings.",
-      "links": ["/shifts/settings"]
+      "links": ["/shifts/settings"],
+      "redesign": {
+        "job": "Old address.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /shifts/settings (unchanged)"
+        ]
+      }
     }
   ]
 }

@@ -2,6 +2,11 @@
   "area": "hr",
   "label": "Personal",
   "module": "hr",
+  "research": "Personio / Factorial: the employee list is searchable with filters (department, employment type, status) and an org chart as another view; the employee profile opens on a header (photo, position, status) with the key facts (contract, working hours, holiday balance, absences) and tabs/sections for personal data, compensation, absences and documents, each edited in its own panel. Absences are a team calendar with a colour per type and an 'Add absence' panel (type as buttons, date range, half day). Payroll preparation is a monthly table with an export and warnings. Taken: Personen with Liste · Organigramm as segments, the person page on its state (Stats: Urlaub übrig, Krank, Stunden, Brutto) with Vertrag/Rolle facts and 'Bearbeiten' / 'Persönliche Daten' as sheets, absences entered on the person page, the type as segments, Lohn with the month in the toolbar.",
+  "navRedesign": {
+    "sidebar": "Personal = Personen · Abwesenheiten · Lohn. Organigramm is a <Segments> view on Personen (/hr/chart keeps its URL). The trash is ?trash=1 (old ?status=trash redirects).",
+    "label": "Personen (was 'Übersicht' / 'Mitarbeitende'), Lohn (was 'Lohnvorbereitung')"
+  },
   "nav": [
     { "label": "Übersicht", "key": "nav.overview", "href": "/hr", "permission": "hr.view" },
     { "label": "Abwesenheiten", "key": "hr.tabs.absences", "href": "/hr/absences", "permission": "hr.view" },
@@ -43,7 +48,25 @@
         "No <EmptyState> on a never-used list (docs require EmptyState); only a table empty text.",
         "Export ignores the current search.",
         "No filters (employment type, department, left/active) although those columns exist."
-      ]
+      ],
+      "redesign": {
+        "job": "Find a person and open their record; see who works here on what terms.",
+        "phone": "Top bar: Personal › Personen, ⋯ (Export, Papierkorb). Round + = Neue Person. Toolbar: search, scroll row: Beschäftigung filter, Segments Liste · Organigramm. Cards: name + 'ausgeschieden' badge, Funktion, Beschäftigung.",
+        "desktop": "<ListToolbar> search · Beschäftigung FilterMenu · Segments on the right. Table: Name (+ Funktion), Beschäftigung, Abteilung, Berichtet an, Seit.",
+        "moves": [
+          "header ⋯ Exportieren → MenuExport with the list's filters (q, type)",
+          "header ⋯ Papierkorb / Zurück zur Liste → ?trash=1 (old ?status=trash redirects), row 'Wiederherstellen' in the trash",
+          "header primary Neue Person (/hr/new) → unchanged",
+          "toolbar SearchBox → <ListToolbar>",
+          "new: Beschäftigung FilterMenu (?type=)",
+          "new: Segments Liste · Organigramm (sidebar Organigramm moves here)",
+          "column Name (link) → title column (row link), Funktion muted underneath",
+          "columns Beschäftigung, Abteilung, Berichtet an, Seit (+ ausgeschieden) → unchanged",
+          "Pager → unchanged",
+          "empty text → <EmptyState> with Neue Person; filtered empty → short text",
+          "?new= legacy redirect → unchanged"
+        ]
+      }
     },
     {
       "route": "/hr/new",
@@ -92,7 +115,25 @@
         "Only org members can become employees; people without an account (e.g. Minijobber without login) can't be added here (hint points to Einstellungen → Team).",
         "Manager picker is a NativeSelect of up to 500 (code comment: ponytail).",
         "Shift-team link (staff_id) is set implicitly by user, never shown or editable."
-      ]
+      ],
+      "redesign": {
+        "job": "Create the HR record for an org member.",
+        "phone": "One column: Person & Rolle (member search picker, Funktion, Abteilung, Telefon, Berichtet an search picker), Vertrag (Beschäftigung, Vergütung segments → only the matching amount field, Beginn/Ende, Wochenstunden, Urlaubstage), Notizen. SaveBar 'Person anlegen'.",
+        "desktop": "Same in form width.",
+        "moves": [
+          "field Mitglied der Organisation (NativeSelect) → <RecordPicker> server search (searchMembers: org members without HR record); ?user=<id> pre-fills",
+          "member hint → hint under the picker with a link to Einstellungen › Team (invite)",
+          "fields Funktion, Abteilung, Telefon → unchanged",
+          "field Berichtet an (NativeSelect ≤ 500) → <RecordPicker> server search (searchEmployees)",
+          "field Beschäftigung (NativeSelect) → <Choice> (8 options = dropdown)",
+          "field Vergütung (Choice) → segments that show only Stundenlohn or Monatsgehalt (PayFields)",
+          "fields Beginn / Ende (TypedInput date) → <DateInput>",
+          "fields Stundenlohn / Monatsgehalt → TypedInput money, only the one for the chosen Vergütung",
+          "fields Wochenstunden / Urlaubstage → <TypedInput kind=number>",
+          "field Notizen → unchanged",
+          "SaveBar 'Anlegen' → 'Person anlegen' (always)"
+        ]
+      }
     },
     {
       "route": "/hr/[id]",
@@ -161,7 +202,30 @@
         "IBAN/BIC labels are hardcoded strings (no i18n key).",
         "The shift-team link that drives 'Dieser Monat' can't be set from this page; the hint 'mit dem Schicht-Team verknüpfen' has no link/action (dead end).",
         "Same action 'Abwesenheit eintragen' appears twice (⋯ menu and aside card button)."
-      ]
+      ],
+      "redesign": {
+        "job": "One person: their terms, holiday left, absences, this month's hours and pay, documents; record an absence.",
+        "phone": "Top bar: ‹ Personen · Name; ⋯ (Bearbeiten, Persönliche Daten, In den Papierkorb). Badge: aktiv / ausgeschieden / ab <Datum>; meta: Beschäftigung · Funktion · Abteilung. Stats (2 per row): Urlaub übrig, Krank {year}, Stunden <Monat>, Brutto ca. Round + = Abwesenheit eintragen (sheet on this page). Sections: Vertrag (DetailList), Person & Rolle (DetailList, tel/mailto), Abwesenheiten {year} (rows → sheet), Stunden & Lohn (hours, unapproved hint → Stunden, warnings; not linked → Verknüpfen / Zum Schicht-Team hinzufügen), Persönliche Daten (hr.manage), Verknüpft (Kontakt, Schicht-Team, Stunden), Dokumente.",
+        "desktop": "RecordLayout: main = Stats, Vertrag, Person & Rolle, Abwesenheiten, Persönliche Daten; aside = Stunden & Lohn, Verknüpft, Dokumente. Header: Bearbeiten (outline) + ⋯ + primary Abwesenheit eintragen.",
+        "moves": [
+          "header badge (employment type, secondary) → state badge (aktiv success / ausgeschieden secondary / ab <date> info); employment type → meta",
+          "header meta job title → meta 'Beschäftigung · Funktion · Abteilung'",
+          "header ⋯ Abwesenheit eintragen (→ /hr/absences) → header primary, sheet on this page (?new=absence)",
+          "header ⋯ In den Papierkorb → unchanged (red, confirm)",
+          "EmployeeForm Person & Rolle + Vertrag + Notizen (page form, SaveBar) → facts as <DetailList> sections; editing in ?edit=details sheet (one form, one SaveBar), header action 'Bearbeiten'",
+          "Konto (read-only) → Person & Rolle DetailList (email as mailto, phone as tel)",
+          "Berichtet an NativeSelect → <RecordPicker> in the edit sheet; fact links to the manager",
+          "new: field 'Schicht-Team' (RecordPicker of the shift team, shifts.view) in the edit sheet → sets employees.staff_id",
+          "Persönliche Daten + Bank/Steuer form (second SaveBar) → section Persönliche Daten (DetailList, hr.manage) + ?edit=private sheet with one form + one SaveBar; ⋯ 'Persönliche Daten bearbeiten'",
+          "IBAN / BIC hardcoded labels → hr.iban / hr.bic keys",
+          "Steuerklasse NativeSelect → <Choice> (6 = dropdown)",
+          "aside Abwesenheiten (read-only list + card button) → section Abwesenheiten {year}: rows open ?edit=<absence id> (sheet with delete in ⋯), AddLink → ?new=absence; 'Urlaub noch x von y' → Stat",
+          "aside Dieser Monat → section 'Stunden & Lohn' + Stats; link 'Zu den Zeiten' → /shifts/hours/<staff>; unapproved hint links there; dead-end 'mit dem Schicht-Team verknüpfen' → button 'Verknüpfen' (same account on the team) or link 'Zum Schicht-Team hinzufügen' (shifts.manage)",
+          "aside Dokumente (FileList) → unchanged (aside)",
+          "new: Verknüpft <LinkRows>: Kontakt (contacts.user_id = account), Schicht-Team (/shifts/team?edit=<staff>), Stunden",
+          "trashed person: hint + Wiederherstellen → unchanged"
+        ]
+      }
     },
     {
       "route": "/hr/absences",
@@ -212,7 +276,28 @@
         "Create sheet uses <SaveBar /> without 'always' + label, unlike other create sheets ('… anlegen' always visible).",
         "No filter by person or kind; hr.view users can't open entries (no read-only sheet).",
         "No link from an absence to the person's page."
-      ]
+      ],
+      "redesign": {
+        "job": "See who is away when; record and correct absences.",
+        "phone": "Top bar: Personal › Abwesenheiten. Meta: 'Heute abwesend: Anna, Ben'. Round + = Abwesenheit eintragen. Toolbar: Art filter, person chip (?person=). Calendar (month/list). Tap → sheet (managers: form; others: facts) with a link to the person.",
+        "desktop": "Same with the calendar wide.",
+        "moves": [
+          "header primary Abwesenheit eintragen (?new=absence) → unchanged",
+          "new: meta 'Heute abwesend: …'",
+          "new: toolbar FilterMenu Art (?kind=) + person chip (?person=<employee>) from the person page",
+          "calendar (month/agenda, colours, click/drag → new) → unchanged; click opens for hr.view too",
+          "sheet field Person (NativeSelect ≤ 500) → <RecordPicker> server search (searchEmployees); fixed when opened from the person page",
+          "sheet field Art (NativeSelect, 4) → <Choice> segments",
+          "sheet fields Von / Bis → unchanged (DateInput)",
+          "sheet field Halber Tag → unchanged checkbox",
+          "sheet field Notiz → unchanged",
+          "sheet '{count} Tage' → sheet meta",
+          "sheet SaveBar (no label on create) → 'Abwesenheit eintragen' always on create",
+          "sheet Löschen (outline, no confirm) → sheet ⋯ red item with confirm (hr.confirmDeleteAbsence)",
+          "new: sheet action 'Zur Person' (link /hr/<id>)",
+          "hr.view without manage → read-only sheet (DetailList)"
+        ]
+      }
     },
     {
       "route": "/hr/chart",
@@ -228,7 +313,18 @@
       "uxNotes": [
         "Area page with a description, while docs/design/app.md says area pages show no description.",
         "Empty state has no action to create a person."
-      ]
+      ],
+      "redesign": {
+        "job": "See who reports to whom.",
+        "phone": "Top bar: Personal › Personen; Segments Liste · Organigramm; nested cards; a one-line hint under the chart.",
+        "desktop": "Same.",
+        "moves": [
+          "sidebar Organigramm → Segments view on Personen (URL /hr/chart unchanged)",
+          "header description chartHint → small muted line under the chart (area pages have no intro)",
+          "nested cards → unchanged",
+          "EmptyState (no action) → EmptyState with Neue Person"
+        ]
+      }
     },
     {
       "route": "/hr/payroll",
@@ -253,7 +349,22 @@
         "Area page with a description (against docs).",
         "Month nav in the top bar (header actions), as on /shifts/hours.",
         "'{count} offen' unapproved badge gives no link to /shifts/hours where approval happens."
-      ]
+      ],
+      "redesign": {
+        "job": "Each month: check hours, rates, gross and warnings, then hand the export to the tax advisor.",
+        "phone": "Top bar: Personal › Lohn, ⋯ Export. Toolbar ‹ Monat ›. Stats: Brutto ca. gesamt · Stunden · Offene Einträge (→ Stunden) · Hinweise. Cards: name + Beschäftigung, Stunden, Brutto, badges. Footnote what roots does (no taxes).",
+        "desktop": "Same; table Name (+ Beschäftigung), Stunden, Satz, Brutto, Abwesenheiten, Hinweise.",
+        "moves": [
+          "title Lohnvorbereitung → Lohn",
+          "header description payrollHint + unapproved → footnote under the table + Stat 'Offen' linking to /shifts/hours?month= (shifts.view)",
+          "header actions MonthNav → page toolbar",
+          "header ⋯ Exportieren → unchanged",
+          "column Name (link → /hr/<id>#pay) → title column (row link → /hr/<id>#pay), Beschäftigung muted",
+          "columns Stunden, Satz, Brutto, Abwesenheiten → unchanged",
+          "column Hinweise → badges (warnings destructive, '{count} offen' warning)",
+          "empty → <EmptyState> with Neue Person (hr.manage)"
+        ]
+      }
     }
   ]
 }

@@ -36,6 +36,16 @@ node_modules/next/dist/docs/ when unsure.
   cards, a record's own fields in a `?edit=details` sheet with errors sent back to `?edit=details`, record row actions as
   one visible button + a row `<ActionsMenu>` of `MenuSubmit`s on hidden forms, a money flow as numbered steps
   (Beiträge › Lastschriften), `/email/log?contact=`.
+- From Kommunikation + Gästelisten: email/views.tsx (`<EmailViews>`: sibling routes as one area's view Segments in the
+  toolbar), email/badges.tsx + forms/badges.tsx (campaign / send / form / submission status → colour), forms/[id]/element-rows.tsx
+  (inline rows kept in client state and posted as one hidden JSON input, ↑ ↓ reorder, ✕ with confirm, "+ Element"
+  dropdown; pure `readElements()` + `checkElements()` on the server), forms/[id]/header.tsx (`formHeader()`: one record
+  header + sub-view Segments rendered by each sub-page so each can set its own primary), a header button that saves
+  and changes state with `form="<id>" name=… value=…` (Veröffentlichen, Jetzt senden), `data-confirm-count` with a
+  server-known number (recipients), server-search pickers `searchEvents` (email) / `searchListEvents` +
+  `searchListArtists` (guestlists), `?edit=list` vs `?edit=<row id>` on one record page (record fields vs a row's
+  sheet), the area settings page as RowGroups of record rows › + AddLink (email/settings), Settings › Bereiche lists
+  nav children with `gear: true`.
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

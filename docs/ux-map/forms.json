@@ -136,8 +136,13 @@
           "new: search ?q=, Status FilterMenu ?status="
         ],
         "kept": "uxNote 4 (membership as default purpose) kept: most orgs using forms collect member applications.",
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
     },
     {
       "route": "/forms/[id]",
@@ -372,9 +377,16 @@
           "new: primary 'Veröffentlichen' for drafts (submits the form with publish=1)",
           "new: ⋯ Einsendungen exportieren (moved from the submissions toolbar)"
         ],
-        "kept": "uxNote 7 (rich text for text elements) kept: public form renders plain text; changing it is a public-page change.",
-        "built": false
-      }
+        "kept": "uxNote 4 (drag to reorder) and 7 (rich text in text elements) kept: ↑ ↓ work on touch + keyboard; the public form renders plain text.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        5
+      ]
     },
     {
       "route": "/forms/[id]/submissions",
@@ -494,8 +506,14 @@
           "sheet Ablehnen → confirm forms.confirmReject",
           "Pager → unchanged"
         ],
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     }
   ],
   "research": "Tally / Typeform / Fillout: the builder is one canvas of blocks you edit in place, add with '+' (or '/'), reorder and delete per block (asks first when it has answers); publish is the main button; Results/Submissions is a tab with 'new' marked; one submission opens in a side panel with every answer by its label. Taken: Aufbau · Einsendungen as record Segments, elements as inline rows saved with one SaveBar, '+ Element' menu, 'Veröffentlichen' as the primary of a draft, submissions open on 'Neu'.",

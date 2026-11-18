@@ -129,12 +129,12 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Kalender | – | |
 | Kontakte ✓ | – | |
 | Mitglieder ✓ | Mitglieder · Beiträge | Mitgliedsarten (a group in Einstellungen), Einstellungen → gear |
-| Events | Events · Einlass | |
+| Events | Events · Gästelisten · Einlass | |
 | Schichten | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
 | Personal | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
 | Kurse | – | |
 | Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
-| Kommunikation | E-Mails · Formulare | Automationen → segment on E-Mails (Kampagnen · Automationen · Versand); Vorlagen → E-Mail Einstellungen |
+| Kommunikation ✓ | E-Mails · Formulare | Automationen, Versand → segments on E-Mails (Kampagnen · Automationen · Versand); E-Mail-Vorlagen → E-Mail-Einstellungen (gear) |
 | Automationen | – | |
 | Projekte | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
 | Vermietung | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben |

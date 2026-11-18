@@ -85,8 +85,13 @@
           "new: ⋯ Papierkorb → ?trash=1 with Wiederherstellen per row (tickets re-issued)",
           "legacy ?new → /guestlists/new (unchanged)"
         ],
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
     },
     {
       "route": "/guestlists/new",
@@ -220,8 +225,14 @@
           "SaveBar label 'Neue Gästeliste' → 'Gästeliste anlegen'",
           "generic invalid_input error → errors naming the field (price, quota, names per entry)"
         ],
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     },
     {
       "route": "/guestlists/[id]",
@@ -400,8 +411,17 @@
           "columns Eingetragen, Ticket, Drin → unchanged; Drin badge success",
           "crumbs (event lists → Events › event; permanent → Gästelisten) → event lists: Events › event › Gästelisten link to the event's tab (unchanged); after trashing an event list → back to the event's Gästelisten"
         ],
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
     }
   ],
   "research": "Luma / Eventbrite guest lists: a list opens on its numbers (guests, checked in) with 'Add guests' as the main action; a share link with copy; guests in a searchable table, one tap opens a guest to rename or remove (asks first); past events stay reachable by a Past/Upcoming switch. Taken: Stats + 'Gäste hinzufügen' as primary, link section with copy and confirms, guest rows open a sheet, Kommend · Vergangen · Alle.",

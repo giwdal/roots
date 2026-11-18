@@ -113,8 +113,13 @@
           "new: gear → /email/settings",
           "sidebar E-Mail-Kampagnen → sidebar 'E-Mails' (page title Kampagnen in the Segments)"
         ],
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
     },
     {
       "route": "/email/[id]",
@@ -290,8 +295,15 @@
           "SaveBar → unchanged (one form)",
           "after sending: new 'Versand ansehen' → /email/log?campaign=<id> (per-recipient list)"
         ],
-        "built": false
-      }
+        "built": true,
+        "kept": "Live reach while editing tags is not built: the count (card + send confirm) is from the last save; 'Jetzt senden' saves first and the toast names the real count."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
     },
     {
       "route": "/email/automations",
@@ -442,8 +454,13 @@
           "sidebar E-Mail-Automationen → Segment 'Automationen' on E-Mails"
         ],
         "kept": "uxNote 2 (no test send for automations) and 4 (overlap with the Automationen module) kept: out of a UX pass.",
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        2,
+        4
+      ]
     },
     {
       "route": "/email/templates",
@@ -593,8 +610,14 @@
           "sheet ⋯ Testmail an mich, Löschen (confirm) → unchanged",
           "⌘K hits for templates → /email/settings?edit=<id>"
         ],
-        "built": false
-      }
+        "built": true,
+        "kept": "uxNote 3 (templates don't apply to campaigns/automations) kept: different mail kinds, a model change."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
     },
     {
       "route": "/email/log",
@@ -684,8 +707,12 @@
           "sidebar E-Mail-Versand → Segment 'Versand' on E-Mails"
         ],
         "kept": "uxNote 3 (resend failed mails) kept: needs a queue retry rule, not a UX change.",
-        "built": false
-      }
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ]
     }
   ],
   "research": "Mailchimp / Brevo / Loops: a campaign is one page that reads top to bottom as a checklist (To · Subject · Content), with 'Send test' and 'Schedule / Send' as the last step; 'Send' always names the audience size in a confirm; sent campaigns open on their report (sent, delivered, bounced). Automations are a list with trigger, delay and an on/off state. Sending log = a filterable activity list. Templates/branding live in settings. Taken: views Kampagnen · Automationen · Versand as Segments on one area page; the campaign page opens on its state with 'Jetzt senden' (count in the confirm) as the next step; test/schedule submit the one form; E-Mail-Vorlagen under the gear.",

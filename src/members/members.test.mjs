@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { billable, coversPeriod, earliestEnd, isPaused, paidUntil, periodEnd, periodFee, periods, reminderScope } from "./dues.ts"
+import { localAdmit, queuedMember, visitLimitReached } from "./door.ts"
 import { pain008, sepaText } from "./sepa.ts"
 
 test("periods are calendar-aligned and start inside the range", () => {
@@ -99,4 +100,27 @@ test("paid until: end of the last paid period without gaps", () => {
   assert.equal(paidUntil([fee("2026-04-01", "paid"), fee("2026-01-01", "open")], "quarter"), null) // gap at the start
   assert.equal(paidUntil([fee("2026-01-01", "paid"), fee("2026-04-01", "cancelled"), fee("2026-07-01", "paid")], "quarter"), "2026-09-30")
   assert.equal(paidUntil([{ kind: "entry", period_start: null, status: "paid" }], "quarter"), null)
+})
+
+test("door offline: same rules as member_door", () => {
+  const now = "2026-11-20T21:00:00Z"
+  const m = { result: "member", contact_id: "c1", visits: 1, visit_limit: 2, event_counts: true }
+  assert.equal(visitLimitReached({ visits: 9, visit_limit: null }), false)
+  let r = localAdmit(m, false, now)
+  assert.equal(r.member.result, "ok"); assert.equal(r.member.visits, 2); assert.equal(r.queue, "member:c1")
+  r = localAdmit({ ...m, visits: 2 }, false, now)
+  assert.equal(r.member.result, "limit"); assert.equal(r.queue, undefined)
+  r = localAdmit({ ...m, visits: 2 }, true, now)
+  assert.equal(r.member.result, "ok"); assert.equal(r.queue, "member:c1:override")
+  r = localAdmit({ ...m, event_counts: false }, false, now)
+  assert.equal(r.member.visits, 1) // non-counting event: let in, not counted
+  r = localAdmit({ ...m, visits: 2, event_counts: false }, false, now)
+  assert.equal(r.member.result, "ok") // limit reached but this event doesn't count: stays open
+  r = localAdmit({ ...m, visits: 2, checked_in_at: now }, false, now)
+  assert.equal(r.member.result, "already") // already beats limit
+  r = localAdmit({ ...m, visit_limit: null, visits: 50 }, false, now)
+  assert.equal(r.member.result, "ok") // no limit, no block
+  assert.deepEqual(queuedMember("member:c1:override"), { contactId: "c1", override: true })
+  assert.deepEqual(queuedMember("member:c1"), { contactId: "c1", override: false })
+  assert.equal(queuedMember("ABCDEFGHJK"), null)
 })

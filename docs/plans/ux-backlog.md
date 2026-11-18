@@ -63,10 +63,10 @@ file too; shared items are done once in shared components.
 ## I. Installable app (PWA) — native feel on phones
 Goal: on phones roots works like a native app from the home screen, on desktop like a perfect web app.
 Today there is no manifest, no app icons, no service worker.
-- [ ] I1 Web app manifest (`src/app/manifest.ts`: name, short_name, `display: standalone`, start_url `/`, theme and
+- [x] I1 (src/app/manifest.ts, /app-icon/[size] generated icons, appleWebApp + themeColor in layout; install hint still open) Web app manifest (`src/app/manifest.ts`: name, short_name, `display: standalone`, start_url `/`, theme and
       background colours for light/dark, icons 192/512 + maskable) and `apple-touch-icon`, iOS status bar style,
       splash colours; "Zum Home-Bildschirm" hint once for phone users in Safari.
-- [ ] I2 Service worker: app shell + static assets cached, offline page instead of the browser error, network-first
+- [x] I2 (public/sw.js: static cache + /offline page, production only) Service worker: app shell + static assets cached, offline page instead of the browser error, network-first
       for data (the door already keeps offline sales on the device).
 - [ ] I3 Instant navigation: prefetch the tab bar targets and area pages, skeletons (loading.tsx) everywhere,
       View Transitions for push/pop between list and record (native-like slide), keep scroll position on back.
@@ -121,6 +121,8 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       Formulare, Gästelisten) against mobile.md §5.
 
 ## Z. To discuss tomorrow
+- The manifest is global, so public org pages could also be "installed" as roots. Limit it to the App (only link it
+  from the App layout), or give orgs their own manifest later?
 - Inline editing needs one `patch<Entity>` server action per record type (validated per field) — fine to add to the
   key API too (`PATCH /<entity>/{id}` with one field), or keep it App-only?
 - Record titles now show in the page *and* the top bar on desktop (crumb + big title, like Linear/Stripe). OK, or only

@@ -6856,5 +6856,9 @@
       "deadline": "last day to give notice",
       "end": "Contract ends"
     }
+  },
+  "pwa": {
+    "offlineTitle": "No connection",
+    "offlineText": "roots needs the internet. As soon as you are back online, reload the page."
   }
 }

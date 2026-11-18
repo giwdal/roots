@@ -6856,5 +6856,9 @@
       "deadline": "letzter Tag für Kündigung",
       "end": "Vertragsende"
     }
+  },
+  "pwa": {
+    "offlineTitle": "Keine Verbindung",
+    "offlineText": "roots braucht Internet. Sobald du wieder online bist, lade die Seite neu."
   }
 }

@@ -52,15 +52,18 @@ file too; shared items are done once in shared components.
       iOS 12.2 (don't block it); keep the parent fallback for deep links.
 
 ## E. Complex components on phones
-- [~] E1 (done: 24 h times + German dates in both languages, phones open on the list view) Calendar on phones —
-      still to build in the Kalender pass: a week strip (Mo–So with dots for days that have entries, swipe for the next
+- [x] E1 (24 h times + German dates; components/phone-calendar.tsx inside CalendarView, Kalender pass) Calendar on phones —
+      a week strip (Mo–So with dots for days that have entries, swipe for the next
       week) above the day's agenda, like iOS Calendar / Google Calendar; filters ("Bereich") as a chip row; "+" creates
       on the selected day; month = compact grid with dots + the day's list below. Desktop keeps week/month grids.
 - [ ] E2 Tables: cards on phones (done in DataTable); wide editors (positions, variants) as cards.
-- [ ] E3 Boards/timelines: one column at a time with snap / own scroll box.
+- [x] E3 (projects/board.tsx: column chips + snap on phones; Timeline scrolls in its own box) Boards/timelines: one column at a time with snap / own scroll box.
 - [ ] E4 Research per component (calendar, table, board, timeline, picker) and note the chosen pattern in mobile.md.
-- [ ] E5 `<CalendarView>` opens on week on phones too (Schichten › Plan, Abwesenheiten); mobile.md §3 wants list/day
+- [x] E5 (phones always get the week strip + day list, any consumer) `<CalendarView>` opens on week on phones too (Schichten › Plan, Abwesenheiten); mobile.md §3 wants list/day
       as the phone default — a phone default view in the shared component (found in the Schichten pass).
+- [ ] E6 Kurse: /courses/new takes no date yet; the calendar's "Neu am …" sheet links to it without the day (Kurse pass:
+      accept ?start= for the first session). Drag & drop on phones (board cards, calendar entries) isn't offered: status
+      and dates change in the task panel / record instead.
 
 ## F. Settings structure
 - [ ] F1 Separate personal settings (Profil, Benachrichtigungen, Sicherheit/Passkeys, KI-Assistent, Sprache, Darstellung)

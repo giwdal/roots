@@ -5457,9 +5457,6 @@
     "trashedTasks": "Gelöschte Aufgaben",
     "confirmUnlink": "Verknüpfung entfernen?",
     "confirmUnlinkHint": "Der verknüpfte Eintrag selbst bleibt erhalten.",
-    "customFields": "Weitere Felder",
-    "editCustom": "Weitere Felder ändern",
-    "addCustom": "Weitere Felder ausfüllen",
     "descriptionOptional": "Beschreibung (optional)",
     "isDoneShort": "erledigt",
     "addColumn": "Spalte hinzufügen",
@@ -5482,7 +5479,6 @@
     "assignee": "Zuständig",
     "assignees": "Zuständig",
     "everyone": "Alle",
-    "mine": "Meine Aufgaben",
     "due": "Fällig",
     "anyDue": "Jede Fälligkeit",
     "dues": {
@@ -5538,7 +5534,6 @@
     "columns": "Spalten des Boards",
     "moveTo": "Verschieben",
     "allProjects": "Alle Projekte",
-    "allTasks": "Alle Aufgaben",
     "backToProjects": "Zurück zu den Projekten",
     "createProject": "Projekt anlegen",
     "deletedAt": "Gelöscht am",
@@ -5558,7 +5553,6 @@
     "newProject": "Neues Projekt",
     "noProject": "Ohne Projekt",
     "noProjects": "Keine Projekte gefunden.",
-    "openBoard": "Zum Board",
     "overdueCount": {
       "one": "{count} Aufgabe überfällig",
       "other": "{count} Aufgaben überfällig"

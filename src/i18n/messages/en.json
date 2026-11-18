@@ -5457,9 +5457,6 @@
     "trashedTasks": "Deleted tasks",
     "confirmUnlink": "Remove link?",
     "confirmUnlinkHint": "The linked record itself is kept.",
-    "customFields": "More fields",
-    "editCustom": "Change more fields",
-    "addCustom": "Fill in more fields",
     "descriptionOptional": "Description (optional)",
     "isDoneShort": "done",
     "addColumn": "Add column",
@@ -5482,7 +5479,6 @@
     "assignee": "Assignee",
     "assignees": "Assignees",
     "everyone": "Everyone",
-    "mine": "My tasks",
     "due": "Due",
     "anyDue": "Any due date",
     "dues": {
@@ -5538,7 +5534,6 @@
     "columns": "Board columns",
     "moveTo": "Move",
     "allProjects": "All projects",
-    "allTasks": "All tasks",
     "backToProjects": "Back to projects",
     "createProject": "Create project",
     "deletedAt": "Deleted on",
@@ -5558,7 +5553,6 @@
     "newProject": "New project",
     "noProject": "No project",
     "noProjects": "No projects found.",
-    "openBoard": "Open the board",
     "overdueCount": {
       "one": "{count} task overdue",
       "other": "{count} tasks overdue"

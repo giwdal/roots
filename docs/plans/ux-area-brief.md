@@ -63,6 +63,17 @@ node_modules/next/dist/docs/ when unsure.
   Eigenschaften as `<InlineField>`s + `patchEmployee` (one field checked with the whole record's `read…()` rules), a
   small `?edit=links` sheet for relations and `?edit=private` for a compound value; `?user=<id>` pre-picks a member
   in create sheets (Meine → "Mich zum Team hinzufügen", HR → "Zum Schicht-Team hinzufügen").
+- From Projekte + Kalender: components/phone-calendar.tsx (every `<CalendarView>` on phones, nothing to do per page:
+  pass `newHref` and the day's "+" creates there), source/filter chips with colour dots that toggle several values in
+  one param and double as the legend (calendar/page.tsx `?src=a,b`), a "Neu am …" chooser sheet (`?new=entry`: one
+  `<LinkRows>` row per module, each link carrying the day), projects/quick-add.tsx (type + Enter creates and keeps the
+  field, `router.refresh()`; a client server action returning `{ error }`), projects/board.tsx (kanban with phone column
+  chips + snap), list grouped into sections by status or due bucket (`?group=`, Überfällig · Heute · Nächste 7 Tage ·
+  Später · Ohne Datum), "Meine · Alle" with Meine as the default and `?assignee=all`, settings/column-rows.tsx (inline
+  rows with ↑↓ and a colour popover, posted per scope by index, one SaveBar), the description of a record autosaving
+  in place (`<AutosaveForm action={patch…}>` with hidden `id` + `field` and a `RichTextEditor name="value"`), the task
+  panel's property rows (label · control in one autosave form; `ProjectField` = a RecordPicker that counts as input),
+  `patchProject` (custom fields via `customInlineItems` too), `?edit=links` with ✕ that asks (`projects.confirmUnlink`).
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

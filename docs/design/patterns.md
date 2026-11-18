@@ -126,7 +126,7 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 
 | Area | Sidebar children | Moves out of the sidebar |
 |---|---|---|
-| Kalender | – | |
+| Kalender ✓ | – | |
 | Kontakte ✓ | – | |
 | Mitglieder ✓ | Mitglieder · Beiträge | Mitgliedsarten (a group in Einstellungen), Einstellungen → gear |
 | Events | Events · Gästelisten · Einlass | |
@@ -136,7 +136,7 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
 | Kommunikation ✓ | E-Mails · Formulare | Automationen, Versand → segments on E-Mails (Kampagnen · Automationen · Versand); E-Mail-Vorlagen → E-Mail-Einstellungen (gear) |
 | Automationen | – | |
-| Projekte | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
+| Projekte ✓ | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
 | Vermietung | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben |
 | Shop ✓ | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
 | Wissen, Auswertungen | – | |

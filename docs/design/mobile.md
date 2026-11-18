@@ -69,8 +69,10 @@ One shared way, so pages don't build two UIs (`usePhone()` in `src/lib/use-phone
 - **Forms**: one column, label above the field, fields `h-11` on phones, 16 px text (global rule), the right keyboard
   (`<TypedInput kind>`: `inputMode`, `autoComplete`, `enterKeyHint`), the SaveBar as the only button. Long forms are
   sections; rarely used fields behind "Mehr Angaben" (progressive disclosure).
-- **Boards / calendars / timelines**: boards scroll horizontally one column at a time (snap), calendars default to the
-  list or day view on phones, timelines scroll in their own box.
+- **Boards / calendars / timelines**: boards show one column at a time (snap) with column chips above (name + count,
+  tap = jump, the active one marked; `projects/board.tsx`); calendars are `<PhoneCalendar>` inside `<CalendarView>`
+  (iOS / Google Calendar: week strip Mo–So with dots, swipe or arrows, Woche · Monat with a dotted month grid, the
+  selected day's entries below, "+" creates on that day through the page's `newHref`); timelines scroll in their own box.
 - **Wide content** (tables with many columns, previews) scrolls inside its own box; the page never scrolls sideways.
 
 ## 4. Touch rules

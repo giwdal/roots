@@ -10,6 +10,13 @@ As long as every feature keeps working, layouts, flows and page structure may be
 patterns from good dashboards (Linear, Stripe Dashboard, Shopify admin, Vercel, Luma/Eventbrite organizer views):
 compact status header, KPI tiles, activity/timeline, the edit form tucked away, keyboard-first lists.
 
+**Simple first.** Before redesigning a tool, look up how the best products in that space do it today (web search is
+fine: e.g. Luma/Eventbrite for events and check-in, Shopify for shop/orders, Stripe/lexoffice/sevDesk for invoices,
+Planday/Deputy for shifts, Personio for HR, Linear for projects, Mailchimp/Brevo for campaigns, Notion for wiki) and
+take the simplest working pattern. Goal: an easy overview, simple for people who are not power users, never a screen
+with dozens of decisions at once. Per screen: one main thing to look at, one main action, a few secondary actions,
+the rest in ⋯ or one level deeper. Progressive disclosure over showing every option.
+
 
 For every page ask: **who lands here, why, and what do they need in the first second?** Then build the page around
 that, not around the table columns or the edit form.

@@ -1,7 +1,8 @@
 # UX overhaul (App + admin; public pages later)
 
 Source: the screen inventory in `docs/ux-map/*.json` (fields, actions, overlays, links and `uxNotes` per page) and the
-binding guide `docs/design/app.md`. This file is the work order: the rules every area is brought to, then the order of
+binding guides `docs/design/app.md`, `docs/design/patterns.md` (information structure, controls, menus) and
+`docs/design/mobile.md`. This file is the work order: the rules every area is brought to, then the order of
 the areas. Rules that are new or sharper than before also go into `docs/design/app.md`.
 
 ## 1. Think from the person first

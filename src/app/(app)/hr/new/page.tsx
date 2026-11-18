@@ -13,7 +13,7 @@ export default async function NewEmployeePage({ searchParams }: { searchParams: 
   const { data: profile } = user && /^[0-9a-f-]{36}$/.test(user) ? await ctx.supabase.from("profiles").select("id, full_name, email").eq("id", user).maybeSingle() : { data: null }
   return (
     <NewPage list={{ href: "/hr", label: t("hr.tabs.people") }} title={t("hr.new")} error={param(sp, "error")}>
-      <EmployeeForm t={t} cards member={profile ? { id: profile.id, label: profile.full_name || profile.email || "–", detail: profile.full_name ? (profile.email ?? undefined) : undefined } : null} />
+      <EmployeeForm t={t} member={profile ? { id: profile.id, label: profile.full_name || profile.email || "–", detail: profile.full_name ? (profile.email ?? undefined) : undefined } : null} />
     </NewPage>
   )
 }

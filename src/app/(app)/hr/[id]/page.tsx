@@ -1,14 +1,16 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { CalendarClockIcon, ClockIcon, ContactIcon, LinkIcon, LockIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { CalendarClockIcon, ClockIcon, ContactIcon, LinkIcon, LockIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { Choice } from "@/components/choice"
 import { DateInput } from "@/components/date-input"
 import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
+import { InlineField } from "@/components/inline-field"
 import { LinkRows, type LinkRow } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
-import { Page, PageHeader, RecordLayout } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
+import { RecordPicker } from "@/components/record-picker"
 import { SaveBar } from "@/components/save-bar"
 import { AddLink, Section } from "@/components/section"
 import { Stat, Stats } from "@/components/stats"
@@ -20,21 +22,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getT } from "@/i18n/server"
-import { TAX_CLASSES } from "@/hr/fields"
+import { EMPLOYMENT_TYPES, PAY_TYPES, TAX_CLASSES } from "@/hr/fields"
 import { absenceDays, vacationTaken } from "@/hr/pay"
 import { payrollMonth } from "@/hr/server"
 import { requirePerm } from "@/lib/context"
 import { monthOf } from "@/lib/time"
 import { param, withParams } from "@/lib/url"
-import { linkStaff, restoreEmployee, savePrivate, trashEmployee } from "../actions"
+import { linkStaff, patchEmployee, restoreEmployee, saveEmployeeLinks, savePrivate, searchEmployees, trashEmployee } from "../actions"
+import { searchStaff } from "../../shifts/actions"
 import { AbsenceSheet } from "../absence-sheet"
-import { EmployeeForm } from "../employee-form"
+import { priceInput } from "@/tickets/price"
 
 const UUID = /^[0-9a-f-]{36}$/
 
-// Personal › Person: opens on the state (holiday left, sick days, this month's hours and gross), then the terms
-// (Vertrag, Person & Rolle as facts), absences, personal data (hr.manage), links and documents. Editing lives in
-// sheets: ?edit=details (role + contract), ?edit=private (personal data), ?new=absence / ?edit=<absence id>.
+// Personal › Person (record page, patterns.md §8): identity + Stats (holiday left, sick days, this month's hours and
+// gross); main column = absences, hours & pay, personal data; right rail = Eigenschaften (each value edited in place,
+// patchEmployee), Zuordnung (?edit=links), Verknüpft, Dokumente. Sheets: ?edit=private (personal data, a compound
+// value), ?edit=links (manager + shift team), ?new=absence / ?edit=<absence id>.
 export default async function EmployeePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params
   const ctx = await requirePerm("hr.view")
@@ -70,8 +74,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
   const left = e.ends_on && e.ends_on < today
   const notYet = e.starts_on && e.starts_on > today
   const here = `/hr/${id}`
-  const sheetOpen = !!editingAbsence || param(sp, "new") === "absence" || editParam === "details" || editParam === "private"
-  const rate = e.pay_type === "hourly" && e.hourly_rate_cents != null ? `${t.money(e.hourly_rate_cents)}/h` : e.pay_type === "monthly" && e.monthly_salary_cents != null ? t.money(e.monthly_salary_cents) : null
+  const sheetOpen = !!editingAbsence || param(sp, "new") === "absence" || editParam === "links" || editParam === "private"
   const hoursStat = pay && e.staff_id ? t.number(pay.approved_minutes / 60, { maximumFractionDigits: 1 }) : null
   const tel = e.phone?.replace(/[^\d+]/g, "")
   const linked: LinkRow[] = [
@@ -86,60 +89,106 @@ export default async function EmployeePage({ params, searchParams }: { params: P
     </div>
   )
 
-  const aside = (
+
+  // Eigenschaften: every single value is edited where it is shown (hr.manage); patchEmployee checks it like the form.
+  const prop = (field: string, label: string, value: string | null, opts: { kind?: React.ComponentProps<typeof InlineField>["kind"]; display?: React.ReactNode; options?: { value: string; label: string }[] } = {}) => ({
+    label,
+    value: canManage ? <InlineField action={patchEmployee} id={e.id} field={field} value={value} label={label} {...opts} /> : (opts.display ?? value),
+  })
+  const link = (href: string, text: string) => (
+    <a href={href} className="text-[var(--link)] hover:underline">
+      {text}
+    </a>
+  )
+
+  const properties = (
     <>
-      <Section id="pay" title={t("hr.hoursPay")}>
-        {e.staff_id && pay ? (
-          <div className="grid gap-2 text-sm">
-            <p>
-              {t("hr.approvedHours", { hours: t.number(pay.approved_minutes / 60, { maximumFractionDigits: 2 }) })}
-              {pay.gross_cents != null && ` · ${t("hr.gross", { amount: t.money(pay.gross_cents) })}`}
-            </p>
-            {pay.unapproved_entries > 0 &&
-              (seesTeam ? (
-                <Link href={`/shifts/hours/${e.staff_id}`} className="text-xs text-[var(--link)] hover:underline">
-                  {t("hr.unapproved", { count: pay.unapproved_entries })}
-                </Link>
-              ) : (
-                <p className="text-xs text-muted-foreground">{t("hr.unapproved", { count: pay.unapproved_entries })}</p>
-              ))}
-            {pay.warnings.length > 0 && (
-              <span className="flex flex-wrap gap-1">
-                {pay.warnings.map((w) => (
-                  <Badge key={w} variant="destructive">
-                    {t.dynamic(`hr.payWarnings.${w}`)}
-                  </Badge>
-                ))}
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-2 text-sm">
-            <p className="text-muted-foreground">{pay?.gross_cents != null ? t("hr.gross", { amount: t.money(pay.gross_cents) }) : t("hr.noHours")}</p>
-            {/* Not linked yet: link the team member of the same account, or put the person on the team. */}
-            {canManage && staff && !e.staff_id && (
-              <form action={linkStaff}>
-                <input type="hidden" name="id" value={e.id} />
-                <SubmitButton size="sm" variant="outline">
-                  <LinkIcon /> {t("hr.linkStaff", { name: staff.name })}
-                </SubmitButton>
-              </form>
-            )}
-            {!staff && !e.staff_id && e.user_id && ctx.modules.has("shifts") && ctx.can("shifts.manage") && (
-              <Button render={<Link href={`/shifts/team?new=staff&user=${e.user_id}`} />} nativeButton={false} size="sm" variant="outline" className="justify-self-start">
-                <PlusIcon /> {t("hr.addToTeam")}
-              </Button>
-            )}
-          </div>
-        )}
+      <Section id="properties" title={t("hr.properties")}>
+        <DetailList
+          items={[
+            prop("employment_type", t("hr.employmentType"), e.employment_type, { kind: "choice", options: EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) })), display: t.dynamic(`hr.types.${e.employment_type}`) }),
+            prop("pay_type", t("hr.payType"), e.pay_type, { kind: "choice", options: PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) })), display: t.dynamic(`hr.payTypes.${e.pay_type}`) }),
+            e.pay_type === "hourly" && prop("hourly_rate", t("hr.hourlyRate"), e.hourly_rate_cents != null ? priceInput(e.hourly_rate_cents) : null, { kind: "money", display: e.hourly_rate_cents != null && `${t.money(e.hourly_rate_cents)}/h` }),
+            e.pay_type === "monthly" && prop("monthly_salary", t("hr.monthlySalary"), e.monthly_salary_cents != null ? priceInput(e.monthly_salary_cents) : null, { kind: "money", display: e.monthly_salary_cents != null && t.money(e.monthly_salary_cents) }),
+            prop("weekly_hours", t("hr.weeklyHours"), e.weekly_hours != null ? String(e.weekly_hours) : null, { kind: "number", display: e.weekly_hours != null && `${t.number(Number(e.weekly_hours))} h` }),
+            prop("vacation_days", t("hr.vacationDays"), e.vacation_days != null ? String(e.vacation_days) : null, { kind: "number", display: e.vacation_days != null && t.number(Number(e.vacation_days)) }),
+            prop("starts_on", t("hr.startsOn"), e.starts_on, { kind: "date", display: e.starts_on && day(e.starts_on) }),
+            prop("ends_on", t("hr.endsOn"), e.ends_on, { kind: "date", display: e.ends_on && day(e.ends_on) }),
+            prop("job_title", t("hr.jobTitle"), e.job_title),
+            prop("department", t("hr.department"), e.department),
+            prop("phone", t("hr.phone"), e.phone, { kind: "phone", display: e.phone && tel && link(`tel:${tel}`, e.phone) }),
+            { label: t("hr.account"), value: e.email && link(`mailto:${e.email}`, e.email) },
+            prop("notes", t("hr.notes"), e.notes, { kind: "textarea", display: e.notes && <span className="whitespace-pre-line">{e.notes}</span> }),
+          ]}
+        />
       </Section>
-      {linked.length > 0 && (
-        <Section id="linked" title={t("shifts.linked")}>
-          <LinkRows rows={linked} />
-        </Section>
-      )}
-      <FileList ctx={ctx} entity="employees" entityId={e.id} back={`/hr/${e.id}#files`} />
+      <Section
+        id="assignment"
+        title={t("hr.assignment")}
+        action={
+          canManage && (
+            <Link href={withParams(sp, { edit: "links", new: undefined })} scroll={false} className="text-sm text-[var(--link)] hover:underline">
+              {t("hr.change")}
+            </Link>
+          )
+        }
+      >
+        <DetailList
+          items={[
+            { label: t("hr.manager"), value: manager ? <Link href={`/hr/${manager.id}`} className="text-[var(--link)] hover:underline">{manager.name}</Link> : null },
+            ctx.modules.has("shifts") && { label: t("hr.shiftTeam"), value: e.staff_id ? (staff?.name ?? t("hr.linkedHidden")) : t("hr.noShiftTeam") },
+          ]}
+        />
+      </Section>
     </>
+  )
+
+  const pay_ = (
+    <Section id="pay" title={t("hr.hoursPay")}>
+      {e.staff_id && pay ? (
+        <div className="grid gap-2 text-sm">
+          <p>
+            {t("hr.approvedHours", { hours: t.number(pay.approved_minutes / 60, { maximumFractionDigits: 2 }) })}
+            {pay.gross_cents != null && ` · ${t("hr.gross", { amount: t.money(pay.gross_cents) })}`}
+          </p>
+          {pay.unapproved_entries > 0 &&
+            (seesTeam ? (
+              <Link href={`/shifts/hours/${e.staff_id}`} className="text-xs text-[var(--link)] hover:underline">
+                {t("hr.unapproved", { count: pay.unapproved_entries })}
+              </Link>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t("hr.unapproved", { count: pay.unapproved_entries })}</p>
+            ))}
+          {pay.warnings.length > 0 && (
+            <span className="flex flex-wrap gap-1">
+              {pay.warnings.map((w) => (
+                <Badge key={w} variant="destructive">
+                  {t.dynamic(`hr.payWarnings.${w}`)}
+                </Badge>
+              ))}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-2 text-sm">
+          <p className="text-muted-foreground">{pay?.gross_cents != null ? t("hr.gross", { amount: t.money(pay.gross_cents) }) : t("hr.noHours")}</p>
+          {/* Not linked yet: link the team member of the same account, or put the person on the team. */}
+          {canManage && staff && !e.staff_id && (
+            <form action={linkStaff}>
+              <input type="hidden" name="id" value={e.id} />
+              <SubmitButton size="sm" variant="outline">
+                <LinkIcon /> {t("hr.linkStaff", { name: staff.name })}
+              </SubmitButton>
+            </form>
+          )}
+          {!staff && !e.staff_id && e.user_id && ctx.modules.has("shifts") && ctx.can("shifts.manage") && (
+            <Button render={<Link href={`/shifts/team?new=staff&user=${e.user_id}`} />} nativeButton={false} size="sm" variant="outline" className="justify-self-start">
+              <PlusIcon /> {t("hr.addToTeam")}
+            </Button>
+          )}
+        </div>
+      )}
+    </Section>
   )
 
   return (
@@ -149,14 +198,6 @@ export default async function EmployeePage({ params, searchParams }: { params: P
         title={e.name}
         badge={e.deleted_at ? <Badge variant="destructive">{t("hr.trash")}</Badge> : left ? <Badge variant="secondary">{t("hr.left")}</Badge> : notYet ? <Badge variant="info">{t("hr.startsAt", { date: day(e.starts_on!) })}</Badge> : <Badge variant="success">{t("hr.active")}</Badge>}
         meta={[t.dynamic(`hr.types.${e.employment_type}`), e.job_title, e.department].filter(Boolean).join(" · ")}
-        actions={
-          canManage &&
-          !e.deleted_at && (
-            <Button render={<Link href={withParams(sp, { edit: "details", new: undefined })} scroll={false} />} nativeButton={false} size="sm" variant="outline">
-              <PencilIcon /> <span className="max-md:sr-only">{t("common.edit")}</span>
-            </Button>
-          )
-        }
         menu={
           canManage &&
           !e.deleted_at && (
@@ -198,98 +239,85 @@ export default async function EmployeePage({ params, searchParams }: { params: P
             <Stat label={t("hr.hoursStat", { month: t.date(`${month.month}-15T12:00:00Z`, { month: "long" }) })} value={hoursStat != null ? `${hoursStat} h` : "–"} hint={pay?.unapproved_entries ? t("time.toApprove", { count: pay.unapproved_entries }) : undefined} href={e.staff_id && seesTeam ? `/shifts/hours/${e.staff_id}` : undefined} />
             <Stat label={t("hr.grossStat")} value={pay?.gross_cents != null ? t.money(pay.gross_cents) : "–"} href="/hr/payroll" tone={pay?.warnings.length ? "warn" : undefined} />
           </Stats>
-          <RecordLayout aside={aside}>
-            <Section id="contract" title={t("hr.contract")}>
-              <DetailList
-                items={[
-                  { label: t("hr.employmentType"), value: t.dynamic(`hr.types.${e.employment_type}`) },
-                  { label: t("hr.payType"), value: [t.dynamic(`hr.payTypes.${e.pay_type}`), rate].filter(Boolean).join(" · ") },
-                  { label: t("hr.weeklyHours"), value: e.weekly_hours != null ? `${t.number(Number(e.weekly_hours))} h` : null },
-                  { label: t("hr.vacationDays"), value: e.vacation_days != null ? t.number(Number(e.vacation_days)) : null },
-                  { label: t("hr.startsOn"), value: e.starts_on && day(e.starts_on) },
-                  { label: t("hr.endsOn"), value: e.ends_on && day(e.ends_on) },
-                ]}
-              />
-            </Section>
-            <Section id="role" title={t("hr.roleCard")}>
-              <DetailList
-                items={[
-                  { label: t("hr.account"), value: e.email ? <a href={`mailto:${e.email}`} className="text-[var(--link)] hover:underline">{e.email}</a> : null },
-                  { label: t("hr.phone"), value: e.phone && tel ? <a href={`tel:${tel}`} className="text-[var(--link)] hover:underline">{e.phone}</a> : e.phone },
-                  { label: t("hr.jobTitle"), value: e.job_title },
-                  { label: t("hr.department"), value: e.department },
-                  { label: t("hr.manager"), value: manager ? <Link href={`/hr/${manager.id}`} className="text-[var(--link)] hover:underline">{manager.name}</Link> : null },
-                  !!e.notes && { label: t("hr.notes"), value: <span className="whitespace-pre-line">{e.notes}</span> },
-                ]}
-              />
-            </Section>
-            <Section id="absences" title={t("hr.absencesYear", { year })} action={<Link href={`/hr/absences?person=${e.id}`} className="text-sm text-[var(--link)] hover:underline">{t("hr.inCalendar")}</Link>}>
-              {(absences ?? []).length > 0 ? (
-                <ul className="grid divide-y rounded-lg border">
-                  {(absences ?? []).map((a) => {
-                    const body = (
-                      <>
-                        <span className="grid min-w-0 flex-1">
-                          <span className="font-medium">{t.dynamic(`hr.kinds.${a.kind}`)}</span>
-                          <span className="truncate text-xs text-muted-foreground">{[a.starts_on === a.ends_on ? day(a.starts_on) : `${day(a.starts_on)} – ${day(a.ends_on)}`, a.note].filter(Boolean).join(" · ")}</span>
-                        </span>
-                        <span className="tabular-nums text-muted-foreground">{t("hr.days", { count: absenceDays(a) })}</span>
-                      </>
-                    )
-                    return (
+          {/* patterns.md §8: desktop = main column + right rail (Eigenschaften on top, then Verknüpft, Dokumente);
+              phones and tablets = one column: Eigenschaften → main sections → Verknüpft → Dokumente. */}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+            <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-1">{properties}</aside>
+            <div className="grid min-w-0 content-start gap-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+              <Section id="absences" title={t("hr.absencesYear", { year })} action={<Link href={`/hr/absences?person=${e.id}`} className="text-sm text-[var(--link)] hover:underline">{t("hr.inCalendar")}</Link>}>
+                {(absences ?? []).length > 0 ? (
+                  <ul className="grid divide-y rounded-lg border">
+                    {(absences ?? []).map((a) => (
                       <li key={a.id}>
                         <Link href={withParams(sp, { edit: a.id, new: undefined })} scroll={false} className="flex min-h-11 items-center gap-3 px-3 py-2 text-sm hover:bg-muted active:bg-muted">
-                          {body}
+                          <span className="grid min-w-0 flex-1">
+                            <span className="font-medium">{t.dynamic(`hr.kinds.${a.kind}`)}</span>
+                            <span className="truncate text-xs text-muted-foreground">{[a.starts_on === a.ends_on ? day(a.starts_on) : `${day(a.starts_on)} – ${day(a.ends_on)}`, a.note].filter(Boolean).join(" · ")}</span>
+                          </span>
+                          <span className="tabular-nums text-muted-foreground">{t("hr.days", { count: absenceDays(a) })}</span>
                         </Link>
                       </li>
-                    )
-                  })}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("hr.noAbsences")}</p>
-              )}
-              {canManage && <AddLink href={withParams(sp, { new: "absence", edit: undefined })}>{t("hr.addAbsence")}</AddLink>}
-            </Section>
-            {canManage && (
-              <Section
-                id="private"
-                title={t("hr.private")}
-                description={t("hr.privateHint")}
-                action={
-                  <Link href={withParams(sp, { edit: "private", new: undefined })} scroll={false} className="text-sm text-[var(--link)] hover:underline">
-                    {t("common.edit")}
-                  </Link>
-                }
-              >
-                <DetailList
-                  items={[
-                    { label: t("hr.birthday"), value: priv?.birthday && day(priv.birthday) },
-                    { label: t("hr.address"), value: [priv?.street, [priv?.postal_code, priv?.city].filter(Boolean).join(" "), priv?.country && priv.country !== "DE" ? priv.country : null].filter(Boolean).join(", ") },
-                    { label: t("hr.nationality"), value: priv?.nationality },
-                    { label: t("hr.emergencyContact"), value: priv?.emergency_contact },
-                    { label: t("hr.iban"), value: priv?.iban && <span className="font-mono">{priv.iban.replace(/(.{4})/g, "$1 ").trim()}</span> },
-                    { label: t("hr.taxId"), value: priv?.tax_id && <span className="font-mono">{priv.tax_id}</span> },
-                    { label: t("hr.taxClass"), value: priv?.tax_class },
-                    { label: t("hr.socialSecurityNo"), value: priv?.social_security_no },
-                    { label: t("hr.healthInsurance"), value: priv?.health_insurance },
-                  ]}
-                />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("hr.noAbsences")}</p>
+                )}
+                {canManage && <AddLink href={withParams(sp, { new: "absence", edit: undefined })}>{t("hr.addAbsence")}</AddLink>}
               </Section>
-            )}
-          </RecordLayout>
+              {pay_}
+              {canManage && (
+                <Section
+                  id="private"
+                  title={t("hr.private")}
+                  description={t("hr.privateHint")}
+                  action={
+                    <Link href={withParams(sp, { edit: "private", new: undefined })} scroll={false} className="text-sm text-[var(--link)] hover:underline">
+                      {t("hr.change")}
+                    </Link>
+                  }
+                >
+                  <DetailList
+                    items={[
+                      { label: t("hr.birthday"), value: priv?.birthday && day(priv.birthday) },
+                      { label: t("hr.address"), value: [priv?.street, [priv?.postal_code, priv?.city].filter(Boolean).join(" "), priv?.country && priv.country !== "DE" ? priv.country : null].filter(Boolean).join(", ") },
+                      { label: t("hr.nationality"), value: priv?.nationality },
+                      { label: t("hr.emergencyContact"), value: priv?.emergency_contact },
+                      { label: t("hr.iban"), value: priv?.iban && <span className="font-mono">{priv.iban.replace(/(.{4})/g, "$1 ").trim()}</span> },
+                      { label: t("hr.taxId"), value: priv?.tax_id && <span className="font-mono">{priv.tax_id}</span> },
+                      { label: t("hr.taxClass"), value: priv?.tax_class },
+                      { label: t("hr.socialSecurityNo"), value: priv?.social_security_no },
+                      { label: t("hr.healthInsurance"), value: priv?.health_insurance },
+                    ]}
+                  />
+                </Section>
+              )}
+            </div>
+            <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-2">
+              {linked.length > 0 && (
+                <Section id="linked" title={t("shifts.linked")}>
+                  <LinkRows rows={linked} />
+                </Section>
+              )}
+              <FileList ctx={ctx} entity="employees" entityId={e.id} back={`/hr/${e.id}#files`} />
+            </aside>
+          </div>
         </>
       )}
 
-      {canManage && !e.deleted_at && editParam === "details" && (
-        <UrlSheet params={["edit"]} title={t("hr.editDetails")} meta={e.name}>
+      {canManage && !e.deleted_at && editParam === "links" && (
+        <UrlSheet params={["edit"]} title={t("hr.assignment")} meta={e.name}>
           <Notice error={param(sp, "error")} />
-          <EmployeeForm
-            t={t}
-            e={e}
-            manager={manager ? { id: manager.id, label: manager.name } : null}
-            staff={staff && e.staff_id ? { id: staff.id, label: staff.name } : null}
-            pickStaff={seesTeam}
-          />
+          <form action={saveEmployeeLinks} className="grid gap-4">
+            <input type="hidden" name="id" value={e.id} />
+            <RecordPicker name="manager_id" label={t("hr.manager")} search={searchEmployees} initial={manager ? { id: manager.id, label: manager.name } : null} placeholder={t("hr.noManager")} />
+            {seesTeam && (
+              <div className="grid gap-1">
+                <RecordPicker name="staff_id" label={t("hr.shiftTeam")} search={searchStaff.bind(null, "")} initial={staff && e.staff_id ? { id: staff.id, label: staff.name } : null} placeholder={t("hr.noShiftTeam")} />
+                <p className="text-xs text-muted-foreground">{t("hr.shiftTeamHint")}</p>
+              </div>
+            )}
+            <SaveBar />
+          </form>
         </UrlSheet>
       )}
       {canManage && !e.deleted_at && editParam === "private" && (

@@ -235,11 +235,22 @@ const PATCHABLE = ["name", "description", "color", "start_on", "end_on", "status
 export async function patchProject(fd: FormData): Promise<{ error?: string }> {
   const { ctx, t } = await manager()
   const project = id(fd, "id")
-  const field = PATCHABLE.find((f) => f === fd.get("field"))
+  const raw = String(fd.get("field") ?? "")
+  const field = PATCHABLE.find((f) => f === raw)
   const value = String(fd.get("value") ?? "")
-  if (!project || !field) return { error: t("errors.invalid_input") }
+  if (!project || (!field && !/^custom\.[a-z0-9_]+$/.test(raw))) return { error: t("errors.invalid_input") }
   let input: Parameters<typeof updateProject>[3]
-  if (field === "status_id") {
+  if (!field) {
+    // A custom field: the stored values in form format with the new one on top, checked by readCustom like the form.
+    const [{ data: p }, defs] = await Promise.all([ctx.supabase.from("projects").select("custom").eq("id", project).eq("org_id", ctx.org.id).maybeSingle(), loadFields(ctx.supabase, ctx.org.id, "projects")])
+    if (!p) return { error: t("errors.not_allowed") }
+    const stored = (p.custom ?? {}) as Record<string, unknown>
+    const current: Record<string, string> = Object.fromEntries(defs.map((d) => [d.key, stored[d.key] == null ? "" : d.type === "money" && typeof stored[d.key] === "number" ? (stored[d.key] as number).toFixed(2).replace(".", ",") : String(stored[d.key])]))
+    current[raw.slice("custom.".length)] = value
+    const c = readCustom(defs, (k) => current[k] ?? "")
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    input = { custom: c.custom }
+  } else if (field === "status_id") {
     const { data: s } = await ctx.supabase.from("task_statuses").select("id").eq("id", UUID.test(value) ? value : "").eq("org_id", ctx.org.id).eq("scope", "project").maybeSingle()
     if (!s) return { error: t("errors.invalid_input") }
     input = { statusId: s.id }
@@ -256,17 +267,6 @@ export async function patchProject(fd: FormData): Promise<{ error?: string }> {
   if ("error" in r) return { error: message(t, r) }
   deliverSoon()
   return {}
-}
-
-/** The project's custom fields (?edit=custom sheet). */
-export async function saveProjectCustom(fd: FormData) {
-  const { ctx, t } = await manager()
-  const project = id(fd, "id") ?? ""
-  const c = readCustom(await loadFields(ctx.supabase, ctx.org.id, "projects"), (k) => String(fd.get(`custom.${k}`) ?? ""))
-  if ("error" in c) back(`/projects/${project}?edit=custom`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  const r = await updateProject(ctx.supabase, ctx.org.id, project, { custom: c.custom })
-  if ("error" in r) back(`/projects/${project}?edit=custom`, { error: message(t, r) })
-  back(`/projects/${project}`, { ok: t("projects.saved") })
 }
 
 export async function moveProjectAction(input: { id: string; statusId: string; order: string[] }): Promise<{ error?: string }> {

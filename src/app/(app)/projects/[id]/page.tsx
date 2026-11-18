@@ -5,7 +5,7 @@ import { berlinToday } from "@/api/v1/shared"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { ActivityFeed } from "@/components/activity-feed"
 import { customDetails } from "@/components/custom-field-details"
-import { CustomFieldInputs } from "@/components/custom-field-inputs"
+import { customInlineItems } from "@/components/custom-field-inline"
 import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
 import { InlineField } from "@/components/inline-field"
@@ -13,7 +13,6 @@ import { LinkRows } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
 import { Page, PageHeader } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
-import { SaveBar } from "@/components/save-bar"
 import { Section } from "@/components/section"
 import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
@@ -22,14 +21,14 @@ import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { loadFields, type CustomValues } from "@/lib/custom-fields"
+import { loadFields } from "@/lib/custom-fields"
 import { cn } from "@/lib/utils"
 import { param, withParams, type SearchParams } from "@/lib/url"
 import { DOT, PICKABLE_COLORS } from "@/projects/fields"
 import { projectBasics } from "@/projects/load"
 import { linkedRecords, PROJECT_COLS } from "@/projects/server"
 import { minutes } from "@/shifts/time"
-import { addCommentAction, deleteCommentAction, editCommentAction, patchProject, removeLinkAction, saveProjectCustom, trashProjectAction } from "../actions"
+import { addCommentAction, deleteCommentAction, editCommentAction, patchProject, removeLinkAction, trashProjectAction } from "../actions"
 import { AutosaveForm } from "../autosave-form"
 import { InlineTitle } from "../inline-title"
 import { LinkPicker } from "../link-picker"
@@ -45,9 +44,9 @@ const KIND_ICON: Record<string, LucideIcon> = { wiki_pages: BookOpenIcon, events
 
 // One project (patterns.md §8): identity (colour, name edited in the title, status, lead · period), Stats (progress,
 // open, overdue, hours), one row of views. Übersicht: main = description (edits in place), the next open tasks with a
-// quick add, the activity; right rail = Eigenschaften (each value edited in place, patchProject), Verknüpft, Dateien.
+// quick add, the activity; right rail = Eigenschaften (each value incl. custom fields edited in place, patchProject), Verknüpft, Dateien.
 // The other views are the project's tasks (board, list, timeline, calendar) and its time. Sheets: ?task=<id>,
-// ?new=task, ?edit=links (link / unlink records), ?edit=custom (custom fields).
+// ?new=task, ?edit=links (link / unlink records).
 export default async function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SearchParams> }) {
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound()
@@ -90,7 +89,6 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
     value: <InlineField action={patchProject} id={p.id} field={field} value={value} label={label} disabled={!canManage} {...opts} />,
   })
   const dot = (color: string) => <span className="size-2.5 shrink-0 rounded-full" style={{ background: DOT[color] ?? DOT.gray }} aria-hidden />
-  const custom = customDetails(t, defs, p.custom)
   const properties = (
     <Section id="properties" title={t("projects.properties")}>
       <DetailList
@@ -108,14 +106,9 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               </span>
             ),
           }),
-          ...custom,
+          ...(canManage ? customInlineItems(t, defs, p.custom, patchProject, p.id) : customDetails(t, defs, p.custom)),
         ]}
       />
-      {canManage && defs.length > 0 && (
-        <Link href={withParams(sp, { edit: "custom", task: undefined, new: undefined })} scroll={false} className="w-fit text-sm link">
-          {t(custom.length ? "projects.editCustom" : "projects.addCustom")}
-        </Link>
-      )}
     </Section>
   )
 
@@ -316,16 +309,6 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
             </ul>
           )}
           <LinkPicker projectId={p.id} />
-        </UrlSheet>
-      )}
-      {canManage && editParam === "custom" && defs.length > 0 && (
-        <UrlSheet params={["edit"]} title={t("projects.customFields")} meta={p.name}>
-          <Notice error={param(sp, "error")} />
-          <form action={saveProjectCustom} className="grid gap-4">
-            <input type="hidden" name="id" value={p.id} />
-            <CustomFieldInputs defs={defs} values={(p.custom ?? {}) as CustomValues} idPrefix="pj-custom" />
-            <SaveBar />
-          </form>
         </UrlSheet>
       )}
     </Page>

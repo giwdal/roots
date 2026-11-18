@@ -1,82 +1,33 @@
-import { ArrowDownIcon, ArrowUpIcon, Trash2Icon } from "lucide-react"
 import { Notice } from "@/components/notice"
-import { FormCard, Page, PageHeader } from "@/components/page"
-import { SubmitButton } from "@/components/submit-button"
-import { Input } from "@/components/ui/input"
+import { Page, PageHeader } from "@/components/page"
+import { SaveBar } from "@/components/save-bar"
+import { Section } from "@/components/section"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, type SearchParams } from "@/lib/url"
-import { DOT, PICKABLE_COLORS } from "@/projects/fields"
-import { deleteStatusAction, moveStatusAction, saveStatusAction } from "../actions"
+import { saveColumnsAction } from "../actions"
+import { ColumnRows } from "./column-rows"
 
-type Status = { id: string; name: string; color: string; is_done: boolean; scope: string }
-
-// Columns of both boards (tasks, projects): name, colour dot, "counts as done". Order with up/down; a column can be
-// deleted while it's empty.
-export default async function ProjectsSetupPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+// Projekte › Einstellungen (gear): the columns of both boards (tasks, projects) as inline rows in one form, one SaveBar.
+export default async function ProjectsSettingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const ctx = await requirePerm("projects.manage")
   const t = await getT()
   const sp = await searchParams
   const { data } = await ctx.supabase.from("task_statuses").select("id, name, color, is_done, scope").eq("org_id", ctx.org.id).order("position")
-
-  const row = (scope: "task" | "project", statuses: Status[]) => function StatusRow(s: Status | null, i: number) {
-  return (
-    <div key={s?.id ?? "new"} className="flex flex-wrap items-center gap-2 rounded-lg border p-2">
-      <form action={saveStatusAction} className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-        {s && <input type="hidden" name="id" value={s.id} />}
-        <input type="hidden" name="scope" value={scope} />
-        <fieldset className="flex gap-1" aria-label={t("projects.color")}>
-          {PICKABLE_COLORS.map((c) => (
-            <label key={c} className="grid size-7 cursor-pointer place-items-center rounded-full has-checked:ring-2 has-checked:ring-ring">
-              <input type="radio" name="color" value={c} defaultChecked={(s?.color ?? "gray") === c} className="sr-only" aria-label={t.dynamic(`projects.colors.${c}`)} />
-              <span className="size-3.5 rounded-full" style={{ background: DOT[c] }} aria-hidden />
-            </label>
-          ))}
-        </fieldset>
-        <Input name="name" defaultValue={s?.name} placeholder={s ? undefined : t("projects.newStatus")} aria-label={t("projects.statusName")} maxLength={60} required className="h-8 w-44 flex-1" />
-        <label className="flex items-center gap-1.5 text-sm">
-          <input type="checkbox" name="is_done" defaultChecked={s?.is_done} className="size-4 accent-primary" /> {t("projects.isDone")}
-        </label>
-        <SubmitButton size="sm" variant={s ? "outline" : "default"}>{s ? t("common.save") : t("projects.add")}</SubmitButton>
-      </form>
-      {s && (
-        <div className="flex gap-1">
-          {(["up", "down"] as const).map((dir) => (
-            <form key={dir} action={moveStatusAction}>
-              <input type="hidden" name="id" value={s.id} />
-              <input type="hidden" name="scope" value={scope} />
-              <input type="hidden" name="dir" value={dir} />
-              <SubmitButton size="icon-sm" variant="ghost" aria-label={t.dynamic(`projects.move.${dir}`)} disabled={dir === "up" ? i === 0 : i === statuses.length - 1}>
-                {dir === "up" ? <ArrowUpIcon /> : <ArrowDownIcon />}
-              </SubmitButton>
-            </form>
-          ))}
-          <form action={deleteStatusAction}>
-            <input type="hidden" name="id" value={s.id} />
-            <SubmitButton size="icon-sm" variant="ghost" aria-label={t("projects.deleteStatus")} disabled={statuses.length <= 1} className="text-destructive hover:text-destructive">
-              <Trash2Icon />
-            </SubmitButton>
-          </form>
-        </div>
-      )}
-    </div>
-  )
-  }
-
+  const rows = (scope: string) => (data ?? []).filter((x) => x.scope === scope).map((x) => ({ id: x.id, name: x.name, color: x.color, is_done: x.is_done }))
   return (
     <Page size="form">
       <PageHeader crumbs={[{ href: "/projects", label: t("projects.title") }, { label: t("common.settings") }]} title={t("common.settings")} />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      {(["task", "project"] as const).map((scope) => {
-        const list = (data ?? []).filter((x) => x.scope === scope)
-        const line = row(scope, list)
-        return (
-          <FormCard key={scope} id={scope === "task" ? "columns" : "project-columns"} title={t(scope === "task" ? "projects.columns" : "projects.projectColumns")} description={t(scope === "task" ? "projects.setupHint" : "projects.projectSetupHint")}>
-            {list.map(line)}
-            {line(null, -1)}
-          </FormCard>
-        )
-      })}
+      <form action={saveColumnsAction} className="grid gap-6">
+        <Section id="columns" title={t("projects.columns")} description={t("projects.setupHint")}>
+          <ColumnRows scope="task" initial={rows("task")} />
+        </Section>
+        <Section id="project-columns" title={t("projects.projectColumns")} description={t("projects.projectSetupHint")}>
+          <ColumnRows scope="project" initial={rows("project")} />
+        </Section>
+        <SaveBar />
+      </form>
     </Page>
   )
 }

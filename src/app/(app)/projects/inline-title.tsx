@@ -4,9 +4,9 @@ import { useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useT } from "@/i18n/client"
-import { renameProjectAction } from "./actions"
+import { patchProject } from "./actions"
 
-/** The project's name as the page title, editable in place: saves on blur or Enter, Escape resets. */
+/** The project's name as the page title, edited in place like every property (patchProject): saves on blur or Enter, Escape resets. */
 export function InlineTitle({ id, name, disabled }: { id: string; name: string; disabled?: boolean }) {
   const t = useT()
   const router = useRouter()
@@ -18,7 +18,11 @@ export function InlineTitle({ id, name, disabled }: { id: string; name: string; 
     const next = el.value.trim()
     if (!next || next === name) return void (el.value = name)
     start(async () => {
-      const r = await renameProjectAction(id, next)
+      const fd = new FormData()
+      fd.set("id", id)
+      fd.set("field", "name")
+      fd.set("value", next)
+      const r = await patchProject(fd)
       if (r.error) {
         toast.error(r.error)
         el.value = name

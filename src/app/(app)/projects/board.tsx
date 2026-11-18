@@ -11,15 +11,17 @@ import { Input } from "@/components/ui/input"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 import { DOT } from "@/projects/fields"
-import { createProjectAction, createTaskAction, moveProjectAction, moveTaskAction } from "./actions"
+import { createProjectAction, moveProjectAction, moveTaskAction } from "./actions"
+import { QuickAdd } from "./quick-add"
 
 export type BoardStatus = { id: string; name: string; color: string }
 export type BoardTask = { id: string; title: string; snippet: string; status_id: string; tags: string[]; due_on: string | null; done: boolean; progress: string | null; people: { id: string; initials: string; name: string }[]; href: string; color?: string; label?: string }
 type Item = { id: string; name: string; column: string; task: BoardTask }
 
 // Kanban of tasks or projects: one column per status, drag & drop between and within columns (saved at once), quick
-// add per column (`extra` = hidden fields for it, e.g. the project), a click opens the task panel / project page.
-// Readers see the board without dragging.
+// add per column (tasks stay on the board, a project opens its page; `projectId` = new tasks go into that project,
+// `mine` = assigned to me), a click opens the task panel / project page. Readers see the board without dragging.
+// Phones: one column fills the width, columns snap sideways, chips above jump to a column and show where you are.
 export function Board({
   statuses,
   tasks,
@@ -27,7 +29,8 @@ export function Board({
   back,
   today,
   kind = "task",
-  extra = {},
+  projectId,
+  mine,
 }: {
   statuses: BoardStatus[]
   tasks: BoardTask[]
@@ -35,7 +38,8 @@ export function Board({
   back: string
   today: string
   kind?: "task" | "project"
-  extra?: Record<string, string>
+  projectId?: string
+  mine?: boolean
 }) {
   const t = useT()
   const toItems = (list: BoardTask[]) => list.map((task) => ({ id: task.id, name: task.title, column: task.status_id, task }))
@@ -74,57 +78,80 @@ export function Board({
     })
   }
 
+  // Phones: which column is in view (from the scroll position), and a chip tap scrolls to a column.
+  const scroller = useRef<HTMLDivElement>(null)
+  const [current, setCurrent] = useState(0)
+  const columnAt = (i: number) => scroller.current?.firstElementChild?.children[i] as HTMLElement | undefined
+  const onScroll = () => {
+    const el = scroller.current
+    const first = columnAt(0)
+    if (!el || !first) return
+    setCurrent(Math.round(el.scrollLeft / (first.offsetWidth + 16)))
+  }
+  const count = (id: string) => items.filter((i) => i.column === id).length
+
   return (
-    <div className="-mx-1 overflow-x-auto px-1 pb-2">
-      <KanbanProvider
-        columns={columns}
-        data={items}
-        onDataChange={canManage ? change : undefined}
-        onDragStart={(e) => {
-          if (!canManage) return
-          const i = latest.current.find((x) => x.id === e.active.id)
-          from.current = i ? { id: i.id, column: i.column } : null
-        }}
-        onDragEnd={() => canManage && persist()}
-        className="w-max auto-cols-[17rem] sm:auto-cols-[19rem]"
-      >
-        {(column) => (
-          <KanbanBoard id={column.id} key={column.id} className="min-h-[60vh] bg-muted/40">
-            <KanbanHeader className="flex items-center gap-2 p-2.5 text-sm font-medium">
-              <span className="size-2.5 rounded-full" style={{ background: DOT[String(column.color)] ?? DOT.gray }} aria-hidden />
-              {column.name}
-              <span className="text-xs font-normal text-muted-foreground">{items.filter((i) => i.column === column.id).length}</span>
-            </KanbanHeader>
-            <KanbanCards id={column.id}>
-              {(item: Item) => (
-                <KanbanCard key={item.id} id={item.id} name={item.name} column={item.column}>
-                  <TaskCard task={item.task} today={today} />
-                </KanbanCard>
-              )}
-            </KanbanCards>
-            {canManage && (
-              <form action={kind === "project" ? createProjectAction : createTaskAction} className="flex gap-1.5 p-2">
-                <input type="hidden" name="status_id" value={column.id} />
-                <input type="hidden" name="back" value={back} />
-                {Object.entries(extra).map(([k, v]) => (
-                  <input key={k} type="hidden" name={k} value={v} />
+    <div className="grid min-w-0 gap-3">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:hidden" role="tablist" aria-label={t("projects.columnsNav")}>
+        {columns.map((c, i) => (
+          <button
+            key={c.id}
+            type="button"
+            role="tab"
+            aria-selected={current === i}
+            onClick={() => columnAt(i)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })}
+            className="inline-flex h-(--control-sm) shrink-0 touch-manipulation items-center gap-1.5 rounded-full border px-3 text-sm whitespace-nowrap text-muted-foreground aria-selected:border-foreground aria-selected:text-foreground active:bg-muted"
+          >
+            <span className="size-2 rounded-full" style={{ background: DOT[String(c.color)] ?? DOT.gray }} aria-hidden />
+            {c.name}
+            <span className="text-xs tabular-nums">{count(c.id)}</span>
+          </button>
+        ))}
+      </div>
+      <div ref={scroller} onScroll={onScroll} className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 max-md:snap-x max-md:snap-mandatory max-md:scroll-px-4 md:-mx-1 md:px-1">
+        <KanbanProvider
+          columns={columns}
+          data={items}
+          onDataChange={canManage ? change : undefined}
+          onDragStart={(e) => {
+            if (!canManage) return
+            const i = latest.current.find((x) => x.id === e.active.id)
+            from.current = i ? { id: i.id, column: i.column } : null
+          }}
+          onDragEnd={() => canManage && persist()}
+          className="w-max auto-cols-[calc(100vw-2rem)] md:auto-cols-[19rem]"
+        >
+          {(column) => (
+            <KanbanBoard id={column.id} key={column.id} className="min-h-[60vh] snap-start bg-muted/40">
+              <KanbanHeader className="flex items-center gap-2 p-2.5 text-sm font-medium">
+                <span className="size-2.5 rounded-full" style={{ background: DOT[String(column.color)] ?? DOT.gray }} aria-hidden />
+                {column.name}
+                <span className="text-xs font-normal text-muted-foreground">{count(column.id)}</span>
+              </KanbanHeader>
+              <KanbanCards id={column.id}>
+                {(item: Item) => (
+                  <KanbanCard key={item.id} id={item.id} name={item.name} column={item.column}>
+                    <TaskCard task={item.task} today={today} />
+                  </KanbanCard>
+                )}
+              </KanbanCards>
+              {canManage &&
+                (kind === "project" ? (
+                  <form action={createProjectAction} className="flex gap-1.5 p-2">
+                    <input type="hidden" name="status_id" value={column.id} />
+                    <input type="hidden" name="back" value={back} />
+                    <Input name="name" placeholder={t("projects.quickAddProject")} aria-label={t("projects.quickAddProject")} maxLength={200} required />
+                    <SubmitButton variant="ghost" aria-label={t("projects.add")}>
+                      +
+                    </SubmitButton>
+                  </form>
+                ) : (
+                  <QuickAdd statusId={column.id} projectId={projectId} mine={mine} className="p-2" />
                 ))}
-                <Input
-                  name={kind === "project" ? "name" : "title"}
-                  placeholder={t(kind === "project" ? "projects.quickAddProject" : "projects.quickAdd")}
-                  aria-label={t(kind === "project" ? "projects.quickAddProject" : "projects.quickAdd")}
-                  maxLength={kind === "project" ? 200 : 300}
-                  required
-                  className="h-8 text-sm"
-                />
-                <SubmitButton size="sm" variant="ghost">
-                  +
-                </SubmitButton>
-              </form>
-            )}
-          </KanbanBoard>
-        )}
-      </KanbanProvider>
+            </KanbanBoard>
+          )}
+        </KanbanProvider>
+      </div>
     </div>
   )
 }

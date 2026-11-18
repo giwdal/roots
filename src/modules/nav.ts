@@ -110,9 +110,9 @@ export const NAV: Area[] = [
     label: "projects.nav",
     icon: KanbanSquareIcon,
     children: [
-      { href: "/projects", label: "nav.overview", module: "projects", permission: "projects.view" },
-      { href: "/projects/tasks", label: "projects.allTasks", module: "projects", permission: "projects.view" },
-      { href: "/projects/settings", label: "common.settings", module: "projects", permission: "projects.manage" },
+      { href: "/projects", label: "projects.title", module: "projects", permission: "projects.view" },
+      { href: "/projects/tasks", label: "projects.tasks", module: "projects", permission: "projects.view" },
+      { href: "/projects/settings", label: "common.settings", module: "projects", permission: "projects.manage", gear: true },
     ],
   },
   {

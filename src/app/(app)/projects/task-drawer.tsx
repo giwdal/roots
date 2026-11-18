@@ -1,5 +1,5 @@
-import { Trash2Icon } from "lucide-react"
-import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { FolderKanbanIcon, Trash2Icon } from "lucide-react"
+import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { ActivityFeed } from "@/components/activity-feed"
 import { Notice } from "@/components/notice"
 import { UrlSheet } from "@/components/url-sheet"
@@ -29,24 +29,33 @@ export async function TaskDrawer({ ctx, t, id, back, basics, error, ok }: { ctx:
   const canManage = ctx.can("projects.manage")
   const here = `${back}${back.includes("?") ? "&" : "?"}task=${id}`
   const name = (uid: unknown) => b.team.find((p) => p.id === uid)?.name ?? "–"
+  const project = b.projects.find((p) => p.id === task.project_id) ?? null
   return (
     <UrlSheet
       params={["task"]}
-      title={task.title}
+      title={project?.name ?? t("projects.taskTitle")}
       wide
       meta={taskMeta(t, task)}
       menu={
-        canManage && (
+        (canManage || project) && (
           <ActionsMenu>
-            <MenuSubmit form="trash-task" icon={<Trash2Icon />} destructive>
-              {t("projects.toTrash")}
-            </MenuSubmit>
+            {project && (
+              <MenuLink href={`/projects/${project.id}`} icon={<FolderKanbanIcon />}>
+                {t("projects.openProject")}
+              </MenuLink>
+            )}
+            {project && canManage && <MenuSeparator />}
+            {canManage && (
+              <MenuSubmit form="trash-task" icon={<Trash2Icon />} destructive>
+                {t("projects.toTrash")}
+              </MenuSubmit>
+            )}
           </ActionsMenu>
         )
       }
     >
       <Notice error={error} ok={ok} />
-      <TaskEditor t={t} task={task} statuses={b.statuses} team={b.team} tags={b.tags} projects={b.projects} defs={defs} canManage={canManage} back={back} />
+      <TaskEditor t={t} task={task} statuses={b.statuses} team={b.team} tags={b.tags} project={project} defs={defs} canManage={canManage} back={back} />
       <section aria-labelledby="task-activity" className="grid gap-3 border-t pt-4">
         <h3 id="task-activity" className="text-sm font-medium">
           {t("activity.title")}

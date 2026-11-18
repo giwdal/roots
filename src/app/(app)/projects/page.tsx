@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
-import { ArchiveRestoreIcon, ListTodoIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { ArchiveRestoreIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { berlinToday } from "@/api/v1/shared"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
-import { DataTable, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, SearchBox } from "@/components/data-table"
 import { FilterMenu } from "@/components/filter-menu"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
@@ -22,16 +22,17 @@ import { ViewSegments } from "./view-segments"
 
 const VIEWS = ["board", "list", "timeline"] as const
 
-// Projects: board by project status, list or timeline; each card opens the project page. "Alle Aufgaben" is its own
-// sub-page. Old task links (/projects?task=<id>) go to the task on "Alle Aufgaben".
+// Projects: board by project status, list or timeline; each card opens the project page; ?trash=1 = the trash with
+// restore. Aufgaben is its own sub-page. Old links: /projects?task=<id> → the task on Aufgaben, ?view=trash → ?trash=1.
 export default async function ProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams
   const task = param(sp, "task")
   if (task) redirect(`/projects/tasks?task=${encodeURIComponent(task)}`)
+  if (param(sp, "view") === "trash") redirect("/projects?trash=1")
   const ctx = await requirePerm("projects.view")
   const t = await getT()
   const canManage = ctx.can("projects.manage")
-  const trash = canManage && param(sp, "view") === "trash"
+  const trash = canManage && param(sp, "trash") === "1"
   const view = VIEWS.find((v) => v === param(sp, "view")) ?? "board"
   const lead = param(sp, "lead")
   const q = param(sp, "q")?.replace(/[%,()*\\]/g, " ").trim()
@@ -77,19 +78,10 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         area="projects"
         title={trash ? `${t("projects.title")} · ${t("projects.trash")}` : t("projects.title")}
         settings={canManage && { href: "/projects/settings", label: t("common.settings") }}
-        actions={
-          !trash && (
-            <>
-              <Button variant="outline" size="sm" render={<Link href="/projects/tasks" />} nativeButton={false}>
-                <ListTodoIcon /> {t("projects.allTasks")}
-              </Button>
-            </>
-          )
-        }
         menu={
           canManage && (
             <ActionsMenu>
-              <MenuLink href={trash ? "/projects" : "/projects?view=trash"} icon={trash ? <ArchiveRestoreIcon /> : <Trash2Icon />}>
+              <MenuLink href={trash ? "/projects" : "/projects?trash=1"} icon={trash ? <ArchiveRestoreIcon /> : <Trash2Icon />}>
                 {trash ? t("projects.backToProjects") : t("projects.trash")}
               </MenuLink>
             </ActionsMenu>
@@ -105,7 +97,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           text={t("projects.emptyText")}
           action={
             canManage && (
-              <Button size="sm" render={<Link href="/projects/new" />} nativeButton={false}>
+              <Button render={<Link href="/projects/new" />} nativeButton={false}>
                 <PlusIcon /> {t("projects.newProject")}
               </Button>
             )
@@ -137,13 +129,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         </>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <SearchBox q={q} label={t("projects.searchProjects")} />
+          <ListToolbar search={<SearchBox q={q} label={t("projects.searchProjects")} />}>
             <FilterMenu param="lead" label={t("projects.lead")} allLabel={t("projects.everyone")} options={team.map((p) => ({ value: p.id, label: p.name }))} />
-            <div className="ml-auto">
+            <div className="md:ml-auto">
               <ViewSegments t={t} sp={sp} views={VIEWS} current={view} />
             </div>
-          </div>
+          </ListToolbar>
           {view === "board" ? (
             <Board kind="project" statuses={projectStatuses} tasks={projects} canManage={canManage} back={here} today={today} />
           ) : view === "timeline" ? (
@@ -170,7 +161,17 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     </span>
                   ),
                 },
-                { header: t("projects.status"), cell: (r) => projectStatuses.find((s) => s.id === r.status_id)?.name ?? "–" },
+                {
+                  header: t("projects.status"),
+                  cell: (r) => {
+                    const s = projectStatuses.find((x) => x.id === r.status_id)
+                    return (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="size-2 rounded-full" style={{ background: DOT[s?.color ?? "gray"] ?? DOT.gray }} aria-hidden /> {s?.name ?? "–"}
+                      </span>
+                    )
+                  },
+                },
                 { header: t("projects.lead"), cell: (r) => r.people[0]?.name ?? "–" },
                 {
                   header: t("projects.period"),

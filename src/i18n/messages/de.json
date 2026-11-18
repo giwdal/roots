@@ -3930,6 +3930,7 @@
     }
   },
   "search": {
+    "askSprout": "Sprout fragen: „{q}“",
     "quick": "Schnellaktionen",
     "actions": {"newContact": "Neuer Kontakt", "newEvent": "Neues Event", "scan": "Einlass öffnen", "newMembership": "Neue Mitgliedschaft", "newInvoice": "Neue Rechnung", "newOrder": "Neue Bestellung", "newProject": "Neues Projekt", "newCampaign": "Neue Kampagne"},
     "goTo": "Gehe zu",

@@ -3930,6 +3930,7 @@
     }
   },
   "search": {
+    "askSprout": "Ask Sprout: “{q}”",
     "quick": "Quick actions",
     "actions": {"newContact": "New contact", "newEvent": "New event", "scan": "Open the door", "newMembership": "New membership", "newInvoice": "New invoice", "newOrder": "New order", "newProject": "New project", "newCampaign": "New campaign"},
     "goTo": "Go to",

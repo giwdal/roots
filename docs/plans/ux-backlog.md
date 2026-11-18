@@ -89,7 +89,7 @@ Today there is no manifest, no app icons, no service worker.
       Neue Bestellung, Zeit erfassen … — only modules that are on and permitted) shown before typing; results grouped by
       area with AreaIcon, records first, then pages, then actions; a result row can act directly where safe
       (call/mail a contact, open the scanner).
-- [ ] J2 Sprout inside search: when Sprout is set up, the search field doubles as the prompt — "Frag Sprout: …" as the
+- [~] J2 (done: "Sprout fragen: …" row opens a new Sprout chat with the question; phone Sprout as full-height sheet still to check) Sprout inside search: when Sprout is set up, the search field doubles as the prompt — "Frag Sprout: …" as the
       last row (Enter on no hit or ⌘↵ asks Sprout), the answer opens the Sprout sheet with the question; on phones
       Sprout is a full-height sheet (not a side panel) reachable from the search tab and the top bar.
 - [ ] J3 Voice: dictation button in the search/Sprout field on phones (the comment form already dictates).

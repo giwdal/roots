@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { FileIcon, FileTextIcon, LayoutGridIcon, Loader2Icon, PlusIcon, ScanLineIcon, SearchIcon, type LucideIcon } from "lucide-react"
+import { FileIcon, FileTextIcon, LayoutGridIcon, Loader2Icon, PlusIcon, ScanLineIcon, SearchIcon, SproutIcon, type LucideIcon } from "lucide-react"
 import { AreaIcon } from "@/components/area-icon"
 import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components/content-sheet"
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -190,6 +190,17 @@ export function CommandSearch({ areas = [], quick = [] }: { areas?: { href: stri
           ))}
         </CommandGroup>
       ))}
+      {/* The same field asks Sprout: the question opens a new chat in the assistant panel. */}
+      {q.trim().length > 2 && (
+        <CommandGroup heading={t("sprout.name")}>
+          <CommandItem value="ask-sprout" onSelect={() => (setOpen(false), reset(), window.dispatchEvent(new CustomEvent("sprout:ask", { detail: q.trim() })))} className={row}>
+            <span className="grid size-5 shrink-0 place-items-center rounded-[0.35rem] bg-muted text-muted-foreground">
+              <SproutIcon className="size-3.5" />
+            </span>
+            <span className="min-w-0 truncate">{t("search.askSprout", { q: q.trim() })}</span>
+          </CommandItem>
+        </CommandGroup>
+      )}
     </CommandList>
   )
 

@@ -79,11 +79,11 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
             render={<button type="button" />}
             disabled={disabled}
             aria-label={t("inputs.pickDate")}
-            className="absolute top-1/2 right-1 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="absolute top-1/2 right-0.5 grid size-8 -translate-y-1/2 touch-manipulation place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <CalendarIcon className="size-4" />
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
+          <PopoverContent sheet title={t("inputs.pickDate")} className="w-auto p-0 max-md:items-center max-md:pb-4" align="end">
             <Calendar
               mode="single"
               locale={t.locale === "de" ? de : enUS}

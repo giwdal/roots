@@ -217,8 +217,14 @@ export function PageTitle({ groups, fallback }: { groups: { items: SidebarLink[]
   return (
     <span className="flex min-w-0 items-center gap-2 text-sm font-medium [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground">
       {parent.icon}
-      <span className="truncate">{parent.label}</span>
-      {sub && <span className="truncate text-muted-foreground">› {sub}</span>}
+      {/* Phones: one line, only the page you're on (the sub-page, else the area). */}
+      <span className={sub ? "truncate max-md:hidden" : "truncate"}>{parent.label}</span>
+      {sub && (
+        <span className="truncate text-muted-foreground max-md:text-foreground">
+          <span className="max-md:hidden">› </span>
+          {sub}
+        </span>
+      )}
     </span>
   )
 }

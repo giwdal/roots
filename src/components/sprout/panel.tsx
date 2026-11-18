@@ -137,7 +137,7 @@ export function SproutPanel({ orgId }: { orgId: string }) {
                     variant="ghost"
                     size="icon-xs"
                     aria-label={t("sprout.deleteChat")}
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
                     onClick={() =>
                       start(async () => {
                         await deleteChat(c.id)

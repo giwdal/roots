@@ -4,6 +4,7 @@ import { AppSidebar, PageTitle, type Me, type SidebarLink } from "@/components/a
 import { Shortcuts } from "@/components/shortcuts"
 import { Separator } from "@/components/ui/separator"
 import { ConfirmHost } from "@/components/confirm-submit"
+import { KeyboardInset } from "@/components/keyboard-inset"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { MobileBar } from "@/components/mobile-bar"
 import { MobileMenu } from "@/components/mobile-menu"
@@ -48,18 +49,19 @@ export async function AppShell({
           {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
           <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
           {/* Where am I: the shown record page's crumbs (<TopbarCrumbs>) or the area › page title. */}
-          <TopbarTitle>{bar ?? <PageTitle groups={groups} fallback={title} />}</TopbarTitle>
+          <TopbarTitle groups={groups}>{bar ?? <PageTitle groups={groups} fallback={title} />}</TopbarTitle>
           {/* The page header's gear / actions / ⋯ / primary land here (<HeaderActions>). */}
           <div id="topbar-actions" className="flex shrink-0 items-center gap-2 empty:hidden" />
           {search && <SproutButton />}
         </header>
-        <main className={`min-w-0 flex-1 px-4 pt-4 pb-6 md:px-8 md:pt-6 md:pb-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>
+        <main className={`min-w-0 flex-1 max-md:overflow-x-clip px-4 pt-4 pb-6 md:px-8 md:pt-6 md:pb-8${search ? " max-md:pb-[calc(var(--mobile-bar)+1rem)] bar-tight" : ""}`}>
           {children}
           <Shortcuts />
           <ConfirmHost />
+          <KeyboardInset />
         </main>
         {search && <CommandSearch />}
-        {search && <MobileBar />}
+        {search && <MobileBar unread={groups.flatMap((g) => g.items).find((i) => i.href === "/notifications")?.count ?? 0} />}
         {search && <MobileMenu header={header} switchOrgs={switchOrgs} groups={groups} me={me} />}
       </SidebarInset>
       {search && <SproutPanel key={orgId} orgId={orgId ?? ""} />}

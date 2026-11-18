@@ -53,7 +53,7 @@ export function ShareButton({
       <PopoverTrigger render={<Button type="button" size="sm" variant="outline" />}>
         {effective === "team" ? <Share2Icon /> : <Icon />} {t("wiki.share.button")}
       </PopoverTrigger>
-      <PopoverContent align="end" className="grid w-80 gap-4">
+      <PopoverContent sheet align="end" className="grid w-80 gap-4 max-md:pb-4">
         <form action={setVisibilityAction} className="grid gap-3">
           <input type="hidden" name="id" value={pageId} />
           <p className="text-sm font-medium">{t("wiki.share.who")}</p>

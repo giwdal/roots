@@ -201,7 +201,9 @@
     "mainNav": "Main",
     "search": "Search",
     "menu": "Menu",
-    "tabs": "Navigation"
+    "tabs": "Navigation",
+    "backTo": "Back to {label}",
+    "menuUnread": "Menu, unread notifications"
   },
   "home": {
     "role": "You're signed in as {role}.",
@@ -3620,7 +3622,8 @@
     "pages": "Pages",
     "empty": "Nothing found.",
     "hint": "Type to find contacts, members, events, invoices, forms, files and pages.",
-    "loading": "Searching …"
+    "loading": "Searching …",
+    "recent": "Recently opened"
   },
   "waitlist": {
     "title": "Sold out – waiting list",

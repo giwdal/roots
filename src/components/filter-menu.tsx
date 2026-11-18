@@ -9,7 +9,8 @@ import { useT } from "@/i18n/client"
 
 /**
  * A list filter as a dropdown button ("Tag ▾" → "Tag: Vorstand ▾"): writes `?<param>=<value>`, keeps the other
- * params, restarts paging. Use it next to the <SearchBox> instead of rows of chips.
+ * params, restarts paging. Use it next to the <SearchBox> instead of rows of chips. Phones: an action sheet titled
+ * with the label (DropdownMenuContent).
  */
 export function FilterMenu({ param, label, options, allLabel }: { param: string; label: string; options: { value: string; label: string }[]; allLabel?: string }) {
   const t = useT()
@@ -26,11 +27,11 @@ export function FilterMenu({ param, label, options, allLabel }: { param: string;
   const active = options.find((o) => o.value === current)
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button size="sm" variant={active ? "secondary" : "outline"} />}>
+      <DropdownMenuTrigger render={<Button size="sm" variant={active ? "secondary" : "outline"} className="shrink-0" />}>
         {active ? `${label}: ${active.label}` : label}
         <ChevronDownIcon className="opacity-60" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-80 min-w-48 overflow-y-auto">
+      <DropdownMenuContent align="start" title={label} className="max-h-80 min-w-48 overflow-y-auto">
         <DropdownMenuItem render={<Link href={href(null)} scroll={false} />}>
           <CheckIcon className={active ? "invisible" : ""} /> {allLabel ?? t("common.all")}
         </DropdownMenuItem>

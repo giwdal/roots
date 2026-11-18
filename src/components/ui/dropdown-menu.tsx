@@ -4,6 +4,8 @@ import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "cn"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
+import { useT } from "@/i18n/client"
+import { usePhone } from "@/lib/use-phone"
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -17,32 +19,53 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
+// Phones (below md): unless `sheet={false}`, the menu is an action sheet: pinned to the bottom with a dim backdrop,
+// grab handle, optional `title`, big rows (CSS in globals.css, [data-phone-sheet]) and "Abbrechen" at the end.
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
   className,
+  sheet = true,
+  title,
+  children,
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<
     MenuPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  > & { sheet?: boolean; title?: React.ReactNode }) {
+  const t = useT()
+  const phone = usePhone()
   return (
     <MenuPrimitive.Portal>
+      {sheet && (
+        <MenuPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/20 duration-200 md:hidden data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none" />
+      )}
       <MenuPrimitive.Positioner
         className="isolate z-50 outline-none"
         align={align}
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        data-phone-sheet={sheet ? "" : undefined}
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn("z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95", className )}
           {...props}
-        />
+        >
+          {sheet && <div aria-hidden className="mx-auto mt-1 mb-2 h-1.5 w-10 shrink-0 rounded-full bg-muted-foreground/30 md:hidden" />}
+          {sheet && title && <div className="truncate px-3 pb-1 text-sm font-medium text-muted-foreground md:hidden">{title}</div>}
+          {children}
+          {sheet && phone && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="justify-center font-medium">{t("common.cancel")}</DropdownMenuItem>
+            </>
+          )}
+        </MenuPrimitive.Popup>
       </MenuPrimitive.Positioner>
     </MenuPrimitive.Portal>
   )

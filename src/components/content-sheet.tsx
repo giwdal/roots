@@ -43,7 +43,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
       onOpenChangeComplete={(o) => !o && onClosed()}
     >
       <Drawer.Portal>
-        <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
+        <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0 motion-reduce:animate-none motion-reduce:transition-none" />
         <Drawer.VirtualKeyboardProvider>
           {/* The Viewport owns swipe handling; click-through so the backdrop and the page still get presses. */}
           <Drawer.Viewport className="pointer-events-none fixed inset-0 z-50">
@@ -57,7 +57,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
               window.addEventListener("resize", update)
               return () => window.removeEventListener("resize", update)
             }}
-            className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none"
+            className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none motion-reduce:animate-none motion-reduce:transition-none"
           >
             {/* Title bar: grab handle (phones), title (+ actions, ⋯) left, close right; stays on top while the content scrolls. */}
             <div className={cn("sticky top-0 z-30 bg-popover/95 backdrop-blur", (header || closeButton) && "border-b")}>

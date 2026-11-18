@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
 import { HeaderActions } from "@/components/header-actions"
+import { PhoneMenu } from "@/components/actions-menu"
 import { PrimaryAction } from "@/components/primary-action"
 import { TopbarCrumbs } from "@/components/topbar-crumbs"
 
@@ -82,7 +83,14 @@ export function PageHeader({
         </div>
         {(actions || menu || primary || settings) && (
           <div className={cn("flex flex-wrap items-center gap-2 max-md:contents", bare && "contents")}>
-            <HeaderActions>
+            {/* Phones: one ⋯ in the top bar whose sheet holds the gear, the actions, the menu's items and a form-button primary. */}
+            <HeaderActions
+              phone={
+                <PhoneMenu settings={settings || undefined} actions={actions || undefined} primary={!isLink(primary) && primary ? (primary as React.ReactNode) : undefined}>
+                  {menu || undefined}
+                </PhoneMenu>
+              }
+            >
             {settings && (
               <Tooltip>
                 <TooltipTrigger render={<Button render={<Link href={settings.href} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={settings.label} />}>
@@ -94,8 +102,8 @@ export function PageHeader({
             {actions}
             {menu}
             </HeaderActions>
-            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes to the bar everywhere. */}
-            <HeaderActions desktop={isLink(primary)}>
+            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes into the phone ⋯ sheet. */}
+            <HeaderActions desktop={isLink(primary)} phone={isLink(primary) ? undefined : false}>
             {isLink(primary) && primary.more?.length ? (
               <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />
             ) : isLink(primary) && PrimaryIcon ? (

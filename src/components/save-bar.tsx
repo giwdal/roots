@@ -115,7 +115,7 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
       data-slot={target ? "save-bar" : undefined}
       className={
         target
-          ? "sticky bottom-0 z-20 mt-auto border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          ? "sticky bottom-0 max-md:bottom-(--keyboard) z-20 mt-auto border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           : "sticky bottom-0 z-20 -mx-6 mt-2 border-t bg-popover/95 backdrop-blur"
       }
     >

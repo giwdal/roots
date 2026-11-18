@@ -26,7 +26,7 @@ export function ImagePick({ name, images, defaultValue, disabled, label, noneLab
           {/* eslint-disable-next-line @next/next/no-img-element -- public bucket URL */}
           {current ? <img src={current.url} alt="" className="size-full object-cover" /> : <ImageIcon className="size-4" />}
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2">
+        <PopoverContent sheet className="w-auto p-2">
           <div className="grid grid-cols-4 gap-2">
             <button type="button" onClick={() => pick("")} aria-label={noneLabel} aria-pressed={!value} className={cn(thumb, "grid place-items-center text-muted-foreground", !value ? "border-primary" : "border-transparent bg-muted")}>
               <XIcon className="size-4" />

@@ -201,7 +201,9 @@
     "mainNav": "Hauptnavigation",
     "search": "Suche",
     "menu": "Menü",
-    "tabs": "Navigation"
+    "tabs": "Navigation",
+    "backTo": "Zurück zu {label}",
+    "menuUnread": "Menü, ungelesene Benachrichtigungen"
   },
   "home": {
     "role": "Du bist angemeldet als {role}.",
@@ -3620,7 +3622,8 @@
     "pages": "Seiten",
     "empty": "Nichts gefunden.",
     "hint": "Tippe, um Kontakte, Mitglieder, Events, Rechnungen, Formulare, Dateien und Seiten zu finden.",
-    "loading": "Suche …"
+    "loading": "Suche …",
+    "recent": "Zuletzt geöffnet"
   },
   "waitlist": {
     "title": "Ausgebucht – Warteliste",

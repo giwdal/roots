@@ -100,6 +100,26 @@ Glossary: Veranstaltung → **Event**; Einlass (area), einchecken (action), Chec
 Mitgliedschaft (one period); Rechnungen (area: Angebote + Rechnungen); Vorlagen = letters (Dateien), E-Mail-Vorlagen
 (E-Mail).
 
+## 6b. How modules work together
+
+The modules are one tool, not 20 apps. Four hubs hold them together; every record shows its connections to records of
+*other active modules* in one place ("Verknüpft" card / tab on the record page, hidden when empty or the module is off),
+and every connection is visible from **both** sides.
+
+| Hub | Record | Should show / offer (only modules that are on) |
+|---|---|---|
+| **Person** | Kontakt | membership + open dues, tickets & guest-list entries, shop orders, invoices & payments, course places, rentals, form submissions, mails sent, employee/shift profile, files, notes/activity. Actions: Mail, Rechnung, Ticket/Gast hinzufügen, Kurs anmelden |
+| **Event** | Event | sales (tickets, shop at the door), check-ins, guest lists, lineup, shifts for that day, linked project/tasks, campaigns to buyers, forms, cash book. Actions: Schichten planen, Kampagne an Käufer, Gästeliste |
+| **Money** | Bestellung → Zahlung → Rechnung → Kassenbuch | each step links the next and the previous (order ↔ payment ↔ invoice ↔ cash entry), and back to the source (event, product, member, rental, course) and the person |
+| **Time** | Kalender | everything dated; every entry opens its record; creating from a day picks the module |
+
+Rules:
+- Start cross-module work where the person already is (from an event: "Schichten planen", not "go to Schichten, pick the event").
+- A link goes to the record, or to the other module's list *filtered* to this record (`?event=`, `?contact=`), never an unfiltered list. Add the filter param to the target list when it's missing.
+- Never show a dead link or empty card for a module that is off or not permitted (`ctx.modules`, `ctx.can`).
+- Same entity, one place to edit it: buyer mail texts, stock, door settings each live in exactly one module; the others link there.
+- Gaps found in the map (to close in the area passes): Kontakte has no shop orders, courses, payments, shifts/HR; Zahlungen ↔ Rechnungen not linked; Mitglieder → Beiträge → Zahlungen not linked; Events ↔ Kampagnen/Formulare/Projekte/Schichten one-way or missing; HR ↔ Kontakte/Schichten-Team link not settable; Kurse/Vermietung → Rechnungen missing.
+
 ## 7. Phones (native-app feel)
 
 - Check every changed screen at 375 px: header facts first, primary action as the round button, tables as cards, sheets
@@ -121,5 +141,6 @@ Mitgliedschaft (one period); Rechnungen (area: Angebote + Rechnungen); Vorlagen 
 9. Vermietung · Kurse
 10. Settings · Dateien · Wiki · Automationen · Benachrichtigungen · Start · Admin
 11. Shell: ⌘K sources, phone inbox, shortcuts help, org creation for single-org people
+12. Connections pass: walk §6b across all modules and close the remaining gaps (both directions)
 
 Public pages (`public.json`) follow later.

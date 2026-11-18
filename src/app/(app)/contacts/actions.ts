@@ -60,7 +60,9 @@ async function patch(fd: FormData, fields: string[]): Promise<{ error?: string }
   const ctx = await requirePerm("crm.manage")
   const t = await getT()
   const id = idOf(fd)
-  if (!ctx.modules.has("crm") || !/^[0-9a-f-]{36}$/.test(id) || !fields.length || fields.some((f) => !PATCHABLE.has(f) && !/^custom\.[a-z0-9_]+$/.test(f))) return { error: t("errors.invalid_input") }
+  // "value" stands for the InlineField's one value; its column is in `field`.
+  const names = fields.map((f) => (f === "value" ? String(fd.get("field") ?? "") : f))
+  if (!ctx.modules.has("crm") || !/^[0-9a-f-]{36}$/.test(id) || !names.length || names.some((f) => !PATCHABLE.has(f) && !/^custom\.[a-z0-9_]+$/.test(f))) return { error: t("errors.invalid_input") }
   const [{ data: c }, defs] = await Promise.all([ctx.supabase.from("contacts").select("*").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(), loadFields(ctx.supabase, ctx.org.id, "contacts")])
   if (!c) return { error: t("errors.not_allowed") }
   const custom = (c.custom ?? {}) as Record<string, unknown>
@@ -72,7 +74,6 @@ async function patch(fd: FormData, fields: string[]): Promise<{ error?: string }
   for (const f of fields) current[f === "value" ? String(fd.get("field")) : f] = String(fd.get(f) ?? "")
   const r = readContact((k) => current[k] ?? "", defs)
   if ("error" in r) return { error: fieldError(t, r) }
-  const names = fields.map((f) => (f === "value" ? String(fd.get("field")) : f))
   const update = Object.fromEntries(names.map((n) => (n.startsWith("custom.") ? ["custom", r.row.custom] : [n, r.row[n as keyof typeof r.row]])))
   const { error } = await ctx.supabase.from("contacts").update(update as TablesUpdate<"contacts">).eq("id", id).eq("org_id", ctx.org.id)
   if (error) return { error: uniqueError(t, error) }

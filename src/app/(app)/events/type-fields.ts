@@ -1,13 +1,12 @@
 // Event types: the rules the settings page and the API share (pure). The type's defaults are copied into a new event.
 import { STATUS_COLORS } from "../../../projects/fields.ts"
+import { EVENT_SLUG } from "./fields.ts"
 import { slugify } from "./slug.ts"
 
 export type TypeInput = { name?: unknown; slug?: unknown; color?: unknown; active?: unknown; counts_visit?: unknown; capacity?: unknown }
 export type TypeDefaults = { counts_visit: boolean; capacity: number | null }
 export type TypeRow = TypeDefaults & { name: string; slug: string; color: string | null; active: boolean }
 
-// Same shape as EVENT_SLUG in fields.ts and the DB check (fields.ts imports ./slug without .ts, so node can't load it here).
-const SLUG = /^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$/
 const bool = (v: unknown, fallback: boolean) => (v === undefined ? fallback : v === true || v === "on")
 
 /** Validates a type from a form or the API; `existingSlugs` = the org's other slugs (an empty slug is made from the name, then numbered). */
@@ -20,7 +19,7 @@ export function readEventType(input: TypeInput, existingSlugs: string[]): { row:
   if (capRaw !== null && !(Number.isInteger(capRaw) && capRaw >= 1)) return { error: "errors.invalid_input" }
   let slug = String(input.slug ?? "").trim()
   if (slug) {
-    if (!SLUG.test(slug)) return { error: "errors.invalid_input" }
+    if (!EVENT_SLUG.test(slug)) return { error: "errors.invalid_input" }
   } else {
     const base = slugify(name)
     slug = base

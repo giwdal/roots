@@ -1419,6 +1419,8 @@ begin
     reset role;
     select count(*) into n from public.pay_orders where org_id = org_a and source_module = 'members' and (metadata->>'override')::boolean; assert n = 1, 'override is recorded on the order';
     assert not has_function_privilege('anon', 'public.member_door(uuid, text, uuid, boolean, boolean)', 'execute'), 'anon must not run member_door';
+    update public.events set deleted_at = now() where id = v_e1;
+    select (r->>'visits')::int into n from public.member_door_rows(org_a, v_e2, v_c) r; assert n = 2, 'visits at a trashed event do not count';
   end;
 
   -- Event types: per org, an event may only use its own org's type, a type in use can't be deleted

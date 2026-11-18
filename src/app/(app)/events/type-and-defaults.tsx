@@ -10,7 +10,7 @@ export type TypeOption = { id: string; name: string; slug: string; counts_visit:
 
 // New event: the type comes first and prefills capacity and "counts towards visit limits" in the browser (no reload, so
 // nothing typed is lost). A field the person already touched keeps their value when they switch the type.
-// shortcut: Choice with more than 15 types becomes a search box that doesn't fire change events; no prefill then, raise the limit if an org gets there.
+// shortcut: with more than 15 types Choice becomes a search box that does not fire change events, so no prefill then; raise the limit if an org gets there.
 export function TypeAndDefaults({ types, initialSlug, showCounts }: { types: TypeOption[]; initialSlug?: string; showCounts: boolean }) {
   const t = useT()
   const first = types.find((x) => x.slug === initialSlug)
@@ -32,7 +32,7 @@ export function TypeAndDefaults({ types, initialSlug, showCounts }: { types: Typ
         }}
       >
         <Label htmlFor="ev-type">{t("eventsPage.type")}</Label>
-        <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} defaultValue={first?.id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
+        <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} dropdown defaultValue={first?.id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>

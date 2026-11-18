@@ -53,7 +53,7 @@ export async function EventForm({ t, action, ev, disabled, initialType }: { t: T
           {ev && types.length > 0 && (
             <div className="grid gap-2">
               <Label htmlFor="ev-type">{t("eventsPage.type")}</Label>
-              <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} defaultValue={ev.event_type_id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
+              <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} dropdown defaultValue={ev.event_type_id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">

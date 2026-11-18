@@ -3,6 +3,7 @@
     "description": "Run your club, business or events in one place."
   },
   "common": {
+    "emptyValue": "Empty",
     "changeImage": "Change picture",
     "confirmRemoveImage": "Remove the picture?",
     "editField": "Edit {field}",

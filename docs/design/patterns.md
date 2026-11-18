@@ -172,10 +172,15 @@ Desktop (xl)                                         Tablet / phone
   stats → properties (first 4, rest behind "Alle anzeigen") → main sections → connections.
 - Simple records (a few fields, no related content) are one column, or a dialog (`?edit=`) if they don't need a page.
 
-**Editing**
+**Editing (the Linear way)** — sources: Linear changelog "Inline editing" (https://linear.app/changelog/2022-06-09-inline-editing:
+"just click on the issue description or title to start editing. Your changes are saved automatically"), Linear docs
+"Edit issues" (https://linear.app/docs/editing-issues) and "Issue properties" (https://linear.app/docs/issue-property),
+2026 UI refresh (properties integrated closely with the main content).
 - Single values (name, email, phone, dates, status, a choice) are edited **in place** with `<InlineField action id field
-  value kind>` (`src/components/inline-field.tsx`): pencil on hover (always visible on touch), Enter / leaving saves,
-  Esc cancels, error → toast. The area provides a `patch<Entity>` server action that validates the one field with the
+  value kind>` (`src/components/inline-field.tsx`): the value looks like plain text (no border, soft hover); a click or
+  Tab edits it, Enter or leaving saves automatically, Esc restores; no save/cancel buttons; a small spinner while it
+  saves; errors → toast and the old value. Choices (status, type, person from a short list) open a small menu with a
+  filter and a check on the current value; on phones that menu is a bottom sheet. Empty values show "Leer" in muted text. The area provides a `patch<Entity>` server action that validates the one field with the
   module's `fields.ts` and updates only that column.
 - Compound values (address, bank details, a schedule) open a compact dialog (`?edit=<part>`) with those fields and a
   SaveBar. Long text (description) edits in place as a textarea / rich text block.

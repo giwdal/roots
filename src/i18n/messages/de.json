@@ -3,6 +3,7 @@
     "description": "Verein, Betrieb oder Events an einem Ort organisieren."
   },
   "common": {
+    "emptyValue": "Leer",
     "changeImage": "Bild ändern",
     "confirmRemoveImage": "Bild entfernen?",
     "editField": "{field} bearbeiten",

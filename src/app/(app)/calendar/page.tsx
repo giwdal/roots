@@ -52,7 +52,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
     { source: "tasks", perm: "projects.manage", href: `/projects/tasks?${q({ new: "task", due: day })}` },
     { source: "projects", perm: "projects.manage", href: `/projects/new?${q({ start: day })}` },
     { source: "rentals", perm: "rentals.manage", href: `/rentals/r/new?${q({ start: evening, end: late })}` },
-    { source: "courses", perm: "courses.manage", href: "/courses/new" },
+    { source: "courses", perm: "courses.manage", href: `/courses/new?${q({ start: evening })}` },
   ]
   const create = options.filter((c) => sources.includes(c.source) && ctx.can(c.perm))
   const newHref = withParams(sp, { new: "entry", start: undefined, end: undefined })

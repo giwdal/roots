@@ -106,8 +106,9 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
       return out
     },
     courses: async () => {
-      const { data } = await ctx.supabase.from("course_sessions").select("id, course_id, starts_at, ends_at, courses!inner(title, deleted_at)").eq("org_id", org).is("courses.deleted_at", null).lt("starts_at", to).gte("starts_at", from).limit(2000)
-      return (data ?? []).map((c) => ({ source: "courses", id: c.id, title: c.courses.title, starts_at: c.starts_at, ends_at: c.ends_at, all_day: false, color: COLOR.courses, href: `/courses/${c.course_id}` }))
+      const { data } = await ctx.supabase.from("course_sessions").select("id, course_id, starts_at, ends_at, courses!inner(title, deleted_at, track_attendance)").eq("org_id", org).is("courses.deleted_at", null).lt("starts_at", to).gte("starts_at", from).limit(2000)
+      // A date opens its attendance page, or its sheet on the course when attendance isn't taken.
+      return (data ?? []).map((c) => ({ source: "courses", id: c.id, title: c.courses.title, starts_at: c.starts_at, ends_at: c.ends_at, all_day: false, color: COLOR.courses, href: c.courses.track_attendance ? `/courses/${c.course_id}/sessions/${c.id}` : `/courses/${c.course_id}?edit=${c.id}` }))
     },
   }
   const lists = await Promise.all(only.map((s) => load[s]().catch((e) => (console.error("calendar", s, e), [] as CalendarEntry[]))))

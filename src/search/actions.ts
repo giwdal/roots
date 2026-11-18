@@ -4,23 +4,12 @@ import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
 import { APP_HOME } from "@/lib/url"
 import { visibleNav } from "@/modules/nav"
+import { areaSettings, settingsFor } from "@/settings/sections"
 
 export type SearchItem = { id: string; title: string; detail?: string; href: string }
 export type SearchGroup = { key: string; label: string; items: SearchItem[] }
 
 const PER_GROUP = 5
-const SETTINGS = [
-  { key: "profile" },
-  { key: "general" },
-  { key: "team" },
-  { key: "roles" },
-  { key: "modules" },
-  { key: "fields" },
-  { key: "locations" },
-  { key: "integrations", permission: "org.integrations.manage" },
-  { key: "api", permission: "org.integrations.manage" },
-]
-
 /**
  * ⌘K search in the active org: pages (navigation + settings) by label, records by name/number. Every source checks
  * module + permission; RLS still applies. All queries run in parallel (one round trip).
@@ -48,22 +37,13 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     ...visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) =>
       a.children.map((c) => ({ id: c.href, title: c.label === "nav.overview" ? t.dynamic(a.label) : t.dynamic(c.label), detail: a.children.length > 1 ? t.dynamic(a.label) : undefined, href: c.href })),
     ),
-    ...(ctx.can("org.files.view")
-      ? [
-          { id: "files", title: t("files.title"), href: "/files" },
-          { id: "templates", title: t("letters.title"), detail: t("files.title"), href: "/files/templates" },
-        ]
-      : []),
     ...(on("crm", "crm.manage") ? [{ id: "contacts-import", title: t("contacts.import"), detail: t("contacts.title"), href: "/contacts/import" }] : []),
     // Views that aren't sidebar entries: Schichten › Meine, Personen › Organigramm.
     ...(on("shifts", "shifts.self") ? [{ id: "shifts-me", title: t("shifts.tabs.me"), detail: t("shifts.nav"), href: "/shifts/me" }] : []),
     ...(on("hr", "hr.view") ? [{ id: "hr-chart", title: t("hr.views.chart"), detail: t("hr.nav"), href: "/hr/chart" }] : []),
-    ...SETTINGS.filter((s) => !s.permission || ctx.can(s.permission)).map((s) => ({
-      id: `settings-${s.key}`,
-      title: t.dynamic(`settings.tabs.${s.key}`),
-      detail: t("shell.settings"),
-      href: `/settings/${s.key}`,
-    })),
+    ...settingsFor(ctx.can, areaSettings((m) => ctx.modules.has(m), ctx.can).length > 0).flatMap((g) =>
+      g.sections.map((s) => ({ id: `settings-${s.key}`, title: t.dynamic(`settings.tabs.${s.key}`), detail: t("shell.settings"), href: `/settings/${s.key}` })),
+    ),
   ]
   const pageHits = pages.filter((p, i, all) => all.findIndex((x) => x.href === p.href) === i && `${p.title} ${p.detail ?? ""}`.toLocaleLowerCase(t.locale).includes(lower))
 

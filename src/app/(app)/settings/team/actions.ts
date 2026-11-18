@@ -43,6 +43,17 @@ export async function removeMember(memberId: string) {
   back(PATH, { ok: t("members.removed") })
 }
 
+/** Profil › Deine Organisationen › Verlassen: the person's own membership in the active org. */
+export async function leaveOrg() {
+  const ctx = await getContext()
+  const t = await getT()
+  const { error, count } = await ctx.supabase.from("org_members").delete({ count: "exact" }).eq("org_id", ctx.org.id).eq("user_id", ctx.userId)
+  if (error || !count) back("/settings/profile", { error: error ? dbError(t, error) : t("errors.not_allowed") })
+  deliverSoon()
+  ;(await cookies()).delete(ACTIVE_ORG_COOKIE)
+  redirect(APP_HOME)
+}
+
 export type InviteState = { error?: string; link?: string; email?: string; mailFailed?: boolean }
 
 export async function createInvite(_: InviteState, formData: FormData): Promise<InviteState> {

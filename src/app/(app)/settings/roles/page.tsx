@@ -1,15 +1,18 @@
+import Link from "next/link"
+import { redirect } from "next/navigation"
 import { DataTable } from "@/components/data-table"
 import { UrlSheet } from "@/components/url-sheet"
 import { getT } from "@/i18n/server"
-import { getContext } from "@/lib/context"
+import { requirePerm } from "@/lib/context"
 import { grantedByModule, roleSummary } from "@/lib/roles"
 import { param, withParams } from "@/lib/url"
 
 // Read-only: roles are defined by platform admins (/admin/roles); orgs assign them under Members.
 export default async function RolesSettings({ searchParams }: PageProps<"/settings/roles">) {
-  const ctx = await getContext()
+  const ctx = await requirePerm("org.members.manage")
   const t = await getT()
   const sp = await searchParams
+  if (param(sp, "view")) redirect(`/settings/roles?edit=${param(sp, "view")}`) // old sheet param
   const [{ data: roles }, { data: members }] = await Promise.all([
     ctx.supabase
       .from("roles")
@@ -20,7 +23,7 @@ export default async function RolesSettings({ searchParams }: PageProps<"/settin
     ctx.supabase.from("org_members").select("role_id").eq("org_id", ctx.org.id),
   ])
   const memberCount = (id: string) => members?.filter((m) => m.role_id === id).length ?? 0
-  const viewing = roles?.find((r) => r.id === param(sp, "view"))
+  const viewing = roles?.find((r) => r.id === param(sp, "edit"))
 
   return (
     <div className="grid gap-4">
@@ -28,24 +31,29 @@ export default async function RolesSettings({ searchParams }: PageProps<"/settin
       <DataTable
         rows={roles ?? []}
         rowKey={(r) => r.id}
-        rowHref={(r) => withParams(sp, { view: r.id })}
+        rowHref={(r) => withParams(sp, { edit: r.id })}
         empty={t("roles.empty")}
         columns={[
           { header: t("roles.name"), cell: (r) => <span className="font-medium">{t.pick(r.name)}</span> },
           { header: t("roles.permissions"), cell: (r) => roleSummary(t, r) },
-          { header: t("roles.members"), cell: (r) => memberCount(r.id), className: "tabular-nums" },
+          { header: t("roles.members"), cell: (r) => memberCount(r.id), className: "tabular-nums text-right" },
         ]}
       />
 
       {viewing && (
-        <UrlSheet params={["view"]} title={t.pick(viewing.name)} description={t("roles.canDo")}>
+        <UrlSheet params={["edit"]} title={t.pick(viewing.name)} description={t("roles.canDo")}>
+          {memberCount(viewing.id) > 0 && (
+            <Link href={`/settings/team?role=${viewing.id}`} className="link text-sm">
+              {t("roles.whoHasIt", { count: memberCount(viewing.id) })}
+            </Link>
+          )}
           {grantedByModule(viewing).length ? (
             grantedByModule(viewing)
               .filter((g) => g.key === "org" || ctx.modules.has(g.key))
               .map((g) => (
                 <section key={g.key} className="grid gap-1.5">
-                  <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t.dynamic(`modules.${g.key}.name`)}</h3>
-                  <ul className="grid gap-1 text-sm">
+                  <h3 className="text-sm font-medium">{t.dynamic(`modules.${g.key}.name`)}</h3>
+                  <ul className="grid gap-1 text-sm text-muted-foreground">
                     {g.permissions.map((p) => (
                       <li key={p}>{t.dynamic(`permissions.${p}`)}</li>
                     ))}

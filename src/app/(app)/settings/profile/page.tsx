@@ -1,42 +1,62 @@
-import { ProfileForms } from "@/app/account/profile-forms"
-import { FormCard } from "@/components/page"
-import { Passkeys } from "@/components/passkeys"
+import { CheckIcon, LogOutIcon } from "lucide-react"
+import { ProfileRows } from "@/app/account/profile-forms"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { Notice } from "@/components/notice"
+import { Picture } from "@/components/picture"
+import { AddLink, RowGroup } from "@/components/section"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
-import { AiKeys } from "../ai-keys"
-import { ConnectAi } from "../connect-ai"
-import { Connections } from "../connections"
+import { param } from "@/lib/url"
+import { switchOrg } from "../../actions"
+import { leaveOrg } from "../team/actions"
 
+// Du › Profil: picture, name, language, look; the orgs this account belongs to (switch, leave, start another).
 export default async function ProfileSettings({ searchParams }: PageProps<"/settings/profile">) {
-  const ctx = await getContext()
-  const t = await getT()
+  const [ctx, t, sp] = await Promise.all([getContext(), getT(), searchParams])
   return (
     <div className="grid gap-8">
-      <ProfileForms sp={await searchParams} path="/settings/profile" />
-      {/* Which organisations this account belongs to (switch in the sidebar). */}
-      <FormCard id="my-orgs" title={t("account.orgs")}>
-        <ul className="grid gap-1.5">
-          {ctx.orgs.map((o) => (
-            <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
-              <span className="font-medium">{o.name}</span>
-              {o.id === ctx.org.id && (
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {ctx.role.name}
-                  <Badge variant="secondary">{t("account.currentOrg")}</Badge>
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-        <p className="text-xs text-muted-foreground">{t("account.orgsHint")}</p>
-      </FormCard>
-      <FormCard id="passkeys" title={t("passkeys.title")} description={t("passkeys.hint")}>
-        <Passkeys />
-      </FormCard>
-      <AiKeys ctx={ctx} />
-      <ConnectAi />
-      <Connections ctx={ctx} scope="mine" back="/settings/profile" />
+      <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+      <ProfileRows path="/settings/profile" />
+      <RowGroup id="my-orgs" title={t("account.orgs")}>
+        {ctx.orgs.map((o) => {
+          const current = o.id === ctx.org.id
+          const body = (
+            <>
+              <Picture path={o.logo_path} name={o.name} size="sm" square />
+              <span className="grid min-w-0 flex-1 text-left">
+                <span className="truncate font-medium">{o.name}</span>
+                {current && <span className="truncate text-xs text-muted-foreground">{ctx.role.name}</span>}
+              </span>
+            </>
+          )
+          return current ? (
+            <div key={o.id} className="flex min-h-12 items-center gap-3 px-4 py-2 text-sm">
+              {body}
+              <Badge variant="success">
+                <CheckIcon /> {t("account.currentOrg")}
+              </Badge>
+              <form id="leave-org" action={leaveOrg} hidden />
+              <ActionsMenu>
+                <MenuSubmit form="leave-org" icon={<LogOutIcon />} destructive confirm="members.confirmLeave">
+                  {t("account.leaveOrg")}
+                </MenuSubmit>
+              </ActionsMenu>
+            </div>
+          ) : (
+            // Another org: the row switches to it.
+            <form key={o.id} action={switchOrg.bind(null, o.id)}>
+              <button type="submit" className="flex min-h-12 w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted active:bg-muted">
+                {body}
+                <span className="text-xs text-[var(--link)]">{t("account.switchOrg")}</span>
+              </button>
+            </form>
+          )
+        })}
+        <div className="px-4 py-2">
+          <AddLink href="/onboarding?new=1">{t("shell.newOrg")}</AddLink>
+        </div>
+      </RowGroup>
     </div>
   )
 }

@@ -52,6 +52,7 @@ export function Passkeys() {
                       size="icon-sm"
                       variant="ghost"
                       aria-label={t("passkeys.remove")}
+                      data-confirm="passkeys.confirmRemove"
                       disabled={pending}
                       className="text-destructive hover:text-destructive"
                       onClick={() =>

@@ -3,21 +3,23 @@
 import { revalidatePath } from "next/cache"
 import { getT } from "@/i18n/server"
 import { dbError } from "@/i18n/translate"
-import { getContext, requirePerm } from "@/lib/context"
+import { requirePerm } from "@/lib/context"
 import { removeImage, replaceImage } from "@/lib/images"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 
-export async function updateOrg(formData: FormData) {
-  const ctx = await getContext()
+/** The org's name, edited in place (InlineField). */
+export async function patchOrg(formData: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("org.settings.manage")
   const t = await getT()
-  const name = String(formData.get("name") ?? "").trim()
-  if (!name) back("/settings/general", { error: t("general.nameRequired") })
+  if (formData.get("field") !== "name") return { error: t("errors.not_allowed") }
+  const name = String(formData.get("value") ?? "").trim().slice(0, 100)
+  if (!name) return { error: t("general.nameRequired") }
   const { error, count } = await ctx.supabase.from("orgs").update({ name }, { count: "exact" }).eq("id", ctx.org.id)
-  if (error || !count) back("/settings/general", { error: error ? dbError(t, error) : t("errors.not_allowed") })
+  if (error || !count) return { error: error ? dbError(t, error) : t("errors.not_allowed") }
   revalidatePath("/", "layout")
   refreshPublic(ctx.org.id) // public pages show this
-  back("/settings/general", { ok: t("general.saved") })
+  return {}
 }
 
 export async function updateLogo(formData: FormData) {

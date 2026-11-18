@@ -1,5 +1,5 @@
 import { APP_HOME } from "@/lib/url"
-import { FolderIcon, HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
+import { HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { AreaIcon } from "@/components/area-icon"
 import type { SidebarLink } from "@/components/app-sidebar"
@@ -48,11 +48,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     },
     ...(moduleLinks.length ? [{ label: t("home.modules"), items: moduleLinks }] : []),
     {
-      // Files and settings have their sub-pages in a section nav beside the page, so plain links here.
+      // Settings have their sections in a nav beside the page (grouped Du / Organisation), so a plain link here.
       label: t("general.org"),
       items: [
-        ...(ctx.can("org.files.view") ? [{ href: "/files", label: t("files.title"), icon: <FolderIcon /> }] : []),
-        { href: "/settings/profile", label: t("shell.settings"), icon: <SettingsIcon /> },
+        { href: "/settings", label: t("shell.settings"), icon: <SettingsIcon /> },
         ...(ctx.isPlatformAdmin ? [{ href: "/admin", label: t("admin.link"), icon: <ShieldIcon /> }] : []),
       ],
     },

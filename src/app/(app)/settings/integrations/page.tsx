@@ -15,8 +15,9 @@ import { DEFAULT_COSTS } from "@/payments/fees"
 import { sender } from "@/integrations/brevo"
 import { TypedInput } from "@/components/typed-input"
 import { formatMoney } from "@/lib/inputs"
-import { NotificationsSection } from "../notifications/section"
+import { NotificationsSection } from "./targets"
 import { SubmitButton } from "@/components/submit-button"
+import { SaveBar } from "@/components/save-bar"
 
 export default async function IntegrationsSettings({ searchParams }: PageProps<"/settings/integrations">) {
   const ctx = await requirePerm("org.integrations.manage")
@@ -34,7 +35,6 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
   return (
     <div className="grid gap-8">
       <div className="grid gap-4">
-        <h2 className="font-medium">{t("settings.tabs.integrations")}</h2>
         <Notice
           error={!connecting && !notificationSheet ? param(sp, "error") : undefined}
           ok={!notificationSheet ? param(sp, "ok") : undefined}
@@ -50,7 +50,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                     <p className="text-sm text-muted-foreground">{t.dynamic(`integrations.${i.key}.description`)}</p>
                   </div>
                   {row && (
-                    <Badge variant={row.status === "connected" ? "default" : row.status === "pending" ? "outline" : "destructive"}>
+                    <Badge variant={row.status === "connected" ? "success" : row.status === "pending" ? "warning" : "destructive"}>
                       {t.dynamic(`integrations.status.${row.status}`)}
                     </Badge>
                   )}
@@ -190,7 +190,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                   )}
                   {row && (
                     <form action={disconnectIntegration.bind(null, i.key)}>
-                      <SubmitButton variant="outline" size="sm">
+                      <SubmitButton variant="outline" size="sm" data-confirm={i.connect ? "integrations.confirmDisconnectPay" : "integrations.confirmDisconnect"}>
                         {t("integrations.disconnect")}
                       </SubmitButton>
                     </form>
@@ -245,7 +245,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                 </div>
               )
             })}
-            <SubmitButton>{t("common.save")}</SubmitButton>
+            <SaveBar label={t("common.save")} always />
           </form>
         </UrlSheet>
       )}

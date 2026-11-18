@@ -247,9 +247,11 @@
       "team": "Team",
       "areas": "Bereiche",
       "domain": "Domain",
-      "website": "Website"
+      "website": "Website",
+      "security": "Sicherheit",
+      "ai": "KI-Assistent"
     },
-    "areasIntro": "Einstellungen, die nur einen Bereich betreffen, findest du dort als letzten Punkt „Einstellungen“ in der Seitenleiste – oder hier gesammelt.",
+    "areasIntro": "Einstellungen, die nur einen Bereich betreffen, öffnest du dort über das Zahnrad oben – oder hier gesammelt.",
     "areasNone": "Für deine Bereiche gibt es keine eigenen Einstellungen, die du ändern darfst.",
     "connections": "Verbundene Apps",
     "connectionsHint": "KI-Apps wie Claude, die mit einem Konto dieser Organisation verbunden sind.",
@@ -270,16 +272,25 @@
     "allowAiHint": "Dürfen Mitglieder des Teams KI-Apps wie Claude mit dieser Organisation verbinden? Ausgeschaltet funktionieren auch bestehende Verbindungen sofort nicht mehr. API-Schlüssel sind davon nicht betroffen.",
     "allowAiLabel": "KI-Apps erlauben",
     "aiOn": "KI-Apps sind erlaubt.",
-    "aiOff": "KI-Apps sind ausgeschaltet – bestehende Verbindungen funktionieren nicht mehr."
+    "aiOff": "KI-Apps sind ausgeschaltet – bestehende Verbindungen funktionieren nicht mehr.",
+    "groups": {
+      "me": "Du",
+      "org": "Organisation"
+    },
+    "confirmDisconnect": "App trennen?",
+    "confirmDisconnectHint": "Sie verliert sofort den Zugriff und muss neu verbunden werden.",
+    "confirmAiOff": "KI-Apps ausschalten?",
+    "confirmAiOffHint": "Alle verbundenen KI-Apps dieser Organisation werden sofort getrennt."
   },
   "general": {
     "name": "Name",
-    "publicAddress": "Slug (Webseite)",
+    "publicAddress": "Öffentliche Adresse",
     "saved": "Gespeichert.",
     "nameRequired": "Der Name darf nicht leer sein.",
     "logo": "Logo",
     "logoHint": "PNG, JPG, WebP oder GIF, max. 2 MB. Erscheint in der App und auf öffentlichen Seiten.",
-    "org": "Organisation"
+    "org": "Organisation",
+    "changeDomain": "Eigene Domain einrichten"
   },
   "members": {
     "heading": "Team",
@@ -314,7 +325,16 @@
     "emptyMembers": "Noch keine Mitglieder.",
     "expiresHeader": "Läuft ab",
     "inviteMailFailed": "Die Einladung konnte nicht per E-Mail verschickt werden. Schick den Link unten selbst weiter.",
-    "inviteSent": "Einladung an {email} verschickt. Du kannst den Link auch selbst weitergeben – er funktioniert einmal und läuft in 7 Tagen ab."
+    "inviteSent": "Einladung an {email} verschickt. Du kannst den Link auch selbst weitergeben – er funktioniert einmal und läuft in 7 Tagen ab.",
+    "confirmLeave": "Organisation verlassen?",
+    "confirmLeaveHint": "Du verlierst sofort den Zugriff. Zurück kommst du nur mit einer neuen Einladung.",
+    "confirmRemove": "Aus dem Team entfernen?",
+    "confirmRemoveHint": "Die Person verliert sofort den Zugriff auf diese Organisation.",
+    "confirmRevoke": "Einladung zurückziehen?",
+    "confirmRevokeHint": "Der Einladungslink funktioniert danach nicht mehr.",
+    "confirmRenew": "Neuen Einladungslink erzeugen?",
+    "confirmRenewHint": "Der bisherige Link funktioniert danach nicht mehr.",
+    "sendInvite": "Einladung senden"
   },
   "roles": {
     "intro": "Rollen werden von der Plattform festgelegt. Hier siehst du, was jede Rolle darf.",
@@ -346,7 +366,11 @@
     "permissions": "Berechtigungen",
     "members": "Mitglieder",
     "empty": "Noch keine Rollen.",
-    "canDo": "Das darf diese Rolle"
+    "canDo": "Das darf diese Rolle",
+    "whoHasIt": {
+      "one": "{count} Person hat diese Rolle",
+      "other": "{count} Personen haben diese Rolle"
+    }
   },
   "modules": {
     "on": "Aktiv",
@@ -440,7 +464,8 @@
     "shop": {
       "name": "Onlineshop",
       "description": "Merch, Bücher, Downloads und mehr verkaufen: Katalog, Produktseiten, Warenkorb, Online-Zahlung, Überweisung oder Abholung, Versand, automatische Rechnungen."
-    }
+    },
+    "off": "Aus"
   },
   "permissions": {
     "org.settings.manage": "Organisationseinstellungen bearbeiten",
@@ -631,7 +656,11 @@
         "sumup": "SumUp nimmt für Online-Zahlungen meist rund 2,5 % – prüft euren Vertrag. Die Gebühr wird so berechnet, dass euch der volle Ticketpreis bleibt, und vor dem Kauf angezeigt. Rechtlich: als Servicegebühr für jede Zahlungsart, nicht als Kartenaufschlag (§ 270a BGB)."
       }
     },
-    "senderInvalid": "Bitte eine gültige Absender-E-Mail eintragen, z. B. tickets@euerverein.de."
+    "senderInvalid": "Bitte eine gültige Absender-E-Mail eintragen, z. B. tickets@euerverein.de.",
+    "confirmDisconnect": "Verbindung trennen?",
+    "confirmDisconnectHint": "roots nutzt diesen Dienst danach nicht mehr, bis du ihn wieder verbindest.",
+    "confirmDisconnectPay": "Zahlungsanbieter trennen?",
+    "confirmDisconnectPayHint": "Online-Zahlungen und Kartenterminals funktionieren danach nicht mehr, bis du wieder verbindest."
   },
   "activity": {
     "filter": "Nach Bereich filtern",
@@ -1020,7 +1049,10 @@
     "memberArea": "Mein Mitgliederbereich",
     "orgs": "Deine Organisationen",
     "currentOrg": "Aktiv",
-    "orgsHint": "Wechseln über das Menü oben in der Seitenleiste."
+    "orgsHint": "Wechseln über das Menü oben in der Seitenleiste.",
+    "leaveOrg": "Organisation verlassen",
+    "switchOrg": "Wechseln",
+    "passwordHint": "Anmelden mit E-Mail und Passwort."
   },
   "payments": {
     "nav": "Zahlungen",
@@ -1163,7 +1195,12 @@
       "chat": "Chat",
       "noChats": "Noch keine Chats. Füge deinen Bot zu einer Gruppe hinzu oder schreib ihm /start, dann erscheint der Chat hier (kann bis zu einer Minute dauern).",
       "notConnected": "Verbinde zuerst deinen Telegram-Bot unter Integrationen."
-    }
+    },
+    "targets": "Webhooks & Telegram",
+    "confirmRotate": "Neues Secret erzeugen?",
+    "confirmRotateHint": "Das bisherige Secret ist sofort ungültig; trage das neue in deinem Tool ein.",
+    "confirmDelete": "Ziel löschen?",
+    "confirmDeleteHint": "Es bekommt danach keine Ereignisse mehr."
   },
   "events": {
     "types": {
@@ -1310,7 +1347,8 @@
     "push": "Push",
     "emailOff": "E-Mail-Versand ist auf der Plattform noch nicht eingerichtet.",
     "saved": "Einstellungen gespeichert.",
-    "none": "Für deine Rollen gibt es noch keine Benachrichtigungen."
+    "none": "Für deine Rollen gibt es noch keine Benachrichtigungen.",
+    "openInbox": "Zu den Benachrichtigungen"
   },
   "eventsPage": {
     "nav": "Events",
@@ -1563,7 +1601,9 @@
     },
     "colors": "Farben",
     "colorFor": "Farbe für {option}",
-    "noColor": "Keine Farbe"
+    "noColor": "Keine Farbe",
+    "confirmDelete": "Feld löschen?",
+    "confirmDeleteHint": "Das Feld verschwindet aus Formularen. Gespeicherte Werte bleiben erhalten und sind wieder da, wenn du ein Feld mit derselben Bezeichnung anlegst."
   },
   "import": {
     "file": "CSV-Datei",
@@ -1866,7 +1906,17 @@
       "30": "in 30 Tagen",
       "90": "in 90 Tagen",
       "365": "in einem Jahr"
-    }
+    },
+    "newKey": "Neuer Schlüssel",
+    "keys": "Schlüssel",
+    "activeKeys": "Aktiv",
+    "allKeys": "Alle",
+    "permCount": {
+      "one": "{count} Recht",
+      "other": "{count} Rechte"
+    },
+    "confirmRevoke": "Schlüssel widerrufen?",
+    "confirmRevokeHint": "Tools, die ihn nutzen, verlieren sofort den Zugriff. Das lässt sich nicht rückgängig machen."
   },
   "invoices": {
     "nav": "Rechnungen",
@@ -2624,7 +2674,9 @@
     "name": "Name",
     "namePlaceholder": "z. B. Club, Café, Halle 3",
     "address": "Adresse",
-    "add": "Ort hinzufügen"
+    "add": "Ort hinzufügen",
+    "delete": "Ort löschen",
+    "confirmDelete": "Ort löschen?"
   },
   "files": {
     "title": "Dateien",
@@ -5986,7 +6038,9 @@
     "unnamed": "Passkey",
     "added": "hinzugefügt am {date}",
     "used": "zuletzt genutzt {date}",
-    "unsupported": "Dieser Browser unterstützt keine Passkeys."
+    "unsupported": "Dieser Browser unterstützt keine Passkeys.",
+    "confirmRemove": "Passkey entfernen?",
+    "confirmRemoveHint": "Mit diesem Passkey meldest du dich danach nicht mehr an."
   },
   "upload": {
     "titleImage": "Bild hochladen",
@@ -6094,7 +6148,8 @@
       "searching": "Sprout schaut nach …",
       "thinking": "Sprout denkt nach …",
       "waiting": "Sprout wartet auf dich …"
-    }
+    },
+    "key": "API-Schlüssel"
   },
   "domains": {
     "intro": "Zeigt eure öffentlichen Seiten – Events, Ticketshop, Formulare, Mitgliederportal – unter eurer eigenen Adresse. Bis dahin sind sie hier erreichbar: {url}",

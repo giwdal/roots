@@ -18,6 +18,7 @@ import {
   MessagesSquareIcon,
   WorkflowIcon,
   CalendarIcon,
+  FolderIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -135,6 +136,16 @@ export const NAV: Area[] = [
     ],
   },
   { key: "wiki", label: "wiki.nav", icon: BookOpenIcon, children: [{ href: "/wiki", label: "wiki.nav", module: "wiki", permission: "wiki.view" }] },
+  // Dateien is core (no module): the org's files and the letter templates that produce them.
+  {
+    key: "files",
+    label: "files.title",
+    icon: FolderIcon,
+    children: [
+      { href: "/files", label: "files.title", module: "org", permission: "org.files.view" },
+      { href: "/files/templates", label: "letters.tabs.templates", module: "org", permission: "org.files.view" },
+    ],
+  },
   { key: "reports", label: "reports.nav", icon: BarChart3Icon, children: [{ href: "/reports", label: "reports.nav", module: "reports", permission: "reports.view" }] },
   {
     key: "website",

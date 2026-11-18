@@ -3,13 +3,14 @@ import { Notice } from "@/components/notice"
 import { SubmitButton } from "@/components/submit-button"
 import { Input } from "@/components/ui/input"
 import { getT } from "@/i18n/server"
-import { getContext } from "@/lib/context"
+import { requirePerm } from "@/lib/context"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { param } from "@/lib/url"
 import { deleteLocation, saveLocation } from "../../shifts/actions"
 
 // Places of the org (own club, external venues, café…), used by events and shift planning.
 export default async function LocationsSettings({ searchParams }: PageProps<"/settings/locations">) {
-  const ctx = await getContext()
+  const ctx = await requirePerm("org.settings.manage")
   const t = await getT()
   const sp = await searchParams
   const canManage = ctx.can("org.settings.manage")
@@ -34,9 +35,12 @@ export default async function LocationsSettings({ searchParams }: PageProps<"/se
             {l && canManage && (
               <form action={deleteLocation}>
                 <input type="hidden" name="id" value={l.id} />
-                <SubmitButton size="icon-sm" variant="ghost" aria-label={t("shifts.remove")}>
-                  <Trash2Icon />
-                </SubmitButton>
+                <Tooltip>
+                  <TooltipTrigger render={<SubmitButton size="icon-sm" variant="ghost" aria-label={t("locations.delete")} data-confirm="locations.confirmDelete" className="text-destructive hover:text-destructive" />}>
+                    <Trash2Icon />
+                  </TooltipTrigger>
+                  <TooltipContent>{t("locations.delete")}</TooltipContent>
+                </Tooltip>
               </form>
             )}
           </li>

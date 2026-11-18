@@ -247,9 +247,11 @@
       "team": "Team",
       "areas": "Areas",
       "domain": "Domain",
-      "website": "Website"
+      "website": "Website",
+      "security": "Security",
+      "ai": "AI assistant"
     },
-    "areasIntro": "Settings that only concern one area live there as the last sidebar item “Settings” – or collected here.",
+    "areasIntro": "Settings that only concern one area open from the gear at the top of that area – or from here.",
     "areasNone": "None of your areas has settings you're allowed to change.",
     "connections": "Connected apps",
     "connectionsHint": "AI apps like Claude connected with an account of this organisation.",
@@ -270,16 +272,25 @@
     "allowAiHint": "May team members connect AI apps like Claude to this organisation? When off, existing connections stop working at once. API keys aren’t affected.",
     "allowAiLabel": "Allow AI apps",
     "aiOn": "AI apps are allowed.",
-    "aiOff": "AI apps are off – existing connections no longer work."
+    "aiOff": "AI apps are off – existing connections no longer work.",
+    "groups": {
+      "me": "You",
+      "org": "Organisation"
+    },
+    "confirmDisconnect": "Disconnect the app?",
+    "confirmDisconnectHint": "It loses access at once and has to be connected again.",
+    "confirmAiOff": "Turn AI apps off?",
+    "confirmAiOffHint": "Every connected AI app of this organisation is disconnected at once."
   },
   "general": {
     "name": "Name",
-    "publicAddress": "Slug (website)",
+    "publicAddress": "Public address",
     "saved": "Saved.",
     "nameRequired": "The name can't be empty.",
     "logo": "Logo",
     "logoHint": "PNG, JPG, WebP or GIF, max. 2 MB. Shown in the app and on public pages.",
-    "org": "Organisation"
+    "org": "Organisation",
+    "changeDomain": "Set up your own domain"
   },
   "members": {
     "heading": "Team",
@@ -314,7 +325,16 @@
     "emptyMembers": "No members yet.",
     "expiresHeader": "Expires",
     "inviteMailFailed": "The invitation couldn't be emailed. Please send the link below yourself.",
-    "inviteSent": "Invitation sent to {email}. You can also pass on the link yourself – it works once and expires in 7 days."
+    "inviteSent": "Invitation sent to {email}. You can also pass on the link yourself – it works once and expires in 7 days.",
+    "confirmLeave": "Leave the organisation?",
+    "confirmLeaveHint": "You lose access at once. You can only come back with a new invite.",
+    "confirmRemove": "Remove from the team?",
+    "confirmRemoveHint": "The person loses access to this organisation at once.",
+    "confirmRevoke": "Withdraw the invite?",
+    "confirmRevokeHint": "The invite link stops working.",
+    "confirmRenew": "Create a new invite link?",
+    "confirmRenewHint": "The previous link stops working.",
+    "sendInvite": "Send invite"
   },
   "roles": {
     "intro": "Roles are set by the platform. Here you can see what each role may do.",
@@ -346,7 +366,11 @@
     "permissions": "Permissions",
     "members": "Members",
     "empty": "No roles yet.",
-    "canDo": "What this role can do"
+    "canDo": "What this role can do",
+    "whoHasIt": {
+      "one": "{count} person has this role",
+      "other": "{count} people have this role"
+    }
   },
   "modules": {
     "on": "On",
@@ -440,7 +464,8 @@
     "shop": {
       "name": "Online shop",
       "description": "Sell merch, books, downloads and more: catalog, product pages, cart, online payment, bank transfer or pickup, shipping, automatic invoices."
-    }
+    },
+    "off": "Off"
   },
   "permissions": {
     "org.settings.manage": "Edit organisation settings",
@@ -631,7 +656,11 @@
         "sumup": "SumUp usually takes around 2.5% for online payments – check your contract. The fee is calculated so you keep the full ticket price, and shown before buying. Legally: a service fee for every payment method, not a card surcharge (§ 270a BGB)."
       }
     },
-    "senderInvalid": "Please enter a valid sender email, e.g. tickets@yourclub.org."
+    "senderInvalid": "Please enter a valid sender email, e.g. tickets@yourclub.org.",
+    "confirmDisconnect": "Disconnect?",
+    "confirmDisconnectHint": "roots stops using this service until you connect it again.",
+    "confirmDisconnectPay": "Disconnect the payment provider?",
+    "confirmDisconnectPayHint": "Online payments and card terminals stop working until you connect again."
   },
   "activity": {
     "filter": "Filter by area",
@@ -1020,7 +1049,10 @@
     "memberArea": "My member area",
     "orgs": "Your organisations",
     "currentOrg": "Active",
-    "orgsHint": "Switch with the menu at the top of the sidebar."
+    "orgsHint": "Switch with the menu at the top of the sidebar.",
+    "leaveOrg": "Leave organisation",
+    "switchOrg": "Switch",
+    "passwordHint": "Sign in with email and password."
   },
   "payments": {
     "nav": "Payments",
@@ -1163,7 +1195,12 @@
       "chat": "Chat",
       "noChats": "No chats yet. Add your bot to a group or send it /start, then the chat shows up here (can take up to a minute).",
       "notConnected": "Connect your Telegram bot under Integrations first."
-    }
+    },
+    "targets": "Webhooks & Telegram",
+    "confirmRotate": "Create a new secret?",
+    "confirmRotateHint": "The current secret stops working at once; enter the new one in your tool.",
+    "confirmDelete": "Delete this target?",
+    "confirmDeleteHint": "It no longer receives events."
   },
   "events": {
     "types": {
@@ -1310,7 +1347,8 @@
     "push": "Push",
     "emailOff": "Email isn't set up on the platform yet.",
     "saved": "Settings saved.",
-    "none": "There are no notifications for your roles yet."
+    "none": "There are no notifications for your roles yet.",
+    "openInbox": "Go to notifications"
   },
   "eventsPage": {
     "nav": "Events",
@@ -1563,7 +1601,9 @@
     },
     "colors": "Colours",
     "colorFor": "Colour for {option}",
-    "noColor": "No colour"
+    "noColor": "No colour",
+    "confirmDelete": "Delete the field?",
+    "confirmDeleteHint": "The field disappears from forms. Stored values are kept and come back when you create a field with the same label."
   },
   "import": {
     "file": "CSV file",
@@ -1866,7 +1906,17 @@
       "30": "in 30 days",
       "90": "in 90 days",
       "365": "in one year"
-    }
+    },
+    "newKey": "New key",
+    "keys": "Keys",
+    "activeKeys": "Active",
+    "allKeys": "All",
+    "permCount": {
+      "one": "{count} permission",
+      "other": "{count} permissions"
+    },
+    "confirmRevoke": "Revoke the key?",
+    "confirmRevokeHint": "Tools using it lose access at once. This can't be undone."
   },
   "invoices": {
     "nav": "Invoices",
@@ -2624,7 +2674,9 @@
     "name": "Name",
     "namePlaceholder": "e.g. Club, Café, Hall 3",
     "address": "Address",
-    "add": "Add location"
+    "add": "Add location",
+    "delete": "Delete place",
+    "confirmDelete": "Delete the place?"
   },
   "files": {
     "title": "Files",
@@ -5986,7 +6038,9 @@
     "unnamed": "Passkey",
     "added": "added on {date}",
     "used": "last used {date}",
-    "unsupported": "This browser doesn’t support passkeys."
+    "unsupported": "This browser doesn’t support passkeys.",
+    "confirmRemove": "Remove the passkey?",
+    "confirmRemoveHint": "You can no longer sign in with this passkey."
   },
   "upload": {
     "titleImage": "Upload a picture",
@@ -6094,7 +6148,8 @@
       "searching": "Sprout is looking …",
       "thinking": "Sprout is thinking …",
       "waiting": "Sprout is waiting for you …"
-    }
+    },
+    "key": "API key"
   },
   "domains": {
     "intro": "Shows your public pages – events, ticket shop, forms, member portal – under your own address. Until then they're here: {url}",

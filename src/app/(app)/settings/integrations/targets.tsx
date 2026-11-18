@@ -1,6 +1,9 @@
 import Link from "next/link"
 import { SaveBar } from "@/components/save-bar"
-import { FormCard } from "@/components/page"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { Choice } from "@/components/choice"
+import { Section } from "@/components/section"
+import { SendIcon, Trash2Icon } from "lucide-react"
 import { DataTable } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { UrlSheet } from "@/components/url-sheet"
@@ -9,15 +12,13 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { eventTypes } from "@/events/registry"
 import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { param, withParams, type SearchParams } from "@/lib/url"
-import { deleteSubscription, sendTest, telegramChats, updateSubscription } from "./actions"
-import { CreateForm, RotateSecret } from "./forms"
-import { SubmitButton } from "@/components/submit-button"
+import { deleteSubscription, sendTest, telegramChats, updateSubscription } from "./targets-actions"
+import { CreateForm, RotateSecret } from "./targets-forms"
 
 type Sub = {
   id: string
@@ -50,7 +51,7 @@ export async function NotificationsSection({ sp }: { sp: SearchParams }) {
   const botConnected = botRow?.status === "connected"
 
   return (
-    <FormCard id="notifications" title={t("settings.tabs.notifications")} description={t("notifications.intro")}>
+    <Section id="notifications" title={t("notifications.targets")} description={t("notifications.intro")}>
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href={withParams(sp, { new: "webhook", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
           {t("notifications.newWebhook")}
@@ -107,7 +108,7 @@ export async function NotificationsSection({ sp }: { sp: SearchParams }) {
         </UrlSheet>
       )}
       {editing && <EditSheet t={t} sub={editing} available={available} chats={chats} error={param(sp, "error")} ok={param(sp, "ok")} />}
-    </FormCard>
+    </Section>
   )
 }
 
@@ -117,7 +118,7 @@ function eventsSummary(t: T, types: string[]) {
 }
 
 function SubStatus({ t, sub }: { t: T; sub: Sub }) {
-  return sub.active ? <Badge>{t("notifications.active")}</Badge> : <Badge variant="secondary">{t("notifications.paused")}</Badge>
+  return sub.active ? <Badge variant="success">{t("notifications.active")}</Badge> : <Badge variant="secondary">{t("notifications.paused")}</Badge>
 }
 
 async function EditSheet({
@@ -146,8 +147,24 @@ async function EditSheet({
   const all = sub.event_types.includes("*")
 
   return (
-    <UrlSheet params={["edit"]} title={sub.name} description={t.dynamic(`notifications.channels.${sub.channel}`)}>
+    <UrlSheet
+      params={["edit"]}
+      title={sub.name}
+      description={t.dynamic(`notifications.channels.${sub.channel}`)}
+      menu={
+        <ActionsMenu>
+          <MenuSubmit form="test-sub" icon={<SendIcon />}>
+            {t("notifications.test")}
+          </MenuSubmit>
+          <MenuSubmit form="delete-sub" icon={<Trash2Icon />} destructive confirm="notifications.confirmDelete">
+            {t("notifications.delete")}
+          </MenuSubmit>
+        </ActionsMenu>
+      }
+    >
       <Notice error={error} ok={ok} />
+      <form id="test-sub" action={sendTest.bind(null, sub.id)} hidden />
+      <form id="delete-sub" action={deleteSubscription.bind(null, sub.id)} hidden />
 
       <form action={updateSubscription.bind(null, sub.id)} className="grid gap-4">
         <div className="grid gap-2">
@@ -163,23 +180,14 @@ async function EditSheet({
         {sub.channel === "telegram" && (
           <div className="grid gap-2">
             <Label htmlFor="sub-chat">{t("notifications.telegram.chat")}</Label>
-            <NativeSelect id="sub-chat" name="chat_id" defaultValue={String(config.chat_id ?? "")}>
-              {[
-                ...chats,
-                ...(chats.some((c) => String(c.id) === String(config.chat_id))
-                  ? []
-                  : [
-                      {
-                        id: Number(config.chat_id),
-                        title: String(config.chat_title ?? config.chat_id),
-                      },
-                    ]),
-              ].map((c) => (
-                <NativeSelectOption key={c.id} value={String(c.id)}>
-                  {c.title}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Choice
+              id="sub-chat"
+              name="chat_id"
+              label={t("notifications.telegram.chat")}
+              required
+              defaultValue={String(config.chat_id ?? "")}
+              options={[...chats, ...(chats.some((c) => String(c.id) === String(config.chat_id)) ? [] : [{ id: Number(config.chat_id), title: String(config.chat_title ?? config.chat_id) }])].map((c) => ({ value: String(c.id), label: c.title }))}
+            />
           </div>
         )}
         <label className="flex items-center gap-2 text-sm">
@@ -187,7 +195,7 @@ async function EditSheet({
           {t("notifications.active")}
         </label>
         <fieldset className="grid gap-2">
-          <legend className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("notifications.events")}</legend>
+          <legend className="mb-1 text-sm font-medium">{t("notifications.events")}</legend>
           <label className="flex items-center gap-2 text-sm font-medium">
             <Checkbox name="events" value="*" defaultChecked={all} />
             {t("notifications.allEvents")}
@@ -209,12 +217,6 @@ async function EditSheet({
         </section>
       )}
 
-      <form action={sendTest.bind(null, sub.id)}>
-        <SubmitButton variant="outline" size="sm">
-          {t("notifications.test")}
-        </SubmitButton>
-      </form>
-
       <section className="grid gap-2">
         <h3 className="font-medium">{t("notifications.deliveries")}</h3>
         {deliveries?.length ? (
@@ -223,7 +225,7 @@ async function EditSheet({
               <li key={d.id} className="grid gap-0.5 px-3 py-2">
                 <span className="flex items-center justify-between gap-2">
                   <span>{t.dynamic(`events.types.${d.events?.type}`)}</span>
-                  <Badge variant={d.status === "succeeded" ? "default" : d.status === "failed" ? "destructive" : "outline"}>
+                  <Badge variant={d.status === "succeeded" ? "success" : d.status === "failed" ? "destructive" : "warning"}>
                     {t.dynamic(`notifications.statuses.${d.status}`)}
                   </Badge>
                 </span>
@@ -242,12 +244,6 @@ async function EditSheet({
           <p className="text-sm text-muted-foreground">{t("notifications.noDeliveries")}</p>
         )}
       </section>
-
-      <form action={deleteSubscription.bind(null, sub.id)}>
-        <SubmitButton variant="destructive" size="sm">
-          {t("notifications.delete")}
-        </SubmitButton>
-      </form>
     </UrlSheet>
   )
 }

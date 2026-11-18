@@ -6,10 +6,11 @@ import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Choice } from "@/components/choice"
 import { useT } from "@/i18n/client"
-import { createSubscription, rotateSecret, type CreateState } from "./actions"
+import { createSubscription, rotateSecret, type CreateState } from "./targets-actions"
 import { SubmitButton } from "@/components/submit-button"
+import { SaveBar } from "@/components/save-bar"
 
 function SecretOnce({ secret }: { secret: string }) {
   const t = useT()
@@ -24,7 +25,7 @@ function SecretOnce({ secret }: { secret: string }) {
 
 export function CreateForm({ channel, chats = [] }: { channel: "webhook" | "telegram"; chats?: { id: number; title: string }[] }) {
   const t = useT()
-  const [state, action, pending] = useActionState(createSubscription, {} as CreateState)
+  const [state, action] = useActionState(createSubscription, {} as CreateState)
   if (state.id)
     return (
       <div className="grid gap-4">
@@ -52,18 +53,10 @@ export function CreateForm({ channel, chats = [] }: { channel: "webhook" | "tele
       {channel === "telegram" && (
         <div className="grid gap-2">
           <Label htmlFor="sub-chat">{t("notifications.telegram.chat")}</Label>
-          <NativeSelect id="sub-chat" name="chat_id" required>
-            {chats.map((c) => (
-              <NativeSelectOption key={c.id} value={String(c.id)}>
-                {c.title}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Choice id="sub-chat" name="chat_id" label={t("notifications.telegram.chat")} required options={chats.map((c) => ({ value: String(c.id), label: c.title }))} defaultValue={chats[0] ? String(chats[0].id) : undefined} />
         </div>
       )}
-      <SubmitButton disabled={pending}>
-        {channel === "webhook" ? t("notifications.newWebhook") : t("notifications.newTelegram")}
-      </SubmitButton>
+      <SaveBar label={channel === "webhook" ? t("notifications.newWebhook") : t("notifications.newTelegram")} always />
     </form>
   )
 }
@@ -76,7 +69,7 @@ export function RotateSecret({ id }: { id: string }) {
   ) : (
     <form action={action}>
       <Notice error={state.error} />
-      <SubmitButton variant="outline" size="sm" disabled={pending}>
+      <SubmitButton variant="outline" size="sm" disabled={pending} data-confirm="notifications.confirmRotate">
         {t("notifications.rotate")}
       </SubmitButton>
     </form>

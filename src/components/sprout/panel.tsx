@@ -172,7 +172,7 @@ export function SproutPanel({ orgId }: { orgId: string }) {
       ) : !models.length ? (
         <div className="m-4 grid gap-3 text-sm">
           <p>{t("sprout.needKey")}</p>
-          <Button size="sm" className="justify-self-start" render={<Link href="/settings/profile#ai" />} nativeButton={false}>
+          <Button size="sm" className="justify-self-start" render={<Link href="/settings/ai" />} nativeButton={false}>
             {t("sprout.addKeyLink")}
           </Button>
         </div>

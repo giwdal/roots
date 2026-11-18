@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { ExternalLinkIcon } from "lucide-react"
 import { CopyButton } from "@/components/copy-button"
-import { FormCard } from "@/components/page"
+import { RowGroup } from "@/components/section"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { APP_URL } from "@/lib/url"
@@ -19,7 +19,8 @@ export async function ConnectAi() {
   // Third-party brand logos (public/brands, from Simple Icons / vscode-icons): the one exception to lucide-only icons.
   const logo = (name: string, extra = "") => <Image src={`/brands/${name}.svg`} alt="" width={16} height={16} className={`size-4 ${extra}`} unoptimized />
   return (
-    <FormCard id="connect-ai" title={t("settings.connectAi")} description={t("settings.connectAiHint")}>
+    <RowGroup id="connect-ai" title={t("settings.connectAi")} description={t("settings.connectAiHint")}>
+      <div className="grid gap-3 p-4">
       <div className={row}>
         <code className="min-w-0 flex-1 truncate text-xs">{url}</code>
         <CopyButton value={url} label={t("common.copy")} />
@@ -51,6 +52,7 @@ export async function ConnectAi() {
         <CopyButton value={cli} label={t("common.copy")} />
       </div>
       <p className="text-xs text-muted-foreground">{t("settings.claudeCodeHint")}</p>
-    </FormCard>
+      </div>
+    </RowGroup>
   )
 }

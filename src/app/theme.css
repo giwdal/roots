@@ -85,7 +85,7 @@
 
 /* Area colours (AreaIcon): one per nav area, grouped by family so related areas look related.
    People: contacts, members, hr · Events: events, courses · Time: calendar, shifts · Money: finance, shop, reports ·
-   Talking: communication · Work: projects, wiki, automations · Places: rentals, website. Also --link for "+ Add" rows. */
+   Talking: communication · Work: projects, wiki, automations, files · Places: rentals, website. Also --link for "+ Add" rows. */
 :root {
   --link: oklch(0.55 0.17 255);
   --success: oklch(0.55 0.14 155);
@@ -107,6 +107,7 @@
   --area-automations: oklch(0.60 0.15 285);
   --area-rentals: oklch(0.66 0.14 55);
   --area-website: oklch(0.66 0.12 200);
+  --area-files: oklch(0.64 0.12 240);
 }
 .dark {
   --link: oklch(0.70 0.15 255);

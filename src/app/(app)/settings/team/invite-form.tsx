@@ -5,14 +5,14 @@ import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Choice } from "@/components/choice"
+import { SaveBar } from "@/components/save-bar"
 import { useT } from "@/i18n/client"
 import { createInvite, type InviteState } from "./actions"
-import { SubmitButton } from "@/components/submit-button"
 
 export function InviteForm({ roles, defaultRoleId }: { roles: { id: string; name: string }[]; defaultRoleId?: string }) {
   const t = useT()
-  const [state, action, pending] = useActionState(createInvite, {} as InviteState)
+  const [state, action] = useActionState(createInvite, {} as InviteState)
   const [copied, setCopied] = useState(false)
 
   if (state.link)
@@ -39,17 +39,9 @@ export function InviteForm({ roles, defaultRoleId }: { roles: { id: string; name
       </div>
       <div className="grid gap-2">
         <Label htmlFor="invite-role">{t("members.role")}</Label>
-        <NativeSelect id="invite-role" name="role_id" defaultValue={defaultRoleId}>
-          {roles.map((r) => (
-            <NativeSelectOption key={r.id} value={r.id}>
-              {r.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+        <Choice id="invite-role" name="role_id" label={t("members.role")} options={roles.map((r) => ({ value: r.id, label: r.name }))} defaultValue={defaultRoleId} required />
       </div>
-      <SubmitButton disabled={pending}>
-        {t("members.createLink")}
-      </SubmitButton>
+      <SaveBar label={t("members.sendInvite")} always />
     </form>
   )
 }

@@ -1299,6 +1299,8 @@
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
+    "countsVisit": "Counts as a visit",
+    "countsVisitHint": "Off = member check-ins don't count towards visit limits (e.g. club night). They still count as attendees.",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
     "imageHint": "PNG, JPG, WebP or GIF, max. 2 MB.",
@@ -2527,6 +2529,9 @@
     "interval": "Interval",
     "entryFee": "Entry fee (€)",
     "noticeMonths": "Notice (months)",
+    "visitLimit": "Visit limit",
+    "visitLimitHint": "Empty = unlimited. After that the door blocks unless someone lets them in anyway. Only events with \"Counts as a visit\" count.",
+    "visitLimitShort": "max. {n} visits",
     "typeActive": "active",
     "addType": "Add",
     "deleteType": "Delete membership type",
@@ -4187,7 +4192,8 @@
       "membership_type": {
         "name": "Name",
         "fee_cents": "Fee (cents)",
-        "interval": "Interval"
+        "interval": "Interval",
+        "visit_limit": "Visit limit"
       },
       "due": {
         "kind": "Kind",
@@ -4206,7 +4212,8 @@
         "starts_at": "Start",
         "ends_at": "End",
         "venue_name": "Venue",
-        "capacity": "Capacity"
+        "capacity": "Capacity",
+        "counts_visit": "Counts as a visit"
       },
       "slot": {
         "title": "Title",

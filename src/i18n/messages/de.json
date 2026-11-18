@@ -1299,6 +1299,8 @@
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
+    "countsVisit": "Zählt als Besuch",
+    "countsVisitHint": "Aus = Check-ins von Mitgliedern zählen nicht für Besuchslimits (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen.",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
     "imageHint": "PNG, JPG, WebP oder GIF, max. 2 MB.",
@@ -2527,6 +2529,9 @@
     "interval": "Rhythmus",
     "entryFee": "Aufnahme (€)",
     "noticeMonths": "Frist (Monate)",
+    "visitLimit": "Besuchslimit",
+    "visitLimitHint": "Leer = unbegrenzt. Danach sperrt die Tür, außer man lässt bewusst trotzdem ein. Es zählen nur Veranstaltungen mit „Zählt als Besuch“.",
+    "visitLimitShort": "max. {n} Besuche",
     "typeActive": "aktiv",
     "addType": "Hinzufügen",
     "deleteType": "Mitgliedsart löschen",
@@ -4187,7 +4192,8 @@
       "membership_type": {
         "name": "Name",
         "fee_cents": "Beitrag (Cent)",
-        "interval": "Intervall"
+        "interval": "Intervall",
+        "visit_limit": "Besuchslimit"
       },
       "due": {
         "kind": "Art",
@@ -4206,7 +4212,8 @@
         "starts_at": "Beginn",
         "ends_at": "Ende",
         "venue_name": "Ort",
-        "capacity": "Kapazität"
+        "capacity": "Kapazität",
+        "counts_visit": "Zählt als Besuch"
       },
       "slot": {
         "title": "Titel",

@@ -60,7 +60,7 @@ export const OBJECTS = {
     relations: { contact_id: "contact", type_id: "membership_type" },
     create: { fields: ["type_id", "starts_on", "ends_on", "note"], parents: { contact_id: "contact" } },
   },
-  membership_type: { table: "membership_types", module: "members", fields: [text("name"), num("fee_cents"), bool("fee_is_minimum"), pick("interval", ["month", "quarter", "half_year", "year", "none"])] },
+  membership_type: { table: "membership_types", module: "members", fields: [text("name"), num("fee_cents"), bool("fee_is_minimum"), num("visit_limit"), pick("interval", ["month", "quarter", "half_year", "year", "none"])] },
   due: {
     table: "member_dues",
     module: "members",
@@ -75,7 +75,7 @@ export const OBJECTS = {
     module: "events",
     idKey: "event_id",
     record: true,
-    fields: [{ key: "id", kind: "ref", ref: "events" }, text("title"), pick("status", ["draft", "published", "cancelled"]), at("starts_at"), at("ends_at"), text("venue_name"), num("capacity")],
+    fields: [{ key: "id", kind: "ref", ref: "events" }, text("title"), pick("status", ["draft", "published", "cancelled"]), at("starts_at"), at("ends_at"), text("venue_name"), num("capacity"), bool("counts_visit", true)],
     create: { fields: ["title", "starts_at", "ends_at", "venue_name", "capacity"] }, // created as a draft
   },
   slot: {

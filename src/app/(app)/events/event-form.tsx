@@ -77,6 +77,16 @@ export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd
             <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
             <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
           </div>
+          {ctx.modules.has("members") && (
+            <div className="grid gap-1">
+              <input type="hidden" name="counts_visit_field" value="1" />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" name="counts_visit" value="on" defaultChecked={ev?.counts_visit ?? true} />
+                {t("eventsPage.countsVisit")}
+              </label>
+              <p className="text-xs text-muted-foreground">{t("eventsPage.countsVisitHint")}</p>
+            </div>
+          )}
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 

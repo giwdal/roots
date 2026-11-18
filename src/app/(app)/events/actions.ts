@@ -46,6 +46,8 @@ function readEvent(fd: FormData) {
     capacity: capRaw ? Number(capRaw) : null,
     links: readEventLinks([0, 1, 2].map((i) => ({ label: fd.get(`link_label_${i}`), url: fd.get(`link_url_${i}`) }))) as never,
     // Only in the form for people who see the email templates; otherwise left as it is.
+    // Only in the form when the members module is on; otherwise left as it is.
+    ...(fd.has("counts_visit_field") && { counts_visit: fd.get("counts_visit") === "on" }),
     ...(fd.has("email_template") && { email_template_id: /^[0-9a-f-]{36}$/.test(String(fd.get("email_template"))) ? String(fd.get("email_template")) : null }),
   }
   const slug = text(fd, "slug")

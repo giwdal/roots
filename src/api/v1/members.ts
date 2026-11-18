@@ -35,10 +35,11 @@ const MembershipType = z.object({
   entry_fee: z.number().int().describe("One-off entry fee in cents"),
   fee_is_minimum: z.boolean().describe("The fee is a minimum (\"from X €\"): members may pay more"),
   notice_months: z.number().int(),
+  visit_limit: z.number().int().nullable().describe("Counting visits allowed per membership (null = unlimited); the door blocks after that unless overridden"),
   prorate: z.boolean(),
   active: z.boolean(),
 })
-const TYPE_COLS = "id, name, fee:fee_cents, interval, entry_fee:entry_fee_cents, fee_is_minimum, notice_months, prorate, active"
+const TYPE_COLS = "id, name, fee:fee_cents, interval, entry_fee:entry_fee_cents, fee_is_minimum, notice_months, visit_limit, prorate, active"
 const TypeInput = z
   .object({
     name: z.string().trim().min(1).max(100),
@@ -47,6 +48,7 @@ const TypeInput = z
     entry_fee: z.number().int().min(0).max(100_000_000).describe("One-off entry fee in cents, billed when a membership starts"),
     fee_is_minimum: z.boolean().describe("The fee is a minimum (\"from X €\"): members may pay more"),
     notice_months: z.number().int().min(0).max(24),
+    visit_limit: z.number().int().min(1).max(1000).nullable().describe("Counting visits allowed per membership (null = unlimited)"),
     prorate: z.boolean().describe("Bill partial periods pro rata when joining/leaving mid-period"),
     active: z.boolean().describe("Inactive types can't be chosen for new members"),
   })
@@ -58,6 +60,7 @@ const typeRow = (b: z.infer<typeof TypeInput>) => ({
   ...(b.interval !== undefined && { interval: b.interval }),
   ...(b.entry_fee !== undefined && { entry_fee_cents: b.entry_fee }),
   ...(b.notice_months !== undefined && { notice_months: b.notice_months }),
+  ...(b.visit_limit !== undefined && { visit_limit: b.visit_limit }),
   ...(b.prorate !== undefined && { prorate: b.prorate }),
   ...(b.fee_is_minimum !== undefined && { fee_is_minimum: b.fee_is_minimum }),
   ...(b.active !== undefined && { active: b.active }),
@@ -499,10 +502,12 @@ export const endpoints: Endpoint[] = [
     tag: "Members",
     summary: "Member check-in at the door",
     description:
-      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). A cancelled event lets nobody in: `admit` fails with 422 `event_cancelled`. Needs the members and tickets modules.",
-    body: z.object({ code: z.string().max(40).optional(), contact_id: uuid.optional(), admit: z.boolean().optional() }).strict(),
+      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). `limit` = the membership type's visit limit is reached at an event that counts as a visit: nobody is let in unless `override: true` (events with counts_visit off never block). A cancelled event lets nobody in: `admit` fails with 422 `event_cancelled`. Needs the members and tickets modules.",
+    body: z.object({ code: z.string().max(40).optional(), contact_id: uuid.optional(), admit: z.boolean().optional(), override: z.boolean().optional().describe("Let in although the membership type's visit limit is reached (recorded on the order)") }).strict(),
     response: z.object({
-      result: z.enum(["invalid", "not_member", "member", "ok", "already"]),
+      result: z.enum(["invalid", "not_member", "member", "ok", "already", "limit"]),
+      visit_limit: z.number().int().nullable().optional(),
+      event_counts: z.boolean().optional().describe("This event counts as a visit"),
       contact_id: uuid.optional(),
       full: z.boolean().optional().describe("Event capacity reached (members are still let in; the door decides)"),
       name: z.string().nullable().optional(),
@@ -515,7 +520,7 @@ export const endpoints: Endpoint[] = [
       paused_until: day.nullable().optional(),
       overdue_count: z.number().int().optional(),
       overdue_cents: z.number().int().optional(),
-      visits: z.number().int().optional().describe("Member check-ins so far (all events)"),
+      visits: z.number().int().optional().describe("Counting check-ins in the current membership (events with counts_visit)"),
       last_visit: ts.nullable().optional(),
       checked_in_at: ts.nullable().optional(),
     }),
@@ -525,7 +530,7 @@ export const endpoints: Endpoint[] = [
       if (!body.code && !body.contact_id) throw new ApiError(400, "invalid_input", "Send `code` or `contact_id`.")
       try {
         const code = body.code?.toUpperCase().replace(/[^A-Z0-9]/g, "")
-        return await memberDoor(db, params.id, { code, contactId: body.contact_id }, body.admit ?? false)
+        return await memberDoor(db, params.id, { code, contactId: body.contact_id }, body.admit ?? false, body.override ?? false)
       } catch (e) {
         throw dbError(e as { message: string; code?: string })
       }

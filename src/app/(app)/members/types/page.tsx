@@ -64,9 +64,9 @@ export default async function MembershipTypesPage({ searchParams }: PageProps<"/
               cell: (x) => (
                 <span className="grid">
                   <span className="font-medium">{x.name}</span>
-                  {(x.prorate || x.fee_is_minimum) && (
+                  {(x.prorate || x.fee_is_minimum || x.visit_limit) && (
                     <span className="text-xs text-muted-foreground">
-                      {[x.prorate && t("membership.prorate"), x.fee_is_minimum && t("membership.feeIsMinimum")].filter(Boolean).join(" · ")}
+                      {[x.prorate && t("membership.prorate"), x.fee_is_minimum && t("membership.feeIsMinimum"), x.visit_limit && t("membership.visitLimitShort", { n: x.visit_limit })].filter(Boolean).join(" · ")}
                     </span>
                   )}
                 </span>
@@ -135,6 +135,11 @@ function TypeForm({ t, type }: { t: T; type?: Tables<"membership_types"> }) {
           <div className="grid content-start gap-2">
             <Label htmlFor={`t-notice-${id}`}>{t("membership.noticeMonths")}</Label>
             <TypedInput kind="number" id={`t-notice-${id}`} name="notice_months" min={0} max={24} defaultValue={type?.notice_months ?? 3} />
+          </div>
+          <div className="grid content-start gap-2">
+            <Label htmlFor={`t-visits-${id}`}>{t("membership.visitLimit")}</Label>
+            <TypedInput kind="number" id={`t-visits-${id}`} name="visit_limit" min={1} max={1000} defaultValue={type?.visit_limit ?? ""} />
+            <p className="text-xs text-muted-foreground">{t("membership.visitLimitHint")}</p>
           </div>
         </div>
         <div className="grid gap-2.5">

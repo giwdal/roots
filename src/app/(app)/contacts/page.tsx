@@ -5,12 +5,12 @@ import { notFound, redirect } from "next/navigation"
 import { DownloadIcon, PlusIcon, TagIcon, Trash2Icon, UploadIcon, UsersIcon } from "lucide-react"
 import { BulkBar } from "@/components/bulk-bar"
 import { SubmitButton } from "@/components/submit-button"
-import { Input } from "@/components/ui/input"
+import { TagSelect } from "@/components/tag-select"
 import { bulkContacts } from "./actions"
 import { ActionsMenu, MenuExport, MenuLink, MenuSeparator } from "@/components/actions-menu"
 import { FilterMenu } from "@/components/filter-menu"
 import { EmptyState, Page, PageHeader } from "@/components/page"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -80,10 +80,9 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
       {!empty && (
-        <div className="flex flex-wrap items-center gap-2">
-          <SearchBox q={q} label={t("common.search")} />
+        <ListToolbar search={<SearchBox q={q} label={t("common.search")} />}>
           {!trash && tags.length > 0 && <FilterMenu param="tag" label={t("contacts.tags")} options={tags.map((tg) => ({ value: tg, label: tg }))} />}
-        </div>
+        </ListToolbar>
       )}
       {trash && <p className="text-sm text-muted-foreground">{t("contacts.trashHint", { days: 30 })}</p>}
 
@@ -104,9 +103,14 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
               text={t("contacts.emptyText")}
               action={
                 canManage && (
-                  <Button render={<Link href="/contacts/new" />} nativeButton={false} size="sm">
-                    <PlusIcon /> {t("contacts.new")}
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button render={<Link href="/contacts/new" />} nativeButton={false} size="sm">
+                      <PlusIcon /> {t("contacts.new")}
+                    </Button>
+                    <Button render={<Link href="/contacts?import=1" scroll={false} />} nativeButton={false} size="sm" variant="outline">
+                      <UploadIcon /> {t("contacts.import")}
+                    </Button>
+                  </div>
                 )
               }
             />
@@ -144,12 +148,9 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       {canManage && !trash && (
         <BulkBar form="bulk-contacts">
           <input type="hidden" name="back" value={`/contacts${withParams(sp, {})}`} />
-          <Input name="bulk_tag" list="bulk-tags" placeholder={t("contacts.tags")} aria-label={t("contacts.tags")} className="h-8 w-36" />
-          <datalist id="bulk-tags">
-            {tags.map((tg) => (
-              <option key={tg} value={tg} />
-            ))}
-          </datalist>
+          <div className="w-56" aria-label={t("contacts.tags")}>
+            <TagSelect name="bulk_tag" options={tags} creatable />
+          </div>
           <SubmitButton size="sm" variant="outline" formAction={bulkContacts} name="intent" value="tag-add">
             <TagIcon /> {t("common.addTag")}
           </SubmitButton>

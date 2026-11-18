@@ -8,7 +8,7 @@ import { loadFields } from "@/lib/custom-fields"
 import { back } from "@/lib/url"
 import type { ImportOutcome } from "@/components/csv-import"
 import { importContactRows, uniqueError } from "@/contacts/server"
-import { fromForm, readContact } from "./fields"
+import { fromForm, parseTags, readContact } from "./fields"
 
 const PATH = "/contacts"
 
@@ -44,10 +44,11 @@ export async function updateContact(fd: FormData) {
   const { ctx, t } = await manager()
   const id = idOf(fd)
   const here = `${PATH}/${id}`
+  const sheet = `${here}?edit=details` // errors come back to the open edit sheet (its SaveBar puts the typed values back)
   const r = await readForm(ctx, fd)
-  if ("error" in r) back(here, { error: fieldError(t, r) })
+  if ("error" in r) back(sheet, { error: fieldError(t, r) })
   const { error, count } = await ctx.supabase.from("contacts").update(r.row, { count: "exact" }).eq("id", id).eq("org_id", ctx.org.id)
-  if (error || !count) back(here, { error: error ? uniqueError(t, error) : t("errors.not_allowed") })
+  if (error || !count) back(sheet, { error: error ? uniqueError(t, error) : t("errors.not_allowed") })
   back(here, { ok: t("contacts.saved") })
 }
 
@@ -124,12 +125,14 @@ export async function bulkContacts(fd: FormData) {
     const failed = results.find((r) => r.error)?.error
     back(to, failed ? { error: dbError(t, failed) } : { ok: t("common.bulkTrashed", { count: ids.length }) })
   }
-  const tag = String(fd.get("bulk_tag") ?? "").trim().slice(0, 100)
-  if (!tag || (intent !== "tag-add" && intent !== "tag-remove")) back(to, { error: t("errors.invalid_input") })
+  // The bulk bar's <TagSelect> posts the picked tags comma-separated.
+  const picked = parseTags(String(fd.get("bulk_tag") ?? ""))
+  if (!picked.length || (intent !== "tag-add" && intent !== "tag-remove")) back(to, { error: t("errors.invalid_input") })
+  const lower = new Set(picked.map((x) => x.toLowerCase()))
   const { data } = await ctx.supabase.from("contacts").select("id, tags").eq("org_id", ctx.org.id).in("id", ids)
   const changes = (data ?? [])
-    .map((c) => ({ id: c.id, tags: intent === "tag-add" ? [...new Set([...c.tags, tag])] : c.tags.filter((x) => x !== tag), before: c.tags.length }))
-    .filter((c) => c.tags.length !== c.before)
+    .map((c) => ({ id: c.id, before: c.tags, tags: intent === "tag-add" ? parseTags([...c.tags, ...picked].join(",")) : c.tags.filter((x) => !lower.has(x.toLowerCase())) }))
+    .filter((c) => c.tags.join("\n") !== c.before.join("\n"))
   const results = await Promise.all(changes.map((c) => ctx.supabase.from("contacts").update({ tags: c.tags }).eq("id", c.id).eq("org_id", ctx.org.id)))
   const failed = results.find((r) => r.error)?.error
   back(to, failed ? { error: dbError(t, failed) } : { ok: t("common.bulkDone", { count: changes.length }) })

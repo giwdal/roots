@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { XIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { DataTable, Pager, pageRange, PAGE_SIZE } from "@/components/data-table"
 import { PageHeader } from "@/components/page"
 import { SearchBox } from "@/components/data-table"
@@ -8,6 +10,7 @@ import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
+import { contactName } from "@/app/(app)/contacts/fields"
 
 const BULK = ["campaign", "automation", "workflow"]
 const VIEWS = ["all", "system", "bulk"] as const
@@ -38,6 +41,9 @@ export default async function EmailLogPage({ searchParams }: PageProps<"/email/l
   const page = pageParam(sp)
   const view = VIEWS.find((v) => v === param(sp, "view")) ?? "all"
   const q = param(sp, "q")?.trim()
+  // ?contact=<id>: every mail to that contact's address (the contact page links here); a chip clears it.
+  const contactId = /^[0-9a-f-]{36}$/.test(param(sp, "contact") ?? "") ? param(sp, "contact")! : null
+  const { data: contact } = contactId ? await ctx.supabase.from("contacts").select("first_name, last_name, company, email").eq("id", contactId).eq("org_id", ctx.org.id).maybeSingle() : { data: null }
   let query = ctx.supabase
     .from("email_history")
     .select("id, to_email, subject, kind, source, entity, entity_id, status, delivery, error, at")
@@ -45,6 +51,7 @@ export default async function EmailLogPage({ searchParams }: PageProps<"/email/l
     .order("at", { ascending: false })
   if (view === "bulk") query = query.in("kind", BULK)
   if (view === "system") query = query.not("kind", "in", `(${BULK.join(",")})`)
+  if (contactId) query = query.ilike("to_email", (contact?.email ?? "-").replace(/[%_\\]/g, "\\$&"))
   if (q) query = query.or(`to_email.ilike.%${q.replace(/[%,()]/g, "")}%,subject.ilike.%${q.replace(/[%,()]/g, "")}%`)
   const { data } = await query.range(...pageRange(page))
   const rows = data?.slice(0, PAGE_SIZE) ?? []
@@ -53,6 +60,11 @@ export default async function EmailLogPage({ searchParams }: PageProps<"/email/l
       <PageHeader area="communication" title={t("email.tabs.log")} description={t("email.logHint")} />
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox label={t("email.logSearch")} />
+        {contact && (
+          <Button render={<Link href={`/email/log${withParams(sp, { contact: undefined, page: undefined })}`} aria-label={`${contactName(contact)} – ${t("common.clear")}`} />} nativeButton={false} size="sm" variant="secondary">
+            {contactName(contact)} <XIcon />
+          </Button>
+        )}
         <Segments label={t("email.source")} items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "all" ? undefined : v, page: undefined }), current: v === view, label: t.dynamic(`email.logViews.${v}`) }))} />
       </div>
       <DataTable

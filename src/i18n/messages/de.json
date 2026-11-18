@@ -55,7 +55,9 @@
     "bulkRestored": {
       "one": "1 Eintrag wiederhergestellt.",
       "other": "{count} Einträge wiederhergestellt."
-    }
+    },
+    "yes": "ja",
+    "no": "nein"
   },
   "auth": {
     "title": "Bei roots anmelden",
@@ -1475,7 +1477,9 @@
       "linked": "Mit dem Teamzugang verknüpft.",
       "unlinked": "Verknüpfung gelöst.",
       "taken": "Dieser Teamzugang ist schon mit einem anderen Kontakt verknüpft.",
-      "badge": "Team"
+      "badge": "Team",
+      "confirmUnlink": "Verknüpfung mit dem Teamzugang lösen?",
+      "confirmUnlinkHint": "Die Person kann ihren Mitgliederbereich dann nicht mehr direkt aus der App öffnen."
     },
     "quickCreate": "Neuen Kontakt anlegen",
     "quickCreateNamed": "„{name}“ als neuen Kontakt anlegen",
@@ -1489,7 +1493,29 @@
     "personHint": "Name oder Firma reicht.",
     "create": "Kontakt anlegen",
     "viaApi": "über API",
-    "viaAi": "über KI-App"
+    "viaAi": "über KI-App",
+    "hub": {
+      "details": "Kontaktdaten",
+      "call": "Anrufen",
+      "newInvoice": "Neue Rechnung",
+      "member": "Mitglied",
+      "formerMember": "Ehemaliges Mitglied",
+      "unsubscribed": "Abgemeldet",
+      "membership": "Mitgliedschaft",
+      "openDues": "Offene Beiträge: {amount}",
+      "openDuesDetail": {
+        "one": "{count} Beitrag offen",
+        "other": "{count} Beiträge offen"
+      },
+      "tickets": "Tickets & Gästelisten",
+      "guestOn": "Gästeliste {list}",
+      "work": "Schichten & Personal",
+      "shiftProfile": "Schichtprofil",
+      "employee": "Personalakte",
+      "inactive": "Inaktiv"
+    },
+    "confirmDeleteNote": "Notiz löschen?",
+    "confirmDeleteNoteHint": "Die Notiz verschwindet aus dem Verlauf."
   },
   "fields": {
     "intro": "Eigene Felder für deine Daten, z. B. Mitgliedsnummer oder Kleidergröße bei Kontakten. Sie erscheinen in Formularen und im CSV-Import.",
@@ -2542,7 +2568,7 @@
     }
   },
   "membership": {
-    "nav": "Mitgliedschaften",
+    "nav": "Mitglieder",
     "title": "Mitgliedschaften",
     "newType": "Neue Mitgliedsart",
     "typesMeta": "{active} aktiv · {total} gesamt",

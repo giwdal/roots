@@ -55,7 +55,9 @@
     "bulkRestored": {
       "one": "1 item restored.",
       "other": "{count} items restored."
-    }
+    },
+    "yes": "yes",
+    "no": "no"
   },
   "auth": {
     "title": "Sign in to roots",
@@ -1475,7 +1477,9 @@
       "linked": "Linked to the team access.",
       "unlinked": "Unlinked.",
       "taken": "This team access is already linked to another contact.",
-      "badge": "Team"
+      "badge": "Team",
+      "confirmUnlink": "Unlink the team access?",
+      "confirmUnlinkHint": "The person can then no longer open their member area right from the app."
     },
     "quickCreate": "Create new contact",
     "quickCreateNamed": "Create “{name}” as a new contact",
@@ -1489,7 +1493,29 @@
     "personHint": "A name or a company is enough.",
     "create": "Create contact",
     "viaApi": "via API",
-    "viaAi": "via AI app"
+    "viaAi": "via AI app",
+    "hub": {
+      "details": "Contact details",
+      "call": "Call",
+      "newInvoice": "New invoice",
+      "member": "Member",
+      "formerMember": "Former member",
+      "unsubscribed": "Unsubscribed",
+      "membership": "Membership",
+      "openDues": "Open dues: {amount}",
+      "openDuesDetail": {
+        "one": "{count} due open",
+        "other": "{count} dues open"
+      },
+      "tickets": "Tickets & guest lists",
+      "guestOn": "Guest list {list}",
+      "work": "Shifts & staff",
+      "shiftProfile": "Shift profile",
+      "employee": "Employee record",
+      "inactive": "Inactive"
+    },
+    "confirmDeleteNote": "Delete this note?",
+    "confirmDeleteNoteHint": "The note disappears from the activity."
   },
   "fields": {
     "intro": "Your own fields for your data, e.g. member number or shirt size on contacts. They show up in forms and in the CSV import.",
@@ -2542,7 +2568,7 @@
     }
   },
   "membership": {
-    "nav": "Memberships",
+    "nav": "Members",
     "title": "Memberships",
     "newType": "New membership type",
     "typesMeta": "{active} active · {total} total",

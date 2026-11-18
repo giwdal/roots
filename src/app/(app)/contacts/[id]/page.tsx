@@ -1,11 +1,34 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { FileTextIcon, MailIcon, PhoneIcon, Trash2Icon } from "lucide-react"
+import {
+  BriefcaseBusinessIcon,
+  CalendarClockIcon,
+  CreditCardIcon,
+  FileTextIcon,
+  GraduationCapIcon,
+  IdCardIcon,
+  KeyRoundIcon,
+  ListChecksIcon,
+  MailIcon,
+  PencilIcon,
+  PhoneIcon,
+  ReceiptTextIcon,
+  ShoppingBagIcon,
+  TicketIcon,
+  Trash2Icon,
+  WalletIcon,
+  ClipboardListIcon,
+} from "lucide-react"
+import { customDetails } from "@/components/custom-field-details"
+import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
+import { LinkRows, type LinkRow } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
-import { FormCard, Page, PageHeader, RecordLayout } from "@/components/page"
+import { Page, PageHeader, RecordLayout } from "@/components/page"
+import { AddLink, Section } from "@/components/section"
 import { SubmitButton } from "@/components/submit-button"
+import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
@@ -16,15 +39,23 @@ import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
 import { param } from "@/lib/url"
+import { rentalState } from "@/rentals/fields"
+import { DocBadge } from "@/app/(app)/invoices/badges"
+import { MemberStateBadge, memberState } from "@/app/(app)/members/badges"
+import { PayStatusBadge } from "@/app/(app)/payments/badges"
+import { OrderBadge } from "@/app/(app)/shop/badges"
 import { addNote, deleteNote, linkContactUser, restoreContact, trashContact, updateContact } from "../actions"
 import { ContactForm } from "../contact-form"
 import { contactName } from "../fields"
-import { rentalState } from "@/rentals/fields"
 
 type Ctx = Awaited<ReturnType<typeof requirePerm>>
 const LIMIT = 10
+const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
+const ilikeExact = (v: string) => v.replace(/[%_\\]/g, "\\$&")
 
-// One person, everything about them: details, membership, what they bought/sent/received, files, notes.
+// The Person hub: who this is (status, tags, how to reach them), then everything connected to them in the modules
+// that are on (membership + open dues, tickets, orders, invoices, payments, courses, rentals, forms, mails, staff),
+// files, team access and the activity. Editing the contact's own fields happens in the "Bearbeiten" sheet.
 export default async function ContactPage({ params, searchParams }: PageProps<"/contacts/[id]">) {
   const { id } = await params
   const ctx = await requirePerm("crm.view")
@@ -35,44 +66,59 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const on = (module: string, perm: string) => ctx.modules.has(module) && ctx.can(perm)
   const none = Promise.resolve({ data: null })
   const by = <Q extends { eq: (c: string, v: string) => Q }>(q: Q) => q.eq("org_id", ctx.org.id).eq("contact_id", id)
+  const now = today()
 
-  const [{ data: c }, { data: notes }, { data: tagRows }, defs, { data: membership }, { data: tickets }, { data: docs }, { data: subs }, { data: mails }, { data: changes }, { data: rentals }, { data: shopOrders }] = await Promise.all([
-    ctx.supabase.from("contacts").select("*").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(),
-    by(ctx.supabase.from("contact_notes").select("id, body, created_at, created_by")).order("created_at", { ascending: false }).limit(200),
-    ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }),
-    loadFields(ctx.supabase, ctx.org.id, "contacts"),
-    on("members", "members.view")
-      ? by(ctx.supabase.from("memberships").select("id, member_no, starts_on, ends_on, membership_types(name)")).is("deleted_at", null).order("starts_on", { ascending: false }).limit(1).maybeSingle()
-      : none,
-    on("tickets", "tickets.view")
-      ? by(ctx.supabase.from("tickets").select("id, status, created_at, event_id, events(title), ticket_types(name)")).order("created_at", { ascending: false }).limit(LIMIT)
-      : none,
-    on("invoices", "invoices.view")
-      ? by(ctx.supabase.from("documents").select("id, kind, status, number, issue_date, gross_total, currency, created_at")).order("created_at", { ascending: false }).limit(LIMIT)
-      : none,
-    on("forms", "forms.view")
-      ? by(ctx.supabase.from("form_submissions").select("id, status, created_at, form_id, forms(title)")).order("created_at", { ascending: false }).limit(LIMIT)
-      : none,
-    on("email", "email.view")
-      ? by(ctx.supabase.from("email_sends").select("id, status, delivery, sent_at, send_after, email_campaigns(name), email_automations(name)")).order("created_at", { ascending: false }).limit(LIMIT)
-      : none,
-    ctx.supabase.rpc("contact_changes", { p_contact: id }),
-    on("rentals", "rentals.view")
-      ? by(ctx.supabase.from("rental_contacts").select("role, rentals!inner(id, status, starts_at, ends_at, deleted_at, rental_objects(name))")).is("rentals.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
-      : none,
-    on("shop", "shop.view")
-      ? by(ctx.supabase.from("shop_orders").select("id, number, status, placed_at, pay_orders(amount_total, currency)")).not("placed_at", "is", null).order("placed_at", { ascending: false }).limit(LIMIT)
-      : none,
-  ])
+  const [{ data: c }, { data: notes }, { data: tagRows }, defs, { data: memberships }, { data: openDues }, { data: tickets }, { data: docs }, { data: subs }, { data: changes }, { data: rentals }, { data: shopOrders }, { data: places }, { data: staff }] =
+    await Promise.all([
+      ctx.supabase.from("contacts").select("*").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(),
+      by(ctx.supabase.from("contact_notes").select("id, body, created_at, created_by")).order("created_at", { ascending: false }).limit(200),
+      ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }),
+      loadFields(ctx.supabase, ctx.org.id, "contacts"),
+      on("members", "members.view")
+        ? by(ctx.supabase.from("memberships").select("id, member_no, starts_on, ends_on, paused_from, paused_until, membership_types(name)")).is("deleted_at", null).order("starts_on", { ascending: false }).limit(5)
+        : none,
+      on("members", "members.view")
+        ? ctx.supabase.from("member_dues").select("amount_cents, due_on, membership_id, memberships!inner(contact_id)").eq("org_id", ctx.org.id).eq("status", "open").eq("memberships.contact_id", id).limit(500)
+        : none,
+      on("tickets", "tickets.view")
+        ? by(ctx.supabase.from("tickets").select("id, status, created_at, event_id, order_id, events(title), ticket_types(name)")).order("created_at", { ascending: false }).limit(LIMIT)
+        : none,
+      on("invoices", "invoices.view")
+        ? by(ctx.supabase.from("documents").select("id, kind, status, number, issue_date, due_date, gross_total, currency, created_at")).order("created_at", { ascending: false }).limit(LIMIT)
+        : none,
+      on("forms", "forms.view")
+        ? by(ctx.supabase.from("form_submissions").select("id, status, created_at, form_id, forms(title)")).order("created_at", { ascending: false }).limit(LIMIT)
+        : none,
+      ctx.supabase.rpc("contact_changes", { p_contact: id }),
+      on("rentals", "rentals.view")
+        ? by(ctx.supabase.from("rental_contacts").select("role, rentals!inner(id, status, starts_at, ends_at, deleted_at, rental_objects(name))")).is("rentals.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
+        : none,
+      on("shop", "shop.view")
+        ? by(ctx.supabase.from("shop_orders").select("id, number, status, placed_at, pay_orders(amount_total, currency)")).not("placed_at", "is", null).order("placed_at", { ascending: false }).limit(LIMIT)
+        : none,
+      on("courses", "courses.view")
+        ? by(ctx.supabase.from("course_participants").select("id, status, created_at, course_id, courses!inner(title, deleted_at)")).is("courses.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
+        : none,
+      (on("shifts", "shifts.manage") || on("hr", "hr.view"))
+        ? by(ctx.supabase.from("staff").select("id, name, active, role_label, employees(id, job_title, deleted_at)")).limit(3)
+        : none,
+    ])
   if (!c) notFound()
-  // Team access: the linked account, and (for managers) the team members who could be linked.
-  // Payments don't point at contacts: the contact's email links them (same rule as Zahlungen › ?contact=).
-  const [{ data: team }, { data: linkedElsewhere }, { data: payments }] = await Promise.all([
+  const email = c.email ? ilikeExact(c.email) : null
+  // Team access: the linked account and (for managers) the team members who could be linked. Payments, mails and
+  // guest-list entries don't point at contacts: the contact's email links them (same rule as Zahlungen › ?contact=).
+  const [{ data: team }, { data: linkedElsewhere }, { data: payments }, { data: mails }, { data: guests }] = await Promise.all([
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
-    on("payments", "payments.view") && c.email
-      ? ctx.supabase.from("pay_orders").select("id, status, source_module, amount_total, currency, created_at").eq("org_id", ctx.org.id).ilike("customer_email", c.email.replace(/[%_\\]/g, "\\$&")).order("created_at", { ascending: false }).limit(LIMIT)
-      : Promise.resolve({ data: null }),
+    on("payments", "payments.view") && email
+      ? ctx.supabase.from("pay_orders").select("id, status, source_module, amount_total, currency, created_at").eq("org_id", ctx.org.id).ilike("customer_email", email).order("created_at", { ascending: false }).limit(LIMIT)
+      : none,
+    on("email", "email.view") && email
+      ? ctx.supabase.from("email_history").select("id, subject, kind, source, status, delivery, at").eq("org_id", ctx.org.id).ilike("to_email", email).order("at", { ascending: false }).limit(5)
+      : none,
+    on("guestlists", "guestlists.view") && email
+      ? ctx.supabase.from("guest_entries").select("id, created_at, list_id, guest_lists!inner(name, deleted_at, events(title))").eq("org_id", ctx.org.id).ilike("email", email).is("guest_lists.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
+      : none,
   ])
   const { data: people } = team?.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", team.map((m) => m.user_id)) : { data: [] }
   const linked = people?.find((p) => p.id === c.user_id)
@@ -80,19 +126,72 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const name = contactName(c)
   const tags = ((tagRows ?? []) as unknown as string[]).sort((a, b) => a.localeCompare(b, t.locale))
   const day = (v: string) => t.date(v, { dateStyle: "medium" })
+  const current = memberships?.find((m) => memberState(m, now) !== "ended")
+  const owed = (openDues ?? []).reduce((s, d) => s + d.amount_cents, 0)
+  const overdue = (openDues ?? []).filter((d) => d.due_on < now)
+  const tel = c.phone?.replace(/[^\d+]/g, "")
+  const address = [c.street, [c.postal_code, c.city].filter(Boolean).join(" "), c.country && c.country !== "DE" ? new Intl.DisplayNames([t.locale], { type: "region" }).of(c.country) : null].filter(Boolean)
+  const canEditMembers = on("members", "members.manage")
+  const showAll = (href: string) => (
+    <Link href={href} className="text-sm text-[var(--link)] hover:underline">
+      {t("common.showAll")}
+    </Link>
+  )
+
+  const ticketRows: LinkRow[] = [
+    ...(tickets ?? []).map((x) => ({
+      key: x.id,
+      icon: TicketIcon,
+      href: on("payments", "payments.view") ? `/payments?edit=${x.order_id}` : `/events/${x.event_id}/tickets`,
+      title: x.events?.title ?? "–",
+      detail: [x.ticket_types?.name, day(x.created_at)].filter(Boolean).join(" · "),
+      badge: <Badge variant={x.status === "valid" || x.status === "used" ? "success" : x.status === "reserved" ? "warning" : "secondary"}>{t.dynamic(`tickets.statuses.${x.status}`)}</Badge>,
+    })),
+    ...(guests ?? []).map((g) => ({
+      key: g.id,
+      icon: ListChecksIcon,
+      href: `/guestlists/${g.list_id}`,
+      title: g.guest_lists.events?.title ?? g.guest_lists.name,
+      detail: [t("contacts.hub.guestOn", { list: g.guest_lists.name }), day(g.created_at)].join(" · "),
+    })),
+  ]
+  const staffRow = staff?.[0]
+  const employee = staffRow?.employees.find((e) => !e.deleted_at)
+  const workRows: LinkRow[] = staffRow
+    ? [
+        ...(on("shifts", "shifts.manage")
+          ? [{ key: "staff", icon: CalendarClockIcon, href: `/shifts/team?edit=${staffRow.id}`, title: t("contacts.hub.shiftProfile"), detail: staffRow.role_label ?? staffRow.name, badge: !staffRow.active && <Badge variant="secondary">{t("contacts.hub.inactive")}</Badge> }]
+          : []),
+        ...(employee && on("hr", "hr.view") ? [{ key: "employee", icon: BriefcaseBusinessIcon, href: `/hr/${employee.id}`, title: t("contacts.hub.employee"), detail: employee.job_title ?? staffRow.name }] : []),
+      ]
+    : []
 
   return (
     <Page size="record">
       <PageHeader
         crumbs={[{ href: "/contacts", label: t("contacts.title") }, { label: name }]}
         title={name}
-        badge={c.deleted_at && <Badge variant="destructive">{t("contacts.trash")}</Badge>}
+        badge={
+          c.deleted_at ? (
+            <Badge variant="destructive">{t("contacts.trash")}</Badge>
+          ) : (
+            <span className="flex flex-wrap gap-1">
+              {current ? (
+                <Badge variant="success">{t("contacts.hub.member")}</Badge>
+              ) : (
+                !!memberships?.length && <Badge variant="secondary">{t("contacts.hub.formerMember")}</Badge>
+              )}
+              {c.user_id && <Badge variant="info">{t("contacts.team.badge")}</Badge>}
+              {c.unsubscribed_at && <Badge variant="warning">{t("contacts.hub.unsubscribed")}</Badge>}
+            </span>
+          )
+        }
         meta={
           (c.company && name !== c.company) || c.tags.length ? (
             <>
               {c.company && name !== c.company && <span>{c.company}</span>}
               {c.tags.map((tg) => (
-                <Badge key={tg} variant="secondary">
+                <Badge key={tg} variant="outline">
                   {tg}
                 </Badge>
               ))}
@@ -107,9 +206,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                   <MailIcon /> {t("contacts.email")}
                 </Button>
               )}
-              {c.phone && (
-                <Button render={<a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} />} nativeButton={false} variant="outline" size="sm">
-                  <PhoneIcon /> {t("contacts.phone")}
+              {tel && (
+                <Button render={<a href={`tel:${tel}`} />} nativeButton={false} variant="outline" size="sm">
+                  <PhoneIcon /> {t("contacts.hub.call")}
                 </Button>
               )}
             </>
@@ -117,8 +216,18 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         }
         menu={
           !c.deleted_at &&
-          (canManage || ctx.can("org.files.view")) && (
+          (canManage || ctx.can("org.files.view") || on("invoices", "invoices.manage") || canEditMembers) && (
             <ActionsMenu>
+              {on("invoices", "invoices.manage") && (
+                <MenuLink href={`/invoices/new?contact=${c.id}`} icon={<ReceiptTextIcon />}>
+                  {t("contacts.hub.newInvoice")}
+                </MenuLink>
+              )}
+              {canEditMembers && !current && (
+                <MenuLink href={`/members/new?contact=${c.id}`} icon={<IdCardIcon />}>
+                  {t("membership.makeMember")}
+                </MenuLink>
+              )}
               {ctx.can("org.files.view") && (
                 <MenuLink href={`/files/templates?contact=${c.id}`} icon={<FileTextIcon />}>
                   {t("contacts.writeLetter")}
@@ -135,6 +244,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             </ActionsMenu>
           )
         }
+        primary={canManage && !c.deleted_at ? { href: `/contacts/${c.id}?edit=details`, label: t("common.edit"), icon: PencilIcon } : undefined}
       />
       {canManage && (
         <form id="trash-contact" action={trashContact} hidden>
@@ -159,211 +269,256 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         <RecordLayout
           aside={
             <>
-            {(linked || canManage) && (
-              <Section id="team" title={t("contacts.team.title")}>
-                {linked ? (
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
-                    <span className="grid min-w-0">
-                      <span className="truncate font-medium">{linked.full_name || linked.email}</span>
-                      <span className="truncate text-xs text-muted-foreground">{t("contacts.team.hasAccess")}</span>
-                    </span>
-                    {canManage && (
-                      <form action={linkContactUser}>
-                        <input type="hidden" name="id" value={c.id} />
-                        <input type="hidden" name="user_id" value="" />
-                        <SubmitButton size="sm" variant="ghost">
-                          {t("contacts.team.unlink")}
-                        </SubmitButton>
-                      </form>
-                    )}
-                  </div>
-                ) : linkable.length ? (
-                  <form action={linkContactUser} className="flex flex-wrap items-center gap-2">
-                    <input type="hidden" name="id" value={c.id} />
-                    <NativeSelect name="user_id" aria-label={t("contacts.team.pick")} defaultValue="" className="min-w-0 flex-1">
-                      <NativeSelectOption value="">{t("contacts.team.pick")}</NativeSelectOption>
-                      {linkable.map((p) => (
-                        <NativeSelectOption key={p.id} value={p.id}>
-                          {p.full_name ? `${p.full_name} · ${p.email}` : p.email}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    <SubmitButton size="sm" variant="outline">
-                      {t("contacts.team.link")}
-                    </SubmitButton>
-                  </form>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{t("contacts.team.none")}</p>
-                )}
-                <p className="text-xs text-muted-foreground">{t("contacts.team.hint")}</p>
-              </Section>
-            )}
-            {ctx.modules.has("members") && ctx.can("members.view") && (
-              <Section id="membership" title={t("membership.nav")}>
-                {membership ? (
-                  <Link href={`/members/${membership.id}`} className="grid gap-0.5 rounded-lg border px-3 py-2 text-sm hover:bg-muted">
-                    <span className="font-medium">
-                      {membership.membership_types?.name ?? "–"}
-                      {membership.member_no && <span className="text-muted-foreground"> · {membership.member_no}</span>}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("contacts.memberSince", { date: day(membership.starts_on) })}
-                      {membership.ends_on && ` · ${t("membership.state.ending", { date: day(membership.ends_on) })}`}
-                    </span>
-                  </Link>
-                ) : ctx.can("members.manage") ? (
-                  <Button render={<Link href={`/members?new=1&contact=${c.id}`} />} nativeButton={false} size="sm" variant="outline" className="justify-self-start">
-                    {t("membership.makeMember")}
-                  </Button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{t("contacts.noMembership")}</p>
-                )}
-              </Section>
-            )}
-            {!!tickets?.length && (
-              <Section id="tickets" title={t("tickets.title")}>
-                <Rows
-                  rows={tickets.map((x) => ({
-                    key: x.id,
-                    href: `/events/${x.event_id}/tickets`,
-                    title: x.events?.title ?? "–",
-                    detail: [x.ticket_types?.name, day(x.created_at)].filter(Boolean).join(" · "),
-                    badge: t.dynamic(`tickets.statuses.${x.status}`),
-                  }))}
-                />
-              </Section>
-            )}
-            {!!rentals?.length && (
-              <Section id="rentals" title={t("rentals.title")}>
-                <Rows
-                  rows={rentals.map((x) => ({
-                    key: x.rentals.id,
-                    href: `/rentals/r/${x.rentals.id}`,
-                    title: x.rentals.rental_objects?.name ?? "–",
-                    detail: [t.dynamic(`rentals.roles.${x.role}`), day(x.rentals.starts_at), x.rentals.ends_at && `– ${day(x.rentals.ends_at)}`].filter(Boolean).join(" "),
-                    badge: t.dynamic(`rentals.states.${rentalState(x.rentals)}`),
-                  }))}
-                />
-              </Section>
-            )}
-            {!!shopOrders?.length && (
-              <Section id="shop" title={t("store.orders")}>
-                <Rows
-                  rows={shopOrders.map((o) => ({
-                    key: o.id,
-                    href: `/shop/orders/${o.id}`,
-                    title: t("store.orderTitle", { number: String(o.number) }),
-                    detail: [o.pay_orders && t.money(o.pay_orders.amount_total, o.pay_orders.currency), o.placed_at && day(o.placed_at)].filter(Boolean).join(" · "),
-                    badge: t.dynamic(`store.orderStatus.${o.status}`),
-                  }))}
-                />
-                {shopOrders.length >= LIMIT && (
-                  <Link href={`/shop/orders?contact=${c.id}&view=all`} className="text-sm text-[var(--link)] hover:underline">
-                    {t("common.showAll")}
-                  </Link>
-                )}
-              </Section>
-            )}
-            {!!docs?.length && (
-              <Section id="invoices" title={t("contacts.invoices")}>
-                <Rows
-                  rows={docs.map((d) => ({
-                    key: d.id,
-                    href: `/invoices/${d.id}`,
-                    title: `${t.dynamic(`invoices.kinds.${d.kind}`)} ${d.number ?? ""}`.trim(),
-                    detail: [t.money(d.gross_total, d.currency), d.issue_date ? day(d.issue_date) : day(d.created_at)].join(" · "),
-                    badge: t.dynamic(`invoices.statuses.${d.kind}.${d.status}`),
-                  }))}
-                />
-                {docs.length >= LIMIT && (
-                  <Link href={`/invoices?contact=${c.id}`} className="text-sm text-[var(--link)] hover:underline">
-                    {t("common.showAll")}
-                  </Link>
-                )}
-              </Section>
-            )}
-            {!!payments?.length && (
-              <Section id="payments" title={t("payments.title")}>
-                <Rows
-                  rows={payments.map((o) => ({
-                    key: o.id,
-                    href: `/payments?contact=${c.id}&edit=${o.id}`,
-                    title: t.dynamic(`payments.sources.${o.source_module}`),
-                    detail: [t.money(o.amount_total, o.currency), day(o.created_at)].join(" · "),
-                    badge: t.dynamic(`payments.statuses.${o.status}`),
-                  }))}
-                />
-                {payments.length >= LIMIT && (
-                  <Link href={`/payments?contact=${c.id}`} className="text-sm text-[var(--link)] hover:underline">
-                    {t("common.showAll")}
-                  </Link>
-                )}
-              </Section>
-            )}
-            {!!subs?.length && (
-              <Section id="forms" title={t("contacts.submissions")}>
-                <Rows
-                  rows={subs.map((s) => ({
-                    key: s.id,
-                    href: `/forms/${s.form_id}/submissions?sub=${s.id}`,
-                    title: s.forms?.title ?? "–",
-                    detail: day(s.created_at),
-                    badge: t.dynamic(`forms.subStatus.${s.status}`),
-                  }))}
-                />
-              </Section>
-            )}
-            {!!mails?.length && (
-              <Section id="emails" title={t("contacts.emails")}>
-                <Rows
-                  rows={mails.map((m) => ({
-                    key: m.id,
-                    href: "/email/log",
-                    title: m.email_campaigns?.name ?? m.email_automations?.name ?? "–",
-                    detail: day(m.sent_at ?? m.send_after),
-                    badge: m.delivery ? t.dynamic(`email.delivery.${m.delivery}`) : t.dynamic(`email.sendStatus.${m.status}`),
-                  }))}
-                />
-              </Section>
-            )}
-            <FileList ctx={ctx} entity="contacts" entityId={c.id} back={`/contacts/${c.id}`} />
+              {(linked || canManage) && (
+                <Section id="team" title={t("contacts.team.title")} description={t("contacts.team.hint")}>
+                  {linked ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
+                      <span className="flex min-w-0 items-center gap-3">
+                        <KeyRoundIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="grid min-w-0">
+                          <span className="truncate font-medium">{linked.full_name || linked.email}</span>
+                          <span className="truncate text-xs text-muted-foreground">{t("contacts.team.hasAccess")}</span>
+                        </span>
+                      </span>
+                      {canManage && (
+                        <form action={linkContactUser}>
+                          <input type="hidden" name="id" value={c.id} />
+                          <input type="hidden" name="user_id" value="" />
+                          <SubmitButton size="sm" variant="ghost" data-confirm="contacts.team.confirmUnlink">
+                            {t("contacts.team.unlink")}
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </div>
+                  ) : linkable.length ? (
+                    <form action={linkContactUser} className="flex flex-wrap items-center gap-2">
+                      <input type="hidden" name="id" value={c.id} />
+                      <NativeSelect name="user_id" aria-label={t("contacts.team.pick")} defaultValue="" className="min-w-0 flex-1">
+                        <NativeSelectOption value="">{t("contacts.team.pick")}</NativeSelectOption>
+                        {linkable.map((p) => (
+                          <NativeSelectOption key={p.id} value={p.id}>
+                            {p.full_name ? `${p.full_name} · ${p.email}` : p.email}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                      <SubmitButton size="sm" variant="outline">
+                        {t("contacts.team.link")}
+                      </SubmitButton>
+                    </form>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("contacts.team.none")}</p>
+                  )}
+                </Section>
+              )}
+              <Timeline t={t} ctx={ctx} c={c} notes={notes ?? []} changes={changes ?? []} defs={defs} canManage={canManage} />
             </>
           }
         >
-          {!canManage && <p className="text-sm text-muted-foreground">{t("contacts.readOnly")}</p>}
-          <ContactForm t={t} action={updateContact} c={c} disabled={!canManage} defs={defs} tags={tags} />
-          <Timeline t={t} ctx={ctx} c={c} notes={notes ?? []} changes={changes ?? []} defs={defs} canManage={canManage} />
+          <Section id="details" title={t("contacts.hub.details")} action={
+              canManage && (
+                <Link href={`/contacts/${c.id}?edit=details`} scroll={false} className="inline-flex min-h-8 items-center gap-1.5 text-sm text-[var(--link)] hover:underline">
+                  <PencilIcon className="size-3.5" /> {t("common.edit")}
+                </Link>
+              )
+            }>
+            <DetailList
+              items={[
+                {
+                  label: t("contacts.email"),
+                  value: c.email && (
+                    <a href={`mailto:${c.email}`} className="break-all underline underline-offset-4">
+                      {c.email}
+                    </a>
+                  ),
+                },
+                {
+                  label: t("contacts.phone"),
+                  value: c.phone && tel && (
+                    <a href={`tel:${tel}`} className="underline underline-offset-4">
+                      {c.phone}
+                    </a>
+                  ),
+                },
+                { label: t("contacts.address"), value: address.length ? <span className="whitespace-pre-line">{address.join("\n")}</span> : null },
+                c.birthday && { label: t("contacts.birthday"), value: t.date(`${c.birthday}T12:00:00`, { dateStyle: "long" }) },
+                ...customDetails(t, defs, c.custom),
+                c.unsubscribed_at && { label: t("contacts.unsubscribed"), value: day(c.unsubscribed_at) },
+              ]}
+            />
+          </Section>
+
+          {on("members", "members.view") && (!!memberships?.length || canEditMembers) && (
+            <Section id="membership" title={t("contacts.hub.membership")}>
+              {memberships?.length ? (
+                <LinkRows
+                  rows={[
+                    ...(owed
+                      ? [
+                          {
+                            key: "dues",
+                            icon: WalletIcon,
+                            href: `/members/${(overdue[0] ?? openDues![0]).membership_id}#dues`,
+                            title: t("contacts.hub.openDues", { amount: t.money(owed) }),
+                            detail: t("contacts.hub.openDuesDetail", { count: openDues!.length }),
+                            badge: overdue.length ? <Badge variant="destructive">{t("membership.overdue")}</Badge> : <Badge variant="warning">{t("membership.dueStatus.open")}</Badge>,
+                          },
+                        ]
+                      : []),
+                    ...memberships.map((m) => ({
+                      key: m.id,
+                      icon: IdCardIcon,
+                      href: `/members/${m.id}`,
+                      title: [m.membership_types?.name ?? "–", m.member_no && t("membership.numberShort", { number: m.member_no })].filter(Boolean).join(" · "),
+                      detail: [t("contacts.memberSince", { date: day(m.starts_on) }), m.ends_on && t("membership.state.ending", { date: day(m.ends_on) })].filter(Boolean).join(" · "),
+                      badge: <MemberStateBadge t={t} m={m} now={now} />,
+                    })),
+                  ]}
+                />
+              ) : null}
+              {canEditMembers && !current && <AddLink href={`/members/new?contact=${c.id}`}>{t("membership.makeMember")}</AddLink>}
+            </Section>
+          )}
+
+          {!!ticketRows.length && (
+            <Section id="tickets" title={t("contacts.hub.tickets")}>
+              <LinkRows rows={ticketRows} />
+            </Section>
+          )}
+
+          {!!shopOrders?.length && (
+            <Section id="shop" title={t("store.orders")}>
+              <LinkRows
+                rows={shopOrders.map((o) => ({
+                  key: o.id,
+                  icon: ShoppingBagIcon,
+                  href: `/shop/orders/${o.id}`,
+                  title: t("store.orderTitle", { number: String(o.number) }),
+                  detail: [o.pay_orders && t.money(o.pay_orders.amount_total, o.pay_orders.currency), o.placed_at && day(o.placed_at)].filter(Boolean).join(" · "),
+                  badge: <OrderBadge t={t} status={o.status} />,
+                }))}
+              />
+              {shopOrders.length >= LIMIT && showAll(`/shop/orders?contact=${c.id}&view=all`)}
+            </Section>
+          )}
+
+          {!!docs?.length && (
+            <Section id="invoices" title={t("contacts.invoices")}>
+              <LinkRows
+                rows={docs.map((d) => ({
+                  key: d.id,
+                  icon: ReceiptTextIcon,
+                  href: `/invoices/${d.id}`,
+                  title: `${t.dynamic(`invoices.kinds.${d.kind}`)} ${d.number ?? ""}`.trim(),
+                  detail: [t.money(d.gross_total, d.currency), d.issue_date ? day(d.issue_date) : day(d.created_at)].join(" · "),
+                  badge: <DocBadge t={t} doc={d} today={now} />,
+                }))}
+              />
+              {docs.length >= LIMIT && showAll(`/invoices?contact=${c.id}`)}
+            </Section>
+          )}
+
+          {!!payments?.length && (
+            <Section id="payments" title={t("payments.title")}>
+              <LinkRows
+                rows={payments.map((o) => ({
+                  key: o.id,
+                  icon: CreditCardIcon,
+                  href: `/payments?contact=${c.id}&edit=${o.id}`,
+                  title: t.dynamic(`payments.sources.${o.source_module}`),
+                  detail: [t.money(o.amount_total, o.currency), day(o.created_at)].join(" · "),
+                  badge: <PayStatusBadge t={t} status={o.status} />,
+                }))}
+              />
+              {payments.length >= LIMIT && showAll(`/payments?contact=${c.id}`)}
+            </Section>
+          )}
+
+          {!!places?.length && (
+            <Section id="courses" title={t("courses.nav")}>
+              <LinkRows
+                rows={places.map((p) => ({
+                  key: p.id,
+                  icon: GraduationCapIcon,
+                  href: `/courses/${p.course_id}`,
+                  title: p.courses.title,
+                  detail: day(p.created_at),
+                  badge: <Badge variant={p.status === "enrolled" ? "success" : p.status === "waiting" ? "warning" : "secondary"}>{t.dynamic(`courses.statuses.${p.status}`)}</Badge>,
+                }))}
+              />
+            </Section>
+          )}
+
+          {!!rentals?.length && (
+            <Section id="rentals" title={t("rentals.title")}>
+              <LinkRows
+                rows={rentals.map((x) => ({
+                  key: x.rentals.id,
+                  icon: KeyRoundIcon,
+                  href: `/rentals/r/${x.rentals.id}`,
+                  title: x.rentals.rental_objects?.name ?? "–",
+                  detail: [t.dynamic(`rentals.roles.${x.role}`), day(x.rentals.starts_at), x.rentals.ends_at && `– ${day(x.rentals.ends_at)}`].filter(Boolean).join(" "),
+                  badge: <Badge variant="outline">{t.dynamic(`rentals.states.${rentalState(x.rentals)}`)}</Badge>,
+                }))}
+              />
+            </Section>
+          )}
+
+          {!!subs?.length && (
+            <Section id="forms" title={t("contacts.submissions")}>
+              <LinkRows
+                rows={subs.map((s) => ({
+                  key: s.id,
+                  icon: ClipboardListIcon,
+                  href: `/forms/${s.form_id}/submissions?sub=${s.id}`,
+                  title: s.forms?.title ?? "–",
+                  detail: day(s.created_at),
+                  badge: <Badge variant={s.status === "accepted" ? "success" : s.status === "new" ? "warning" : "secondary"}>{t.dynamic(`forms.subStatus.${s.status}`)}</Badge>,
+                }))}
+              />
+            </Section>
+          )}
+
+          {!!mails?.length && (
+            <Section id="emails" title={t("contacts.emails")}>
+              <LinkRows
+                rows={mails.map((m) => ({
+                  key: m.id ?? `${m.at}`,
+                  icon: MailIcon,
+                  href: `/email/log?contact=${c.id}`,
+                  title: m.subject || (m.source ?? "–"),
+                  detail: m.at ? t.date(m.at, { dateStyle: "medium", timeStyle: "short" }) : "",
+                  badge:
+                    m.delivery === "bounced" || m.delivery === "complained" || m.status === "failed" ? (
+                      <Badge variant="destructive">{m.delivery ? t.dynamic(`email.delivery.${m.delivery}`) : t.dynamic(`email.sendStatus.${m.status}`)}</Badge>
+                    ) : m.status && m.status !== "sent" ? (
+                      <Badge variant="warning">{t.dynamic(`email.sendStatus.${m.status}`)}</Badge>
+                    ) : undefined,
+                }))}
+              />
+              {showAll(`/email/log?contact=${c.id}`)}
+            </Section>
+          )}
+
+          {!!workRows.length && (
+            <Section id="work" title={t("contacts.hub.work")}>
+              <LinkRows rows={workRows} />
+            </Section>
+          )}
+
+          {ctx.can("org.files.view") && (
+            <Section id="files" title={t("files.title")}>
+              <FileList ctx={ctx} entity="contacts" entityId={c.id} back={`/contacts/${c.id}`} hideTitle />
+            </Section>
+          )}
         </RecordLayout>
       )}
+
+      {canManage && !c.deleted_at && param(sp, "edit") === "details" && (
+        <UrlSheet params={["edit"]} title={name}>
+          <ContactForm t={t} action={updateContact} c={c} defs={defs} tags={tags} />
+        </UrlSheet>
+      )}
     </Page>
-  )
-}
-
-function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: React.ReactNode }) {
-  return (
-    <FormCard id={id} title={title} description={description}>
-      {children}
-    </FormCard>
-  )
-}
-
-function Rows({ rows }: { rows: { key: string; href: string; title: string; detail: string; badge: string }[] }) {
-  return (
-    <ul className="divide-y rounded-lg border">
-      {rows.map((r) => (
-        <li key={r.key}>
-          <Link href={r.href} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted">
-            <span className="grid min-w-0 flex-1">
-              <span className="truncate font-medium">{r.title}</span>
-              <span className="truncate text-xs text-muted-foreground">{r.detail}</span>
-            </span>
-            <Badge variant="outline" className="shrink-0">
-              {r.badge}
-            </Badge>
-          </Link>
-        </li>
-      ))}
-    </ul>
   )
 }
 
@@ -478,7 +633,7 @@ async function Timeline({
                     <input type="hidden" name="id" value={c.id} />
                     <input type="hidden" name="note" value={e.note.id} />
                     <Tooltip>
-                      <TooltipTrigger render={<SubmitButton variant="ghost" size="icon-sm" aria-label={t("contacts.deleteNote")} />}>
+                      <TooltipTrigger render={<SubmitButton variant="ghost" size="icon-sm" aria-label={t("contacts.deleteNote")} data-confirm="contacts.confirmDeleteNote" />}>
                         <Trash2Icon />
                       </TooltipTrigger>
                       <TooltipContent>{t("contacts.deleteNote")}</TooltipContent>

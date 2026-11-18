@@ -2893,7 +2893,6 @@
     "nav": "Formulare",
     "title": "Formulare",
     "new": "Neues Formular",
-    "create": "Anlegen",
     "empty": "Noch keine Formulare.",
     "formTitle": "Titel",
     "titlePlaceholder": "z. B. Mitgliedsantrag",
@@ -2921,9 +2920,12 @@
     "defaultSuccessMembership": "Danke für deinen Antrag! Wir melden uns, sobald der Vorstand ihn bearbeitet hat.",
     "tabs": {
       "builder": "Aufbau",
-      "submissions": "Einsendungen"
+      "submissions": "Einsendungen",
+      "submissionsNew": {
+        "one": "Einsendungen · {count} neu",
+        "other": "Einsendungen · {count} neu"
+      }
     },
-    "openPublic": "Öffentliche Seite",
     "settings": "Einstellungen",
     "slug": "Slug",
     "intro": "Einleitung",
@@ -2948,8 +2950,7 @@
     "consentText": "Text der Einwilligung",
     "textBody": "Text",
     "required": "Pflichtfeld",
-    "addElement": "Hinzufügen",
-    "add": "Hinzufügen",
+    "addElement": "Element hinzufügen",
     "consent": "Ich stimme zu.",
     "toTrash": "Formular in den Papierkorb",
     "fields": {
@@ -2986,7 +2987,30 @@
     "emptyTrash": "Der Papierkorb ist leer.",
     "restore": "Wiederherstellen",
     "restored": "Formular wiederhergestellt.",
-    "confirmFailed": "Deine Angaben sind angekommen – die Bestätigungs-E-Mail konnte aber nicht verschickt werden."
+    "confirmFailed": "Deine Angaben sind angekommen – die Bestätigungs-E-Mail konnte aber nicht verschickt werden.",
+    "elementsInvalid": "Die Felder passen nicht: jedes Feld nur einmal, Einwilligungen brauchen einen Text.",
+    "published": "Formular veröffentlicht.",
+    "publish": "Veröffentlichen",
+    "copyLink": "Link kopieren",
+    "exportSubmissions": "Einsendungen exportieren",
+    "confirmTrash": "Formular in den Papierkorb?",
+    "confirmTrashHint": "Die öffentliche Seite ist dann nicht mehr erreichbar. Einsendungen bleiben; wiederherstellen geht 30 Tage lang.",
+    "mandateHint": "Kontoinhaber:in, IBAN, BIC und der Mandatstext mit eurer Gläubiger-ID.",
+    "confirmRemoveElement": "Element entfernen?",
+    "confirmRemoveElementHint": "Wird beim Speichern aus dem Formular genommen. Bisherige Einsendungen behalten ihre Antworten.",
+    "noNewSubmissions": "Keine neuen Einsendungen.",
+    "confirmAccept": "Einsendung annehmen?",
+    "confirmAcceptMember": "Als Mitglied aufnehmen?",
+    "confirmAcceptMemberHint": "Legt Kontakt und Mitgliedschaft an (mit Lastschriftmandat, falls angegeben).",
+    "confirmReject": "Einsendung ablehnen?",
+    "confirmRejectHint": "Es wird nichts angelegt; die Person bekommt keine Nachricht.",
+    "noMatch": "Kein Formular passt dazu.",
+    "emptyText": "Ein Formular ist eine öffentliche Seite, z. B. Kontaktformular oder Mitgliedsantrag; Einsendungen landen hier.",
+    "newCount": {
+      "one": "{count} neu",
+      "other": "{count} neu"
+    },
+    "createForm": "Formular anlegen"
   },
   "export": {
     "button": "Exportieren",

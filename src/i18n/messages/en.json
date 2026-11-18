@@ -2893,7 +2893,6 @@
     "nav": "Forms",
     "title": "Forms",
     "new": "New form",
-    "create": "Create",
     "empty": "No forms yet.",
     "formTitle": "Title",
     "titlePlaceholder": "e.g. Membership application",
@@ -2921,9 +2920,12 @@
     "defaultSuccessMembership": "Thank you for your application! We'll get back to you once the board has reviewed it.",
     "tabs": {
       "builder": "Builder",
-      "submissions": "Submissions"
+      "submissions": "Submissions",
+      "submissionsNew": {
+        "one": "Submissions · {count} new",
+        "other": "Submissions · {count} new"
+      }
     },
-    "openPublic": "Public page",
     "settings": "Settings",
     "slug": "Slug",
     "intro": "Introduction",
@@ -2948,8 +2950,7 @@
     "consentText": "Consent text",
     "textBody": "Text",
     "required": "Required",
-    "addElement": "Add",
-    "add": "Add",
+    "addElement": "Add element",
     "consent": "I agree.",
     "toTrash": "Move form to trash",
     "fields": {
@@ -2986,7 +2987,30 @@
     "emptyTrash": "The trash is empty.",
     "restore": "Restore",
     "restored": "Form restored.",
-    "confirmFailed": "Your details arrived – but the confirmation email couldn't be sent."
+    "confirmFailed": "Your details arrived – but the confirmation email couldn't be sent.",
+    "elementsInvalid": "The elements don't fit: each field once, consents need a text.",
+    "published": "Form published.",
+    "publish": "Publish",
+    "copyLink": "Copy link",
+    "exportSubmissions": "Export submissions",
+    "confirmTrash": "Move form to the trash?",
+    "confirmTrashHint": "The public page stops working. Submissions stay; you can restore it for 30 days.",
+    "mandateHint": "Account holder, IBAN, BIC and the mandate text with your creditor ID.",
+    "confirmRemoveElement": "Remove element?",
+    "confirmRemoveElementHint": "Taken out of the form when you save. Earlier submissions keep their answers.",
+    "noNewSubmissions": "No new submissions.",
+    "confirmAccept": "Accept submission?",
+    "confirmAcceptMember": "Admit as member?",
+    "confirmAcceptMemberHint": "Creates the contact and the membership (with the direct debit mandate, if given).",
+    "confirmReject": "Reject submission?",
+    "confirmRejectHint": "Nothing is created; the person gets no message.",
+    "noMatch": "No form matches.",
+    "emptyText": "A form is a public page, e.g. a contact form or membership application; submissions land here.",
+    "newCount": {
+      "one": "{count} new",
+      "other": "{count} new"
+    },
+    "createForm": "Create form"
   },
   "export": {
     "button": "Export",

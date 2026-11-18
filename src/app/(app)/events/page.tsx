@@ -14,6 +14,7 @@ import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
 import { StatusBadge } from "./event-form"
+import { TypeBadge } from "./type-badge"
 
 const VIEWS = ["upcoming", "past", "all"] as const
 const STATUSES = ["draft", "published", "cancelled"] as const
@@ -31,6 +32,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
   const view = VIEWS.find((v) => v === param(sp, "view")) ?? "upcoming"
   const status = STATUSES.find((s) => s === param(sp, "status"))
   const page = pageParam(sp)
+  const typeSlug = param(sp, "type")
   // Old drawer links (?edit=<id>) → the event's page.
   const editId = param(sp, "edit")
   if (editId && /^[0-9a-f-]{36}$/.test(editId)) redirect(`/events/${editId}`)
@@ -40,7 +42,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
   const now = new Date().toISOString()
   let query = ctx.supabase
     .from("events")
-    .select("id, title, slug, status, starts_at, ends_at, venue_name, deleted_at")
+    .select(`id, title, slug, status, starts_at, ends_at, venue_name, deleted_at, event_types${typeSlug ? "!inner" : ""}(name, slug, color)`)
     .eq("org_id", ctx.org.id)
     .range(...pageRange(page))
   if (trash) query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
@@ -53,7 +55,8 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
     if (status) query = query.eq("status", status)
   }
   if (q) query = query.or(`title.ilike.%${q}%,venue_name.ilike.%${q}%`)
-  const { data } = await query
+  if (typeSlug) query = query.eq("event_types.slug", typeSlug)
+  const [{ data }, { data: typeList }] = await Promise.all([query, ctx.supabase.from("event_types").select("name, slug").eq("org_id", ctx.org.id).order("name")])
   const rows = data?.slice(0, PAGE_SIZE) ?? []
   const chip = (href: string, current: boolean, label: string) => (
     <Link
@@ -92,6 +95,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
               {VIEWS.map((v) => chip(withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined, edit: undefined }), v === view, t.dynamic(`eventsPage.${v}`)))}
             </nav>
             <FilterMenu param="status" label={t("eventsPage.status")} options={STATUSES.map((s) => ({ value: s, label: t.dynamic(`eventsPage.statuses.${s}`) }))} />
+            {!!typeList?.length && <FilterMenu param="type" label={t("eventsPage.type")} options={typeList.map((x) => ({ value: x.slug, label: x.name }))} />}
           </>
         )}
       </div>
@@ -105,7 +109,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
         empty={
           trash ? (
             t("eventsPage.emptyTrash")
-          ) : q || status || view !== "upcoming" ? (
+          ) : q || status || typeSlug || view !== "upcoming" ? (
             t("eventsPage.empty")
           ) : (
             <EmptyState
@@ -123,7 +127,15 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
           )
         }
         columns={[
-          { header: t("eventsPage.titleLabel"), cell: (r) => <span className="font-medium">{r.title}</span> },
+          {
+            header: t("eventsPage.titleLabel"),
+            cell: (r) => (
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">{r.title}</span>
+                <TypeBadge type={r.event_types} />
+              </span>
+            ),
+          },
           {
             header: t("eventsPage.when"),
             cell: (r) => t.date(r.starts_at, { dateStyle: "medium", timeStyle: "short" }),

@@ -152,6 +152,10 @@ export async function saveType(fd: FormData) {
     active: !fd.has("active") || fd.getAll("active").includes("on"), // new types have no checkbox
     prorate: fd.get("prorate") === "on",
     fee_is_minimum: fd.get("fee_is_minimum") === "on",
+    visit_limit: (() => {
+      const n = Math.floor(Number(fd.get("visit_limit")))
+      return n >= 1 ? Math.min(1000, n) : null // empty or < 1 = no limit
+    })(),
   }
   const { error } = id
     ? await ctx.supabase.from("membership_types").update(row).eq("id", id).eq("org_id", ctx.org.id)

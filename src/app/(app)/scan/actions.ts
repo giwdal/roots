@@ -4,7 +4,7 @@ import { getT } from "@/i18n/server"
 import { dbError } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { back } from "@/lib/url"
-import { isMemberCode, memberDoor, memberDoorList, type MemberAtDoor } from "@/members/door"
+import { isMemberCode, memberDoor, memberDoorList, queuedMember, type MemberAtDoor } from "@/members/door"
 import { cancelDoorSale, doorSaleStatus, doorStats, payAtDoor, sellAtDoor } from "@/tickets/door"
 import { DOOR_METHODS, readLines, type DoorMethod } from "@/tickets/door-fields"
 import { qrSvg } from "@/tickets/server"
@@ -40,12 +40,12 @@ export async function checkIn(eventId: string, code: string): Promise<ScanResult
 }
 
 /** Let a looked-up member in (scanner card button). */
-export async function admitMember(eventId: string, contactId: string): Promise<MemberAtDoor | { result: "error"; message: string; cancelled?: boolean }> {
+export async function admitMember(eventId: string, contactId: string, override = false): Promise<MemberAtDoor | { result: "error"; message: string; cancelled?: boolean }> {
   const ctx = await requirePerm("tickets.scan")
   const t = await getT()
   if (!/^[0-9a-f-]{36}$/.test(eventId) || !/^[0-9a-f-]{36}$/.test(contactId)) return { result: "invalid" }
   try {
-    return await memberDoor(ctx.supabase, eventId, { contactId }, true)
+    return await memberDoor(ctx.supabase, eventId, { contactId }, true, override)
   } catch (e) {
     return { result: "error", message: scanError(t, e as { message?: string }), cancelled: (e as { message?: string }).message === "event_cancelled" }
   }
@@ -84,8 +84,9 @@ export async function syncCheckIns(eventId: string, codes: string[]): Promise<{ 
   let synced = 0
   const conflicts: string[] = []
   for (const code of codes.slice(0, 2000)) {
-    if (code.startsWith("member:")) {
-      const m = await admitMember(eventId, code.slice(7))
+    const q = queuedMember(code)
+    if (q) {
+      const m = await admitMember(eventId, q.contactId, q.override)
       if (m.result === "ok") synced++
       else if (m.result === "error" && !m.cancelled) throw new Error(m.message)
       else conflicts.push(("name" in m && m.name) || code)
@@ -135,7 +136,7 @@ export async function memberDoorCheckIn(fd: FormData) {
   if (!/^[0-9a-f-]{36}$/.test(event) || !/^[0-9a-f-]{36}$/.test(contact)) back(here, { error: t("errors.invalid_input") })
   let r: MemberAtDoor
   try {
-    r = await memberDoor(ctx.supabase, event, { contactId: contact }, true)
+    r = await memberDoor(ctx.supabase, event, { contactId: contact }, true, fd.get("override") === "1")
   } catch (e) {
     back(here, { error: dbError(t, e as { message: string }) })
   }

@@ -13,6 +13,7 @@ import { loadFields, type CustomValues } from "@/lib/custom-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { DateInput } from "@/components/date-input"
+import { TypeAndDefaults } from "./type-and-defaults"
 
 type Ev = Tables<"events">
 
@@ -22,24 +23,39 @@ export function StatusBadge({ t, status }: { t: T; status: string }) {
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 
-export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean }) {
+export async function EventForm({ t, action, ev, disabled, initialType }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; initialType?: string }) {
   const ctx = await getContext()
   const mails = ctx.modules.has("email") && ctx.can("email.view")
-  const [{ data: locations }, defs, { data: templates }] = await Promise.all([
+  const [{ data: locations }, defs, { data: templates }, { data: allTypes }] = await Promise.all([
     ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name"),
     loadFields(ctx.supabase, ctx.org.id, "events"),
     mails ? ctx.supabase.from("email_templates").select("id, name, is_default").eq("org_id", ctx.org.id).order("name") : Promise.resolve({ data: null }),
+    ctx.supabase.from("event_types").select("id, name, slug, counts_visit, capacity, active").eq("org_id", ctx.org.id).order("name"),
   ])
+  // Inactive types can't be picked for new events; an event keeps the one it has.
+  const types = (allTypes ?? []).filter((x) => x.active || x.id === ev?.event_type_id)
+  const withTypes = !ev && types.length > 0 // new event: the type comes first and prefills
   const fallback = templates?.find((x) => x.is_default)
   return (
     <form action={action} className="grid gap-6">
       {ev && <input type="hidden" name="id" value={ev.id} />}
       <fieldset disabled={disabled} className="grid gap-6">
+        {withTypes && (
+          <FormCard id="type" title={t("eventsPage.type")}>
+            <TypeAndDefaults types={types} initialSlug={initialType} showCounts={ctx.modules.has("members")} />
+          </FormCard>
+        )}
         <FormCard id="when" title={t("eventsPage.basics")}>
           <div className="grid gap-2">
             <Label htmlFor="ev-title">{t("eventsPage.titleLabel")}</Label>
             <Input id="ev-title" name="title" defaultValue={ev?.title} required maxLength={200} className="text-base font-medium" />
           </div>
+          {ev && types.length > 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="ev-type">{t("eventsPage.type")}</Label>
+              <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} dropdown defaultValue={ev.event_type_id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ev-starts">{t("eventsPage.startsAt")}</Label>
@@ -73,10 +89,22 @@ export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd
 
         <FormCard id="about" title={t("eventsPage.description")}>
           <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} />
-          <div className="grid gap-2">
-            <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
-            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
-          </div>
+          {!withTypes && (
+            <div className="grid gap-2">
+              <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
+              <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
+            </div>
+          )}
+          {!withTypes && ctx.modules.has("members") && (
+            <div className="grid gap-1">
+              <input type="hidden" name="counts_visit_field" value="1" />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" name="counts_visit" value="on" defaultChecked={ev?.counts_visit ?? true} />
+                {t("eventsPage.countsVisit")}
+              </label>
+              <p className="text-xs text-muted-foreground">{t("eventsPage.countsVisitHint")}</p>
+            </div>
+          )}
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 

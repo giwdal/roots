@@ -665,6 +665,7 @@
       "shift_assignments": "Schicht-Einteilungen",
       "files": "Dateien",
       "membership_types": "Mitgliedsarten",
+      "event_types": "Event-Typen",
       "memberships": "Mitgliedschaften",
       "member_dues": "Mitgliedsbeiträge",
       "sepa_runs": "Lastschriftdateien",
@@ -1280,6 +1281,32 @@
     "saved": "Einstellungen gespeichert.",
     "none": "Für deine Rollen gibt es noch keine Benachrichtigungen."
   },
+  "eventTypes": {
+    "title": "Event-Typen",
+    "hint": "Typen ordnen Events (z. B. Session, Workshop, Klubnacht) und füllen neue Events vor.",
+    "new": "Neuer Typ",
+    "empty": "Noch keine Event-Typen.",
+    "name": "Name",
+    "slug": "Kurzname",
+    "slugHint": "Für die API und Links, z. B. klubnacht. Leer = aus dem Namen.",
+    "color": "Farbe",
+    "colors": { "gray": "Grau", "blue": "Blau", "green": "Grün", "yellow": "Gelb", "orange": "Orange", "red": "Rot", "purple": "Lila", "pink": "Pink" },
+    "defaults": "Voreinstellungen für neue Events",
+    "defaultsHint": "Gilt nur beim Anlegen. Spätere Änderungen am Typ ändern bestehende Events nicht.",
+    "countsVisit": "Zählt als Mitglieder-Besuch",
+    "yes": "ja",
+    "no": "nein",
+    "events": "Events",
+    "status": "Status",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "activeLabel": "aktiv (bei neuen Events wählbar)",
+    "delete": "Typ löschen",
+    "confirmDelete": "Typ wirklich löschen?",
+    "inUse": "Dieser Typ wird noch von Events genutzt, auch von gelöschten im Papierkorb. Setze ihn stattdessen auf inaktiv.",
+    "saved": "Typ gespeichert.",
+    "deleted": "Typ gelöscht."
+  },
   "eventsPage": {
     "nav": "Events",
     "title": "Events",
@@ -1299,6 +1326,9 @@
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
+    "type": "Typ",
+    "countsVisit": "Zählt als Mitglieder-Besuch",
+    "countsVisitHint": "Aus: Check-ins von Mitgliedern erhöhen ihren Besuchszähler nicht, und die Tür bleibt auch am Limit offen (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen und zur Kapazität.",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
     "imageHint": "PNG, JPG, WebP oder GIF, max. 2 MB.",
@@ -2162,7 +2192,12 @@
       "lastVisit": "Zuletzt da: {date}",
       "admit": "Einlassen",
       "admitting": "Einlassen …",
-      "noneFound": "Kein Mitglied gefunden."
+      "noneFound": "Kein Mitglied gefunden.",
+      "limit": "Besuchslimit erreicht",
+      "limitHint": "Alle Besuche dieser Mitgliedsart sind aufgebraucht.",
+      "override": "Trotzdem einlassen",
+      "visitsOf": "{count} von {limit} Besuchen genutzt",
+      "notCounting": "Zählt nicht als Besuch"
     },
     "sale": {
       "cashEntry": "Abendkasse: {event}",
@@ -2519,6 +2554,9 @@
     "interval": "Rhythmus",
     "entryFee": "Aufnahme (€)",
     "noticeMonths": "Frist (Monate)",
+    "visitLimit": "Besuchslimit",
+    "visitLimitHint": "Leer = unbegrenzt. Danach sperrt die Tür, außer man lässt bewusst trotzdem ein. Es zählen nur Veranstaltungen mit „Zählt als Besuch“.",
+    "visitLimitShort": "max. {n} Besuche",
     "typeActive": "aktiv",
     "addType": "Hinzufügen",
     "deleteType": "Mitgliedsart löschen",
@@ -4114,6 +4152,7 @@
       "note": "Notiz",
       "membership": "Mitgliedschaft",
       "membership_type": "Mitgliedsart",
+      "event_type": "Event-Typ",
       "due": "Beitrag",
       "event": "Event",
       "slot": "Timetable-Slot",
@@ -4176,10 +4215,17 @@
         "ends_on": "Ende",
         "note": "Notiz"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Kurzname",
+        "counts_visit": "Zählt als Mitglieder-Besuch",
+        "capacity": "Kapazität"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Beitrag (Cent)",
-        "interval": "Intervall"
+        "interval": "Intervall",
+        "visit_limit": "Besuchslimit"
       },
       "due": {
         "kind": "Art",
@@ -4198,7 +4244,8 @@
         "starts_at": "Beginn",
         "ends_at": "Ende",
         "venue_name": "Ort",
-        "capacity": "Kapazität"
+        "capacity": "Kapazität",
+        "counts_visit": "Zählt als Mitglieder-Besuch"
       },
       "slot": {
         "title": "Titel",

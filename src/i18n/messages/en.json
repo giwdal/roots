@@ -665,6 +665,7 @@
       "shift_assignments": "Shift assignments",
       "files": "Files",
       "membership_types": "Membership types",
+      "event_types": "Event types",
       "memberships": "Memberships",
       "member_dues": "Member dues",
       "sepa_runs": "Direct debit files",
@@ -1280,6 +1281,32 @@
     "saved": "Settings saved.",
     "none": "There are no notifications for your roles yet."
   },
+  "eventTypes": {
+    "title": "Event types",
+    "hint": "Types organise events (e.g. session, workshop, club night) and prefill new events.",
+    "new": "New type",
+    "empty": "No event types yet.",
+    "name": "Name",
+    "slug": "Short name",
+    "slugHint": "For the API and links, e.g. club-night. Empty = made from the name.",
+    "color": "Colour",
+    "colors": { "gray": "Gray", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "red": "Red", "purple": "Purple", "pink": "Pink" },
+    "defaults": "Defaults for new events",
+    "defaultsHint": "Only applied when creating. Changing the type later doesn't change existing events.",
+    "countsVisit": "Counts as a member visit",
+    "yes": "yes",
+    "no": "no",
+    "events": "Events",
+    "status": "Status",
+    "active": "active",
+    "inactive": "inactive",
+    "activeLabel": "active (can be picked for new events)",
+    "delete": "Delete type",
+    "confirmDelete": "Really delete this type?",
+    "inUse": "This type is still used by events, including trashed ones. Set it to inactive instead.",
+    "saved": "Type saved.",
+    "deleted": "Type deleted."
+  },
   "eventsPage": {
     "nav": "Events",
     "title": "Events",
@@ -1299,6 +1326,9 @@
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
+    "type": "Type",
+    "countsVisit": "Counts as a member visit",
+    "countsVisitHint": "Off: member check-ins don't raise their visit counter, and the door stays open even at the limit (e.g. club night). They still count as attendees and towards capacity.",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
     "imageHint": "PNG, JPG, WebP or GIF, max. 2 MB.",
@@ -2162,7 +2192,12 @@
       "lastVisit": "Last visit: {date}",
       "admit": "Let in",
       "admitting": "Letting in …",
-      "noneFound": "No member found."
+      "noneFound": "No member found.",
+      "limit": "Visit limit reached",
+      "limitHint": "All visits of this membership type are used up.",
+      "override": "Let in anyway",
+      "visitsOf": "{count} of {limit} visits used",
+      "notCounting": "Doesn't count as a visit"
     },
     "sale": {
       "cashEntry": "Door sales: {event}",
@@ -2519,6 +2554,9 @@
     "interval": "Interval",
     "entryFee": "Entry fee (€)",
     "noticeMonths": "Notice (months)",
+    "visitLimit": "Visit limit",
+    "visitLimitHint": "Empty = unlimited. After that the door blocks unless someone lets them in anyway. Only events with \"Counts as a visit\" count.",
+    "visitLimitShort": "max. {n} visits",
     "typeActive": "active",
     "addType": "Add",
     "deleteType": "Delete membership type",
@@ -4114,6 +4152,7 @@
       "note": "Note",
       "membership": "Membership",
       "membership_type": "Membership type",
+      "event_type": "Event type",
       "due": "Due",
       "event": "Event",
       "slot": "Timetable slot",
@@ -4176,10 +4215,17 @@
         "ends_on": "End",
         "note": "Note"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Short name",
+        "counts_visit": "Counts as a member visit",
+        "capacity": "Capacity"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Fee (cents)",
-        "interval": "Interval"
+        "interval": "Interval",
+        "visit_limit": "Visit limit"
       },
       "due": {
         "kind": "Kind",
@@ -4198,7 +4244,8 @@
         "starts_at": "Start",
         "ends_at": "End",
         "venue_name": "Venue",
-        "capacity": "Capacity"
+        "capacity": "Capacity",
+        "counts_visit": "Counts as a member visit"
       },
       "slot": {
         "title": "Title",

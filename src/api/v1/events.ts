@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { checkEvent, EVENT_SLUG, EVENT_STATUSES, insertEvent, TICKET_NAMES } from "@/app/(app)/events/fields"
+import { withTypeDefaults, type TypeDefaults } from "@/app/(app)/events/type-fields"
 import { deliverSoon } from "@/events/worker"
 import { messages } from "@/i18n/config"
 import { createT } from "@/i18n/translate"
@@ -32,6 +33,9 @@ export const Event = z.object({
   max_tickets_per_order: z.number().int(),
   links: z.array(z.object({ label: z.string(), url: z.string() })).describe("The event's own links (max 3), shown as buttons on its page"),
   show_code_field: z.boolean().describe("Shop shows the discount code field (?code= links work either way)"),
+  counts_visit: z.boolean().describe("Member check-ins here count towards membership visit limits (default true). Off = still let in and counted as attendees"),
+  event_type_id: uuid.nullable().describe("The event's type (GET /event-types), null = none"),
+  event_type_slug: z.string().nullable().describe("Slug of that type"),
   door: z.object({ methods: z.array(z.enum(DOOR_METHODS)), reader_id: z.string().nullable(), cash_account_id: uuid.nullable() }).describe("Door sales (POS): payment methods offered, card reader, cash book account for cash"),
   email_template_id: uuid.nullable().describe("Email template for this event's ticket, guest-list and waiting-list mails (null = the org's default, else roots' built-in mail). See GET /email/templates"),
   custom: Custom,
@@ -41,8 +45,13 @@ export const Event = z.object({
   updated_at: ts,
 })
 export const EVENT_COLS =
-  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
-const eventOut = <T extends { image_path: string | null; door: unknown }>({ image_path, ...e }: T) => ({ ...e, door: readDoor(e.door), image_url: imageUrl(image_path) ?? null })
+  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, counts_visit, event_type_id, event_types(slug), door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
+const eventOut = <T extends { image_path: string | null; door: unknown; event_types: { slug: string } | null }>({ image_path, event_types, ...e }: T) => ({
+  ...e,
+  event_type_slug: event_types?.slug ?? null,
+  door: readDoor(e.door),
+  image_url: imageUrl(image_path) ?? null,
+})
 
 const EventFields = z.object({
   title: z.string().max(200),
@@ -59,6 +68,9 @@ const EventFields = z.object({
   max_tickets_per_order: z.number().int().min(1).max(100),
   email_template_id: uuid.nullable().describe("An email template of the org (GET /email/templates); null = the org's default"),
   show_code_field: z.boolean().describe("Show the discount code field in the shop (default true); ?code= links work either way"),
+  counts_visit: z.boolean().describe("Member check-ins at this event count towards membership visit limits (default true, or the type's default); off = e.g. club nights"),
+  event_type_id: uuid.nullable().describe("An event type of the organisation (GET /event-types); null clears it. On create the type's defaults (counts_visit, capacity) fill what the request leaves out. Give this or event_type_slug"),
+  event_type_slug: z.string().regex(EVENT_SLUG).nullable().describe("The same by slug"),
   door: z
     .object({ methods: z.array(z.enum(DOOR_METHODS)).max(3), reader_id: z.string().max(100).nullable().optional(), cash_account_id: uuid.nullable().optional() })
     .describe("Door sales (POS): methods cash | qr | terminal (default all), the card reader (from the SumUp integration), a cash book account (kind cash) that cash sales are booked into"),
@@ -112,6 +124,22 @@ async function templateOf(db: Db, orgId: string, id: string | null | undefined) 
   if (!id) return
   const { data } = await db.from("email_templates").select("id").eq("id", id).eq("org_id", orgId).maybeSingle()
   if (!data) throw new ApiError(422, "invalid_reference", "email_template_id does not belong to this organisation.")
+}
+
+// The type named by id or slug in a request: undefined = the request doesn't touch it, id null = clear it.
+async function typeOf(db: Db, orgId: string, id: string | null | undefined, slug: string | null | undefined, forNew: boolean): Promise<{ id: string | null; defaults: TypeDefaults | null } | undefined> {
+  if (id === undefined && slug === undefined) return undefined
+  if (id === null || slug === null) return { id: null, defaults: null }
+  let q = db.from("event_types").select("id, counts_visit, capacity, active").eq("org_id", orgId)
+  q = id ? q.eq("id", id) : q.eq("slug", slug!)
+  const { data } = await q.maybeSingle()
+  if (!data) throw new ApiError(422, "invalid_reference", "event_type_id / event_type_slug does not belong to this organisation.")
+  if (forNew && !data.active) throw new ApiError(422, "type_inactive", "This event type is inactive; it can't be chosen for new events.")
+  return { id: data.id, defaults: data }
+}
+// id and slug together are ambiguous.
+const eitherType = (b: { event_type_id?: unknown; event_type_slug?: unknown }, ctx: z.RefinementCtx) => {
+  if (b.event_type_id !== undefined && b.event_type_slug !== undefined) ctx.addIssue({ code: "custom", message: "Give event_type_id or event_type_slug, not both." })
 }
 
 // Lineup
@@ -237,12 +265,16 @@ export const endpoints: Endpoint[] = [
       status: z.enum(EVENT_STATUSES).optional(),
       from: z.iso.datetime({ offset: true }).optional().describe("Only events ending/starting after this time"),
       deleted: z.stringbool().default(false).describe("true = the trash (purged after 30 days)"),
+      event_type_id: uuid.optional().describe("Only events of this type"),
+      event_type_slug: z.string().optional().describe("Only events of the type with this slug"),
     }),
     response: list(Event),
     async handler({ db, orgId, query }) {
       let q = db.from("events").select(EVENT_COLS).eq("org_id", orgId).order("starts_at").range(query.offset, query.offset + query.limit)
       q = query.deleted ? q.not("deleted_at", "is", null) : q.is("deleted_at", null)
       if (query.status) q = q.eq("status", query.status)
+      const typeId = query.event_type_id ?? (query.event_type_slug ? (await db.from("event_types").select("id").eq("org_id", orgId).eq("slug", query.event_type_slug).maybeSingle()).data?.id ?? "00000000-0000-0000-0000-000000000000" : undefined)
+      if (typeId) q = q.eq("event_type_id", typeId)
       if (query.from) q = q.or(`ends_at.gte.${query.from},and(ends_at.is.null,starts_at.gte.${query.from})`)
       const { data } = await q
       return paged(data?.map(eventOut) ?? [], query)
@@ -265,12 +297,14 @@ export const endpoints: Endpoint[] = [
     tag: "Events",
     summary: "Create an event",
     description: "Starts as a draft unless `status` is given. Without `slug` the address comes from the title (409 `slug_taken` if a given slug is in use).",
-    body: EventFields.partial().required({ title: true, starts_at: true }).strict(),
+    body: EventFields.partial().required({ title: true, starts_at: true }).strict().superRefine(eitherType),
     response: Event,
     status: 201,
     async handler({ db, orgId, body }) {
-      const { slug, custom, ...rest } = body
-      const row = { ...clean(rest), custom: await eventCustom(db, orgId, custom) }
+      const { slug, custom, event_type_id, event_type_slug, ...rest } = body
+      const type = await typeOf(db, orgId, event_type_id, event_type_slug, true)
+      // What the request leaves out comes from the type (App parity: the form prefills the same two values).
+      const row = { ...withTypeDefaults(type?.defaults ?? null, clean(rest)), custom: await eventCustom(db, orgId, custom), ...(type && { event_type_id: type.id }) }
       const err = checkEvent({ ends_at: null, capacity: null, ...row, title: row.title ?? null, starts_at: row.starts_at! }, slug)
       if (err) throw invalid(err)
       await Promise.all([locationOf(db, orgId, row.location_id), templateOf(db, orgId, row.email_template_id), cashAccountOf(db, orgId, body.door?.cash_account_id)])
@@ -289,13 +323,14 @@ export const endpoints: Endpoint[] = [
     summary: "Update an event",
     description:
       "Only the given fields change; null clears. `status` publishes (`published`), unpublishes (`draft`) or cancels (`cancelled`) the event. `ticket_names` and `max_tickets_per_order` are the ticket shop settings.",
-    body: EventFields.partial().strict(),
+    body: EventFields.partial().strict().superRefine(eitherType),
     response: Event,
     async handler({ db, orgId, params, body }) {
       const { data: old } = await db.from("events").select("title, starts_at, ends_at, capacity, custom").eq("id", params.id).eq("org_id", orgId).is("deleted_at", null).maybeSingle()
       if (!old) throw notFound()
-      const { custom, ...fields } = body
-      const row = { ...clean(fields), ...(custom && { custom: await eventCustom(db, orgId, { ...(old.custom as Record<string, string>), ...custom }) }) }
+      const { custom, event_type_id, event_type_slug, ...fields } = body
+      const type = await typeOf(db, orgId, event_type_id, event_type_slug, false) // a type change moves the label only, not the event's values
+      const row = { ...clean(fields), ...(type && { event_type_id: type.id }), ...(custom && { custom: await eventCustom(db, orgId, { ...(old.custom as Record<string, string>), ...custom }) }) }
       const err = checkEvent({ ...old, ...row, title: row.title === undefined ? old.title : row.title, starts_at: row.starts_at ?? old.starts_at }, body.slug)
       if (err) throw invalid(err)
       await Promise.all([locationOf(db, orgId, row.location_id), templateOf(db, orgId, row.email_template_id), cashAccountOf(db, orgId, body.door?.cash_account_id)])

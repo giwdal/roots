@@ -1,7 +1,7 @@
 // Event fields: the rules the App form and the API share, plus the insert with its automatic address.
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database, TablesInsert } from "@/lib/supabase/types"
-import { slugify } from "./slug"
+import { slugify } from "./slug.ts" // with .ts so node --test can load this file too
 
 export const EVENT_STATUSES = ["draft", "published", "cancelled"] as const
 export const TICKET_NAMES = ["off", "optional", "required"] as const

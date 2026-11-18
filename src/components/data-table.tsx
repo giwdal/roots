@@ -56,7 +56,7 @@ export function DataTable<R>({
                   )}
                 </div>
                 {meta.length > 0 && (
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground [&>*+*]:before:mr-2 [&>*+*]:before:content-['·']">
+                  <div className="flex min-w-0 items-center gap-x-2 overflow-hidden text-xs whitespace-nowrap text-muted-foreground [&>*+*]:before:mr-2 [&>*+*]:before:content-['·']">
                     {meta.map((v, i) => (
                       <span key={i} className="inline-flex min-w-0 items-center truncate">
                         {v}

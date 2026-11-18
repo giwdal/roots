@@ -3,6 +3,9 @@
 You redesign one area of the roots App. UX and UI are the priority; every feature must keep working.
 
 ## Read first (all binding)
+docs/design/system.md (sizes `--control`, spacing, type, icons, buttons for phone/tablet/desktop) · patterns.md §8
+(record pages: identity header, main + right rail, **inline editing** with `<InlineField>` + a `patch<Entity>` server
+action per record type) · docs/plans/ux-backlog.md (open cross-cutting tasks; tick what you do, add what you find) ·
 AGENTS.md · docs/design/app.md · docs/design/patterns.md (screen types, settings as grouped rows, how to show/enter
 each kind of information, when menus, §7 navigation + target sidebar) · docs/design/mobile.md (phone concept and what
 the shell already does) · docs/plans/ux-overhaul.md (§1 simple first, §1b rethink per device + written spec, §6b module
@@ -49,6 +52,14 @@ node_modules/next/dist/docs/ when unsure.
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.
+
+## Also new (use them)
+- `src/components/inline-field.tsx` (edit one value in place) — add `patch<Entity>(form)` actions that validate the
+  one field with the module's fields.ts and update only that column; keep the full form for creating.
+- Overlays (`<UrlSheet>`/`<ContentSheet>`) are centred dialogs from md automatically; `compact` for short ones.
+- `link` utility class for inline links; `<ImageForm labelHidden>` (tap the picture to upload).
+- Never hard-code control heights; button/input/select sizes come from the tokens.
+- Anything new you find that you shouldn't fix in your area: add it to docs/plans/ux-backlog.md (§Z for questions).
 
 ## Process
 1. Research briefly how the best tools in the space do it (WebSearch/WebFetch ok) and take the simplest pattern.

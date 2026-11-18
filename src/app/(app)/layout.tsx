@@ -7,6 +7,7 @@ import { OrgSwitcher } from "@/components/org-switcher"
 import { getT } from "@/i18n/server"
 import { getContext, getSession } from "@/lib/context"
 import { visibleNav } from "@/modules/nav"
+import { quickActions } from "@/lib/quick-actions"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getContext()
@@ -27,18 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     children: a.children.filter((c) => !c.gear).map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
   }))
   // Quick actions in the search (before typing): create the common things, open the door — only what this org and person can.
-  const quick = [
-    { module: "crm", perm: "crm.manage", href: "/contacts/new", key: "newContact" },
-    { module: "events", perm: "events.manage", href: "/events/new", key: "newEvent" },
-    { module: "tickets", perm: "tickets.scan", href: "/scan", key: "scan" },
-    { module: "members", perm: "members.manage", href: "/members/new", key: "newMembership" },
-    { module: "invoices", perm: "invoices.manage", href: "/invoices/new", key: "newInvoice" },
-    { module: "shop", perm: "shop.manage", href: "/shop/orders/new", key: "newOrder" },
-    { module: "projects", perm: "projects.manage", href: "/projects/new", key: "newProject" },
-    { module: "email", perm: "email.manage", href: "/email/new", key: "newCampaign" },
-  ]
-    .filter((a) => ctx.modules.has(a.module) && ctx.can(a.perm))
-    .map((a) => ({ href: a.href, label: t.dynamic(`search.actions.${a.key}`) }))
+  const quick = quickActions((m) => ctx.modules.has(m), ctx.can, t).map(({ href, label }) => ({ href, label }))
   const groups = [
     {
       items: [

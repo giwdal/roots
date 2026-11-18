@@ -13,7 +13,7 @@ import { entryProblem } from "@/shifts/time"
 const UUID = /^[0-9a-f-]{36}$/
 const ret = (fd: FormData, fallback: string) => {
   const r = String(fd.get("return") ?? "")
-  return r.startsWith("/shifts") || r.startsWith("/projects/") ? r : fallback
+  return r.startsWith("/shifts") || r.startsWith("/projects/") || r === "/" ? r : fallback // "/" = Start's Jetzt card
 }
 const without = (path: string, ...keys: string[]) => {
   const u = new URL(path, "http://x")

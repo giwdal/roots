@@ -218,7 +218,7 @@
     "today": "Today",
     "myTasks": "My tasks",
     "myShifts": "My next shifts",
-    "nextEvents": "Next events",
+    "nextEvents": "Events",
     "overdueDues": "Overdue dues",
     "all": "All",
     "noTasks": "No open tasks for you.",
@@ -229,7 +229,40 @@
       "one": "{count} due",
       "other": "{count} dues"
     },
-    "inboxEmpty": "All read."
+    "inboxEmpty": "All read.",
+    "waitingTitle": "Waiting for you",
+    "allClear": "Nothing is waiting for you.",
+    "todayAt": "today {time}",
+    "waiting": {
+      "tasks": {
+        "one": "{count} task due",
+        "other": "{count} tasks due"
+      },
+      "hours": {
+        "one": "{count} time entry to approve",
+        "other": "{count} time entries to approve"
+      },
+      "submissions": {
+        "one": "{count} new submission",
+        "other": "{count} new submissions"
+      },
+      "orders": {
+        "one": "{count} order to handle",
+        "other": "{count} orders to handle"
+      },
+      "invoices": {
+        "one": "{count} invoice overdue",
+        "other": "{count} invoices overdue"
+      },
+      "dues": {
+        "one": "{count} due overdue",
+        "other": "{count} dues overdue"
+      },
+      "unread": {
+        "one": "{count} unread notification",
+        "other": "{count} unread notifications"
+      }
+    }
   },
   "settings": {
     "title": "Settings",
@@ -1336,7 +1369,17 @@
     "unread": "Unread",
     "when": "When",
     "what": "What",
-    "org": "Organisation"
+    "org": "Organisation",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "settings": "Notification settings",
+    "area": "Area",
+    "allAreas": "All areas",
+    "inOrg": "in {org}",
+    "allRead": "All read.",
+    "emptyText": "What roots tells you lands here: sales, sign-ups, deadlines.",
+    "allMarked": "All marked as read.",
+    "switched": "Switched to {org}."
   },
   "prefs": {
     "title": "Notifications",

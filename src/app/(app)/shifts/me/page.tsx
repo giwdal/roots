@@ -4,20 +4,18 @@ import { PlusIcon } from "lucide-react"
 import { ListToolbar } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
-import { RecordPicker } from "@/components/record-picker"
 import { AddLink, Section } from "@/components/section"
 import { ShiftSelfView } from "@/components/shift-self-view"
 import { Stat, Stats } from "@/components/stats"
-import { SubmitButton } from "@/components/submit-button"
 import { hoursText, MonthNav, monthOf, TIME_COLS, TimeEntryList, TimeEntrySheet, type TimeRow } from "@/components/time-entries"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
-import { selfView, type SelfShift } from "@/shifts/server"
+import { selfView } from "@/shifts/server"
 import { minutes } from "@/shifts/time"
 import { selfAction } from "../actions"
-import { clock, searchProjects } from "../time-actions"
+import { NowCard } from "../now-card"
 import { PlanViews } from "../views"
 
 // Schichten › Meine: a team member's day on the phone. The Jetzt card holds the one main thing (clock out of what runs,
@@ -61,15 +59,6 @@ export default async function MyShifts({ searchParams }: PageProps<"/shifts/me">
   const total = entries.filter((e) => e.ended_at).reduce((s, e) => s + minutes(e).net, 0)
   const target = data?.me.target_hours != null ? Number(data.me.target_hours) : null
   const own = data?.own ?? []
-  const now = new Date().getTime()
-  const inWindow = (s: SelfShift) => now >= new Date(s.starts_at).getTime() - 2 * 3600_000 && now <= new Date(s.ends_at).getTime() + 2 * 3600_000
-  const runningShift = running?.shift_id ? own.find((s) => s.id === running.shift_id) : null
-  const current = !running ? own.find((s) => s.status === "assigned" && !s.checked_in_at && inWindow(s)) : null
-  const next = own.find((s) => s.status === "assigned" && new Date(s.starts_at).getTime() > now)
-  const label = (s: SelfShift) => [s.position ?? s.title, s.event].filter(Boolean).join(" · ")
-  const span = (s: SelfShift) => `${t.date(s.starts_at, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}–${t.date(s.ends_at, { hour: "2-digit", minute: "2-digit" })}`
-  const clockTime = (v: string) => t.date(v, { hour: "2-digit", minute: "2-digit" })
-  const big = "h-12 w-full text-base md:w-auto md:min-w-48"
 
   return (
     <Page>
@@ -79,58 +68,7 @@ export default async function MyShifts({ searchParams }: PageProps<"/shifts/me">
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:items-start">
         {/* Jetzt: the one main action of this page. */}
-        <section aria-labelledby="now" className="grid gap-3 rounded-xl border bg-card p-4">
-          {running ? (
-            <>
-              <div className="grid gap-0.5">
-                <p className="text-sm text-muted-foreground">{t("time.since", { time: clockTime(running.started_at) })}</p>
-                <h2 id="now" className="text-lg font-medium">
-                  {runningShift ? label(runningShift) : (running.projects?.name ?? t("shifts.withoutShift"))}
-                </h2>
-              </div>
-              <form action={runningShift ? selfAction : clock}>
-                {runningShift ? (
-                  <>
-                    <input type="hidden" name="shift" value={runningShift.id} />
-                    <input type="hidden" name="action" value="check_out" />
-                  </>
-                ) : (
-                  <input type="hidden" name="return" value={here} />
-                )}
-                <SubmitButton className={big}>{t("time.clockOut")}</SubmitButton>
-              </form>
-            </>
-          ) : current ? (
-            <>
-              <div className="grid gap-0.5">
-                <p className="text-sm text-muted-foreground">{span(current)}</p>
-                <h2 id="now" className="text-lg font-medium">
-                  {label(current)}
-                </h2>
-                {current.location && <p className="text-sm text-muted-foreground">{current.location}</p>}
-              </div>
-              <form action={selfAction}>
-                <input type="hidden" name="shift" value={current.id} />
-                <input type="hidden" name="action" value="check_in" />
-                <SubmitButton className={big}>{t("shifts.checkIn")}</SubmitButton>
-              </form>
-            </>
-          ) : (
-            <>
-              <div className="grid gap-0.5">
-                <p className="text-sm text-muted-foreground">{next ? t("shifts.nextShift", { when: span(next) }) : t("shifts.noShiftNow")}</p>
-                <h2 id="now" className="text-lg font-medium">
-                  {next ? label(next) : t("shifts.withoutShift")}
-                </h2>
-              </div>
-              <form action={clock} className="grid gap-3">
-                <input type="hidden" name="return" value={here} />
-                {withProjects && <RecordPicker name="project_id" label={t("time.projectOptional")} search={searchProjects} placeholder={t("time.noProject")} />}
-                <SubmitButton className={big}>{t("shifts.clockInFree")}</SubmitButton>
-              </form>
-            </>
-          )}
-        </section>
+        <NowCard own={own} running={running} returnTo={here} withProjects={withProjects} />
         <Stats className="sm:grid-cols-2 md:grid-cols-1">
           <Stat label={t("shifts.workedIn", { month: t.date(`${month.month}-15T12:00:00Z`, { month: "long" }) })} value={hoursText(t, total)} />
           {target != null && <Stat label={t("shifts.targetHours")} value={`${t.number(target)} h`} hint={t("shifts.balanceHint", { hours: `${total >= target * 60 ? "+" : "−"}${hoursText(t, Math.abs(total - target * 60))}` })} />}

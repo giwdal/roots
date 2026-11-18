@@ -16,7 +16,7 @@ const id = (fd: FormData, k: string) => {
 }
 const ret = (fd: FormData, fallback: string) => {
   const r = String(fd.get("return") ?? "")
-  return r.startsWith("/shifts") ? r : fallback
+  return r.startsWith("/shifts") || r === "/" ? r : fallback // "/" = Start's Jetzt card
 }
 
 async function manager() {
@@ -222,10 +222,11 @@ export async function selfAction(fd: FormData) {
   const ctx = await requirePerm("shifts.self")
   const t = await getT()
   const action = String(fd.get("action"))
+  const here = ret(fd, "/shifts/me")
   const { error } = await ctx.supabase.rpc("shift_self", { p_action: action, p_shift: String(fd.get("shift")) })
-  if (error) back("/shifts/me", { error: dbError(t, error) })
+  if (error) back(here, { error: dbError(t, error) })
   deliverSoon()
-  back("/shifts/me", { ok: t.dynamic(`shifts.self.${action}`) })
+  back(here, { ok: t.dynamic(`shifts.self.${action}`) })
 }
 
 // --- Locations (core settings) ------------------------------------------------------------------

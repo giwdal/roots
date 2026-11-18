@@ -218,7 +218,7 @@
     "today": "Heute",
     "myTasks": "Meine Aufgaben",
     "myShifts": "Meine nächsten Schichten",
-    "nextEvents": "Nächste Veranstaltungen",
+    "nextEvents": "Events",
     "overdueDues": "Überfällige Beiträge",
     "all": "Alle",
     "noTasks": "Keine offenen Aufgaben für dich.",
@@ -229,7 +229,40 @@
       "one": "{count} Beitrag",
       "other": "{count} Beiträge"
     },
-    "inboxEmpty": "Alles gelesen."
+    "inboxEmpty": "Alles gelesen.",
+    "waitingTitle": "Wartet auf dich",
+    "allClear": "Nichts wartet auf dich.",
+    "todayAt": "heute {time}",
+    "waiting": {
+      "tasks": {
+        "one": "{count} Aufgabe fällig",
+        "other": "{count} Aufgaben fällig"
+      },
+      "hours": {
+        "one": "{count} Zeiteintrag freigeben",
+        "other": "{count} Zeiteinträge freigeben"
+      },
+      "submissions": {
+        "one": "{count} neue Einsendung",
+        "other": "{count} neue Einsendungen"
+      },
+      "orders": {
+        "one": "{count} Bestellung zu erledigen",
+        "other": "{count} Bestellungen zu erledigen"
+      },
+      "invoices": {
+        "one": "{count} Rechnung überfällig",
+        "other": "{count} Rechnungen überfällig"
+      },
+      "dues": {
+        "one": "{count} Beitrag überfällig",
+        "other": "{count} Beiträge überfällig"
+      },
+      "unread": {
+        "one": "{count} ungelesene Benachrichtigung",
+        "other": "{count} ungelesene Benachrichtigungen"
+      }
+    }
   },
   "settings": {
     "title": "Einstellungen",
@@ -1336,7 +1369,17 @@
     "unread": "Ungelesen",
     "when": "Wann",
     "what": "Was",
-    "org": "Organisation"
+    "org": "Organisation",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "settings": "Benachrichtigungen einstellen",
+    "area": "Bereich",
+    "allAreas": "Alle Bereiche",
+    "inOrg": "in {org}",
+    "allRead": "Alles gelesen.",
+    "emptyText": "Hier landet, was roots dir meldet: Verkäufe, Anmeldungen, Fristen.",
+    "allMarked": "Alle als gelesen markiert.",
+    "switched": "Gewechselt zu {org}."
   },
   "prefs": {
     "title": "Benachrichtigungen",

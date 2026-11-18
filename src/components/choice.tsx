@@ -9,11 +9,11 @@ export type ChoiceOption = { value: string; label: string }
  * ≤ 5 → segmented buttons (all visible, one tap) · 6–15 → dropdown · > 15 → search dropdown.
  * Posts `name` like a select. Not `required` → an empty choice ("–") is offered.
  */
-export function Choice({ name, options, defaultValue, required, disabled, id, label, className }: { name: string; options: ChoiceOption[]; defaultValue?: string | null; required?: boolean; disabled?: boolean; id?: string; label?: string; className?: string }) {
+export function Choice({ name, options, defaultValue, required, disabled, id, label, className, emptyLabel }: { name: string; options: ChoiceOption[]; defaultValue?: string | null; required?: boolean; disabled?: boolean; id?: string; label?: string; className?: string; emptyLabel?: string }) {
   if (options.length <= 5)
     return (
       <SegmentGroup id={id} label={label} className={className}>
-          {!required && <Segment name={name} value="" label="–" defaultChecked={!defaultValue} disabled={disabled} />}
+          {!required && <Segment name={name} value="" label={emptyLabel ?? "–"} defaultChecked={!defaultValue} disabled={disabled} />}
           {options.map((o) => (
             <Segment key={o.value} name={name} value={o.value} label={o.label} defaultChecked={defaultValue === o.value} disabled={disabled} required={required} />
           ))}
@@ -22,7 +22,7 @@ export function Choice({ name, options, defaultValue, required, disabled, id, la
   if (options.length <= 15)
     return (
       <NativeSelect id={id} name={name} defaultValue={defaultValue ?? ""} required={required} disabled={disabled} aria-label={label} className={cn("w-full", className)}>
-        {!required && <NativeSelectOption value="">–</NativeSelectOption>}
+        {!required && <NativeSelectOption value="">{emptyLabel ?? "–"}</NativeSelectOption>}
         {options.map((o) => (
           <NativeSelectOption key={o.value} value={o.value}>
             {o.label}
@@ -30,7 +30,7 @@ export function Choice({ name, options, defaultValue, required, disabled, id, la
         ))}
       </NativeSelect>
     )
-  return <MultiSelect id={id} name={name} options={options} defaultValue={defaultValue ? [defaultValue] : []} single disabled={disabled} />
+  return <MultiSelect id={id} name={name} options={options} defaultValue={defaultValue ? [defaultValue] : []} single disabled={disabled} placeholder={emptyLabel} />
 }
 
 /** Segmented control: native radios (arrow keys, one tab stop, form posting) styled as one row of buttons. */

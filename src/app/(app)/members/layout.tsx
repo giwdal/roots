@@ -4,7 +4,7 @@ import { titled } from "@/lib/title"
 
 export const generateMetadata = titled("membership.nav")
 
-// Overview, dues, import and setup are sub-items in the sidebar (src/modules/nav.ts).
+// Mitglieder and Beiträge are sidebar items, Einstellungen is the gear (src/modules/nav.ts).
 export default async function MembersLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePerm("members.view")
   if (!ctx.modules.has("members")) notFound()

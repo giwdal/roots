@@ -37,7 +37,7 @@ export const NAV: Area[] = [
     label: "contacts.nav",
     icon: ContactIcon,
     children: [
-      { href: "/contacts", label: "nav.overview", module: "crm", permission: "crm.view" },
+      { href: "/contacts", label: "contacts.nav", module: "crm", permission: "crm.view" },
     ],
   },
   {
@@ -46,9 +46,8 @@ export const NAV: Area[] = [
     icon: IdCardIcon,
     children: [
       { href: "/members", label: "membership.tabs.members", module: "members", permission: "members.view" },
-      { href: "/members/types", label: "membership.types", module: "members", permission: "members.manage" },
       { href: "/members/dues", label: "membership.tabs.dues", module: "members", permission: "members.view" },
-      { href: "/members/settings", label: "common.settings", module: "members", permission: "members.manage" },
+      { href: "/members/settings", label: "common.settings", module: "members", permission: "members.manage", gear: true },
     ],
   },
   {

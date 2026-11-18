@@ -69,7 +69,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
 
   const none = Promise.resolve({ data: [] as never[] })
   const day = (v: string | null) => (v ? t.date(v, { dateStyle: "medium" }) : undefined)
-  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists, employees] = await Promise.all([
+  const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists, employees, courses, workflows, staff, payments] = await Promise.all([
     on("crm", "crm.view")
       ? db
           .from("contacts")
@@ -80,7 +80,13 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
           .limit(PER_GROUP)
       : none,
     on("members", "members.view")
-      ? db.from("memberships").select("id, member_no, contacts(first_name, last_name, company)").eq("org_id", org).is("deleted_at", null).ilike("member_no", like).limit(PER_GROUP)
+      ? db
+          .from("memberships")
+          .select("id, member_no, contacts!inner(first_name, last_name, company)")
+          .eq("org_id", org)
+          .is("deleted_at", null)
+          .or(["first_name", "last_name", "company"].map((c) => `${c}.ilike.${like}`).join(","), { referencedTable: "contacts" })
+          .limit(PER_GROUP)
       : none,
     on("events", "events.view") ? db.from("events").select("id, title, starts_at").eq("org_id", org).is("deleted_at", null).ilike("title", like).order("starts_at", { ascending: false }).limit(PER_GROUP) : none,
     on("invoices", "invoices.view")
@@ -117,6 +123,12 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
       ? db.from("guest_lists").select("id, name, events(title, starts_at)").eq("org_id", org).is("deleted_at", null).ilike("name", like).order("created_at", { ascending: false }).limit(PER_GROUP)
       : none,
     on("hr", "hr.view") ? db.from("employees").select("id, name, job_title").eq("org_id", org).is("deleted_at", null).or(`name.ilike.${like},job_title.ilike.${like}`).order("name").limit(PER_GROUP) : none,
+    on("courses", "courses.view") ? db.from("courses").select("id, title").eq("org_id", org).is("deleted_at", null).ilike("title", like).order("created_at", { ascending: false }).limit(PER_GROUP) : none,
+    on("automations", "automations.view") ? db.from("workflows").select("id, name, active").eq("org_id", org).is("deleted_at", null).ilike("name", like).order("name").limit(PER_GROUP) : none,
+    on("shifts", "shifts.view") ? db.from("staff").select("id, name, active").eq("org_id", org).ilike("name", like).order("name").limit(PER_GROUP) : none,
+    on("payments", "payments.view")
+      ? db.from("pay_orders").select("id, customer_name, customer_email, amount_total, currency, created_at").eq("org_id", org).or(`customer_name.ilike.${like},customer_email.ilike.${like}`).order("created_at", { ascending: false }).limit(PER_GROUP)
+      : none,
   ])
 
   const person = (c: { first_name: string | null; last_name: string | null; company: string | null } | null) =>
@@ -163,10 +175,18 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     { key: "files", label: t("files.title"), items: (files.data ?? []).map((f) => ({ id: f.id, title: f.name, detail: f.folder ?? undefined, href: `/files?edit=${f.id}` })) },
     { key: "wiki", label: t("wiki.title"), items: (wiki.data ?? []).map((w) => ({ id: w.id, title: w.title, href: `/wiki/${w.id}` })) },
     { key: "projects", label: t("projects.title"), items: (projects.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/projects/${x.id}` })) },
-    { key: "tasks", label: t("projects.allTasks"), items: (tasks.data ?? []).map((x) => ({ id: x.id, title: x.title, detail: x.due_on ?? undefined, href: `/projects/tasks?task=${x.id}` })) },
+    { key: "tasks", label: t("projects.allTasks"), items: (tasks.data ?? []).map((x) => ({ id: x.id, title: x.title, detail: day(x.due_on), href: `/projects/tasks?task=${x.id}` })) },
     { key: "rentals", label: t("rentals.title"), items: (objects.data ?? []).map((x) => ({ id: x.id, title: x.name, detail: t.has(`rentals.kinds.${x.kind}`) ? t.dynamic(`rentals.kinds.${x.kind}`) : x.kind, href: `/rentals/${x.id}` })) },
     { key: "products", label: t("store.products"), items: (products.data ?? []).map((x) => ({ id: x.id, title: x.name, detail: x.category ?? undefined, href: `/shop/${x.id}` })) },
     { key: "shop_orders", label: t("store.orders"), items: (shopOrders.data ?? []).map((x) => ({ id: x.id, title: `#${x.number} · ${x.name}`, href: `/shop/orders/${x.id}` })) },
+    { key: "courses", label: t("courses.nav"), items: (courses.data ?? []).map((x) => ({ id: x.id, title: x.title, href: `/courses/${x.id}` })) },
+    { key: "automations", label: t("automations.nav"), items: (workflows.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/automations/${x.id}` })) },
+    { key: "staff", label: t("shifts.nav"), items: (staff.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/shifts/hours/${x.id}` })) },
+    {
+      key: "payments",
+      label: t("payments.nav"),
+      items: (payments.data ?? []).map((x) => ({ id: x.id, title: x.customer_name || x.customer_email || "–", detail: `${t.money(x.amount_total, x.currency)} · ${day(x.created_at)}`, href: `/payments?edit=${x.id}` })),
+    },
     { key: "templates", label: t("letters.title"), items: (templates.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/files/templates/${x.id}` })) },
   ]
   return groups.filter((g) => g.items.length)

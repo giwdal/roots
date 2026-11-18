@@ -86,7 +86,7 @@ Today there is no manifest, no app icons, no service worker.
       last row (Enter on no hit or ⌘↵ asks Sprout), the answer opens the Sprout sheet with the question; on phones
       Sprout is a full-height sheet (not a side panel) reachable from the search tab and the top bar.
 - [ ] J3 Voice: dictation button in the search/Sprout field on phones (the comment form already dictates).
-- [ ] J4 ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
+- [x] J4 (courses, automations, shift team, payments added; members by name; every group has its area colour) ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
 
 ## K. Start page & notifications
 - [ ] K1 Start (home) per person: "Für dich" first — my next shift (with Einchecken), my tasks due, things waiting for me

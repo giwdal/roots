@@ -35,7 +35,7 @@ file too; shared items are done once in shared components.
       minimal, clear decisions for the user.
 
 ## C. Overlays on desktop
-- [ ] C1 Desktop: forms/quick creates/confirms as a centred dialog (sizes: compact / default / wide), phones keep the
+- [x] C1 (content-sheet.tsx: centred dialog from md, compact/normal/wide widths, darker backdrop) Desktop: forms/quick creates/confirms as a centred dialog (sizes: compact / default / wide), phones keep the
       bottom sheet — one component (`<ContentSheet>` responsive), so every `<UrlSheet>` follows.
 - [ ] C2 Single values edited inline (B3) instead of opening any overlay.
 
@@ -45,7 +45,7 @@ file too; shared items are done once in shared components.
 - [ ] D2 URL rules written down and checked: `/<area>`, `/<area>/<id>`, `/<area>/<id>/<sub>`, `/<area>/new`,
       `/<area>/settings`; params `?edit ?new ?trash ?q ?page ?view` + filters. Fix outliers (`/rentals/r/[id]`,
       `/members/[id]` = membership vs contact, `/scan`).
-- [ ] D3 Back navigation like a native app: the top bar back goes back in history when the person came from inside
+- [x] D3 (topbar-crumbs.tsx: own nav stack in sessionStorage, back = history when it came from inside the App, else parent) Back navigation like a native app: the top bar back goes back in history when the person came from inside
       the App (member → contact → back = member), else to the parent; iOS edge-swipe works in standalone PWAs since
       iOS 12.2 (don't block it); keep the parent fallback for deep links.
 
@@ -76,6 +76,17 @@ Today there is no manifest, no app icons, no service worker.
       receipts, `tel:`/`mailto:`/maps links, file picker for documents, haptic-like feedback via pressed states.
 - [ ] I5 Standalone details: safe areas (done), no rubber-band on the shell, pull-to-refresh on lists, edge-swipe
       back not blocked, links to other origins open in the browser.
+
+## J. Search + Sprout on phones (quick access)
+- [ ] J1 Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
+      Neue Bestellung, Zeit erfassen … — only modules that are on and permitted) shown before typing; results grouped by
+      area with AreaIcon, records first, then pages, then actions; a result row can act directly where safe
+      (call/mail a contact, open the scanner).
+- [ ] J2 Sprout inside search: when Sprout is set up, the search field doubles as the prompt — "Frag Sprout: …" as the
+      last row (Enter on no hit or ⌘↵ asks Sprout), the answer opens the Sprout sheet with the question; on phones
+      Sprout is a full-height sheet (not a side panel) reachable from the search tab and the top bar.
+- [ ] J3 Voice: dictation button in the search/Sprout field on phones (the comment form already dictates).
+- [ ] J4 ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
 
 ## H. Code
 - [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,

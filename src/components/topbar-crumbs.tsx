@@ -2,7 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ChevronLeftIcon } from "lucide-react"
 import { PageCrumbs } from "@/components/page-crumbs"
 import { useT } from "@/i18n/client"
@@ -43,6 +43,30 @@ export function backTarget(crumbs: Crumbs, groups: NavGroup[], pathname: string)
   return page && appRoute(page.href) !== path ? { href: page.href, label: page.label } : null
 }
 
+// The App's own history of this tab (sessionStorage): like a native navigation stack, "back" returns to the screen
+// the person came from inside the App (member → contact → back = member); only without one (deep link, reload of a
+// first page) it falls back to the parent. Going back to the previous entry pops it, any other move pushes.
+const STACK = "roots-nav"
+const readStack = (): string[] => {
+  try {
+    return JSON.parse(sessionStorage.getItem(STACK) ?? "[]")
+  } catch {
+    return []
+  }
+}
+function useNavStack() {
+  const path = usePathname()
+  useEffect(() => {
+    const s = readStack()
+    if (s.at(-1) === path) return
+    if (s.at(-2) === path) s.pop()
+    else s.push(path)
+    try {
+      sessionStorage.setItem(STACK, JSON.stringify(s.slice(-50)))
+    } catch {}
+  }, [path])
+}
+
 /**
  * In the top bar: the shown page's crumbs, else the area › page title. Phones: a back chevron to the parent when the
  * page is deeper than an area page, and only the current page's name (one line).
@@ -51,11 +75,18 @@ export function TopbarTitle({ groups, children }: { groups: NavGroup[]; children
   const t = useT()
   const crumbs = useSyncExternalStore(subscribe, () => current, () => null)
   const back = backTarget(crumbs, groups, usePathname())
+  const router = useRouter()
+  useNavStack()
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden text-sm">
       {back && (
         <Link
           href={back.href}
+          onClick={(e) => {
+            if (readStack().length < 2) return
+            e.preventDefault()
+            router.back()
+          }}
           aria-label={t("shell.backTo", { label: back.label })}
           className="-ml-2 grid size-9 shrink-0 touch-manipulation place-items-center rounded-lg [-webkit-tap-highlight-color:transparent] active:bg-muted md:hidden"
         >

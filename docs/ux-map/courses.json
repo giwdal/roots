@@ -2,12 +2,15 @@
   "area": "courses",
   "label": "Kurse",
   "module": "courses",
+  "research": "Eversports Manager / Mindbody Business / Bsport: a class has a roster; staff check people in on the phone by tapping names (a counter 'x of y checked in', 'check in all'); waitlist moves up automatically, cancelling asks; the class schedule is the main view of a course/series with past dates collapsed; a course page shows capacity, waitlist, next date at the top. Teachable/Kajabi course pages: overview with key numbers, then the curriculum (here: dates), students as a list. Empty states offer the first step ('Create class', 'Add schedule'). Taken: course page per patterns.md §8 with Stats (Belegt, Warteliste, Nächster Termin, Anwesenheit), dates as the main content (next first, earlier collapsed), participants below, properties edited in place on the right; attendance as a phone-first tap-to-mark list that saves each tap, with 'Alle da' and ‹ › to the neighbouring dates; the next step as primary (Anwesenheit for today's date, else Termine anlegen / Person hinzufügen).",
+  "navRedesign": {"sidebar": "Kurse stays one page.", "urls": "trash ?trash=1 (old ?status=trash redirects); course sheets ?new=series, ?new=date, ?new=person, ?edit=<session id> (date fields when attendance isn't tracked); session page ?edit=date; /courses/new?start= pre-fills a first date."},
   "nav": [
     { "label": "Kurse", "key": "courses.nav", "href": "/courses", "permission": "courses.view" }
   ],
   "pages": [
     {
       "route": "/courses",
+      "redesign": {"job": "Find a course and see its next date and how full it is; create one.", "phone": "Top bar 'Kurse' (⋯: Papierkorb). Search full width. Cards: course + full/waiting badges, next date · places. Round + = Neuer Kurs.", "desktop": "⋯ Papierkorb, primary Neuer Kurs; search; table Kurs (+ Leitung), Nächster Termin, Belegt.", "moves": ["⋯ Papierkorb / Zurück zur Liste → ?trash=1 (old ?status=trash redirects); back item 'Zurück zu den Kursen'", "primary Neuer Kurs → kept", "SearchBox → <ListToolbar search>", "column Kurs (link inside) → plain text, the row opens the course (rowHref)", "column Nächster Termin → kept", "column Belegt + voll/warten badges → kept, badges warning/info", "empty 'Noch keine Kurse.' → EmptyState with Neuer Kurs; search: 'Kein Kurs gefunden.'", "trash rows → Wiederherstellen inline + 30-day hint", "legacy ?new → /courses/new (kept)"]},
       "file": "src/app/(app)/courses/page.tsx",
       "title": "Kurse (trash: \"Kurse · Papierkorb\")",
       "purpose": "List of courses with next date, places taken and waiting list; entry to each course; trash view.",
@@ -41,6 +44,7 @@
     },
     {
       "route": "/courses/new",
+      "redesign": {"job": "Create a course; optionally its first date right away (the calendar's 'Neu am …' sends ?start=).", "phone": "NewPage: Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen; 'Erster Termin (optional)' Beginn/Ende (open + pre-filled with ?start=); SaveBar Kurs anlegen.", "desktop": "Same, form width.", "moves": ["Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen → kept (checkbox accent-primary)", "new: Erster Termin (Beginn, Ende) – optional, ?start= pre-fills (end +90 min)", "SaveBar Kurs anlegen → kept; → course page"]},
       "file": "src/app/(app)/courses/new/page.tsx",
       "title": "Neuer Kurs",
       "purpose": "Create a course (title, instructor, places, location, description, attendance tracking).",
@@ -70,6 +74,7 @@
     },
     {
       "route": "/courses/[id]",
+      "redesign": {"job": "Run a course: the dates (take attendance), who is in / waiting, how full it is; change details in place.", "phone": "Top bar ‹ Kurse · title (⋯: Teilnehmende exportieren, Papierkorb). Title + badge (Voll / n warten), meta Leitung · Ort. Stats 2×2: Belegt, Warteliste, Nächster Termin, Anwesenheit Ø. Eigenschaften (inline). Termine (next first, Frühere collapsed, + Regelmäßige / Einzelner Termin). Teilnehmende (Abmelden asks), Warteliste, Abmeldungen. Verknüpft, Dateien. Round + = next step (Anwesenheit today → session; no dates → Termine anlegen; else Person hinzufügen).", "desktop": "Header ⋯ + primary; Stats; main: Termine, Teilnehmende; right rail: Eigenschaften, Verknüpft, Dateien.", "moves": ["meta Leitung · places → meta Leitung · Ort; places into Stats + badge", "⋯ Teilnehmende export → kept", "⋯ In den Papierkorb → kept (confirm)", "trash state + Wiederherstellen → kept", "section Teilnehmende inline add form (picker + note + Hinzufügen) → AddLink 'Person hinzufügen' → ?new=person compact sheet (picker, note, SaveBar 'Hinzufügen')", "enrolled rows (name → contact, note, rate badge, Abmelden) → kept; Abmelden asks (moves the waiting list up)", "Warteliste numbered + Abmelden → kept, asks", "Abmeldungen <details> + Wieder aufnehmen → kept", "section Termine + 'Regelmäßige Termine' / 'Einzelner Termin' → main first section; AddLinks; upcoming first, 'Frühere (n)' collapsed; rows → session page (attendance) or ?edit=<id> sheet when attendance isn't tracked", "sheet ?new=series (weekdays, Beginn/Ende time, Ab, Bis, alle n Wochen, Termine anlegen) → weekday toggles as one segmented row with a visible label, TimeInput instead of native time, SaveBar 'Termine anlegen'", "sheet ?new=date (Beginn, Ende, Hinzufügen) → SaveBar 'Termin anlegen'", "aside Kursdaten form + SaveBar → Eigenschaften inline (patchCourse): Kurs, Leitung, Plätze, Ort, Anwesenheit erfassen, Beschreibung", "new: Verknüpft (linked projects), Dateien"]},
       "file": "src/app/(app)/courses/[id]/page.tsx",
       "title": "<Course title>",
       "purpose": "One course: participants (enrolled, waiting list, cancelled) with attendance rate, dates (single or weekly series), course details on the side.",
@@ -155,6 +160,7 @@
     },
     {
       "route": "/courses/[id]/sessions/[sessionId]",
+      "redesign": {"job": "Take attendance for one date on a phone: tap the names of who is there; occasionally move, cancel or delete the date.", "phone": "Top bar ‹ course · date (⋯: Termin ändern, Fällt aus / Findet statt, Termin löschen). Meta time · note; banner when cancelled. Toolbar ‹ previous · next ›. 'x von y da' + 'Alle da'. Big rows: tap = present (check), saves each tap.", "desktop": "Same in form width; ⋯ and ‹ › in the header/toolbar.", "moves": ["attendance checkboxes + 'Anwesenheit speichern' → tap-to-toggle rows that save each tap (markAttendance), counter + 'Alle da'", "Termin ändern card (Beginn, Ende, Notiz, Speichern) → ⋯ 'Termin ändern' → ?edit=date sheet with SaveBar", "checkbox 'Termin fällt aus' → ⋯ 'Fällt aus' (confirm) / 'Findet statt'", "Termin löschen (outline, no confirm) → ⋯ red 'Termin löschen' (confirm)", "new: ‹ › to the previous / next date", "course without attendance → page redirects to /courses/<id>?edit=<session> (small record as a sheet)"]},
       "file": "src/app/(app)/courses/[id]/sessions/[sessionId]/page.tsx",
       "title": "<Weekday, date, time of the session>",
       "purpose": "One course date: tick who was there, change time/note, mark as cancelled, delete.",

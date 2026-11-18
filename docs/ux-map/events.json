@@ -3,8 +3,17 @@
   "label": "Events",
   "module": "events",
   "nav": [
-    { "label": "Übersicht", "key": "nav.overview", "href": "/events" },
-    { "label": "Einlass", "key": "tickets.scanNav", "href": "/scan", "notes": "documented in scan.json" }
+    {
+      "label": "Events",
+      "key": "eventsPage.nav",
+      "href": "/events"
+    },
+    {
+      "label": "Einlass",
+      "key": "tickets.scanNav",
+      "href": "/scan",
+      "notes": "documented in scan.json"
+    }
   ],
   "pages": [
     {
@@ -18,34 +27,94 @@
         "area": "events",
         "actions": [],
         "menu": [
-          { "label": "Papierkorb (in trash view: Alle)", "key": "eventsPage.trash / eventsPage.all", "target": "/events?trash=1 | /events", "permission": "events.manage" }
+          {
+            "label": "Papierkorb (in trash view: Alle)",
+            "key": "eventsPage.trash / eventsPage.all",
+            "target": "/events?trash=1 | /events",
+            "permission": "events.manage"
+          }
         ],
-        "primary": { "label": "Neues Event", "key": "eventsPage.new", "href": "/events/new", "permission": "events.manage", "notes": "hidden in trash view" }
+        "primary": {
+          "label": "Neues Event",
+          "key": "eventsPage.new",
+          "href": "/events/new",
+          "permission": "events.manage",
+          "notes": "hidden in trash view"
+        }
       },
       "urlState": [
-        { "param": "q", "meaning": "search title + venue_name (ilike)" },
-        { "param": "view", "meaning": "upcoming (default, omitted) | past | all" },
-        { "param": "status", "meaning": "draft | published | cancelled (FilterMenu)" },
-        { "param": "trash", "meaning": "1 = trash view (events.manage only)" },
-        { "param": "page", "meaning": "pagination (Pager)" },
-        { "param": "edit", "meaning": "legacy: redirects to /events/<id>" },
-        { "param": "new", "meaning": "legacy: redirects to /events/new" },
-        { "param": "ok / error", "meaning": "toast via <Notice>" }
+        {
+          "param": "q",
+          "meaning": "search title + venue_name (ilike)"
+        },
+        {
+          "param": "view",
+          "meaning": "upcoming (default, omitted) | past | all"
+        },
+        {
+          "param": "status",
+          "meaning": "draft | published | cancelled (FilterMenu)"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view (events.manage only)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination (Pager)"
+        },
+        {
+          "param": "edit",
+          "meaning": "legacy: redirects to /events/<id>"
+        },
+        {
+          "param": "new",
+          "meaning": "legacy: redirects to /events/new"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
       ],
       "sections": [
         {
           "title": "Toolbar",
           "kind": "custom",
           "fields": [
-            { "name": "q", "label": "Suchen…", "key": "common.search", "type": "search", "component": "SearchBox" },
-            { "name": "view", "label": "Kommend · Vergangen · Alle", "key": "eventsPage.upcoming/past/all", "type": "segments", "component": "hand-built <nav> of Links (chip())", "notes": "aria-label eventsPage.when; hidden in trash view" },
-            { "name": "status", "label": "Status", "key": "eventsPage.status", "type": "select", "component": "FilterMenu", "notes": "Entwurf / Veröffentlicht / Abgesagt; hidden in trash view" }
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "key": "common.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "view",
+              "label": "Kommend · Vergangen · Alle",
+              "key": "eventsPage.upcoming/past/all",
+              "type": "segments",
+              "component": "hand-built <nav> of Links (chip())",
+              "notes": "aria-label eventsPage.when; hidden in trash view"
+            },
+            {
+              "name": "status",
+              "label": "Status",
+              "key": "eventsPage.status",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Entwurf / Veröffentlicht / Abgesagt; hidden in trash view"
+            }
           ]
         },
         {
           "title": "Events",
           "kind": "DataTable",
-          "columns": ["Titel", "Wann (date medium + time short)", "Wo (venue_name)", "Status (badge)"],
+          "columns": [
+            "Titel",
+            "Wann (date medium + time short)",
+            "Wo (venue_name)",
+            "Status (badge)"
+          ],
           "notes": "Row → /events/<id>. Tick boxes for events.manage (not in trash). Trash view shows eventsPage.trashHint ('Gelöschte Events werden nach 30 Tagen endgültig entfernt.')."
         }
       ],
@@ -61,7 +130,10 @@
           "result": "toast common.bulkTrashed; confirm text common.confirmTrashMany"
         }
       ],
-      "links": ["/events/new", "/events/[eventId]"],
+      "links": [
+        "/events/new",
+        "/events/[eventId]"
+      ],
       "empty": "EmptyState: 'Noch keine Events.' / 'Lege eine Veranstaltung an, verkaufe Tickets oder sammle Anmeldungen und plane Schichten und Gästeliste dazu.' + button 'Neues Event'. Filtered/past/all: plain 'Noch keine Events.' Trash: 'Der Papierkorb ist leer.'",
       "phone": "DataTable as cards (no tick boxes, no bulk bar); primary as round + by the tab bar.",
       "uxNotes": [
@@ -69,6 +141,28 @@
         "Filtered empty result reuses 'Noch keine Events.' even when events exist but do not match the filter (no 'Keine Events gefunden.').",
         "No ExportMenu on the list (other lists like contacts have one).",
         "Restoring from the trash is only possible on the event page, the trash list has no restore bulk action."
+      ],
+      "redesign": {
+        "job": "Find the event to work on (upcoming first) and see at a glance how it sells.",
+        "phone": "Cards: title + status badge, place, date, tickets n / capacity; search full width, status filter + Kommend·Vergangen·Alle segments; primary = round +.",
+        "desktop": "Table: Event (title + place), Wann, Status, Tickets (n / capacity, right-aligned); toolbar search · Status filter · segments on the right.",
+        "moves": [
+          "q search → toolbar SearchBox (unchanged)",
+          "view chip nav → <Segments> on the right of the toolbar",
+          "status FilterMenu → toolbar (unchanged)",
+          "trash ⋯ item → header ⋯ (unchanged), ?trash=1",
+          "Neues Event primary → header primary (unchanged)",
+          "columns Titel/Wo → one 'Event' column (title + venue muted); Wann, Status kept; new column Tickets (count / capacity) when tickets module + tickets.view",
+          "bulk 'In den Papierkorb' → bulk bar (unchanged, confirm common.confirmTrashMany)",
+          "new: bulk 'Wiederherstellen' in the trash view (bulkRestoreEvents)",
+          "filtered empty text → eventsPage.noMatch; never-used empty → EmptyState (unchanged)",
+          "legacy ?edit=/?new= redirects → kept"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
       ]
     },
     {
@@ -78,17 +172,50 @@
       "purpose": "Create an event (title, time, place, description, links, slug, mail template).",
       "permission": "events.manage",
       "size": "form",
-      "header": { "crumbs": ["Events", "Neues Event"] },
-      "urlState": [{ "param": "error", "meaning": "error shown via <Notice> in NewPage" }],
+      "header": {
+        "crumbs": [
+          "Events",
+          "Neues Event"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "error",
+          "meaning": "error shown via <Notice> in NewPage"
+        }
+      ],
       "sections": [
         {
           "title": "Titel & Zeit",
           "anchor": "#when",
           "kind": "FormCard",
           "fields": [
-            { "name": "title", "label": "Titel", "key": "eventsPage.titleLabel", "type": "text", "component": "Input", "required": true, "notes": "max 200" },
-            { "name": "starts_at", "label": "Beginn", "key": "eventsPage.startsAt", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
-            { "name": "ends_at", "label": "Ende (optional)", "key": "eventsPage.endsAt", "type": "datetime", "component": "DateInput:datetime-local", "required": false, "notes": "must be after start (errors.end_before_start)" }
+            {
+              "name": "title",
+              "label": "Titel",
+              "key": "eventsPage.titleLabel",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "max 200"
+            },
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "eventsPage.startsAt",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            },
+            {
+              "name": "ends_at",
+              "label": "Ende (optional)",
+              "key": "eventsPage.endsAt",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": false,
+              "notes": "must be after start (errors.end_before_start)"
+            }
           ]
         },
         {
@@ -96,9 +223,31 @@
           "anchor": "#where",
           "kind": "FormCard",
           "fields": [
-            { "name": "location", "label": "Ort", "key": "locations.title", "type": "select", "component": "Choice", "required": false, "notes": "only when the org has locations" },
-            { "name": "venue_name", "label": "Ort", "key": "eventsPage.venueName", "type": "text", "component": "Input", "required": false },
-            { "name": "venue_address", "label": "Adresse des Orts", "key": "eventsPage.venueAddress", "type": "text", "component": "Input", "required": false }
+            {
+              "name": "location",
+              "label": "Ort",
+              "key": "locations.title",
+              "type": "select",
+              "component": "Choice",
+              "required": false,
+              "notes": "only when the org has locations"
+            },
+            {
+              "name": "venue_name",
+              "label": "Ort",
+              "key": "eventsPage.venueName",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            },
+            {
+              "name": "venue_address",
+              "label": "Adresse des Orts",
+              "key": "eventsPage.venueAddress",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            }
           ]
         },
         {
@@ -106,9 +255,29 @@
           "anchor": "#about",
           "kind": "FormCard",
           "fields": [
-            { "name": "description", "label": "Beschreibung", "key": "eventsPage.description", "type": "textarea", "component": "Textarea", "required": false, "notes": "plain text, max 20000, no visible label (aria-label only)" },
-            { "name": "capacity", "label": "Kapazität (optional)", "key": "eventsPage.capacity", "type": "number", "component": "TypedInput:number", "required": false },
-            { "name": "custom.<key>", "label": "org custom fields (entity events)", "type": "custom", "component": "CustomFieldInputs" }
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "eventsPage.description",
+              "type": "textarea",
+              "component": "Textarea",
+              "required": false,
+              "notes": "plain text, max 20000, no visible label (aria-label only)"
+            },
+            {
+              "name": "capacity",
+              "label": "Kapazität (optional)",
+              "key": "eventsPage.capacity",
+              "type": "number",
+              "component": "TypedInput:number",
+              "required": false
+            },
+            {
+              "name": "custom.<key>",
+              "label": "org custom fields (entity events)",
+              "type": "custom",
+              "component": "CustomFieldInputs"
+            }
           ]
         },
         {
@@ -116,8 +285,22 @@
           "anchor": "#links",
           "kind": "FormCard",
           "fields": [
-            { "name": "link_label_0..2", "label": "Titel", "key": "eventsPage.linkTitle", "type": "text", "component": "Input", "notes": "3 fixed rows, placeholder 'Telegram' in the first" },
-            { "name": "link_url_0..2", "label": "Link (https://…)", "key": "eventsPage.linkUrl", "type": "url", "component": "Input (inputMode url)", "notes": "not TypedInput kind=url" }
+            {
+              "name": "link_label_0..2",
+              "label": "Titel",
+              "key": "eventsPage.linkTitle",
+              "type": "text",
+              "component": "Input",
+              "notes": "3 fixed rows, placeholder 'Telegram' in the first"
+            },
+            {
+              "name": "link_url_0..2",
+              "label": "Link (https://…)",
+              "key": "eventsPage.linkUrl",
+              "type": "url",
+              "component": "Input (inputMode url)",
+              "notes": "not TypedInput kind=url"
+            }
           ],
           "notes": "Description eventsPage.linksHint: up to 3 links shown as buttons on the event page."
         },
@@ -126,7 +309,15 @@
           "anchor": "#page",
           "kind": "FormCard",
           "fields": [
-            { "name": "slug", "label": "Slug", "key": "eventsPage.slug", "type": "text", "component": "Input", "required": false, "notes": "prefix '/e/'; empty = generated from title" }
+            {
+              "name": "slug",
+              "label": "Slug",
+              "key": "eventsPage.slug",
+              "type": "text",
+              "component": "Input",
+              "required": false,
+              "notes": "prefix '/e/'; empty = generated from title"
+            }
           ]
         },
         {
@@ -134,19 +325,55 @@
           "anchor": "#emails",
           "kind": "FormCard",
           "fields": [
-            { "name": "email_template", "label": "Vorlage", "key": "eventsPage.emailTemplate", "type": "select", "component": "Choice", "required": false, "notes": "only with email module + email.view and when templates exist; hint eventsPage.emailsHint names the fallback" }
+            {
+              "name": "email_template",
+              "label": "Vorlage",
+              "key": "eventsPage.emailTemplate",
+              "type": "select",
+              "component": "Choice",
+              "required": false,
+              "notes": "only with email module + email.view and when templates exist; hint eventsPage.emailsHint names the fallback"
+            }
           ]
         }
       ],
       "actions": [
-        { "label": "Veranstaltung anlegen", "key": "eventsPage.create", "where": "savebar", "kind": "serverAction", "target": "createEvent (events/actions.ts)", "permission": "events.manage", "confirm": false, "result": "→ /events/<id>, toast 'Event angelegt.'; errors back to /events/new?error=" }
+        {
+          "label": "Veranstaltung anlegen",
+          "key": "eventsPage.create",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "createEvent (events/actions.ts)",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "→ /events/<id>, toast 'Event angelegt.'; errors back to /events/new?error="
+        }
       ],
-      "links": ["/events"],
+      "links": [
+        "/events"
+      ],
       "uxNotes": [
         "Label drift: page title 'Neues Event' but the create button says 'Veranstaltung anlegen'; 'Event' and 'Veranstaltung' are mixed.",
         "Two fields labelled 'Ort': the location Choice (locations.title) and the free venue name (eventsPage.venueName).",
         "On error the whole form is re-rendered empty (redirect with ?error=, no useActionState), so typed input is lost.",
         "Description is a plain Textarea while other long texts (projects, letters) use <RichTextEditor>."
+      ],
+      "redesign": {
+        "job": "Create an event with the minimum (title, start), the rest optional.",
+        "phone": "One column form (NewPage), SaveBar 'Event anlegen' at the bottom.",
+        "desktop": "Same form, FormCards in the 3xl column.",
+        "moves": [
+          "all fields → unchanged EventForm (Titel & Zeit, Wo, Beschreibung, Links, Öffentliche Seite, E-Mails)",
+          "create button label 'Veranstaltung anlegen' → 'Event anlegen'",
+          "location Choice label 'Ort' → 'Gespeicherter Ort'; venue_name label → 'Name des Orts'",
+          "link URLs → TypedInput kind=url",
+          "error keeps input: SaveBar restores sent values (existing mechanism)"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
       ]
     },
     {
@@ -157,20 +384,55 @@
       "permission": "events.view",
       "size": "record",
       "header": {
-        "crumbs": ["Events", "<Event title>"],
+        "crumbs": [
+          "Events",
+          "<Event title>"
+        ],
         "badge": "Status (Entwurf / Veröffentlicht / Abgesagt)",
         "meta": "start date (dateStyle full, timeStyle short)",
         "actions": [
-          { "label": "Öffentliche Seite", "key": "eventsPage.publicLink", "target": "<site>/e/<slug> (new tab)", "notes": "only when status != draft and not trashed" }
+          {
+            "label": "Öffentliche Seite",
+            "key": "eventsPage.publicLink",
+            "target": "<site>/e/<slug> (new tab)",
+            "notes": "only when status != draft and not trashed"
+          }
         ],
         "menu": [
-          { "label": "Schichtplan", "key": "shifts.title", "target": "/shifts?event=<id>", "permission": "shifts.view (module shifts)" },
-          { "label": "Einlass", "key": "tickets.scanNav", "target": "/scan?event=<id>", "permission": "tickets.scan or guestlists.checkin" },
-          { "label": "In den Papierkorb", "key": "eventsPage.toTrash", "target": "trashEvent via hidden form #trash-event", "permission": "events.manage", "notes": "MenuSubmit destructive → confirm common.confirmTrash" }
+          {
+            "label": "Schichtplan",
+            "key": "shifts.title",
+            "target": "/shifts?event=<id>",
+            "permission": "shifts.view (module shifts)"
+          },
+          {
+            "label": "Einlass",
+            "key": "tickets.scanNav",
+            "target": "/scan?event=<id>",
+            "permission": "tickets.scan or guestlists.checkin"
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "eventsPage.toTrash",
+            "target": "trashEvent via hidden form #trash-event",
+            "permission": "events.manage",
+            "notes": "MenuSubmit destructive → confirm common.confirmTrash"
+          }
         ],
-        "primary": { "label": "Veröffentlichen | Zurück zu Entwurf", "key": "eventsPage.publish / eventsPage.unpublish", "href": "setEventStatus (form post)", "permission": "events.manage", "notes": "a SubmitButton, not a link; outline variant when published; hidden when cancelled or trashed" }
+        "primary": {
+          "label": "Veröffentlichen | Zurück zu Entwurf",
+          "key": "eventsPage.publish / eventsPage.unpublish",
+          "href": "setEventStatus (form post)",
+          "permission": "events.manage",
+          "notes": "a SubmitButton, not a link; outline variant when published; hidden when cancelled or trashed"
+        }
       },
-      "urlState": [{ "param": "ok / error", "meaning": "toast via <Notice>" }],
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
+      ],
       "sections": [
         {
           "title": "Tabs (layout)",
@@ -184,12 +446,26 @@
           "fields": [],
           "notes": "Same EventForm as /events/new (Titel & Zeit, Wo, Beschreibung, Links, Öffentliche Seite, E-Mails) with SaveBar (appears on change). Fieldset disabled without events.manage, plus line 'Du kannst Events ansehen, aber nicht bearbeiten.'"
         },
-        { "title": "Dateien", "anchor": "#files", "kind": "FileList", "notes": "aside, org.files.view" },
+        {
+          "title": "Dateien",
+          "anchor": "#files",
+          "kind": "FileList",
+          "notes": "aside, org.files.view"
+        },
         {
           "title": "Bild",
           "anchor": "#image",
           "kind": "custom",
-          "fields": [{ "name": "file", "label": "Bild", "key": "eventsPage.image", "type": "file", "component": "ImageForm (square)", "notes": "hint 'PNG, JPG, WebP oder GIF, max. 2 MB.'; remove option" }],
+          "fields": [
+            {
+              "name": "file",
+              "label": "Bild",
+              "key": "eventsPage.image",
+              "type": "file",
+              "component": "ImageForm (square)",
+              "notes": "hint 'PNG, JPG, WebP oder GIF, max. 2 MB.'; remove option"
+            }
+          ],
           "notes": "aside, events.manage"
         },
         {
@@ -205,14 +481,74 @@
         }
       ],
       "actions": [
-        { "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "updateEvent", "permission": "events.manage", "confirm": false, "result": "toast 'Gespeichert.'; public cache refreshed" },
-        { "label": "Veröffentlichen / Zurück zu Entwurf", "key": "eventsPage.publish / eventsPage.unpublish", "where": "header", "kind": "serverAction", "target": "setEventStatus status=published|draft", "permission": "events.manage", "confirm": false, "result": "toast 'Veröffentlicht.' / 'Wieder Entwurf.'" },
-        { "label": "Absagen", "key": "eventsPage.cancel", "where": "section", "kind": "serverAction", "target": "setEventStatus status=cancelled", "permission": "events.manage", "confirm": false, "result": "toast 'Abgesagt.'; subscribers notified; publish button disappears" },
-        { "label": "Bild hochladen / entfernen", "where": "section", "kind": "serverAction", "target": "updateEventImage", "permission": "events.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
-        { "label": "In den Papierkorb", "key": "eventsPage.toTrash", "where": "menu", "kind": "confirm", "target": "trashEvent", "permission": "events.manage", "confirm": true, "result": "→ /events, toast 'In den Papierkorb verschoben.'" },
-        { "label": "Wiederherstellen", "key": "eventsPage.restore", "where": "section", "kind": "serverAction", "target": "restoreEvent", "permission": "events.manage", "confirm": false, "result": "toast 'Wiederhergestellt.'; error errors.slug_taken if the address was reused" }
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "updateEvent",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'; public cache refreshed"
+        },
+        {
+          "label": "Veröffentlichen / Zurück zu Entwurf",
+          "key": "eventsPage.publish / eventsPage.unpublish",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "setEventStatus status=published|draft",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "toast 'Veröffentlicht.' / 'Wieder Entwurf.'"
+        },
+        {
+          "label": "Absagen",
+          "key": "eventsPage.cancel",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "setEventStatus status=cancelled",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "toast 'Abgesagt.'; subscribers notified; publish button disappears"
+        },
+        {
+          "label": "Bild hochladen / entfernen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updateEventImage",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "eventsPage.toTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashEvent",
+          "permission": "events.manage",
+          "confirm": true,
+          "result": "→ /events, toast 'In den Papierkorb verschoben.'"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "eventsPage.restore",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restoreEvent",
+          "permission": "events.manage",
+          "confirm": false,
+          "result": "toast 'Wiederhergestellt.'; error errors.slug_taken if the address was reused"
+        }
       ],
-      "links": ["/events", "/events/[eventId]/lineup", "/events/[eventId]/tickets", "/events/[eventId]/guestlists", "/shifts?event=<id>", "/scan?event=<id>", "<site>/e/<slug>"],
+      "links": [
+        "/events",
+        "/events/[eventId]/lineup",
+        "/events/[eventId]/tickets",
+        "/events/[eventId]/guestlists",
+        "/shifts?event=<id>",
+        "/scan?event=<id>",
+        "<site>/e/<slug>"
+      ],
       "phone": "RecordLayout stacks: form first, then Dateien / Bild / Absagen cards; tab row scrolls horizontally; primary (publish) is a form button, so it is not a link-based round + button.",
       "uxNotes": [
         "'Absagen' is a destructive, notifying action (webhooks/Telegram) with no data-confirm: the card's description is phrased as a question ('Event wirklich absagen?') but the button submits immediately.",
@@ -221,6 +557,40 @@
         "The event layout wraps pages in a plain div (max-w-6xl) instead of <Page size=record>; tabs are a NavLink row, while docs/design/app.md says new sub-pages belong into the nav tree, not a tab bar.",
         "Status, image, and form are three separate save paths on one page (header button, image form, SaveBar).",
         "Shifts and Einlass for the event are only in the ⋯ menu, guest lists/tickets are tabs: related event parts are split between tabs and menu."
+      ],
+      "redesign": {
+        "job": "Event hub: how is it doing (sold, revenue, check-ins, waiting list), what's missing before going live, what's connected, the one next step.",
+        "phone": "Header (title, status badge, date · place), Stats 2 per row, next step as the round button (Einlass when published), sections: checklist (drafts), Details, Beschreibung, Programm, Verknüpft, Bild, Dateien. Sub-views as a horizontally scrolling Segments row. Edit in a bottom sheet.",
+        "desktop": "Same header; Stats row of 4; RecordLayout: main = checklist, Details, Beschreibung, Programm; aside = Verknüpft (AreaIcon rows + quiet add buttons), Bild, Dateien.",
+        "moves": [
+          "header badge/meta → kept; meta now date range + place",
+          "Öffentliche Seite button → header action (unchanged, not for drafts)",
+          "Veröffentlichen primary → primary for drafts; 'Zurück zu Entwurf' → ⋯ with confirm eventsPage.confirmUnpublish",
+          "Absagen aside card → ⋯ destructive with confirm eventsPage.confirmCancel (+Hint)",
+          "new: 'Absage zurücknehmen' in ⋯ for cancelled events (→ draft)",
+          "Schichtplan ⋯ link → ⋯ (kept) + Verknüpft row 'Schichtplan' (count, + Schichten planen → /shifts?event=&new=shift&start=)",
+          "Einlass ⋯ link → primary (published) / ⋯ (other states) + Verknüpft row",
+          "In den Papierkorb ⋯ → ⋯ (unchanged)",
+          "Wiederherstellen (trashed) → header primary; trashed notice stays in the page",
+          "NavLink tab row → <EventViews> Segments: Übersicht · Tickets · Lineup · Gästelisten",
+          "Event form (whole page) → 'Bearbeiten' header action → UrlSheet ?edit=<id> with EventForm; errors reopen the sheet",
+          "read-only line → removed: read-only users see the Details section, no form",
+          "Bild ImageForm → aside section (managers), Picture for read-only",
+          "Dateien FileList → aside section (unchanged)",
+          "new: Stats (Verkauft, Umsatz, Eingecheckt, Warteliste) when tickets module + tickets.view",
+          "new: 'Vor dem Veröffentlichen' checklist for drafts (Ort, Beschreibung, Bild, Ticketart)",
+          "new: Details DetailList (Beginn, Ende, Wo, Kapazität, öffentliche Adresse, Links, E-Mail-Vorlage, custom fields)",
+          "new: Programm (next 5 slots → Lineup)",
+          "new: Verknüpft: Einlass, Bestellungen (/payments?event=), Gästelisten (+ new list), Schichtplan, Kassenbuch (door cash account), linked projects"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
       ]
     },
     {
@@ -230,23 +600,52 @@
       "purpose": "Plan the event's timetable: slots with artist or title, stage and times; edit artists; create an artist guest list.",
       "permission": "events.view",
       "size": "record",
-      "header": { "crumbs": ["Events", "<Event title>"], "notes": "header from the event layout (see /events/[eventId])" },
+      "header": {
+        "crumbs": [
+          "Events",
+          "<Event title>"
+        ],
+        "notes": "header from the event layout (see /events/[eventId])"
+      },
       "urlState": [
-        { "param": "new", "meaning": "slot = new slot sheet" },
-        { "param": "slot", "meaning": "<slot id> = edit slot sheet" },
-        { "param": "artist", "meaning": "<artist id> = edit artist sheet" },
-        { "param": "ok / error", "meaning": "toast / error inside the open sheet" }
+        {
+          "param": "new",
+          "meaning": "slot = new slot sheet"
+        },
+        {
+          "param": "slot",
+          "meaning": "<slot id> = edit slot sheet"
+        },
+        {
+          "param": "artist",
+          "meaning": "<artist id> = edit artist sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast / error inside the open sheet"
+        }
       ],
       "sections": [
         {
           "title": "Lineup & Timetable",
           "kind": "DataTable",
-          "columns": ["Zeit (weekday + start – end)", "Act (artist name or title, '· title', badge 'intern' if not public)", "Bühne / Floor"],
+          "columns": [
+            "Zeit (weekday + start – end)",
+            "Act (artist name or title, '· title', badge 'intern' if not public)",
+            "Bühne / Floor"
+          ],
           "notes": "Row → ?slot=<id> (events.manage only). Section heading h2 + button 'Neuer Slot' (events.manage)."
         }
       ],
       "actions": [
-        { "label": "Neuer Slot", "key": "lineup.newSlot", "where": "section", "kind": "sheet", "target": "?new=slot", "permission": "events.manage" }
+        {
+          "label": "Neuer Slot",
+          "key": "lineup.newSlot",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=slot",
+          "permission": "events.manage"
+        }
       ],
       "overlays": [
         {
@@ -254,20 +653,104 @@
           "component": "UrlSheet",
           "title": "Neuer Slot | <artist name or slot title>",
           "fields": [
-            { "name": "artist", "label": "Artist", "key": "lineup.artist", "type": "select", "component": "NativeSelect", "notes": "all org artists (limit 1000), '–' for none" },
-            { "name": "new_artist", "label": "…oder neuer Artist", "key": "lineup.orNewArtist", "type": "text", "component": "Input", "notes": "creates an artist on save" },
-            { "name": "title", "label": "Titel (statt/zusätzlich zum Artist)", "key": "lineup.slotTitle", "type": "text", "component": "Input" },
-            { "name": "stage", "label": "Bühne / Floor", "key": "lineup.stage", "type": "text", "component": "Input" },
-            { "name": "starts_at", "label": "Beginn", "key": "lineup.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true, "notes": "defaults to event start" },
-            { "name": "ends_at", "label": "Ende (optional)", "key": "lineup.end", "type": "datetime", "component": "DateInput:datetime-local" },
-            { "name": "public", "label": "Im öffentlichen Timetable zeigen", "key": "lineup.publicLabel", "type": "checkbox", "component": "checkbox", "notes": "default on" },
-            { "name": "notes", "label": "Interne Notiz", "key": "lineup.notes", "type": "text", "component": "Input" }
+            {
+              "name": "artist",
+              "label": "Artist",
+              "key": "lineup.artist",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "all org artists (limit 1000), '–' for none"
+            },
+            {
+              "name": "new_artist",
+              "label": "…oder neuer Artist",
+              "key": "lineup.orNewArtist",
+              "type": "text",
+              "component": "Input",
+              "notes": "creates an artist on save"
+            },
+            {
+              "name": "title",
+              "label": "Titel (statt/zusätzlich zum Artist)",
+              "key": "lineup.slotTitle",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "stage",
+              "label": "Bühne / Floor",
+              "key": "lineup.stage",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "lineup.start",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true,
+              "notes": "defaults to event start"
+            },
+            {
+              "name": "ends_at",
+              "label": "Ende (optional)",
+              "key": "lineup.end",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "public",
+              "label": "Im öffentlichen Timetable zeigen",
+              "key": "lineup.publicLabel",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "default on"
+            },
+            {
+              "name": "notes",
+              "label": "Interne Notiz",
+              "key": "lineup.notes",
+              "type": "text",
+              "component": "Input"
+            }
           ],
           "actions": [
-            { "label": "Neuer Slot / Speichern", "where": "savebar", "kind": "serverAction", "target": "saveSlot (lineup/actions.ts)", "confirm": false, "result": "toast 'Gespeichert.', sheet closes; needs artist or title (lineup.needArtistOrTitle)" },
-            { "label": "Artist bearbeiten", "key": "lineup.editArtist", "where": "sheet", "kind": "link", "target": "?artist=<id>", "notes": "only when the slot has an artist" },
-            { "label": "Gästeliste für Artist", "key": "lineup.guestList", "where": "sheet", "kind": "serverAction", "target": "artistGuestList", "permission": "guestlists.manage", "confirm": false, "result": "→ /guestlists/<id> (existing or new list '<Artist> +', quota 5, link on)" },
-            { "label": "Slot löschen", "key": "lineup.deleteSlot", "where": "sheet", "kind": "serverAction", "target": "deleteSlot", "confirm": false, "result": "hard delete, toast 'Slot gelöscht.'" }
+            {
+              "label": "Neuer Slot / Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveSlot (lineup/actions.ts)",
+              "confirm": false,
+              "result": "toast 'Gespeichert.', sheet closes; needs artist or title (lineup.needArtistOrTitle)"
+            },
+            {
+              "label": "Artist bearbeiten",
+              "key": "lineup.editArtist",
+              "where": "sheet",
+              "kind": "link",
+              "target": "?artist=<id>",
+              "notes": "only when the slot has an artist"
+            },
+            {
+              "label": "Gästeliste für Artist",
+              "key": "lineup.guestList",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "artistGuestList",
+              "permission": "guestlists.manage",
+              "confirm": false,
+              "result": "→ /guestlists/<id> (existing or new list '<Artist> +', quota 5, link on)"
+            },
+            {
+              "label": "Slot löschen",
+              "key": "lineup.deleteSlot",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteSlot",
+              "confirm": false,
+              "result": "hard delete, toast 'Slot gelöscht.'"
+            }
           ]
         },
         {
@@ -275,15 +758,53 @@
           "component": "UrlSheet",
           "title": "<Artist name>",
           "fields": [
-            { "name": "name", "label": "Name", "key": "lineup.artistName", "type": "text", "component": "Input", "required": true },
-            { "name": "description", "label": "Beschreibung (öffentlich)", "key": "lineup.description", "type": "textarea", "component": "native textarea" },
-            { "name": "links", "label": "Links (einer pro Zeile)", "key": "lineup.links", "type": "textarea", "component": "native textarea", "notes": "only http(s) URLs kept, max 10, invalid lines dropped silently" },
-            { "name": "notes", "label": "Interne Notiz", "key": "lineup.notes", "type": "textarea", "component": "native textarea", "notes": "placeholder 'Gage, Rider, Hotel, Ansprechpartner…'" }
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "lineup.artistName",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung (öffentlich)",
+              "key": "lineup.description",
+              "type": "textarea",
+              "component": "native textarea"
+            },
+            {
+              "name": "links",
+              "label": "Links (einer pro Zeile)",
+              "key": "lineup.links",
+              "type": "textarea",
+              "component": "native textarea",
+              "notes": "only http(s) URLs kept, max 10, invalid lines dropped silently"
+            },
+            {
+              "name": "notes",
+              "label": "Interne Notiz",
+              "key": "lineup.notes",
+              "type": "textarea",
+              "component": "native textarea",
+              "notes": "placeholder 'Gage, Rider, Hotel, Ansprechpartner…'"
+            }
           ],
-          "actions": [{ "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "saveArtist", "confirm": false, "result": "toast 'Gespeichert.'" }]
+          "actions": [
+            {
+              "label": "Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveArtist",
+              "confirm": false,
+              "result": "toast 'Gespeichert.'"
+            }
+          ]
         }
       ],
-      "links": ["/guestlists/[id]"],
+      "links": [
+        "/guestlists/[id]"
+      ],
       "empty": "'Noch kein Lineup.' (plain DataTable empty text)",
       "phone": "Table as cards; sheets full width.",
       "uxNotes": [
@@ -292,6 +813,26 @@
         "Artists have no page or list of their own: they can only be edited via a slot that uses them (?artist only reachable from a slot sheet), and cannot be deleted in the UI.",
         "Artist 'Links' field is a raw textarea where invalid lines are silently dropped.",
         "Read-only users see the table but rows are not clickable and give no detail view."
+      ],
+      "redesign": {
+        "job": "Plan the timetable; keep artist details in one place.",
+        "phone": "Slot cards (act + badge, time, stage); 'Neuer Slot' button; sheets full width.",
+        "desktop": "Table Act · Zeit · Bühne; sheets from the bottom.",
+        "moves": [
+          "h2 + Neuer Slot → count line + 'Neuer Slot' button above the table; EmptyState with the same action when empty",
+          "?slot=<id> → ?edit=<slot id> (old param redirects); ?artist=<id> → ?edit=<artist id> (redirects)",
+          "artist NativeSelect + '…oder neuer Artist' input → one RecordPicker (searchArtists) with '„x“ als neuen Artist anlegen' (posts new_artist)",
+          "title, stage, start, end, public, notes → unchanged fields (order: title, times, stage)",
+          "Artist bearbeiten button → sheet ⋯ MenuLink",
+          "Gästeliste für Artist → sheet ⋯ MenuSubmit (hidden form)",
+          "Slot löschen ghost button → sheet ⋯ destructive with confirm lineup.confirmDeleteSlot",
+          "artist sheet textareas → shared Textarea; links hint added (invalid lines dropped)"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
       ]
     },
     {
@@ -301,16 +842,46 @@
       "purpose": "Set up ticket types, price tiers, codes/discount links, shop and door settings; see sold tickets and the waiting list.",
       "permission": "tickets.view (module tickets)",
       "size": "record",
-      "header": { "crumbs": ["Events", "<Event title>"], "notes": "header from the event layout; the page adds its own h2 'Tickets' row with buttons" },
+      "header": {
+        "crumbs": [
+          "Events",
+          "<Event title>"
+        ],
+        "notes": "header from the event layout; the page adds its own h2 'Tickets' row with buttons"
+      },
       "urlState": [
-        { "param": "q", "meaning": "search sold tickets by code or holder name" },
-        { "param": "status", "meaning": "valid | used | reserved | void (default: all except reserved)" },
-        { "param": "page", "meaning": "pagination of sold tickets" },
-        { "param": "new", "meaning": "type = new ticket type sheet; code = new code sheet" },
-        { "param": "edit", "meaning": "<ticket type id> = edit type sheet" },
-        { "param": "code", "meaning": "<code id> = edit code sheet" },
-        { "param": "#door / #waitlist / #sold", "meaning": "anchors used by redirects" },
-        { "param": "ok / error", "meaning": "toast / error inside sheet" }
+        {
+          "param": "q",
+          "meaning": "search sold tickets by code or holder name"
+        },
+        {
+          "param": "status",
+          "meaning": "valid | used | reserved | void (default: all except reserved)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination of sold tickets"
+        },
+        {
+          "param": "new",
+          "meaning": "type = new ticket type sheet; code = new code sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "<ticket type id> = edit type sheet"
+        },
+        {
+          "param": "code",
+          "meaning": "<code id> = edit code sheet"
+        },
+        {
+          "param": "#door / #waitlist / #sold",
+          "meaning": "anchors used by redirects"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast / error inside sheet"
+        }
       ],
       "sections": [
         {
@@ -322,7 +893,13 @@
           "title": "Ticketarten",
           "anchor": "#types",
           "kind": "DataTable",
-          "columns": ["Ticketart (+ badges Pausiert/versteckt, tier names 'A → B')", "Preis", "Verkauft (n / quota)", "Frei (∞ if unlimited)", "Verkaufszeitraum"],
+          "columns": [
+            "Ticketart (+ badges Pausiert/versteckt, tier names 'A → B')",
+            "Preis",
+            "Verkauft (n / quota)",
+            "Frei (∞ if unlimited)",
+            "Verkaufszeitraum"
+          ],
           "notes": "Only shop types (not guest-list or member types). Row → ?edit=<id> (tickets.manage). Button 'Neue Ticketart' → ?new=type."
         },
         {
@@ -330,9 +907,30 @@
           "anchor": "#shop-settings",
           "kind": "custom",
           "fields": [
-            { "name": "ticket_names", "label": "Namen auf Tickets", "key": "tickets.names", "type": "select", "component": "NativeSelect", "notes": "Keine Namen / Optional abfragen / Pflicht" },
-            { "name": "max_tickets_per_order", "label": "Max. Tickets pro Bestellung", "key": "tickets.maxPerOrder", "type": "number", "component": "Input type=number", "notes": "1–100" },
-            { "name": "show_code_field", "label": "Feld für Rabattcodes im Shop anzeigen", "key": "tickets.showCodeField", "type": "checkbox", "component": "checkbox", "notes": "hint tickets.showCodeFieldHint" }
+            {
+              "name": "ticket_names",
+              "label": "Namen auf Tickets",
+              "key": "tickets.names",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Keine Namen / Optional abfragen / Pflicht"
+            },
+            {
+              "name": "max_tickets_per_order",
+              "label": "Max. Tickets pro Bestellung",
+              "key": "tickets.maxPerOrder",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "1–100"
+            },
+            {
+              "name": "show_code_field",
+              "label": "Feld für Rabattcodes im Shop anzeigen",
+              "key": "tickets.showCodeField",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "hint tickets.showCodeFieldHint"
+            }
           ],
           "notes": "tickets.manage; own 'Speichern' button (saveTicketSettings)."
         },
@@ -341,9 +939,30 @@
           "anchor": "#door",
           "kind": "custom",
           "fields": [
-            { "name": "methods", "label": "Zahlungsarten", "key": "door.settings.methods", "type": "checkbox[]", "component": "checkbox", "notes": "cash / qr / terminal (labels door.sale.method.*); unavailable ones disabled with reason door.settings.unavailable.*" },
-            { "name": "reader_id", "label": "Kartenterminal", "key": "door.settings.reader", "type": "select", "component": "NativeSelect", "notes": "only when terminal is possible; 'Kein Terminal'; no readers → 'Noch kein Terminal gekoppelt.' + link 'Zu den Integrationen'" },
-            { "name": "cash_account_id", "label": "Kassenbuch-Konto für Barzahlungen", "key": "door.settings.cashAccount", "type": "select", "component": "NativeSelect", "notes": "cashbook module only; 'Nicht ins Kassenbuch buchen'; hint door.settings.cashAccountHint" }
+            {
+              "name": "methods",
+              "label": "Zahlungsarten",
+              "key": "door.settings.methods",
+              "type": "checkbox[]",
+              "component": "checkbox",
+              "notes": "cash / qr / terminal (labels door.sale.method.*); unavailable ones disabled with reason door.settings.unavailable.*"
+            },
+            {
+              "name": "reader_id",
+              "label": "Kartenterminal",
+              "key": "door.settings.reader",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "only when terminal is possible; 'Kein Terminal'; no readers → 'Noch kein Terminal gekoppelt.' + link 'Zu den Integrationen'"
+            },
+            {
+              "name": "cash_account_id",
+              "label": "Kassenbuch-Konto für Barzahlungen",
+              "key": "door.settings.cashAccount",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "cashbook module only; 'Nicht ins Kassenbuch buchen'; hint door.settings.cashAccountHint"
+            }
           ],
           "notes": "tickets.manage; description door.settings.description; own 'Speichern' button (saveDoorSettings)."
         },
@@ -351,7 +970,14 @@
           "title": "Codes & Rabatt-Links",
           "anchor": "#codes",
           "kind": "DataTable",
-          "columns": ["Code", "Rabatt (−x % / −€ / nur freischalten)", "Gilt für", "Genutzt (n / max)", "Link (+ copy button)", "Status (Pausiert badge if inactive)"],
+          "columns": [
+            "Code",
+            "Rabatt (−x % / −€ / nur freischalten)",
+            "Gilt für",
+            "Genutzt (n / max)",
+            "Link (+ copy button)",
+            "Status (Pausiert badge if inactive)"
+          ],
           "notes": "Row → ?code=<id> (tickets.manage). Button 'Neuer Code' → ?new=code."
         },
         {
@@ -359,29 +985,114 @@
           "anchor": "#sold",
           "kind": "DataTable",
           "fields": [
-            { "name": "q", "label": "Code oder Name suchen…", "key": "tickets.search", "type": "search", "component": "SearchBox" },
-            { "name": "status", "label": "Alle · Gültig · Eingecheckt · Reserviert · Storniert", "key": "tickets.allSold / tickets.statuses.*", "type": "segments", "component": "hand-built <nav> of Links" }
+            {
+              "name": "q",
+              "label": "Code oder Name suchen…",
+              "key": "tickets.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "status",
+              "label": "Alle · Gültig · Eingecheckt · Reserviert · Storniert",
+              "key": "tickets.allSold / tickets.statuses.*",
+              "type": "segments",
+              "component": "hand-built <nav> of Links"
+            }
           ],
-          "columns": ["Code", "Ticketart", "Name", "Käufer:in (email)", "Status"],
+          "columns": [
+            "Code",
+            "Ticketart",
+            "Name",
+            "Käufer:in (email)",
+            "Status"
+          ],
           "notes": "Row → /payments?edit=<order_id> when payments module + payments.view. Pager."
         },
         {
           "title": "Warteliste",
           "anchor": "#waitlist",
           "kind": "DataTable",
-          "columns": ["Dein Name", "Deine E-Mail", "Plätze", "Status (+ 'bis <date>' when offered)", "Seit", "(Entfernen button)"],
+          "columns": [
+            "Dein Name",
+            "Deine E-Mail",
+            "Plätze",
+            "Status (+ 'bis <date>' when offered)",
+            "Seit",
+            "(Entfernen button)"
+          ],
           "notes": "Only rendered when there are entries (waiting/offered/claimed/expired, max 500). Hint waitlist.hint."
         }
       ],
       "actions": [
-        { "label": "Scannen", "key": "tickets.scan", "where": "section", "kind": "link", "target": "/scan?event=<id>", "permission": "tickets.scan" },
-        { "label": "Ticketshop", "key": "tickets.shop", "where": "section", "kind": "link", "target": "<site>/e/<slug> (new tab)" },
-        { "label": "Neue Ticketart", "key": "tickets.newType", "where": "section", "kind": "sheet", "target": "?new=type", "permission": "tickets.manage" },
-        { "label": "Speichern (Shop-Einstellungen)", "key": "common.save", "where": "section", "kind": "serverAction", "target": "saveTicketSettings", "permission": "tickets.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
-        { "label": "Speichern (Abendkasse)", "key": "common.save", "where": "section", "kind": "serverAction", "target": "saveDoorSettings", "permission": "tickets.manage", "confirm": false, "result": "→ #door, toast 'Gespeichert.'" },
-        { "label": "Neuer Code", "key": "tickets.newCode", "where": "section", "kind": "sheet", "target": "?new=code", "permission": "tickets.manage" },
-        { "label": "Link kopieren", "key": "tickets.copyLink", "where": "row", "kind": "client", "target": "CopyButton (shop URL ?code=)" },
-        { "label": "Entfernen", "key": "waitlist.remove", "where": "row", "kind": "serverAction", "target": "removeFromWaitlist", "permission": "tickets.manage", "confirm": false, "result": "→ #waitlist, toast 'Von der Warteliste entfernt.'" }
+        {
+          "label": "Scannen",
+          "key": "tickets.scan",
+          "where": "section",
+          "kind": "link",
+          "target": "/scan?event=<id>",
+          "permission": "tickets.scan"
+        },
+        {
+          "label": "Ticketshop",
+          "key": "tickets.shop",
+          "where": "section",
+          "kind": "link",
+          "target": "<site>/e/<slug> (new tab)"
+        },
+        {
+          "label": "Neue Ticketart",
+          "key": "tickets.newType",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=type",
+          "permission": "tickets.manage"
+        },
+        {
+          "label": "Speichern (Shop-Einstellungen)",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveTicketSettings",
+          "permission": "tickets.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Speichern (Abendkasse)",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveDoorSettings",
+          "permission": "tickets.manage",
+          "confirm": false,
+          "result": "→ #door, toast 'Gespeichert.'"
+        },
+        {
+          "label": "Neuer Code",
+          "key": "tickets.newCode",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=code",
+          "permission": "tickets.manage"
+        },
+        {
+          "label": "Link kopieren",
+          "key": "tickets.copyLink",
+          "where": "row",
+          "kind": "client",
+          "target": "CopyButton (shop URL ?code=)"
+        },
+        {
+          "label": "Entfernen",
+          "key": "waitlist.remove",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "removeFromWaitlist",
+          "permission": "tickets.manage",
+          "confirm": false,
+          "result": "→ #waitlist, toast 'Von der Warteliste entfernt.'"
+        }
       ],
       "overlays": [
         {
@@ -389,20 +1100,106 @@
           "component": "UrlSheet",
           "title": "Neue Ticketart | <type name>",
           "fields": [
-            { "name": "name", "label": "Ticketart", "key": "tickets.typeName", "type": "text", "component": "Input", "required": true, "notes": "placeholder 'z. B. Normal, Ermäßigt, VIP'" },
-            { "name": "price", "label": "Preis in € (0 = kostenlos)", "key": "tickets.priceEur", "type": "money", "component": "Input inputMode=decimal", "required": true, "notes": "not TypedInput kind=money" },
-            { "name": "quota", "label": "Kontingent (leer = unbegrenzt)", "key": "tickets.quota", "type": "number", "component": "Input type=number" },
-            { "name": "sales_start", "label": "Verkauf ab (optional)", "key": "tickets.salesStart", "type": "datetime", "component": "DateInput:datetime-local" },
-            { "name": "sales_end", "label": "Verkauf bis (optional)", "key": "tickets.salesEnd", "type": "datetime", "component": "DateInput:datetime-local" },
-            { "name": "description", "label": "Beschreibung (optional)", "key": "tickets.typeDescription", "type": "text", "component": "Input" },
-            { "name": "hidden", "label": "Versteckt", "key": "tickets.hiddenLabel", "type": "checkbox", "component": "checkbox", "notes": "hint tickets.hiddenHint" }
+            {
+              "name": "name",
+              "label": "Ticketart",
+              "key": "tickets.typeName",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Normal, Ermäßigt, VIP'"
+            },
+            {
+              "name": "price",
+              "label": "Preis in € (0 = kostenlos)",
+              "key": "tickets.priceEur",
+              "type": "money",
+              "component": "Input inputMode=decimal",
+              "required": true,
+              "notes": "not TypedInput kind=money"
+            },
+            {
+              "name": "quota",
+              "label": "Kontingent (leer = unbegrenzt)",
+              "key": "tickets.quota",
+              "type": "number",
+              "component": "Input type=number"
+            },
+            {
+              "name": "sales_start",
+              "label": "Verkauf ab (optional)",
+              "key": "tickets.salesStart",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "sales_end",
+              "label": "Verkauf bis (optional)",
+              "key": "tickets.salesEnd",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung (optional)",
+              "key": "tickets.typeDescription",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "hidden",
+              "label": "Versteckt",
+              "key": "tickets.hiddenLabel",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "hint tickets.hiddenHint"
+            }
           ],
           "actions": [
-            { "label": "Neue Ticketart / Speichern", "where": "savebar", "kind": "serverAction", "target": "saveTicketType", "confirm": false, "result": "toast 'Gespeichert.', sheet closes" },
-            { "label": "Freigeschaltet durch: <code> links + 'Neuer Code'", "key": "tickets.unlockedBy", "where": "sheet", "kind": "link", "target": "?code=<id> | ?new=code", "notes": "only for hidden types; red text tickets.noUnlockCode when none" },
-            { "label": "Preisstufen: per tier 'Speichern' / 'Löschen', new row 'Stufe hinzufügen'", "key": "tickets.tiers / common.save / tickets.deleteTier / tickets.addTier", "where": "sheet", "kind": "serverAction", "target": "saveTier / deleteTier", "confirm": false, "result": "stays on ?edit=<type>, toast 'Gespeichert.' / 'Ticketart gelöscht.' (sic, also for a tier); tier fields: name, price, quota, sales_end, position (number)" },
-            { "label": "Verkauf pausieren / Verkauf wieder aktivieren", "key": "tickets.pause / tickets.activate", "where": "sheet", "kind": "serverAction", "target": "setTicketTypeActive", "confirm": false, "result": "toast 'Verkauf pausiert.' / 'Verkauf aktiv.'" },
-            { "label": "Ticketart löschen", "key": "tickets.deleteType", "where": "sheet", "kind": "serverAction", "target": "deleteTicketType", "confirm": false, "result": "toast 'Ticketart gelöscht.'; blocked with tickets.typeHasTickets when sold", "notes": "inside a red 'Gefahrenzone' box" }
+            {
+              "label": "Neue Ticketart / Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveTicketType",
+              "confirm": false,
+              "result": "toast 'Gespeichert.', sheet closes"
+            },
+            {
+              "label": "Freigeschaltet durch: <code> links + 'Neuer Code'",
+              "key": "tickets.unlockedBy",
+              "where": "sheet",
+              "kind": "link",
+              "target": "?code=<id> | ?new=code",
+              "notes": "only for hidden types; red text tickets.noUnlockCode when none"
+            },
+            {
+              "label": "Preisstufen: per tier 'Speichern' / 'Löschen', new row 'Stufe hinzufügen'",
+              "key": "tickets.tiers / common.save / tickets.deleteTier / tickets.addTier",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "saveTier / deleteTier",
+              "confirm": false,
+              "result": "stays on ?edit=<type>, toast 'Gespeichert.' / 'Ticketart gelöscht.' (sic, also for a tier); tier fields: name, price, quota, sales_end, position (number)"
+            },
+            {
+              "label": "Verkauf pausieren / Verkauf wieder aktivieren",
+              "key": "tickets.pause / tickets.activate",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "setTicketTypeActive",
+              "confirm": false,
+              "result": "toast 'Verkauf pausiert.' / 'Verkauf aktiv.'"
+            },
+            {
+              "label": "Ticketart löschen",
+              "key": "tickets.deleteType",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteTicketType",
+              "confirm": false,
+              "result": "toast 'Ticketart gelöscht.'; blocked with tickets.typeHasTickets when sold",
+              "notes": "inside a red 'Gefahrenzone' box"
+            }
           ]
         },
         {
@@ -410,22 +1207,97 @@
           "component": "UrlSheet",
           "title": "Neuer Code | <code>",
           "fields": [
-            { "name": "code", "label": "Code", "key": "tickets.code", "type": "text", "component": "Input (mono, uppercase)", "required": true, "notes": "placeholder CREW-2026, 3–40 chars" },
-            { "name": "kind", "label": "Rabatt", "key": "tickets.discount", "type": "select", "component": "NativeSelect (CodeKindFields, client)", "notes": "Prozent / Betrag in € / Kein Rabatt (nur freischalten)" },
-            { "name": "value", "label": "Wert (% oder €)", "key": "tickets.codeValueLabel", "type": "number", "component": "Input inputMode=decimal", "notes": "hidden for 'none'" },
-            { "name": "max_uses", "label": "Max. Tickets über diesen Code", "key": "tickets.maxUses", "type": "number", "component": "Input type=number", "notes": "hidden for 'none'; hint tickets.maxUsesHint" },
-            { "name": "valid_from", "label": "Gültig ab", "key": "tickets.validFrom", "type": "datetime", "component": "DateInput:datetime-local" },
-            { "name": "valid_until", "label": "Gültig bis", "key": "tickets.validUntil", "type": "datetime", "component": "DateInput:datetime-local" },
-            { "name": "type_ids", "label": "Gilt für", "key": "tickets.codeTypes", "type": "checkbox[]", "component": "checkbox per shop type", "notes": "none = all visible types (tickets.codeTypesHint)" },
-            { "name": "active", "label": "Aktiv", "key": "tickets.codeActive", "type": "checkbox", "component": "checkbox" }
+            {
+              "name": "code",
+              "label": "Code",
+              "key": "tickets.code",
+              "type": "text",
+              "component": "Input (mono, uppercase)",
+              "required": true,
+              "notes": "placeholder CREW-2026, 3–40 chars"
+            },
+            {
+              "name": "kind",
+              "label": "Rabatt",
+              "key": "tickets.discount",
+              "type": "select",
+              "component": "NativeSelect (CodeKindFields, client)",
+              "notes": "Prozent / Betrag in € / Kein Rabatt (nur freischalten)"
+            },
+            {
+              "name": "value",
+              "label": "Wert (% oder €)",
+              "key": "tickets.codeValueLabel",
+              "type": "number",
+              "component": "Input inputMode=decimal",
+              "notes": "hidden for 'none'"
+            },
+            {
+              "name": "max_uses",
+              "label": "Max. Tickets über diesen Code",
+              "key": "tickets.maxUses",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "hidden for 'none'; hint tickets.maxUsesHint"
+            },
+            {
+              "name": "valid_from",
+              "label": "Gültig ab",
+              "key": "tickets.validFrom",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "valid_until",
+              "label": "Gültig bis",
+              "key": "tickets.validUntil",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "type_ids",
+              "label": "Gilt für",
+              "key": "tickets.codeTypes",
+              "type": "checkbox[]",
+              "component": "checkbox per shop type",
+              "notes": "none = all visible types (tickets.codeTypesHint)"
+            },
+            {
+              "name": "active",
+              "label": "Aktiv",
+              "key": "tickets.codeActive",
+              "type": "checkbox",
+              "component": "checkbox"
+            }
           ],
           "actions": [
-            { "label": "Neuer Code / Speichern", "where": "savebar", "kind": "serverAction", "target": "saveCode", "confirm": false, "result": "toast 'Gespeichert.'; tickets.codeTaken on duplicates" },
-            { "label": "Code löschen", "key": "tickets.deleteCode", "where": "sheet", "kind": "serverAction", "target": "deleteCode", "confirm": false, "result": "toast 'Ticketart gelöscht.' (sic); blocked with tickets.codeUsed", "notes": "inside a red 'Gefahrenzone' box; the code's link is shown above as text" }
+            {
+              "label": "Neuer Code / Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveCode",
+              "confirm": false,
+              "result": "toast 'Gespeichert.'; tickets.codeTaken on duplicates"
+            },
+            {
+              "label": "Code löschen",
+              "key": "tickets.deleteCode",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteCode",
+              "confirm": false,
+              "result": "toast 'Ticketart gelöscht.' (sic); blocked with tickets.codeUsed",
+              "notes": "inside a red 'Gefahrenzone' box; the code's link is shown above as text"
+            }
           ]
         }
       ],
-      "links": ["/scan?event=<id>", "/payments?edit=<order id>", "/settings/integrations", "<site>/e/<slug>"],
+      "links": [
+        "/scan?event=<id>",
+        "/payments?edit=<order id>",
+        "/settings/integrations",
+        "<site>/e/<slug>"
+      ],
       "empty": "Types: 'Noch keine Ticketarten. Lege z. B. „Normal“ und „Ermäßigt“ an.' Codes: 'Noch keine Codes. Codes geben Rabatt oder schalten versteckte Ticketarten frei; jeder Code hat einen Link.' Sold: 'Noch keine Tickets verkauft.' Waitlist section hidden when empty.",
       "phone": "All tables become cards; long single page with 6 sections; sheets full width.",
       "uxNotes": [
@@ -438,6 +1310,38 @@
         "Sold ticket rows jump to /payments?edit=<order> (another area's drawer) and are not clickable without payments.view; there is no per-ticket view, void or resend action here.",
         "Waitlist column headers reuse public-facing labels 'Dein Name' / 'Deine E-Mail' (waitlist.name/email) in the back office.",
         "'Scannen' button label differs from the nav label 'Einlass' for the same route."
+      ],
+      "redesign": {
+        "job": "Set up what's on sale, see who bought, manage codes and the waiting list; settings one level deeper.",
+        "phone": "Summary line + gear + 'Neue Ticketart'; sections Ticketarten, Codes, Verkaufte Tickets (search + horizontally scrolling status segments), Warteliste; sheets full width.",
+        "desktop": "Same sections as tables; sheets from the bottom.",
+        "moves": [
+          "h2 'Tickets' row → removed: the event header names the event; summary line kept",
+          "Scannen button → removed here: Einlass is the event header primary/⋯ and Verknüpft row",
+          "Ticketshop button → kept (published only)",
+          "Neue Ticketart → toolbar button + EmptyState action",
+          "types columns → Ticketart (+ badges, tiers), Preis, Verkauft (n / quota + 'noch n frei'), Verkaufszeitraum",
+          "Shop-Einstellungen inline form + Abendkasse inline form → one sheet ?edit=settings (gear), grouped rows, one SaveBar (saveTicketSettings now also saves events.door)",
+          "codes columns → Code (+ discount · applies to), Genutzt, Link (copy); status as badge in the first column",
+          "Neuer Code button → quiet '+ Neuer Code' link",
+          "sold tickets: hand-built status chips → Segments; columns Name (+ buyer email), Ticketart, Code, Status; row → /payments?edit=<order> (unchanged)",
+          "waitlist: 'Dein Name'/'Deine E-Mail' → 'Person' column (name + mailto email); Entfernen with confirm waitlist.confirmRemove",
+          "type sheet: 4 forms → 1 form: fields + 'Im Verkauf' checkbox (was Pausieren/Aktivieren button) + price tiers as inline rows (TierRows) behind 'Mehr Optionen'; prices TypedInput money; delete → ⋯ with confirm (no Gefahrenzone)",
+          "tier position number input → removed: order = row order",
+          "'Freigeschaltet durch' codes → kept below the form in the type sheet",
+          "code sheet: ?code=<id> → ?edit=<id> (redirects); kind NativeSelect → segments; value money/number input; link + copy in the sheet meta; delete → ⋯ with confirm",
+          "toasts: tickets.codeDeleted / typeDeleted / typeCreated / codeCreated / settingsSaved instead of 'Ticketart gelöscht.' everywhere"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
       ]
     },
     {
@@ -447,24 +1351,60 @@
       "purpose": "See the event's guest lists plus permanent ones and start a new list for this event.",
       "permission": "guestlists.view (module guestlists)",
       "size": "record",
-      "header": { "crumbs": ["Events", "<Event title>"], "notes": "header from the event layout" },
+      "header": {
+        "crumbs": [
+          "Events",
+          "<Event title>"
+        ],
+        "notes": "header from the event layout"
+      },
       "sections": [
         {
           "title": "Gästelisten",
           "anchor": "#guestlists",
           "kind": "DataTable",
-          "columns": ["Name", "(badge 'dauerhaft' for permanent lists)", "Einträge (n / quota)", "Abendkassenpreis / frei", "Link (badge when on)"],
+          "columns": [
+            "Name",
+            "(badge 'dauerhaft' for permanent lists)",
+            "Einträge (n / quota)",
+            "Abendkassenpreis / frei",
+            "Link (badge when on)"
+          ],
           "notes": "GuestListTable from guestlists/table.tsx inside a FormCard; row → /guestlists/<id>."
         }
       ],
       "actions": [
-        { "label": "Neue Gästeliste", "key": "guestlists.new", "where": "section", "kind": "link", "target": "/guestlists/new?event=<id>", "permission": "guestlists.manage" }
+        {
+          "label": "Neue Gästeliste",
+          "key": "guestlists.new",
+          "where": "section",
+          "kind": "link",
+          "target": "/guestlists/new?event=<id>",
+          "permission": "guestlists.manage"
+        }
       ],
-      "links": ["/guestlists/new?event=<id>", "/guestlists/[id]"],
+      "links": [
+        "/guestlists/new?event=<id>",
+        "/guestlists/[id]"
+      ],
       "empty": "'Noch keine Gästelisten.'",
       "uxNotes": [
         "Tab content leaves the event: rows and 'Neue Gästeliste' go to the Gästelisten area, so the event tabs and breadcrumbs are lost.",
         "Uses a FormCard as a list container (FormCard is meant for form groups)."
+      ],
+      "redesign": {
+        "job": "See and start this event's guest lists.",
+        "phone": "Hint + 'Neue Gästeliste' button, list cards; EmptyState when none.",
+        "desktop": "Same as table.",
+        "moves": [
+          "FormCard container → plain section with hint line",
+          "Neue Gästeliste → kept (/guestlists/new?event=)",
+          "rows → /guestlists/<id> (unchanged; the list's own page belongs to the Gästelisten area)",
+          "empty text → EmptyState with text + action"
+        ]
+      },
+      "uxNotesDone": [
+        1
       ]
     }
   ]

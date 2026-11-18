@@ -3,8 +3,17 @@
   "label": "Einlass",
   "module": "tickets | guestlists",
   "nav": [
-    { "label": "Übersicht", "key": "nav.overview", "href": "/events", "notes": "documented in events.json" },
-    { "label": "Einlass", "key": "tickets.scanNav", "href": "/scan" }
+    {
+      "label": "Übersicht",
+      "key": "nav.overview",
+      "href": "/events",
+      "notes": "documented in events.json"
+    },
+    {
+      "label": "Einlass",
+      "key": "tickets.scanNav",
+      "href": "/scan"
+    }
   ],
   "pages": [
     {
@@ -14,20 +23,48 @@
       "purpose": "Door mode for one event: scan QR codes (tickets + member cards), sell at the door, look up tickets, members and guest-list entries and let them in.",
       "permission": "tickets.scan (module tickets) or guestlists.checkin (module guestlists); notFound otherwise",
       "size": "form",
-      "header": { "notes": "No <PageHeader>: no title, crumbs, gear, menu or primary. The event chips are the first thing on the page." },
+      "header": {
+        "notes": "No <PageHeader>: no title, crumbs, gear, menu or primary. The event chips are the first thing on the page."
+      },
       "urlState": [
-        { "param": "event", "meaning": "event id; default = first published event starting within the last 12 h or later (list: published, from 7 days ago, max 20)" },
-        { "param": "tab", "meaning": "scan | sale | tickets | members | guests (only those permitted; default = first)" },
-        { "param": "q", "meaning": "search on the Gäste / Tickets / Mitglieder tabs" },
-        { "param": "list", "meaning": "guest list filter on the Gäste tab" },
-        { "param": "who", "meaning": "contact id of the member card shown on the Mitglieder tab" },
-        { "param": "ok / error", "meaning": "toast via <Notice>" }
+        {
+          "param": "event",
+          "meaning": "event id; default = first published event starting within the last 12 h or later (list: published, from 7 days ago, max 20)"
+        },
+        {
+          "param": "tab",
+          "meaning": "scan | sale | tickets | members | guests (only those permitted; default = first)"
+        },
+        {
+          "param": "q",
+          "meaning": "search on the Gäste / Tickets / Mitglieder tabs"
+        },
+        {
+          "param": "list",
+          "meaning": "guest list filter on the Gäste tab"
+        },
+        {
+          "param": "who",
+          "meaning": "contact id of the member card shown on the Mitglieder tab"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
       ],
       "sections": [
         {
           "title": "Event wählen",
           "kind": "custom",
-          "fields": [{ "name": "event", "label": "<title> · <date short> chips", "key": "tickets.pickEvent", "type": "segments", "component": "rounded-full Link chips, horizontal scroll" }],
+          "fields": [
+            {
+              "name": "event",
+              "label": "<title> · <date short> chips",
+              "key": "tickets.pickEvent",
+              "type": "segments",
+              "component": "rounded-full Link chips, horizontal scroll"
+            }
+          ],
           "notes": "Empty: 'Keine veröffentlichten Events in den letzten Tagen oder demnächst.' (tickets.noEventsToScan)."
         },
         {
@@ -44,8 +81,22 @@
           "title": "Tab Scannen",
           "kind": "custom",
           "fields": [
-            { "name": "camera", "label": "Kamera starten / Kamera stoppen", "key": "tickets.cameraOn / tickets.cameraOff", "type": "toggle", "component": "Button h-14", "notes": "state remembered on the device (localStorage roots-scan-camera); BarcodeDetector or jsQR" },
-            { "name": "code", "label": "Code eingeben", "key": "tickets.codePlaceholder", "type": "text", "component": "Input (mono, uppercase)", "notes": "submit button 'Einchecken' (tickets.checkIn)" }
+            {
+              "name": "camera",
+              "label": "Kamera starten / Kamera stoppen",
+              "key": "tickets.cameraOn / tickets.cameraOff",
+              "type": "toggle",
+              "component": "Button h-14",
+              "notes": "state remembered on the device (localStorage roots-scan-camera); BarcodeDetector or jsQR"
+            },
+            {
+              "name": "code",
+              "label": "Code eingeben",
+              "key": "tickets.codePlaceholder",
+              "type": "text",
+              "component": "Input (mono, uppercase)",
+              "notes": "submit button 'Einchecken' (tickets.checkIn)"
+            }
           ],
           "notes": "Status line: offline badge, 'n Tickets auf dem Gerät, Stand hh:mm', queued check-ins, refresh icon button (tickets.refreshList), sync note (synced / conflicts). Result box: 'Gültig – Einlass' / 'Schon eingecheckt' (+ time) / 'Ungültig' / 'Fehler' with code, holder, type. Member code → MemberCard with 'Einlassen' button (second step). Offline: list and members cached in localStorage, check-ins queued."
         },
@@ -53,48 +104,182 @@
           "title": "Tab Verkauf",
           "kind": "custom",
           "fields": [
-            { "name": "type tiles", "label": "<type name> · price · 'noch n verfügbar'/'ausverkauft'", "type": "button grid", "component": "button tiles (2–3 columns)" },
-            { "name": "free", "label": "Freier Betrag", "key": "door.sale.freeAmount", "type": "button", "component": "dashed tile → inline form: Betrag (TypedInput:money), Anzahl (− / +), Hinzufügen / Abbrechen" },
-            { "name": "lines", "label": "cart lines", "type": "list", "component": "price (tap = 'Preis ändern', inline TypedInput:money), − / + quantity" },
-            { "name": "buyer.name", "label": "Name", "key": "door.sale.name", "type": "text", "component": "Input inside <details> 'Name / E-Mail (optional)'" },
-            { "name": "buyer.email", "label": "E-Mail", "key": "door.sale.email", "type": "email", "component": "TypedInput:email", "notes": "hint door.sale.buyerHint: tickets mailed + contact created" },
-            { "name": "given", "label": "Gegeben", "key": "door.sale.given", "type": "money", "component": "TypedInput:money + 4 quick amount buttons", "notes": "cash phase; shows 'Rückgeld: …'" }
+            {
+              "name": "type tiles",
+              "label": "<type name> · price · 'noch n verfügbar'/'ausverkauft'",
+              "type": "button grid",
+              "component": "button tiles (2–3 columns)"
+            },
+            {
+              "name": "free",
+              "label": "Freier Betrag",
+              "key": "door.sale.freeAmount",
+              "type": "button",
+              "component": "dashed tile → inline form: Betrag (TypedInput:money), Anzahl (− / +), Hinzufügen / Abbrechen"
+            },
+            {
+              "name": "lines",
+              "label": "cart lines",
+              "type": "list",
+              "component": "price (tap = 'Preis ändern', inline TypedInput:money), − / + quantity"
+            },
+            {
+              "name": "buyer.name",
+              "label": "Name",
+              "key": "door.sale.name",
+              "type": "text",
+              "component": "Input inside <details> 'Name / E-Mail (optional)'"
+            },
+            {
+              "name": "buyer.email",
+              "label": "E-Mail",
+              "key": "door.sale.email",
+              "type": "email",
+              "component": "TypedInput:email",
+              "notes": "hint door.sale.buyerHint: tickets mailed + contact created"
+            },
+            {
+              "name": "given",
+              "label": "Gegeben",
+              "key": "door.sale.given",
+              "type": "money",
+              "component": "TypedInput:money + 4 quick amount buttons",
+              "notes": "cash phase; shows 'Rückgeld: …'"
+            }
           ],
           "notes": "Phases: cart → cash (given/change) | waiting (QR code or 'Bitte am Kartenterminal bezahlen', polls every 2 s) → done ('Bezahlt', 'n Tickets eingelassen', 'Nächster Verkauf') | failed (retry with any method / cancel). Capacity line 'Noch n Plätze frei' or red 'Über der Kapazität … – Verkauf ist trotzdem möglich.' Offline: only cash, sales queued on the device. Below: card 'Abendkasse heute' with 'n Verkäufe · n Tickets', total per method, Summe."
         },
         {
           "title": "Tab Tickets",
           "kind": "custom",
-          "fields": [{ "name": "q", "label": "Name oder Code suchen…", "key": "door.searchTickets", "type": "search", "component": "SearchBox size=lg" }],
+          "fields": [
+            {
+              "name": "q",
+              "label": "Name oder Code suchen…",
+              "key": "door.searchTickets",
+              "type": "search",
+              "component": "SearchBox size=lg"
+            }
+          ],
           "notes": "List (max 200, by holder name) of DoorRows: name, 'type · code', action 'Einlass' button, badge 'drin seit hh:mm' or 'Storniert'. Empty 'Keine Tickets gefunden.'"
         },
         {
           "title": "Tab Mitglieder",
           "kind": "custom",
-          "fields": [{ "name": "q", "label": "Mitglied suchen (Name, Nr., E-Mail)", "key": "door.searchMembers", "type": "search", "component": "SearchBox size=lg" }],
+          "fields": [
+            {
+              "name": "q",
+              "label": "Mitglied suchen (Name, Nr., E-Mail)",
+              "key": "door.searchMembers",
+              "type": "search",
+              "component": "SearchBox size=lg"
+            }
+          ],
           "notes": "Results as link rows (name, 'Nr. …') → ?who=<id>; MemberCard (status, membership state, paused, overdue dues, full, visits, last visit) with 'Einlassen'. Empty 'Kein Mitglied gefunden.'"
         },
         {
           "title": "Tab Gäste",
           "kind": "custom",
           "fields": [
-            { "name": "q", "label": "Name suchen…", "key": "door.searchGuests", "type": "search", "component": "SearchBox size=lg" },
-            { "name": "list", "label": "Alle Listen + one chip per list", "key": "door.allLists", "type": "segments", "component": "hand-built chip nav" }
+            {
+              "name": "q",
+              "label": "Name suchen…",
+              "key": "door.searchGuests",
+              "type": "search",
+              "component": "SearchBox size=lg"
+            },
+            {
+              "name": "list",
+              "label": "Alle Listen + one chip per list",
+              "key": "door.allLists",
+              "type": "segments",
+              "component": "hand-built chip nav"
+            }
           ],
           "notes": "Count '{in} von {total} drin'. DoorRows (max 500): name, 'list · Abendkasse price', button 'Einlass' or badge 'drin seit' + 'Rückgängig'. Event lists + permanent lists. Empty 'Keine Gäste gefunden.'"
         }
       ],
       "actions": [
-        { "label": "Einchecken (code typed or scanned)", "key": "tickets.checkIn", "where": "section", "kind": "client", "target": "checkIn (scan/actions.ts) / offline queue + syncCheckIns", "permission": "tickets.scan", "confirm": false, "result": "big coloured result box, no toast" },
-        { "label": "Einlassen (member)", "key": "door.member.admit", "where": "section", "kind": "client", "target": "admitMember (scanner) / memberDoorCheckIn (Mitglieder tab form)", "permission": "tickets.scan", "confirm": false, "result": "scanner: card updates; tab: toast '{name} ist drin.'" },
-        { "label": "Bar / Bezahlcode (QR) / Kartenterminal", "key": "door.sale.method.* (or door.sale.via.* '<Provider>-Bezahlcode')", "where": "section", "kind": "client", "target": "doorSell / doorPay / doorStatus", "permission": "tickets.scan", "confirm": false, "result": "phase screens; paid tickets let in at once; cash booked into the event's cash book account" },
-        { "label": "Bar erhalten", "key": "door.sale.cashReceived", "where": "section", "kind": "client", "target": "doorSell(method cash, offline id)", "confirm": false, "result": "done screen or 'Ohne Verbindung gespeichert'" },
-        { "label": "Doch bar / Verkauf abbrechen", "key": "door.sale.switchCash / door.sale.cancel", "where": "section", "kind": "client", "target": "doorPay(cash) / doorCancel", "confirm": false, "result": "back to the cart (keeps its lines)" },
-        { "label": "Einlass (ticket row)", "key": "door.checkIn", "where": "row", "kind": "serverAction", "target": "ticketDoorCheckIn", "permission": "tickets.scan", "confirm": false, "result": "toast '{name} ist drin.'" },
-        { "label": "Einlass / Rückgängig (guest row)", "key": "door.checkIn / door.undo", "where": "row", "kind": "serverAction", "target": "guestCheckIn (undo=1 deletes the check-in)", "permission": "guestlists.checkin", "confirm": false, "result": "toast '{name} ist drin.' / 'Check-in zurückgenommen.'" },
-        { "label": "Liste aktualisieren und synchronisieren", "key": "tickets.refreshList", "where": "section", "kind": "client", "target": "syncCheckIns + scanList + scanMembers", "confirm": false }
+        {
+          "label": "Einchecken (code typed or scanned)",
+          "key": "tickets.checkIn",
+          "where": "section",
+          "kind": "client",
+          "target": "checkIn (scan/actions.ts) / offline queue + syncCheckIns",
+          "permission": "tickets.scan",
+          "confirm": false,
+          "result": "big coloured result box, no toast"
+        },
+        {
+          "label": "Einlassen (member)",
+          "key": "door.member.admit",
+          "where": "section",
+          "kind": "client",
+          "target": "admitMember (scanner) / memberDoorCheckIn (Mitglieder tab form)",
+          "permission": "tickets.scan",
+          "confirm": false,
+          "result": "scanner: card updates; tab: toast '{name} ist drin.'"
+        },
+        {
+          "label": "Bar / Bezahlcode (QR) / Kartenterminal",
+          "key": "door.sale.method.* (or door.sale.via.* '<Provider>-Bezahlcode')",
+          "where": "section",
+          "kind": "client",
+          "target": "doorSell / doorPay / doorStatus",
+          "permission": "tickets.scan",
+          "confirm": false,
+          "result": "phase screens; paid tickets let in at once; cash booked into the event's cash book account"
+        },
+        {
+          "label": "Bar erhalten",
+          "key": "door.sale.cashReceived",
+          "where": "section",
+          "kind": "client",
+          "target": "doorSell(method cash, offline id)",
+          "confirm": false,
+          "result": "done screen or 'Ohne Verbindung gespeichert'"
+        },
+        {
+          "label": "Doch bar / Verkauf abbrechen",
+          "key": "door.sale.switchCash / door.sale.cancel",
+          "where": "section",
+          "kind": "client",
+          "target": "doorPay(cash) / doorCancel",
+          "confirm": false,
+          "result": "back to the cart (keeps its lines)"
+        },
+        {
+          "label": "Einlass (ticket row)",
+          "key": "door.checkIn",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "ticketDoorCheckIn",
+          "permission": "tickets.scan",
+          "confirm": false,
+          "result": "toast '{name} ist drin.'"
+        },
+        {
+          "label": "Einlass / Rückgängig (guest row)",
+          "key": "door.checkIn / door.undo",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "guestCheckIn (undo=1 deletes the check-in)",
+          "permission": "guestlists.checkin",
+          "confirm": false,
+          "result": "toast '{name} ist drin.' / 'Check-in zurückgenommen.'"
+        },
+        {
+          "label": "Liste aktualisieren und synchronisieren",
+          "key": "tickets.refreshList",
+          "where": "section",
+          "kind": "client",
+          "target": "syncCheckIns + scanList + scanMembers",
+          "confirm": false
+        }
       ],
-      "links": ["/scan?event=<id>&tab=<tab>"],
+      "links": [
+        "/scan?event=<id>&tab=<tab>"
+      ],
       "empty": "'Keine veröffentlichten Events in den letzten Tagen oder demnächst.' and no tabs; Verkauf without methods: 'Für diese Veranstaltung ist keine Zahlungsart an der Tür aktiv (Tickets → Abendkasse).'",
       "phone": "Designed phone-first: own bottom tab bar (App MobileBar hidden), 44–56px buttons, big search boxes, pb-24 for the bar; camera square full width.",
       "uxNotes": [
@@ -105,6 +290,31 @@
         "'Rückgängig' on a guest check-in has no confirm (low risk); the cash sale 'Bar erhalten' books money and lets people in without a confirm by design.",
         "Events older than 7 days or drafts cannot be selected; a cancelled event never shows (status filter = published).",
         "Two distinct feedback styles on one page: scanner/sale show inline result boxes, the list tabs reload with toasts."
+      ],
+      "redesign": {
+        "job": "Get people in fast and right: scan, sell at the door, look someone up, know how full it is.",
+        "phone": "Scanner app: header (Einlass + gear), event chips, live numbers, one view at a time via the bottom tab bar (Scannen · Verkauf · Tickets · Mitglieder · Gäste); big result box; door cash under Verkauf.",
+        "desktop": "Door dashboard without a tab bar: live numbers full width (rows per type open), left = action panel (Scannen · Verkauf segments + door cash of the night), right = lookup panel (Tickets · Gäste · Mitglieder segments, ?look=).",
+        "moves": [
+          "no PageHeader → PageHeader area=events 'Einlass' with gear → /events/<id>/tickets?edit=settings#door (tickets.manage)",
+          "event chips → kept (horizontal scroll)",
+          "DoorStats → full width above the panels on every view",
+          "tab bar (phone + md segmented) → phone bottom bar only; desktop: two Segments (actions, lookups)",
+          "Scannen tab → action panel 'Scannen'",
+          "Verkauf tab → action panel 'Verkauf'; 'Abendkasse heute' summary → DoorCash (phone: under Verkauf; desktop: always under the action panel)",
+          "Tickets / Mitglieder / Gäste tabs → lookup panel",
+          "guest list chip nav → FilterMenu 'Liste' next to the search",
+          "empty-methods hint → hint + link 'Abendkasse einrichten' to the settings",
+          "labels Einlass/Einlassen → Einchecken; 'Eingelassen' → 'Eingecheckt'; toast '{name} ist eingecheckt.'",
+          "Rückgängig on guest check-in → kept without confirm (one tap undo, low risk)",
+          "camera auto-start → only when the scanner is visible"
+        ]
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
       ]
     }
   ]

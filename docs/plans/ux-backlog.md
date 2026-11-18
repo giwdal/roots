@@ -96,6 +96,16 @@ Today there is no manifest, no app icons, no service worker.
       row opens the record (switching org visibly when it belongs to another org), settings per channel in the person's
       settings (F1); push + app badge on phones (I4).
 
+## L. Comments & notes (one system)
+Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/tasks use the generic `comments`
+(entity + entity_id, attachments as files, dictation) with `<CommentForm>` + `<ActivityFeed>`.
+- [ ] L1 One `<Comments entity entityId attachments photos dictation mentions?>` component (form + feed, same look
+      everywhere: avatar, name, relative time, edit/delete own, attachments as thumbnails) built on `comments`.
+- [ ] L2 Move contact notes into `comments` (migration copying `contact_notes` → `comments` with entity `contacts`,
+      RLS check that the comment policy covers contacts), then contacts use L1; drop `contact_notes` later.
+- [ ] L3 Offer it on every record with real content: contacts, members, events, shop orders, invoices, rentals,
+      courses, HR people (switch per module via props, not copies).
+
 ## H. Code
 - [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,
       Section/RowGroup, picker search actions, inline-row editors) instead of near-copies per area; no repetition

@@ -54,6 +54,10 @@ Readability: prose max ~70 characters (`max-w-prose`), never all caps for more t
 - Surfaces as elevation steps, each a little lighter in dark mode (darker in light): background → card/panel →
   popover/dialog; never more than these three. Borders 1 px at low contrast.
 - Light and dark come from the same rules (oklch lightness steps), so they stay in sync.
+- From Linear's latest refresh (https://linear.app/now/behind-the-latest-design-refresh): "don't compete for attention
+  you haven't earned" — the sidebar is dimmer than the content; "structure should be felt, not seen" — fewer
+  separators, the remaining ones soft (`--border` low contrast), spacing does the grouping; neutrals are a slightly
+  warm, low-chroma grey (chroma 0.004, hue 75), never blue-leaning; icons small (16 px), fewer of them.
 
 ## Radius, borders, elevation
 Controls `rounded-lg`, cards/tiles/groups `rounded-xl`, sheets/dialogs `rounded-2xl`, badges/pills `rounded-full`.

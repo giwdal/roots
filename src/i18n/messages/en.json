@@ -1293,7 +1293,7 @@
     "colors": { "gray": "Gray", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "red": "Red", "purple": "Purple", "pink": "Pink" },
     "defaults": "Defaults for new events",
     "defaultsHint": "Only applied when creating. Changing the type later doesn't change existing events.",
-    "countsVisit": "Counts towards visit limits",
+    "countsVisit": "Counts as a member visit",
     "yes": "yes",
     "no": "no",
     "events": "Events",
@@ -1327,8 +1327,8 @@
     "description": "Description",
     "capacity": "Capacity (optional)",
     "type": "Type",
-    "countsVisit": "Counts towards visit limits",
-    "countsVisitHint": "Off = member check-ins don't count towards visit limits (e.g. club night). They still count as attendees.",
+    "countsVisit": "Counts as a member visit",
+    "countsVisitHint": "Off: member check-ins don't raise their visit counter, and the door stays open even at the limit (e.g. club night). They still count as attendees and towards capacity.",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
     "imageHint": "PNG, JPG, WebP or GIF, max. 2 MB.",
@@ -4218,7 +4218,7 @@
       "event_type": {
         "name": "Name",
         "slug": "Short name",
-        "counts_visit": "Counts towards visit limits",
+        "counts_visit": "Counts as a member visit",
         "capacity": "Capacity"
       },
       "membership_type": {
@@ -4245,7 +4245,7 @@
         "ends_at": "End",
         "venue_name": "Venue",
         "capacity": "Capacity",
-        "counts_visit": "Counts towards visit limits"
+        "counts_visit": "Counts as a member visit"
       },
       "slot": {
         "title": "Title",

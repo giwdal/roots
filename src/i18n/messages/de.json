@@ -1293,7 +1293,7 @@
     "colors": { "gray": "Grau", "blue": "Blau", "green": "Grün", "yellow": "Gelb", "orange": "Orange", "red": "Rot", "purple": "Lila", "pink": "Pink" },
     "defaults": "Voreinstellungen für neue Events",
     "defaultsHint": "Gilt nur beim Anlegen. Spätere Änderungen am Typ ändern bestehende Events nicht.",
-    "countsVisit": "Zählt für Besuchslimits",
+    "countsVisit": "Zählt als Mitglieder-Besuch",
     "yes": "ja",
     "no": "nein",
     "events": "Events",
@@ -1327,8 +1327,8 @@
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
     "type": "Typ",
-    "countsVisit": "Zählt für Besuchslimits",
-    "countsVisitHint": "Aus = Check-ins von Mitgliedern zählen nicht für Besuchslimits (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen.",
+    "countsVisit": "Zählt als Mitglieder-Besuch",
+    "countsVisitHint": "Aus: Check-ins von Mitgliedern erhöhen ihren Besuchszähler nicht, und die Tür bleibt auch am Limit offen (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen und zur Kapazität.",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
     "imageHint": "PNG, JPG, WebP oder GIF, max. 2 MB.",
@@ -4218,7 +4218,7 @@
       "event_type": {
         "name": "Name",
         "slug": "Kurzname",
-        "counts_visit": "Zählt für Besuchslimits",
+        "counts_visit": "Zählt als Mitglieder-Besuch",
         "capacity": "Kapazität"
       },
       "membership_type": {
@@ -4245,7 +4245,7 @@
         "ends_at": "Ende",
         "venue_name": "Ort",
         "capacity": "Kapazität",
-        "counts_visit": "Zählt für Besuchslimits"
+        "counts_visit": "Zählt als Mitglieder-Besuch"
       },
       "slot": {
         "title": "Titel",

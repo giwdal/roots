@@ -30,7 +30,7 @@ export const NAV: Area[] = [
     key: "calendar",
     label: "calendar.nav",
     icon: CalendarIcon,
-    children: [{ href: "/calendar", label: "calendar.nav", module: ["events", "shifts", "projects", "rentals", "courses"], permission: ["events.view", "shifts.view", "projects.view", "rentals.view", "courses.view"] }],
+    children: [{ href: "/calendar", label: "calendar.nav", module: ["events", "shifts", "hr", "projects", "rentals", "courses"], permission: ["events.view", "shifts.view", "hr.view", "projects.view", "rentals.view", "courses.view"] }],
   },
   {
     key: "contacts",

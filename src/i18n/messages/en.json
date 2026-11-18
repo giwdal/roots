@@ -6900,11 +6900,39 @@
     }
   },
   "calendar": {
+    "entries": {
+      "one": "{count} entry",
+      "other": "{count} entries"
+    },
+    "allDay": "All day",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "viewLabel": "View",
+    "week": "Week",
+    "month": "Month",
+    "new": "New",
+    "noEntries": "Nothing on this day.",
+    "newOn": "New on {date}",
+    "newHint": "What would you like to add?",
+    "sourcesLabel": "Areas",
+    "create": {
+      "events": "Event",
+      "shifts": "Shift",
+      "absences": "Absence",
+      "tasks": "Task",
+      "projects": "Project",
+      "rentals": "Booking",
+      "courses": "Course"
+    },
     "nav": "Calendar",
     "title": "Calendar",
     "source": "Area",
     "sources": {
       "events": "Events",
+      "absences": "Absences",
       "shifts": "Shifts",
       "tasks": "Tasks",
       "projects": "Projects",

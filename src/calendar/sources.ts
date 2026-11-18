@@ -9,7 +9,7 @@ import type { T } from "@/i18n/translate"
 
 type Ctx = Awaited<ReturnType<typeof getContext>>
 
-export const CALENDAR_SOURCES = ["events", "shifts", "tasks", "projects", "rentals", "courses"] as const
+export const CALENDAR_SOURCES = ["events", "shifts", "absences", "tasks", "projects", "rentals", "courses"] as const
 export type CalendarSource = (typeof CALENDAR_SOURCES)[number]
 
 export type CalendarEntry = {
@@ -26,14 +26,17 @@ export type CalendarEntry = {
 const ACCESS: Record<CalendarSource, { module: string; permission: string }> = {
   events: { module: "events", permission: "events.view" },
   shifts: { module: "shifts", permission: "shifts.view" },
+  absences: { module: "hr", permission: "hr.view" },
   tasks: { module: "projects", permission: "projects.view" },
   projects: { module: "projects", permission: "projects.view" },
   rentals: { module: "rentals", permission: "rentals.view" },
   courses: { module: "courses", permission: "courses.view" },
 }
-const COLOR: Record<CalendarSource, string> = {
+/** Each source's colour (events may use their own type colours); the calendar's source chips show it as the legend. */
+export const COLOR: Record<CalendarSource, string> = {
   events: "var(--chart-1)",
   shifts: "var(--chart-4)",
+  absences: "var(--muted-foreground)",
   tasks: "var(--chart-3)",
   projects: "var(--chart-2)",
   rentals: "var(--chart-5)",
@@ -66,6 +69,10 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
     shifts: async () => {
       const { data } = await ctx.supabase.from("shifts").select("id, title, starts_at, ends_at, positions(name)").eq("org_id", org).lt("starts_at", to).gte("ends_at", from).limit(2000)
       return (data ?? []).map((s) => ({ source: "shifts", id: s.id, title: s.title || s.positions?.name || "", starts_at: s.starts_at, ends_at: s.ends_at, all_day: false, color: COLOR.shifts, href: `/shifts?edit=${s.id}` }))
+    },
+    absences: async () => {
+      const { data } = await ctx.supabase.from("absences").select("id, kind, starts_on, ends_on, employees!inner(name, deleted_at)").eq("org_id", org).is("employees.deleted_at", null).lte("starts_on", toDay).gte("ends_on", fromDay).limit(2000)
+      return (data ?? []).map((a) => ({ source: "absences", id: a.id, title: `${a.employees.name} · ${t.dynamic(`hr.kinds.${a.kind}`)}`, starts_at: day(a.starts_on), ends_at: day(a.ends_on), all_day: true, color: COLOR.absences, href: `/hr/absences?edit=${a.id}` }))
     },
     tasks: async () => {
       const { data } = await ctx.supabase.from("tasks").select("id, title, start_on, due_on, completed_at").eq("org_id", org).is("deleted_at", null).not("due_on", "is", null).lte("due_on", toDay).gte("due_on", fromDay).limit(2000)

@@ -22,7 +22,7 @@ export function StatusBadge({ t, status }: { t: T; status: string }) {
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 
-export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean }) {
+export async function EventForm({ t, action, ev, disabled, start }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; start?: string /* new event: "YYYY-MM-DDTHH:MM" pre-filled (from a calendar day) */ }) {
   const ctx = await getContext()
   const mails = ctx.modules.has("email") && ctx.can("email.view")
   const [{ data: locations }, defs, { data: templates }] = await Promise.all([
@@ -43,7 +43,7 @@ export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ev-starts">{t("eventsPage.startsAt")}</Label>
-              <DateInput id="ev-starts" name="starts_at" type="datetime-local" defaultValue={ev ? toLocalInput(ev.starts_at) : undefined} required />
+              <DateInput id="ev-starts" name="starts_at" type="datetime-local" defaultValue={ev ? toLocalInput(ev.starts_at) : start} required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ev-ends">{t("eventsPage.endsAt")}</Label>

@@ -11,6 +11,7 @@ import { EventCalendarNav } from "@/components/reui/event-calendar/event-calenda
 import type { CalendarEvent, CalendarView as View, EventCalendarResource } from "@/components/reui/event-calendar/event-calendar-types"
 import { useT } from "@/i18n/client"
 import { usePhone } from "@/lib/use-phone"
+import { PhoneCalendar } from "@/components/phone-calendar"
 
 // Generic calendar for any module (shifts, events, bookings…), built on the ReUI event calendar (src/components/reui).
 // - View + date live in the URL (?view=week&date=2026-10-12), so every view is shareable and survives reload.
@@ -18,6 +19,8 @@ import { usePhone } from "@/lib/use-phone"
 //   length `newMinutes`) or drag across a range → newHref + &start=…&end=…(&resource=…) to create something there.
 // - Optional drag & drop: `onMove` (a server action) gets the new times; it returns an error text to reject.
 // - "resource" view = one column per person/room; pass `resourceEvents` (entries with resourceId) for it.
+// - Phones: <PhoneCalendar> instead of the grids – a week strip (or the month with dots) above the selected day's
+//   entries; "+" on the day goes to newHref like an empty slot. ?view=month = the month, any other view = the strip.
 export type CalendarItem = { id: string; title: string; start: string; end: string; allDay?: boolean; color?: string; href?: string; resourceId?: string; readOnly?: boolean }
 
 type Opts = { locale?: Locale }
@@ -62,10 +65,7 @@ export function CalendarView({
   const pathname = usePathname()
   const sp = useSearchParams()
   const phone = usePhone()
-  // Phones open on the list (agenda) when the page offers it: a 7-column week grid can't be read at 375 px. A chosen
-  // view in the URL always wins; week/month stay one tap away.
-  const fallback = phone && views.includes("agenda") && (defaultView === "week" || defaultView === "month") ? "agenda" : defaultView
-  const view = (views.find((v) => v === sp.get(viewParam)) ?? fallback) as View
+  const view = (views.find((v) => v === sp.get(viewParam)) ?? defaultView) as View
   const dateParam = sp.get("date")
   const date = useMemo(() => (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? new Date(`${dateParam}T12:00:00`) : new Date()), [dateParam])
   const source = view === "resource" && resourceEvents ? resourceEvents : events
@@ -96,6 +96,29 @@ export function CalendarView({
     go(`${newHref}&start=${encodeURIComponent(iso(start))}&end=${encodeURIComponent(iso(end))}${resourceId ? `&resource=${resourceId}` : ""}`)
   const day = (d: Date) => d.toLocaleDateString("sv-SE")
 
+  const locale = t.locale === "de" ? de : enGB
+  if (phone)
+    return (
+      <PhoneCalendar
+        entries={events.map((e) => ({ id: e.id, title: e.title, start: new Date(e.start), end: new Date(e.end), allDay: e.allDay, color: e.color, href: e.href }))}
+        date={date}
+        month={view === "month"}
+        canMonth={views.includes("month")}
+        locale={locale}
+        onDate={(d) => setParams({ date: day(d) })}
+        onMonth={(m) => setParams({ [viewParam]: m ? "month" : (views.find((v) => v === "week" || v === "day" || v === "agenda") ?? views[0]) })}
+        onOpen={go}
+        onCreate={
+          newHref
+            ? (d) => {
+                const start = new Date(new Date(d).setHours(18, 0, 0, 0))
+                create(start, new Date(start.getTime() + newMinutes * 60_000))
+              }
+            : undefined
+        }
+      />
+    )
+
   return (
     <EventCalendar<{ href?: string }>
       events={items}
@@ -103,7 +126,7 @@ export function CalendarView({
       date={date}
       views={views}
       resources={view === "resource" ? resources : undefined}
-      locale={t.locale === "de" ? de : enGB}
+      locale={locale}
       timeZone="Europe/Berlin"
       weekStartsOn={1}
       dayStartHour={0}

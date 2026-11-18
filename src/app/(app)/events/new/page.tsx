@@ -13,7 +13,7 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams
   return (
     <NewPage list={{ href: "/events", label: t("eventsPage.nav") }} title={t("eventsPage.new")} error={param(sp, "error")}>
-      <EventForm t={t} action={createEvent} />
+      <EventForm t={t} action={createEvent} start={/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(param(sp, "start") ?? "") ? param(sp, "start") : undefined} />
     </NewPage>
   )
 }

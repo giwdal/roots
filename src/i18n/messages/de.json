@@ -6900,11 +6900,39 @@
     }
   },
   "calendar": {
+    "entries": {
+      "one": "{count} Eintrag",
+      "other": "{count} Einträge"
+    },
+    "allDay": "Ganztägig",
+    "prevWeek": "Vorige Woche",
+    "nextWeek": "Nächste Woche",
+    "prevMonth": "Voriger Monat",
+    "nextMonth": "Nächster Monat",
+    "today": "Heute",
+    "viewLabel": "Ansicht",
+    "week": "Woche",
+    "month": "Monat",
+    "new": "Neu",
+    "noEntries": "Keine Einträge an diesem Tag.",
+    "newOn": "Neu am {date}",
+    "newHint": "Was möchtest du anlegen?",
+    "sourcesLabel": "Bereiche",
+    "create": {
+      "events": "Event",
+      "shifts": "Schicht",
+      "absences": "Abwesenheit",
+      "tasks": "Aufgabe",
+      "projects": "Projekt",
+      "rentals": "Vergabe",
+      "courses": "Kurs"
+    },
     "nav": "Kalender",
     "title": "Kalender",
     "source": "Bereich",
     "sources": {
-      "events": "Veranstaltungen",
+      "events": "Events",
+      "absences": "Abwesenheiten",
       "shifts": "Schichten",
       "tasks": "Aufgaben",
       "projects": "Projekte",

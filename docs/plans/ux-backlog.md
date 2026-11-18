@@ -60,6 +60,23 @@ file too; shared items are done once in shared components.
       from org settings (Allgemein, Team, Rollen, Module, Bereiche, Felder, Orte, Integrationen, API) and area settings
       (gear) and platform admin (/admin); section nav grouped "Du" / "Organisation"; people only see what they may change.
 
+## I. Installable app (PWA) — native feel on phones
+Goal: on phones roots works like a native app from the home screen, on desktop like a perfect web app.
+Today there is no manifest, no app icons, no service worker.
+- [ ] I1 Web app manifest (`src/app/manifest.ts`: name, short_name, `display: standalone`, start_url `/`, theme and
+      background colours for light/dark, icons 192/512 + maskable) and `apple-touch-icon`, iOS status bar style,
+      splash colours; "Zum Home-Bildschirm" hint once for phone users in Safari.
+- [ ] I2 Service worker: app shell + static assets cached, offline page instead of the browser error, network-first
+      for data (the door already keeps offline sales on the device).
+- [ ] I3 Instant navigation: prefetch the tab bar targets and area pages, skeletons (loading.tsx) everywhere,
+      View Transitions for push/pop between list and record (native-like slide), keep scroll position on back.
+- [ ] I4 Native functions where they help: Web Push for notifications (iOS 16.4+ for home-screen apps; the inbox
+      already exists → a push channel in `src/events/channels/`), app badge with the unread count
+      (`navigator.setAppBadge`), Web Share for links/tickets/invoices, camera for scanning (exists) and photos of
+      receipts, `tel:`/`mailto:`/maps links, file picker for documents, haptic-like feedback via pressed states.
+- [ ] I5 Standalone details: safe areas (done), no rubber-band on the shell, pull-to-refresh on lists, edge-swipe
+      back not blocked, links to other origins open in the browser.
+
 ## H. Code
 - [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,
       Section/RowGroup, picker search actions, inline-row editors) instead of near-copies per area; no repetition

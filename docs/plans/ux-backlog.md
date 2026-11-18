@@ -60,7 +60,16 @@ file too; shared items are done once in shared components.
       from org settings (Allgemein, Team, Rollen, Module, Bereiche, Felder, Orte, Integrationen, API) and area settings
       (gear) and platform admin (/admin); section nav grouped "Du" / "Organisation"; people only see what they may change.
 
+## H. Code
+- [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,
+      Section/RowGroup, picker search actions, inline-row editors) instead of near-copies per area; no repetition
+      where one helper fits.
+- [ ] H2 Modules work together and alone: every cross-module link, card, ⌘K source, filter and Start tile checks
+      `ctx.modules` + permission; an org with 1 module gets a complete, clean App.
+
 ## G. Process
 - [ ] G1 Look at the real UI regularly (headless browser screenshots at 375 / 1280, light + dark) and fix what shows.
+- [ ] G3 Final review when everything is done: best user flows, clear information, works on phone and desktop,
+      state-of-the-art UX/UI.
 - [ ] G2 Re-check every redesigned area on phones (Events, Einlass, Shop, Finanzen, Kontakte, Mitglieder, E-Mails,
       Formulare, Gästelisten) against mobile.md §5.

@@ -59,6 +59,24 @@ Readability: prose max ~70 characters (`max-w-prose`), never all caps for more t
   separators, the remaining ones soft (`--border` low contrast), spacing does the grouping; neutrals are a slightly
   warm, low-chroma grey (chroma 0.004, hue 75), never blue-leaning; icons small (16 px), fewer of them.
 
+## Taken from Linear's system (adapted, not copied)
+- One accent, used scarcely: our primary is neutral; colour = `--link` / focus ring (blue) and status/area colours only.
+- Surface ladder instead of shadows: background → card → popover/dialog, 1 px low-contrast hairlines; no drop
+  shadows except floating layers.
+- Radius: controls 8 px, cards/groups ~12 px, dialogs/sheets ~16 px, pills/badges full — one rule everywhere
+  (`--radius: 0.5rem`).
+- Type: titles semibold with slight negative tracking (`tracking-tight`), body 400, buttons 500, captions 13 px;
+  one family (Geist) from title to body.
+- Buttons ~8 × 14 px padding, inputs ~8 × 12 px; pressed state on every button (1 px push).
+- Full state cycle on every screen: skeleton (not spinner) while loading, empty state with the one action, inline
+  error under the field, toast only for transient results.
+- **One verb per action, everywhere**: "In den Papierkorb" = soft delete of a record (restorable), "Löschen" =
+  gone for good (rows, settings), "Entfernen" = take something out of a list/link without deleting it (a guest, a
+  link, a picture), "Stornieren" = money/booking reversed, "Abmelden" = a person leaves a course/list. Never
+  synonyms for the same action.
+- The landing-page "taste" rules (no em-dashes, eyebrow limits, hero rules) apply to the public/marketing pages
+  when they get their pass, not to the App.
+
 ## Radius, borders, elevation
 Controls `rounded-lg`, cards/tiles/groups `rounded-xl`, sheets/dialogs `rounded-2xl`, badges/pills `rounded-full`.
 1 px `border-border` for separation; shadows only on floating things (menus, sheets, tab bar).

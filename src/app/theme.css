@@ -36,7 +36,7 @@
   --sidebar-accent-foreground: oklch(0.24 0.004 75);
   --sidebar-border: oklch(0.92 0.004 75);
   --sidebar-ring: oklch(0.55 0.12 255);
-  --radius: 0.625rem;
+  --radius: 0.5rem; /* controls 8 px (rounded-lg), cards ~11 px (rounded-xl), dialogs ~14 px (rounded-2xl), like Linear */
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);

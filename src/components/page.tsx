@@ -75,7 +75,7 @@ export function PageHeader({
           )}
           <div className="grid min-w-0 gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className={cn("font-heading text-2xl font-semibold break-words", inTopBar && "sr-only")}>{title}</h1>
+              <h1 className={cn("font-heading text-xl font-semibold tracking-tight break-words md:text-2xl", inTopBar && "sr-only")}>{title}</h1>
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}

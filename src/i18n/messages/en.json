@@ -1422,6 +1422,7 @@
     }
   },
   "contacts": {
+    "editAll": "Edit all details",
     "nav": "Contacts",
     "title": "Contacts",
     "new": "New contact",

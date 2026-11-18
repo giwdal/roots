@@ -9,6 +9,7 @@ import { back } from "@/lib/url"
 import type { ImportOutcome } from "@/components/csv-import"
 import { importContactRows, uniqueError } from "@/contacts/server"
 import { fromForm, parseTags, readContact } from "./fields"
+import type { TablesUpdate } from "@/lib/supabase/types"
 
 const PATH = "/contacts"
 
@@ -50,6 +51,47 @@ export async function updateContact(fd: FormData) {
   const { error, count } = await ctx.supabase.from("contacts").update(r.row, { count: "exact" }).eq("id", id).eq("org_id", ctx.org.id)
   if (error || !count) back(sheet, { error: error ? uniqueError(t, error) : t("errors.not_allowed") })
   back(here, { ok: t("contacts.saved") })
+}
+
+// One value edited in place (InlineField) or a small group (the address dialog): the stored contact in form format,
+// the new values on top, checked by readContact like the full form, then only those columns are written.
+const PATCHABLE = new Set(["first_name", "last_name", "company", "email", "phone", "birthday", "street", "postal_code", "city", "country"])
+async function patch(fd: FormData, fields: string[]): Promise<{ error?: string }> {
+  const ctx = await requirePerm("crm.manage")
+  const t = await getT()
+  const id = idOf(fd)
+  if (!ctx.modules.has("crm") || !/^[0-9a-f-]{36}$/.test(id) || !fields.length || fields.some((f) => !PATCHABLE.has(f) && !/^custom\.[a-z0-9_]+$/.test(f))) return { error: t("errors.invalid_input") }
+  const [{ data: c }, defs] = await Promise.all([ctx.supabase.from("contacts").select("*").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(), loadFields(ctx.supabase, ctx.org.id, "contacts")])
+  if (!c) return { error: t("errors.not_allowed") }
+  const custom = (c.custom ?? {}) as Record<string, unknown>
+  const current: Record<string, string> = {
+    ...Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v == null || typeof v === "object" ? "" : String(v)])),
+    tags: (c.tags ?? []).join(", "),
+    ...Object.fromEntries(defs.map((d) => [`custom.${d.key}`, custom[d.key] == null ? "" : d.type === "money" && typeof custom[d.key] === "number" ? (custom[d.key] as number).toFixed(2).replace(".", ",") : String(custom[d.key])])),
+  }
+  for (const f of fields) current[f === "value" ? String(fd.get("field")) : f] = String(fd.get(f) ?? "")
+  const r = readContact((k) => current[k] ?? "", defs)
+  if ("error" in r) return { error: fieldError(t, r) }
+  const names = fields.map((f) => (f === "value" ? String(fd.get("field")) : f))
+  const update = Object.fromEntries(names.map((n) => (n.startsWith("custom.") ? ["custom", r.row.custom] : [n, r.row[n as keyof typeof r.row]])))
+  const { error } = await ctx.supabase.from("contacts").update(update as TablesUpdate<"contacts">).eq("id", id).eq("org_id", ctx.org.id)
+  if (error) return { error: uniqueError(t, error) }
+  return {}
+}
+
+/** InlineField: one contact value (`field` + `value`). */
+export async function patchContact(fd: FormData) {
+  const field = String(fd.get("field") ?? "")
+  if (!PATCHABLE.has(field) && !/^custom\.[a-z0-9_]+$/.test(field)) return { error: (await getT())("errors.invalid_input") }
+  return patch(fd, ["value"])
+}
+
+/** The address dialog (street, postal code, city, country together). */
+export async function saveContactAddress(fd: FormData) {
+  const id = idOf(fd)
+  const r = await patch(fd, ["street", "postal_code", "city", "country"])
+  if (r.error) back(`${PATH}/${id}?edit=address`, { error: r.error })
+  back(`${PATH}/${id}`, { ok: (await getT())("contacts.saved") })
 }
 
 export async function trashContact(fd: FormData) {

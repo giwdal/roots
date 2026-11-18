@@ -19,9 +19,11 @@ export function UrlSheet({
   menu,
   children,
   wide,
+  compact,
 }: {
   params: string[]
   wide?: boolean // e.g. an import with a preview table
+  compact?: boolean // a few fields (an address, one question): a small dialog / short sheet
   title: string
   description?: string
   meta?: React.ReactNode
@@ -55,6 +57,7 @@ export function UrlSheet({
       onClose={confirmClose}
       onClosed={closed}
       wide={wide}
+      compact={compact}
       label={title}
       header={
         <div className="grid gap-1">

@@ -19,7 +19,14 @@ import {
   WalletIcon,
   ClipboardListIcon,
 } from "lucide-react"
+import { Choice } from "@/components/choice"
 import { customDetails } from "@/components/custom-field-details"
+import { customInlineItems } from "@/components/custom-field-inline"
+import { InlineField } from "@/components/inline-field"
+import { SaveBar } from "@/components/save-bar"
+import { TypedInput } from "@/components/typed-input"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
 import { LinkRows, type LinkRow } from "@/components/link-rows"
@@ -44,9 +51,9 @@ import { DocBadge } from "@/app/(app)/invoices/badges"
 import { MemberStateBadge, memberState } from "@/app/(app)/members/badges"
 import { PayStatusBadge } from "@/app/(app)/payments/badges"
 import { OrderBadge } from "@/app/(app)/shop/badges"
-import { addNote, deleteNote, linkContactUser, restoreContact, trashContact, updateContact } from "../actions"
+import { addNote, deleteNote, linkContactUser, patchContact, restoreContact, saveContactAddress, trashContact, updateContact } from "../actions"
 import { ContactForm } from "../contact-form"
-import { contactName } from "../fields"
+import { COUNTRIES, contactName } from "../fields"
 
 type Ctx = Awaited<ReturnType<typeof requirePerm>>
 const LIMIT = 10
@@ -220,6 +227,11 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
           !c.deleted_at &&
           (canManage || ctx.can("org.files.view") || on("invoices", "invoices.manage") || canEditMembers) && (
             <ActionsMenu>
+              {canManage && !c.deleted_at && (
+                <MenuLink href={`/contacts/${c.id}?edit=details`} icon={<PencilIcon />}>
+                  {t("contacts.editAll")}
+                </MenuLink>
+              )}
               {on("invoices", "invoices.manage") && (
                 <MenuLink href={`/invoices/new?contact=${c.id}`} icon={<ReceiptTextIcon />}>
                   {t("contacts.hub.newInvoice")}
@@ -246,7 +258,6 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             </ActionsMenu>
           )
         }
-        primary={canManage && !c.deleted_at ? { href: `/contacts/${c.id}?edit=details`, label: t("common.edit"), icon: PencilIcon } : undefined}
       />
       {canManage && (
         <form id="trash-contact" action={trashContact} hidden>
@@ -316,13 +327,40 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             </>
           }
         >
-          <Section id="details" title={t("contacts.hub.details")} action={
-              canManage && (
-                <Link href={`/contacts/${c.id}?edit=details`} scroll={false} className="inline-flex min-h-8 items-center gap-1.5 text-sm text-[var(--link)] hover:underline">
-                  <PencilIcon className="size-3.5" /> {t("common.edit")}
-                </Link>
-              )
-            }>
+          <Section id="details" title={t("contacts.hub.details")}>
+            {/* Every value edits in place (Linear style); the address is one small dialog; tags + everything at once
+                stay in "Alle Angaben bearbeiten" (⋯). */}
+            {canManage && !c.deleted_at ? (
+              <DetailList
+                items={[
+                  { label: t("contacts.firstName"), value: <InlineField action={patchContact} id={c.id} field="first_name" value={c.first_name} label={t("contacts.firstName")} /> },
+                  { label: t("contacts.lastName"), value: <InlineField action={patchContact} id={c.id} field="last_name" value={c.last_name} label={t("contacts.lastName")} /> },
+                  { label: t("contacts.company"), value: <InlineField action={patchContact} id={c.id} field="company" value={c.company} label={t("contacts.company")} /> },
+                  {
+                    label: t("contacts.email"),
+                    value: <InlineField action={patchContact} id={c.id} field="email" kind="email" value={c.email} label={t("contacts.email")} display={c.email && <a href={`mailto:${c.email}`} className="break-all link">{c.email}</a>} />,
+                  },
+                  {
+                    label: t("contacts.phone"),
+                    value: <InlineField action={patchContact} id={c.id} field="phone" kind="phone" value={c.phone} label={t("contacts.phone")} display={c.phone && tel && <a href={`tel:${tel}`} className="link">{c.phone}</a>} />,
+                  },
+                  {
+                    label: t("contacts.address"),
+                    value: (
+                      <Link href={`/contacts/${c.id}?edit=address`} scroll={false} className="-mx-2 block rounded-md px-2 py-1 hover:bg-muted/60" aria-label={t("common.editField", { field: t("contacts.address") })}>
+                        {address.length ? <span className="whitespace-pre-line">{address.join("\n")}</span> : <span className="text-muted-foreground">{t("common.emptyValue")}</span>}
+                      </Link>
+                    ),
+                  },
+                  {
+                    label: t("contacts.birthday"),
+                    value: <InlineField action={patchContact} id={c.id} field="birthday" kind="date" value={c.birthday} label={t("contacts.birthday")} display={c.birthday ? t.date(`${c.birthday}T12:00:00`, { dateStyle: "long" }) : undefined} />,
+                  },
+                  ...customInlineItems(t, defs, c.custom, patchContact, c.id),
+                  c.unsubscribed_at && { label: t("contacts.unsubscribed"), value: day(c.unsubscribed_at) },
+                ]}
+              />
+            ) : (
             <DetailList
               items={[
                 {
@@ -347,6 +385,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 c.unsubscribed_at && { label: t("contacts.unsubscribed"), value: day(c.unsubscribed_at) },
               ]}
             />
+            )}
           </Section>
 
           {on("members", "members.view") && (!!memberships?.length || canEditMembers) && (
@@ -515,6 +554,32 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         </RecordLayout>
       )}
 
+      {canManage && !c.deleted_at && param(sp, "edit") === "address" && (
+        <UrlSheet params={["edit"]} title={t("contacts.address")} compact>
+          <form action={saveContactAddress} className="grid gap-4 px-6 pt-6 sm:grid-cols-2">
+            <input type="hidden" name="id" value={c.id} />
+            <div className="grid gap-2 sm:col-span-2">
+              <Label htmlFor="a-street">{t("contacts.street")}</Label>
+              <Input id="a-street" name="street" defaultValue={c.street ?? ""} autoComplete="street-address" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="a-postal">{t("contacts.postalCode")}</Label>
+              <TypedInput kind="postcode" id="a-postal" name="postal_code" defaultValue={c.postal_code ?? ""} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="a-city">{t("contacts.city")}</Label>
+              <Input id="a-city" name="city" defaultValue={c.city ?? ""} autoComplete="address-level2" />
+            </div>
+            <div className="grid gap-2 sm:col-span-2">
+              <Label htmlFor="a-country">{t("contacts.country")}</Label>
+              <Choice id="a-country" name="country" label={t("contacts.country")} defaultValue={c.country} options={COUNTRIES.map((code) => ({ value: code, label: new Intl.DisplayNames([t.locale], { type: "region" }).of(code) ?? code }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <SaveBar />
+            </div>
+          </form>
+        </UrlSheet>
+      )}
       {canManage && !c.deleted_at && param(sp, "edit") === "details" && (
         <UrlSheet params={["edit"]} title={name}>
           <ContactForm t={t} action={updateContact} c={c} defs={defs} tags={tags} />

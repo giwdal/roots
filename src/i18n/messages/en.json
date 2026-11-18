@@ -2979,7 +2979,8 @@
       "placeholders": "Placeholders",
       "copyName": "My event mail",
       "shopMails": "Shop mails",
-      "shopMailsHint": "What buyers get after an order – in the default template's design above. Same settings as Shop → Settings."
+      "shopMailsHint": "What buyers get after an order – in the design of the default template above. Which mails go out and their texts are set in the shop.",
+      "shopMailsLink": "Shop mails in the shop settings"
     },
     "eventMail": {
       "greeting": "Hello {name},",
@@ -6424,7 +6425,19 @@
     },
     "imageActions": "Picture {n}",
     "confirmRemoveImage": "Remove this picture?",
-    "confirmRemoveImageHint": "Variants showing it won't have their own picture any more."
+    "confirmRemoveImageHint": "Variants showing it won't have their own picture any more.",
+    "settings": {
+      "change": "Change",
+      "notSet": "Not set",
+      "set": "Set",
+      "days": {
+        "one": "{count} day",
+        "other": "{count} days"
+      },
+      "text": "Text",
+      "ownText": "Own text",
+      "markdownHint": "Markdown: **bold**, *italic*, # heading, - list. Shown like this on the shop's page."
+    }
   },
   "calendar": {
     "nav": "Calendar",

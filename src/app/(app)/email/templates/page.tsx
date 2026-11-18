@@ -4,7 +4,7 @@ import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { DataTable } from "@/components/data-table"
 import { EmailBodyField } from "@/components/email-body-field"
 import { Notice } from "@/components/notice"
-import { FormCard, PageHeader } from "@/components/page"
+import { PageHeader } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
 import { UrlSheet } from "@/components/url-sheet"
 import { SubmitButton } from "@/components/submit-button"
@@ -18,9 +18,9 @@ import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import type { Tables } from "@/lib/supabase/types"
 import { param } from "@/lib/url"
-import { shopSettings } from "@/shop/server"
-import { saveShopMails } from "../../shop/actions"
-import { ShopMailFields } from "../../shop/settings/mail-fields"
+import Link from "next/link"
+import { ChevronRightIcon } from "lucide-react"
+import { RowGroup } from "@/components/section"
 import { copyBuiltInTemplate, deleteTemplate, saveTemplateAction, testTemplate } from "../actions"
 
 // Templates for the mails events send on their own (tickets, guest-list tickets, waiting-list offers). One template
@@ -30,12 +30,9 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/email/
   const t = await getT()
   const sp = await searchParams
   const canManage = ctx.can("email.manage")
-  // Shop on: its buyer mails are edited here too (same data as Shop → Einstellungen), they use the default template.
+  // Shop on: its buyer mails use the default template; their texts are edited in Shop → Einstellungen (linked here).
   const shop = ctx.modules.has("shop") && ctx.can("shop.manage")
-  const [{ data }, shopS] = await Promise.all([
-    ctx.supabase.from("email_templates").select("*").eq("org_id", ctx.org.id).order("name"),
-    shop ? shopSettings(ctx.org.id) : null,
-  ])
+  const { data } = await ctx.supabase.from("email_templates").select("*").eq("org_id", ctx.org.id).order("name")
 
   // roots' built-in mail is always the first row: what's sent while there's no own default, and the start for a copy.
   const builtIn = { id: "builtin", name: t("email.templates.builtIn"), ...builtInTemplate(t), is_default: !(data ?? []).some((x) => x.is_default) }
@@ -65,13 +62,13 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/email/
           { header: t("email.status"), cell: (x) => (x.is_default ? <Badge>{t("email.templates.default")}</Badge> : null) },
         ]}
       />
-      {shopS && (
-        <form action={saveShopMails} className="grid gap-6">
-          <FormCard id="shop" title={t("email.templates.shopMails")} description={t("email.templates.shopMailsHint")}>
-            <ShopMailFields t={t} mails={(shopS.mails ?? {}) as Record<string, { off?: boolean; message?: string }>} />
-          </FormCard>
-          <SaveBar />
-        </form>
+      {shop && (
+        <RowGroup id="shop" title={t("email.templates.shopMails")} description={t("email.templates.shopMailsHint")}>
+          <Link href="/shop/settings#mails" className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-muted">
+            {t("email.templates.shopMailsLink")}
+            <ChevronRightIcon className="size-4 text-muted-foreground" />
+          </Link>
+        </RowGroup>
       )}
       {viewingBuiltIn && (
         <UrlSheet params={["edit"]} title={builtIn.name} wide>

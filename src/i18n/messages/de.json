@@ -2979,7 +2979,8 @@
       "placeholders": "Platzhalter",
       "copyName": "Meine Event-Mail",
       "shopMails": "Shop-Mails",
-      "shopMailsHint": "Was Käufer:innen nach einer Bestellung bekommen – im Design der Standard-Vorlage oben. Dieselben Einstellungen wie unter Shop → Einstellungen."
+      "shopMailsHint": "Was Käufer:innen nach einer Bestellung bekommen – im Design der Standardvorlage oben. Welche Mails rausgehen und ihre Texte stellst du im Shop ein.",
+      "shopMailsLink": "Shop-Mails in den Shop-Einstellungen"
     },
     "eventMail": {
       "greeting": "Hallo {name},",
@@ -6424,7 +6425,19 @@
     },
     "imageActions": "Bild {n}",
     "confirmRemoveImage": "Dieses Bild entfernen?",
-    "confirmRemoveImageHint": "Varianten, die es zeigen, haben danach kein eigenes Bild mehr."
+    "confirmRemoveImageHint": "Varianten, die es zeigen, haben danach kein eigenes Bild mehr.",
+    "settings": {
+      "change": "Ändern",
+      "notSet": "Nicht festgelegt",
+      "set": "Festgelegt",
+      "days": {
+        "one": "{count} Tag",
+        "other": "{count} Tage"
+      },
+      "text": "Text",
+      "ownText": "Eigener Text",
+      "markdownHint": "Markdown: **fett**, *kursiv*, # Überschrift, - Liste. So steht es auf der Seite im Shop."
+    }
   },
   "calendar": {
     "nav": "Kalender",

@@ -9,7 +9,7 @@ import { moneyCents } from "@/lib/inputs"
 import { back } from "@/lib/url"
 import { MAIL_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readTeamOrder, readVariant } from "@/shop/fields"
 import { bookStock, stockItem } from "@/shop/stock"
-import { applyOptions, cancelOrder, createTeamOrder, ensureInvoice, issueMissingInvoices, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
+import { DEFAULT_SETTINGS, shopSettings, applyOptions, cancelOrder, createTeamOrder, ensureInvoice, issueMissingInvoices, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
 import { deleteTrack, finishTrackUpload, startTrackUpload, updateTrack } from "@/shop/audio"
 
 const UUID = /^[0-9a-f-]{36}$/
@@ -241,56 +241,67 @@ export async function resendMailAction(fd: FormData) {
 
 // ---------- settings ----------
 
-const readMails = (fd: FormData) =>
-  Object.fromEntries(MAIL_KINDS.map((k) => [k, { off: fd.get(`mail_${k}`) !== "1", message: String(fd.get(`mail_${k}_message`) ?? "").trim().slice(0, 2000) || undefined }]))
+type ShopPatch = Partial<Omit<typeof DEFAULT_SETTINGS, "shipping_rates" | "mails">> & { shipping_rates?: unknown; mails?: unknown }
 
-/** Only the buyer mails (E-Mail → Vorlagen shows them too). */
-export async function saveShopMails(fd: FormData) {
-  const { ctx, t } = await manager()
-  const here = "/email/templates"
-  const { error } = await ctx.supabase.from("shop_settings").upsert({ org_id: ctx.org.id, mails: readMails(fd) as never }, { onConflict: "org_id" })
-  if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t("store.saved") })
+/** Change some settings; the first change of an org stores the defaults with it. */
+async function patchShop(ctx: Awaited<ReturnType<typeof manager>>["ctx"], patch: ShopPatch) {
+  const { data } = await ctx.supabase.from("shop_settings").select("org_id").eq("org_id", ctx.org.id).maybeSingle()
+  return data
+    ? ctx.supabase.from("shop_settings").update(patch as never).eq("org_id", ctx.org.id)
+    : ctx.supabase.from("shop_settings").insert({ ...DEFAULT_SETTINGS, ...patch, org_id: ctx.org.id } as never)
 }
 
-export async function saveShopSettings(fd: FormData) {
+const SWITCHES = ["pay_online", "pay_transfer", "pay_on_pickup", "pickup", "shipping", "auto_invoice"] as const
+
+/** A settings switch (payment methods, delivery, automatic invoices, one buyer mail on/off): saved as it is flipped. */
+export async function setShopSwitch(key: string, on: boolean): Promise<{ error?: string }> {
   const { ctx, t } = await manager()
-  const here = "/shop/settings"
-  const on = (k: string) => fd.get(k) === "1"
+  const flag = SWITCHES.find((k) => k === key)
+  const mailKind = MAIL_KINDS.find((k) => `mail_${k}` === key)
+  if (!flag && !mailKind) return { error: t("errors.invalid_input") }
+  let patch: ShopPatch
+  if (flag) patch = { [flag]: !!on }
+  else {
+    const mails = ((await shopSettings(ctx.org.id)).mails ?? {}) as Record<string, { off?: boolean; message?: string }>
+    patch = { mails: { ...mails, [mailKind!]: { ...mails[mailKind!], off: !on } } }
+  }
+  const { error } = await patchShop(ctx, patch)
+  return error ? { error: dbError(t, error) } : {}
+}
+
+/** One settings sheet (?edit=<part>): shop page text, reservation days, pickup text, shipping rates, legal texts, one mail's text. */
+export async function saveShopPart(fd: FormData) {
+  const { ctx, t } = await manager()
+  const part = String(fd.get("part") ?? "")
+  const here = `/shop/settings?edit=${encodeURIComponent(part)}`
   const text = (k: string, max: number) => String(fd.get(k) ?? "").trim().slice(0, max) || null
-  // Shipping rates come as parallel lists (one row per rate; empty names are dropped).
-  const list = (k: string) => fd.getAll(k).map(String)
-  const rates = list("rate_name").map((name, i) => ({
-    id: list("rate_id")[i] || crypto.randomUUID().slice(0, 8),
-    name,
-    cents: moneyCents(list("rate_price")[i] || "0"),
-    free_from: list("rate_free")[i]?.trim() ? moneyCents(list("rate_free")[i]) : null,
-    countries: list("rate_countries")[i] || "DE",
-  }))
-  const mails = readMails(fd)
-  const days = Math.floor(Number(fd.get("transfer_days")) || 7)
-  const { error } = await ctx.supabase.from("shop_settings").upsert(
-    {
-      org_id: ctx.org.id,
-      title: text("title", 200),
-      intro: text("intro", 5000),
-      pay_online: on("pay_online"),
-      pay_transfer: on("pay_transfer"),
-      pay_on_pickup: on("pay_on_pickup"),
-      transfer_days: Math.min(60, Math.max(1, days)),
-      pickup: on("pickup"),
-      pickup_text: text("pickup_text", 2000),
-      shipping: on("shipping"),
-      shipping_rates: readShippingRates(rates) as never,
-      auto_invoice: on("auto_invoice"),
-      terms: text("terms", 50000),
-      withdrawal: text("withdrawal", 50000),
-      mails: mails as never,
-    },
-    { onConflict: "org_id" },
-  )
+  let patch: ShopPatch | null = null
+  if (part === "page") patch = { title: text("title", 200), intro: text("intro", 5000) }
+  if (part === "transfer") patch = { transfer_days: Math.min(60, Math.max(1, Math.floor(Number(fd.get("transfer_days")) || 7))) }
+  if (part === "pickup") patch = { pickup_text: text("pickup_text", 2000) }
+  if (part === "terms") patch = { terms: text("terms", 50000) }
+  if (part === "withdrawal") patch = { withdrawal: text("withdrawal", 50000) }
+  if (part === "shipping") {
+    // Shipping rates come as parallel lists (one row per rate; empty names are dropped).
+    const list = (k: string) => fd.getAll(k).map(String)
+    const rates = list("rate_name").map((name, i) => ({
+      id: list("rate_id")[i] || crypto.randomUUID().slice(0, 8),
+      name,
+      cents: moneyCents(list("rate_price")[i] || "0"),
+      free_from: list("rate_free")[i]?.trim() ? moneyCents(list("rate_free")[i]) : null,
+      countries: list("rate_countries")[i] || "DE",
+    }))
+    patch = { shipping_rates: readShippingRates(rates) }
+  }
+  const mailKind = MAIL_KINDS.find((k) => `mail-${k}` === part)
+  if (mailKind) {
+    const mails = ((await shopSettings(ctx.org.id)).mails ?? {}) as Record<string, { off?: boolean; message?: string }>
+    patch = { mails: { ...mails, [mailKind]: { ...mails[mailKind], message: text("message", 2000) ?? undefined } } }
+  }
+  if (!patch) back("/shop/settings", { error: t("errors.invalid_input") })
+  const { error } = await patchShop(ctx, patch)
   if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t("store.saved") })
+  back("/shop/settings", { ok: t("store.saved") })
 }
 
 /** Music upload, step 1 (called from the browser): the track row + a link to PUT the master to. */

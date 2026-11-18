@@ -137,7 +137,7 @@ async function OrderSheet({ t, orderId, canRefund, error, ok }: { t: T; orderId:
   const ctx = await requirePerm("payments.view")
   const { data: order } = await ctx.supabase
     .from("pay_orders")
-    .select("*, pay_order_items(*), pay_payments(*, pay_refunds(*)), tickets(id, code, holder_name, status, price, ticket_types(name)), shop_orders(id)")
+    .select("*, pay_order_items(*), pay_payments(*, pay_refunds(*)), tickets(id, code, holder_name, status, price, ticket_types(name)), shop_orders(id, number)")
     .eq("id", orderId)
     .eq("org_id", ctx.org.id)
     .maybeSingle()
@@ -159,6 +159,10 @@ async function OrderSheet({ t, orderId, canRefund, error, ok }: { t: T; orderId:
               order.source_module === "tickets" && order.source_id ? (
                 <Link href={`/events/${order.source_id}/tickets#sold`} className="underline underline-offset-4">
                   {order.pay_order_items[0]?.description.split(" · ")[0] ?? t.dynamic(`payments.sources.${order.source_module}`)}
+                </Link>
+              ) : order.shop_orders && ctx.modules.has("shop") && ctx.can("shop.view") ? (
+                <Link href={`/shop/orders/${order.shop_orders.id}`} className="underline underline-offset-4">
+                  {t("store.orderTitle", { number: String(order.shop_orders.number) })}
                 </Link>
               ) : (
                 t.dynamic(`payments.sources.${order.source_module}`)
@@ -244,7 +248,7 @@ async function OrderSheet({ t, orderId, canRefund, error, ok }: { t: T; orderId:
 
       {refundable && order.shop_orders ? (
         // Shop orders are refunded on the order (pieces, stock, corrected invoice).
-        <Link href={`/shop/orders/${order.shop_orders.id}?refund=1`} className="justify-self-start text-sm underline underline-offset-4">
+        <Link href={`/shop/orders/${order.shop_orders.id}?new=refund`} className="justify-self-start text-sm underline underline-offset-4">
           {t("payments.refundInShop")}
         </Link>
       ) : refundable && (

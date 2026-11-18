@@ -190,10 +190,12 @@ export async function orderStatusAction(fd: FormData) {
   })
 }
 
-/** Cancel; a paid order is refunded in full, so this needs payments.refund too. */
+/** Cancel; a paid order is refunded in full, so that needs payments.refund too (an unpaid one only shop.manage). */
 export async function cancelOrderAction(fd: FormData) {
   await orderStep(fd, async (ctx, order, t) => {
-    if (!ctx.can("payments.refund")) throw new Error("errors.not_allowed")
+    const { data: o } = await ctx.supabase.from("shop_orders").select("pay_orders!inner(status)").eq("id", order).eq("org_id", ctx.org.id).maybeSingle()
+    if (!o) throw new Error("errors.not_found")
+    if (["paid", "partially_refunded"].includes(o.pay_orders.status) && !ctx.can("payments.refund")) throw new Error("errors.not_allowed")
     const r = await cancelOrder(ctx.org.id, order, String(fd.get("reason") ?? "").slice(0, 500) || undefined)
     return r === "pending" ? t("store.refundPending") : t("store.cancelled")
   })
@@ -378,10 +380,38 @@ export async function orderBuyer(contactId: string) {
   return c && { first_name: c.first_name ?? "", last_name: c.last_name ?? "", email: c.email ?? "", phone: c.phone ?? "", company: c.company ?? "", street: c.street ?? "", postal_code: c.postal_code ?? "", city: c.city ?? "", country: c.country ?? "DE" }
 }
 
+/** Item picker of "Neue Bestellung": products and their variants matching `q` (drafts too), with the price to fill in. */
+export async function searchOrderItems(q: string): Promise<{ id: string; label: string; detail: string; price: number }[]> {
+  const ctx = await requirePerm("shop.manage")
+  const t = await getT()
+  const term = String(q ?? "").replace(/[%,()*]/g, "").trim().slice(0, 100)
+  let query = ctx.supabase
+    .from("products")
+    .select("id, name, price_cents, position, product_variants(id, name, price_cents, position, active)")
+    .eq("org_id", ctx.org.id)
+    .is("deleted_at", null)
+    .neq("status", "archived")
+    .order("position")
+    .limit(20)
+  if (term) query = query.or(`name.ilike.%${term}%,category.ilike.%${term}%`)
+  const { data } = await query
+  return (data ?? [])
+    .flatMap((p) =>
+      p.product_variants.length
+        ? [...p.product_variants]
+            .filter((v) => v.active)
+            .sort((a, b) => a.position - b.position)
+            .map((v) => ({ id: v.id, label: `${p.name} · ${v.name}`, price: v.price_cents ?? p.price_cents }))
+        : [{ id: p.id, label: p.name, price: p.price_cents }],
+    )
+    .slice(0, 20)
+    .map((i) => ({ ...i, detail: t.money(i.price, "eur") }))
+}
+
 /** "Neue Bestellung" (sold offline, by phone …) → the new order's page. */
 export async function createTeamOrderAction(fd: FormData) {
   const { ctx, t } = await manager()
-  const here = "/shop/orders?new=order"
+  const here = "/shop/orders/new"
   const r = readTeamOrder(getter(fd))
   if ("error" in r) back(here, { error: msg(t, r.error) })
   let id = ""

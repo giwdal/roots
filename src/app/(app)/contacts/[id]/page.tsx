@@ -36,7 +36,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const none = Promise.resolve({ data: null })
   const by = <Q extends { eq: (c: string, v: string) => Q }>(q: Q) => q.eq("org_id", ctx.org.id).eq("contact_id", id)
 
-  const [{ data: c }, { data: notes }, { data: tagRows }, defs, { data: membership }, { data: tickets }, { data: docs }, { data: subs }, { data: mails }, { data: changes }, { data: rentals }] = await Promise.all([
+  const [{ data: c }, { data: notes }, { data: tagRows }, defs, { data: membership }, { data: tickets }, { data: docs }, { data: subs }, { data: mails }, { data: changes }, { data: rentals }, { data: shopOrders }] = await Promise.all([
     ctx.supabase.from("contacts").select("*").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(),
     by(ctx.supabase.from("contact_notes").select("id, body, created_at, created_by")).order("created_at", { ascending: false }).limit(200),
     ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }),
@@ -59,6 +59,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     ctx.supabase.rpc("contact_changes", { p_contact: id }),
     on("rentals", "rentals.view")
       ? by(ctx.supabase.from("rental_contacts").select("role, rentals!inner(id, status, starts_at, ends_at, deleted_at, rental_objects(name))")).is("rentals.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
+      : none,
+    on("shop", "shop.view")
+      ? by(ctx.supabase.from("shop_orders").select("id, number, status, placed_at, pay_orders(amount_total, currency)")).not("placed_at", "is", null).order("placed_at", { ascending: false }).limit(LIMIT)
       : none,
   ])
   if (!c) notFound()
@@ -237,6 +240,24 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                     badge: t.dynamic(`rentals.states.${rentalState(x.rentals)}`),
                   }))}
                 />
+              </Section>
+            )}
+            {!!shopOrders?.length && (
+              <Section id="shop" title={t("store.orders")}>
+                <Rows
+                  rows={shopOrders.map((o) => ({
+                    key: o.id,
+                    href: `/shop/orders/${o.id}`,
+                    title: t("store.orderTitle", { number: String(o.number) }),
+                    detail: [o.pay_orders && t.money(o.pay_orders.amount_total, o.pay_orders.currency), o.placed_at && day(o.placed_at)].filter(Boolean).join(" · "),
+                    badge: t.dynamic(`store.orderStatus.${o.status}`),
+                  }))}
+                />
+                {shopOrders.length >= LIMIT && (
+                  <Link href={`/shop/orders?contact=${c.id}&view=all`} className="text-sm text-[var(--link)] hover:underline">
+                    {t("common.showAll")}
+                  </Link>
+                )}
               </Section>
             )}
             {!!docs?.length && (

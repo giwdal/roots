@@ -46,6 +46,7 @@ export function RefundForm({ orderId, items, left, currency, manual }: { orderId
               </span>
               <Input
                 type="number"
+                inputMode="numeric"
                 name={`q_${i.id}`}
                 min={0}
                 max={i.left}
@@ -80,7 +81,7 @@ export function RefundForm({ orderId, items, left, currency, manual }: { orderId
       </label>
 
       <p className="text-sm text-muted-foreground">{manual ? t("store.refundManualHint") : t("store.refundOnlineHint")}</p>
-      <SubmitButton disabled={amount <= 0 || amount > left} data-confirm="store.confirmRefund" className="justify-self-start">
+      <SubmitButton disabled={amount <= 0 || amount > left} data-confirm="store.confirmRefund" className="w-full sm:w-auto sm:justify-self-end">
         {amount > 0 ? t("store.refundButton", { amount: t.money(amount, currency) }) : t("store.refundChoose")}
       </SubmitButton>
     </form>

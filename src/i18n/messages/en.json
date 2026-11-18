@@ -6342,12 +6342,62 @@
       "pickContact": "Please choose a contact from the CRM.",
       "contactExists": "This email already belongs to a contact – please choose “Contact from the CRM”.",
       "invoice": "Issue an invoice",
-      "invoiceHint": "Private buyers don't need an invoice – the sale is recorded either way. Up to €250 a simplified invoice without an address is fine."
+      "invoiceHint": "Private buyers don't need an invoice – the sale is recorded either way. Up to €250 a simplified invoice without an address is fine.",
+      "quantity": "Quantity"
     },
     "payFilter": {
       "open": "Still to pay",
       "paid": "Paid"
-    }
+    },
+    "itemsMore": "{first} + {count} more",
+    "date": "Date",
+    "clearContact": "Remove filter {name}",
+    "confirmIssueMissing": "Issue invoices for all paid orders without one?",
+    "confirmIssueMissingHint": "Each gets a consecutive number and can only be cancelled afterwards, not changed.",
+    "payStatus": {
+      "open": "Open",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded",
+      "partially_refunded": "Partly refunded",
+      "pending": "Pending",
+      "succeeded": "Paid"
+    },
+    "confirmTransferReceived": "Mark the transfer as received?",
+    "confirmTransferReceivedHint": "The order then counts as paid; depending on your settings the buyer gets a confirmation and the invoice.",
+    "confirmCashReceived": "Mark the cash payment as received?",
+    "confirmCashReceivedHint": "The order then counts as paid; depending on your settings the buyer gets a confirmation and the invoice.",
+    "steps": {
+      "label": "Order progress",
+      "placed": "Placed",
+      "paid": "Paid"
+    },
+    "allOrdersOf": "All orders of this person",
+    "paymentMethod": "Payment method",
+    "paidAt": "Paid on",
+    "heldUntilLabel": "Reserved until",
+    "confirmIssueInvoice": "Issue the invoice now?",
+    "confirmIssueInvoiceHint": "It gets a consecutive number and can only be cancelled afterwards, not changed.",
+    "perPiece": "{amount} each",
+    "changeTracking": "Change tracking number",
+    "shippingMethod": "Shipping method",
+    "noteInternal": "Note (internal)",
+    "shipHint": "The buyer gets the shipping mail, with the tracking number if you add one.",
+    "confirmResend": "Send this mail to the buyer again now?",
+    "confirmResendHint": "It goes out right away, with the text from the shop settings.",
+    "confirmReopen": "Reopen the order?",
+    "confirmReopenHint": "It goes back to “To do”. Payment and invoice stay as they are.",
+    "confirmCancelHint": "The buyer gets the cancellation mail if it is switched on.",
+    "confirmCancelPaidHint": "The money goes back through the payment provider (for transfer/cash you pay back yourself). This can't be undone.",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "company": "Company",
+      "phone": "Phone"
+    },
+    "orderNumber": "Number"
   },
   "calendar": {
     "nav": "Calendar",

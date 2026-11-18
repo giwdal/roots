@@ -321,6 +321,57 @@ export const EXPORTERS: Record<string, Exporter> = {
       }
     },
   },
+  shop_orders: {
+    perm: "shop.view",
+    module: "shop",
+    name: "bestellungen",
+    async load(ctx, t, sp) {
+      // Same filters as Shop → Bestellungen (view, payment, search, contact).
+      const views: Record<string, string[]> = { open: ["new", "ready"], done: ["shipped", "completed"], cancelled: ["cancelled"] }
+      const view = sp.get("view") ?? "open"
+      const q = clean(sp.get("q"))
+      const contact = /^[0-9a-f-]{36}$/.test(sp.get("contact") ?? "") ? sp.get("contact")! : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("shop_orders")
+          .select("id, number, status, delivery, payment, name, company, phone, street, postal_code, city, country, placed_at, tracking, pay_orders!inner(status, amount_total, customer_email, pay_order_items(description, quantity, metadata))")
+          .eq("org_id", ctx.org.id)
+          .not("placed_at", "is", null)
+          .order("placed_at", { ascending: false })
+          .range(from, to)
+        if (picked(sp).length) return x.in("id", picked(sp))
+        if (views[view]) x = x.in("status", views[view])
+        if (q) x = /^\d+$/.test(q) ? x.eq("number", Number(q)) : x.ilike("name", `%${q}%`)
+        if (contact) x = x.eq("contact_id", contact)
+        if (sp.get("pay") === "open") x = x.in("pay_orders.status", ["open", "failed", "expired"])
+        if (sp.get("pay") === "paid") x = x.in("pay_orders.status", ["paid", "partially_refunded"])
+        return x
+      })
+      const at = (iso: string | null) => (iso ? new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Berlin" }).slice(0, 16) : "")
+      return {
+        headers: [t("store.orderNumber"), t("store.date"), t("store.fields.name"), t("store.fields.company"), t("store.fields.email"), t("store.fields.phone"), t("store.items"), t("store.total"), t("store.delivery"), t("store.street"), t("store.postalCode"), t("store.city"), t("store.country"), t("store.tracking"), t("store.paymentMethod"), t("store.payment"), t("store.status")],
+        rows: rows.map((o) => [
+          o.number,
+          at(o.placed_at),
+          o.name,
+          o.company,
+          o.pay_orders.customer_email,
+          o.phone,
+          o.pay_orders.pay_order_items.filter((i) => !(i.metadata as Record<string, unknown> | null)?.shipping).map((i) => `${i.quantity}× ${i.description}`).join(", "),
+          o.pay_orders.amount_total / 100,
+          t.dynamic(`store.deliveries.${o.delivery}`),
+          o.street,
+          o.postal_code,
+          o.city,
+          o.country,
+          o.tracking,
+          t.dynamic(`store.payments.${o.payment}`),
+          t.dynamic(`store.payStatus.${o.pay_orders.status}`),
+          t.dynamic(`store.orderStatus.${o.status}`),
+        ]),
+      }
+    },
+  },
   rental_objects: {
     perm: "rentals.view",
     module: "rentals",

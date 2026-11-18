@@ -6342,12 +6342,62 @@
       "pickContact": "Bitte einen Kontakt aus dem CRM wählen.",
       "contactExists": "Diese E-Mail gehört schon zu einem Kontakt – bitte „Kontakt aus dem CRM“ wählen.",
       "invoice": "Rechnung erstellen",
-      "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse."
+      "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse.",
+      "quantity": "Anzahl"
     },
     "payFilter": {
       "open": "Noch zu bezahlen",
       "paid": "Bezahlt"
-    }
+    },
+    "itemsMore": "{first} + {count} weitere",
+    "date": "Datum",
+    "clearContact": "Filter {name} entfernen",
+    "confirmIssueMissing": "Rechnungen für alle bezahlten Bestellungen ohne Rechnung ausstellen?",
+    "confirmIssueMissingHint": "Jede bekommt eine fortlaufende Nummer und lässt sich danach nur noch stornieren, nicht ändern.",
+    "payStatus": {
+      "open": "Offen",
+      "paid": "Bezahlt",
+      "failed": "Fehlgeschlagen",
+      "expired": "Abgelaufen",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet",
+      "partially_refunded": "Teilweise erstattet",
+      "pending": "Ausstehend",
+      "succeeded": "Bezahlt"
+    },
+    "confirmTransferReceived": "Überweisung als eingegangen markieren?",
+    "confirmTransferReceivedHint": "Die Bestellung gilt dann als bezahlt; je nach Einstellung gehen Bestätigung und Rechnung an die Käufer:in.",
+    "confirmCashReceived": "Barzahlung als erhalten markieren?",
+    "confirmCashReceivedHint": "Die Bestellung gilt dann als bezahlt; je nach Einstellung gehen Bestätigung und Rechnung an die Käufer:in.",
+    "steps": {
+      "label": "Fortschritt der Bestellung",
+      "placed": "Bestellt",
+      "paid": "Bezahlt"
+    },
+    "allOrdersOf": "Alle Bestellungen dieser Person",
+    "paymentMethod": "Zahlungsart",
+    "paidAt": "Bezahlt am",
+    "heldUntilLabel": "Reserviert bis",
+    "confirmIssueInvoice": "Rechnung jetzt ausstellen?",
+    "confirmIssueInvoiceHint": "Sie bekommt eine fortlaufende Nummer und lässt sich danach nur noch stornieren, nicht ändern.",
+    "perPiece": "je {amount}",
+    "changeTracking": "Sendungsnummer ändern",
+    "shippingMethod": "Versandart",
+    "noteInternal": "Notiz (intern)",
+    "shipHint": "Die Käufer:in bekommt die Versandmail, mit Sendungsnummer, wenn du eine einträgst.",
+    "confirmResend": "Diese Mail jetzt erneut an die Käufer:in senden?",
+    "confirmResendHint": "Sie geht sofort raus, mit dem Text aus den Shop-Einstellungen.",
+    "confirmReopen": "Bestellung wieder öffnen?",
+    "confirmReopenHint": "Sie steht dann wieder auf „Zu bearbeiten“. Bezahlung und Rechnung bleiben, wie sie sind.",
+    "confirmCancelHint": "Die Käufer:in bekommt die Storno-Mail, wenn sie eingeschaltet ist.",
+    "confirmCancelPaidHint": "Das Geld geht über den Zahlungsweg zurück (bei Überweisung/Bar zahlst du selbst zurück). Das lässt sich nicht rückgängig machen.",
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "company": "Firma",
+      "phone": "Telefon"
+    },
+    "orderNumber": "Nummer"
   },
   "calendar": {
     "nav": "Kalender",

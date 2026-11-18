@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label"
 import { ContentSheet, ContentSheetTitle } from "@/components/content-sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox"
 import { useT } from "@/i18n/client"
 
 type Option = { id: string; label: string; detail: string }
+const CREATE = "\u0000create"
 
 /** Pick one contact by searching on the server (works for any number of contacts). Posts the id as `name`. */
 export function ContactPicker({
@@ -36,6 +38,8 @@ export function ContactPicker({
   const [open, setOpen] = useState(false)
   const [pending, start] = useTransition()
   const [creating, setCreating] = useState(false)
+  const createLabel = q.trim() ? t("contacts.quickCreateNamed", { name: q.trim() }) : t("contacts.quickCreate")
+  const items = noCreate ? results : [...results, { id: CREATE, label: createLabel, detail: "" }]
   const pick = (r: Option) => {
     setPicked(r)
     onChange?.(r)
@@ -74,51 +78,48 @@ export function ContactPicker({
           </Button>
         </div>
       ) : (
-        <div className="relative">
-          <Input
-            id={id}
-            value={q}
-            placeholder={placeholder ?? t("common.search")}
-            autoComplete="off"
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={`${id}-list`}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {pending && <Loader2Icon className="absolute top-2 right-2 size-4 animate-spin text-muted-foreground" aria-hidden />}
-          {open && (
-            <ul id={`${id}-list`} role="listbox" className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border bg-popover p-1 shadow-md">
-              {results.map((r) => (
-                <li key={r.id} role="option" aria-selected={false}>
-                  <button
-                    type="button"
-                    className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => pick(r)}
-                  >
-                    {r.label}
-                    {r.detail && <span className="text-muted-foreground"> · {r.detail}</span>}
-                  </button>
-                </li>
-              ))}
-              {!noCreate && <li>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-primary hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    setOpen(false)
-                    setCreating(true)
-                  }}
-                >
-                  <PlusIcon className="size-4" /> {q.trim() ? t("contacts.quickCreateNamed", { name: q.trim() }) : t("contacts.quickCreate")}
-                </button>
-              </li>}
-            </ul>
-          )}
-        </div>
+        <Combobox
+          items={items}
+          filter={null}
+          itemToStringLabel={(r: Option) => r.label}
+          value={null}
+          onValueChange={(r: Option | null) => {
+            if (!r) return
+            if (r.id === CREATE) {
+              setOpen(false)
+              setCreating(true)
+            } else pick(r)
+          }}
+          inputValue={q}
+          onInputValueChange={setQ}
+          open={open}
+          onOpenChange={setOpen}
+          autoHighlight
+        >
+          <div className="relative">
+            <ComboboxInput id={id} placeholder={placeholder ?? t("common.search")} autoComplete="off" showTrigger={false} className="w-full" />
+            {pending && <Loader2Icon className="absolute top-2 right-2 size-4 animate-spin text-muted-foreground" aria-hidden />}
+          </div>
+          <ComboboxContent>
+            <ComboboxEmpty>{t("tags.noMatch")}</ComboboxEmpty>
+            <ComboboxList>
+              {(r: Option) =>
+                r.id === CREATE ? (
+                  <ComboboxItem key={r.id} value={r} className="text-primary">
+                    <PlusIcon /> {r.label}
+                  </ComboboxItem>
+                ) : (
+                  <ComboboxItem key={r.id} value={r}>
+                    <span className="min-w-0 truncate">
+                      {r.label}
+                      {r.detail && <span className="text-muted-foreground"> · {r.detail}</span>}
+                    </span>
+                  </ComboboxItem>
+                )
+              }
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       )}
       {creating && <QuickCreate initial={q.trim()} onClose={() => setCreating(false)} onCreated={pick} />}
     </div>

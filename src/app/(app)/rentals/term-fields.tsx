@@ -1,5 +1,6 @@
 "use client"
 
+import { Segment, SegmentGroup } from "@/components/choice"
 import { useState } from "react"
 import { DateInput } from "@/components/date-input"
 import { Input } from "@/components/ui/input"
@@ -24,12 +25,7 @@ export function TermFields({ start, end, renew, notice, termMonths, disabled }: 
   const n = Number(months)
   const until = mode === "fixed" && /^\d{4}-\d{2}-\d{2}$/.test(from) && Number.isInteger(n) && n > 0 && n <= 600 ? termEndOf(from, n) : ""
   const day = (d: string) => t.date(`${d}T12:00:00Z`, { dateStyle: "medium" })
-  const segment = <V extends string>(name: string, value: V, current: V, set: (v: V) => void, label: string) => (
-    <label className="cursor-pointer rounded-md px-3 py-1.5 text-sm has-checked:bg-background has-checked:shadow-sm has-disabled:cursor-default">
-      <input type="radio" name={name} value={value} checked={current === value} onChange={() => set(value)} disabled={disabled} className="sr-only" />
-      {label}
-    </label>
-  )
+  const segment = <V extends string>(name: string, value: V, current: V, set: (v: V) => void, label: string) => <Segment name={name} value={value} label={label} checked={current === value} onPick={() => set(value)} disabled={disabled} />
 
   return (
     <div className="grid gap-4">
@@ -41,10 +37,10 @@ export function TermFields({ start, end, renew, notice, termMonths, disabled }: 
       </div>
       <div className="grid gap-2">
         <span className="text-sm font-medium">{t("rentals.termLabel")}</span>
-        <div role="radiogroup" aria-label={t("rentals.termLabel")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
+        <SegmentGroup label={t("rentals.termLabel")}>
           {segment("term_mode", "open", mode, setMode, t("rentals.termOpen"))}
           {segment("term_mode", "fixed", mode, setMode, t("rentals.termFixed"))}
-        </div>
+        </SegmentGroup>
         {mode === "fixed" && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <Input aria-label={t("rentals.termMonths")} type="number" inputMode="numeric" min={1} max={600} value={months} onChange={(e) => setMonths(e.target.value)} disabled={disabled} className="w-20" />
@@ -56,10 +52,10 @@ export function TermFields({ start, end, renew, notice, termMonths, disabled }: 
       {mode === "fixed" && (
         <div className="grid gap-2">
           <span className="text-sm font-medium">{t("rentals.afterLabel")}</span>
-          <div role="radiogroup" aria-label={t("rentals.afterLabel")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
+          <SegmentGroup label={t("rentals.afterLabel")}>
             {segment("term_after", "end", after, setAfter, t("rentals.afterEnd"))}
             {segment("term_after", "renew", after, setAfter, t("rentals.afterRenew"))}
-          </div>
+          </SegmentGroup>
           {after === "renew" && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span>{t("rentals.renewBy")}</span>

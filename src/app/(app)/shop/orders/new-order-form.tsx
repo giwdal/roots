@@ -1,5 +1,6 @@
 "use client"
 
+import { Segment, SegmentGroup } from "@/components/choice"
 import { useState, useTransition } from "react"
 import { PlusIcon, Trash2Icon } from "lucide-react"
 import { ContactPicker } from "@/components/contact-picker"
@@ -41,12 +42,7 @@ export function NewOrderForm({ items, currency, initialItem }: { items: Item[]; 
   const total = lines.reduce((s, l) => s + l.q * (moneyCents(l.price) ?? 0), 0)
   const withBuyer = mode !== "none" && (mode === "new" || !!contact)
   const wantInvoice = invoice ?? (withBuyer && !!buyer.street && !!buyer.city)
-  const segment = (name: string, value: string, current: string, onPick: (v: string) => void, label: string) => (
-    <label key={value} className="cursor-pointer rounded-md px-3 py-1.5 text-sm has-checked:bg-background has-checked:shadow-sm">
-      <input type="radio" name={name} value={value} checked={current === value} onChange={() => onPick(value)} className="sr-only" />
-      {label}
-    </label>
-  )
+  const segment = (name: string, value: string, current: string, onPick: (v: string) => void, label: string) => <Segment key={value} name={name} value={value} label={label} checked={current === value} onPick={onPick} />
   const field = (k: keyof Buyer, label: string, props: React.ComponentProps<typeof Input> = {}) => (
     <div className="grid gap-2">
       <Label htmlFor={`o-${k}`}>{label}</Label>
@@ -61,11 +57,11 @@ export function NewOrderForm({ items, currency, initialItem }: { items: Item[]; 
       <input type="hidden" name="lines" value={JSON.stringify(lines.filter((l) => l.id).map((l) => ({ id: l.id, q: l.q, p: moneyCents(l.price) ?? 0 })))} />
 
       <FormCard title={t("store.buyer")}>
-        <div role="radiogroup" aria-label={t("store.buyer")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
+        <SegmentGroup label={t("store.buyer")}>
           {segment("buyer", "none", mode, (v) => setMode(v as Mode), t("store.teamOrder.buyerNone"))}
           {segment("buyer", "crm", mode, (v) => setMode(v as Mode), t("store.teamOrder.buyerCrm"))}
           {segment("buyer", "new", mode, (v) => (setMode(v as Mode), setContact(null), setBuyer(EMPTY)), t("store.teamOrder.buyerNew"))}
-        </div>
+        </SegmentGroup>
         {mode === "none" && <p className="text-sm text-muted-foreground">{t("store.teamOrder.buyerNoneHint")}</p>}
         {mode === "crm" && (
           <ContactPicker
@@ -137,9 +133,9 @@ export function NewOrderForm({ items, currency, initialItem }: { items: Item[]; 
       </FormCard>
 
       <FormCard title={t("store.delivery")}>
-        <div role="radiogroup" aria-label={t("store.delivery")} className="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1">
+        <SegmentGroup label={t("store.delivery")}>
           {["pickup", ...(withBuyer ? ["shipping"] : []), "digital"].map((d) => segment("delivery", d, delivery, setDelivery, t.dynamic(`store.deliveries.${d}`)))}
-        </div>
+        </SegmentGroup>
         {delivery === "shipping" && (
           <div className="grid gap-2 sm:max-w-48">
             <Label htmlFor="o-ship">{t("store.teamOrder.shipping")}</Label>

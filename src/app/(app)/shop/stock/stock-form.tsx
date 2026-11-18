@@ -1,5 +1,6 @@
 "use client"
 
+import { Segment, SegmentGroup } from "@/components/choice"
 import { useState } from "react"
 import { SubmitButton } from "@/components/submit-button"
 import { Input } from "@/components/ui/input"
@@ -15,14 +16,11 @@ export function StockForm({ item, onHand }: { item: string; onHand: number }) {
   return (
     <form action={bookStockAction} className="grid gap-4">
       <input type="hidden" name="item" value={item} />
-      <div role="radiogroup" aria-label={t("store.lager.kind")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
+      <SegmentGroup label={t("store.lager.kind")}>
         {STOCK_KINDS.map((k) => (
-          <label key={k} className="cursor-pointer rounded-md px-3 py-1.5 text-sm has-checked:bg-background has-checked:shadow-sm">
-            <input type="radio" name="kind" value={k} checked={kind === k} onChange={() => setKind(k)} className="sr-only" />
-            {t.dynamic(`store.lager.kinds.${k}`)}
-          </label>
+          <Segment key={k} name="kind" value={k} label={t.dynamic(`store.lager.kinds.${k}`)} checked={kind === k} onPick={() => setKind(k)} />
         ))}
-      </div>
+      </SegmentGroup>
       <p className="text-sm text-muted-foreground">{t.dynamic(`store.lager.hints.${kind}`)}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">

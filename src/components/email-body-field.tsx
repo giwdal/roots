@@ -1,5 +1,6 @@
 "use client"
 
+import { Segment, SegmentGroup } from "@/components/choice"
 import { useState } from "react"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Label } from "@/components/ui/label"
@@ -25,21 +26,11 @@ export function EmailBodyField({ id, format: initialFormat, body: initialBody, p
       <input type="hidden" name="format" value={format} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Label htmlFor={id}>{t("email.body")}</Label>
-        <div role="radiogroup" aria-label={t("email.format")} className="flex gap-1 rounded-lg border p-0.5">
+        <SegmentGroup label={t("email.format")}>
           {(["rich", "html"] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="radio"
-              aria-checked={format === f}
-              disabled={disabled}
-              onClick={() => setFormat(f)}
-              className="rounded-md px-2.5 py-1 text-xs text-muted-foreground aria-checked:bg-primary aria-checked:text-primary-foreground"
-            >
-              {t(`email.formats.${f}`)}
-            </button>
+            <Segment key={f} name={`${id}-format`} value={f} label={t(`email.formats.${f}`)} checked={format === f} onPick={() => setFormat(f)} disabled={disabled} />
           ))}
-        </div>
+        </SegmentGroup>
       </div>
       {format === "rich" ? (
         <RichTextEditor key={`rich-${id}`} id={id} name="body" defaultValue={body} placeholders={placeholders} disabled={disabled} onChange={setBody} />

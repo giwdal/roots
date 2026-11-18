@@ -74,7 +74,10 @@ export function DoorSale({ eventId, types, methods, provider, left, currency }: 
       const i = cur.findIndex((x) => x.typeId === l.typeId && x.label === l.label && x.price === l.price)
       return i < 0 ? [...cur, l] : cur.map((x, j) => (j === i ? { ...x, quantity: Math.min(100, x.quantity + l.quantity) } : x))
     })
-  const change = (i: number, d: number) => setLines((cur) => cur.map((x, j) => (j === i ? { ...x, quantity: x.quantity + d } : x)).filter((x) => x.quantity > 0))
+  const change = (i: number, d: number) => {
+    if (lines[i] && lines[i].quantity + d <= 0) setEditing(null) // rows shift: the price being edited would jump to the next line
+    setLines((cur) => cur.map((x, j) => (j === i ? { ...x, quantity: x.quantity + d } : x)).filter((x) => x.quantity > 0))
+  }
   const reset = () => {
     setLines([])
     setBuyer({ name: "", email: "" })

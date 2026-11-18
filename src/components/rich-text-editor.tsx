@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Toolbar } from "@base-ui/react/toolbar"
 import Image from "@tiptap/extension-image"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
@@ -84,7 +85,7 @@ export function RichTextEditor({
     <Tooltip key={label}>
       <TooltipTrigger
         render={
-          <Button type="button" size="icon-sm" variant={on ? "secondary" : "ghost"} aria-label={label} aria-pressed={on} disabled={disabled || !editor} onClick={run} />
+          <Toolbar.Button render={<Button type="button" size="icon-sm" variant={on ? "secondary" : "ghost"} />} aria-label={label} aria-pressed={on} disabled={disabled || !editor} onClick={run} />
         }
       >
         <Icon />
@@ -97,7 +98,7 @@ export function RichTextEditor({
   return (
     <div className={cn("rounded-lg border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30", className)}>
       <input type="hidden" name={name} value={html} />
-      <div role="toolbar" aria-label={t("editor.toolbar")} className="flex flex-wrap gap-0.5 border-b p-1">
+      <Toolbar.Root aria-label={t("editor.toolbar")} className="flex flex-wrap gap-0.5 border-b p-1">
         {tool(t("editor.bold"), BoldIcon, () => chain().toggleBold().run(), active?.bold)}
         {tool(t("editor.italic"), ItalicIcon, () => chain().toggleItalic().run(), active?.italic)}
         {tool(t("editor.h2"), Heading2Icon, () => chain().toggleHeading({ level: 2 }).run(), active?.h2)}
@@ -125,7 +126,7 @@ export function RichTextEditor({
         {placeholders?.length ? (
           <DropdownMenu>
             <Tooltip>
-              <TooltipTrigger render={<DropdownMenuTrigger render={<Button type="button" size="icon-sm" variant="ghost" aria-label={t("editor.placeholder")} disabled={disabled || !editor} />} />}>
+              <TooltipTrigger render={<Toolbar.Button render={<DropdownMenuTrigger render={<Button type="button" size="icon-sm" variant="ghost" />} />} aria-label={t("editor.placeholder")} disabled={disabled || !editor} />}>
                 <BracesIcon />
               </TooltipTrigger>
               <TooltipContent>{t("editor.placeholder")}</TooltipContent>
@@ -143,7 +144,7 @@ export function RichTextEditor({
           {tool(t("editor.undo"), Undo2Icon, () => chain().undo().run())}
           {tool(t("editor.redo"), Redo2Icon, () => chain().redo().run())}
         </span>
-      </div>
+      </Toolbar.Root>
       <EditorContent editor={editor} />
     </div>
   )

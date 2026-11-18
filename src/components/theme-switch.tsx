@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react"
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react"
 import { useT } from "@/i18n/client"
-import { cn } from "@/lib/utils"
+import { Segment, SegmentGroup } from "@/components/choice"
 
 // Light / dark / system, per browser (localStorage "theme"). THEME_SCRIPT applies it before first paint.
 type Theme = "light" | "dark" | "system"
@@ -43,23 +43,22 @@ export function ThemeSwitch() {
     ["system", <MonitorIcon key="s" />],
   ]
   return (
-    <div role="radiogroup" aria-label={t("account.theme")} className="inline-flex w-fit gap-1 rounded-lg border p-1">
+    <SegmentGroup label={t("account.theme")}>
       {options.map(([v, icon]) => (
-        <button
+        <Segment
           key={v}
-          type="button"
-          role="radio"
-          aria-checked={theme === v}
-          onClick={() => set(v)}
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4",
-            theme === v && "bg-muted text-foreground",
-          )}
-        >
-          {icon}
-          {t.dynamic(`account.themes.${v}`)}
-        </button>
+          name="theme"
+          value={v}
+          checked={theme === v}
+          onPick={() => set(v)}
+          label={
+            <>
+              {icon}
+              {t.dynamic(`account.themes.${v}`)}
+            </>
+          }
+        />
       ))}
-    </div>
+    </SegmentGroup>
   )
 }

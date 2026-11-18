@@ -9,6 +9,7 @@ Binding for every screen in the App and `/admin`. Read it before any UI change; 
 - Compose from `src/components/ui/*`; app-level components go in `src/components/`. Use `cn()` from `@/lib/utils` for class merging.
 - Icons: `lucide-react` only. Exception: logos of third-party apps (Claude, Cursor, VS Code …) as SVGs in `public/brands/`.
 - Accessible basics: labels on inputs, focus rings intact, real `<button>`/`<a>`.
+- No hand-rolled widgets (`role="listbox|combobox|radio|toolbar|menu…"` on divs/buttons): search pickers are Base UI's Combobox (`ui/combobox`, as in `<MultiSelect>` / `<ContactPicker>`), one-of-few is `<SegmentGroup>` + `<Segment>` (`choice.tsx`, native radios: arrow keys, one tab stop), button rows are Base UI's `Toolbar`.
 
 ## Page anatomy (same on every screen, see /style/app)
 - **Page**: `<Page size="list|record|form">` (6xl lists/boards/records, 3xl forms/settings/new). Area layouts use the list width.

@@ -1386,5 +1386,40 @@ begin
   end;
   reset role;
 
+  -- Visit limit at the door (#17): only counting events count, the limit blocks counting events, override lets in, non-counting stay open
+  declare v_t uuid; v_c uuid; v_e0 uuid; v_e1 uuid; v_e2 uuid; v_e3 uuid; v_x uuid; v_x2 uuid; v_j jsonb;
+  begin
+    insert into public.membership_types (org_id, name, visit_limit) values (org_a, 'Probe', 2) returning id into v_t;
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'Probe', 'probe@x.de') returning id into v_c;
+    insert into public.memberships (org_id, contact_id, type_id, starts_on) values (org_a, v_c, v_t, current_date - 30);
+    insert into public.events (org_id, title, slug, starts_at, counts_visit) values
+      (org_a, 'E0', 'vl-e0', now(), true), (org_a, 'E1', 'vl-e1', now(), true), (org_a, 'E2', 'vl-e2', now(), true),
+      (org_a, 'E3', 'vl-e3', now(), true), (org_a, 'X', 'vl-x', now(), false), (org_a, 'X2', 'vl-x2', now(), false);
+    select id into v_e0 from public.events where org_id = org_a and slug = 'vl-e0'; select id into v_e1 from public.events where org_id = org_a and slug = 'vl-e1';
+    select id into v_e2 from public.events where org_id = org_a and slug = 'vl-e2'; select id into v_e3 from public.events where org_id = org_a and slug = 'vl-e3';
+    select id into v_x from public.events where org_id = org_a and slug = 'vl-x';   select id into v_x2 from public.events where org_id = org_a and slug = 'vl-x2';
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    perform public.member_door(v_e0, '', v_c, true);
+    reset role;
+    update public.tickets set checked_in_at = now() - interval '60 days' where event_id = v_e0 and contact_id = v_c; -- before this membership started
+    set local role authenticated;
+    v_j := public.member_door(v_e1, '', v_c, false);            assert v_j->>'result' = 'member', 'lookup below limit';
+    assert (v_j->>'visits')::int = 0 and (v_j->>'visit_limit')::int = 2, 'visits before starts_on do not count; row carries the limit';
+    v_j := public.member_door(v_x, '', v_c, true);              assert v_j->>'result' = 'ok' and (v_j->>'visits')::int = 0, 'non-counting check-in lets in but does not count';
+    select count(*) into n from public.tickets where event_id = v_x and contact_id = v_c and status = 'used'; assert n = 1, 'non-counting check-in is a used ticket (real headcount)';
+    v_j := public.member_door(v_e1, '', v_c, true);             assert (v_j->>'visits')::int = 1, 'counting check-in counts';
+    v_j := public.member_door(v_e2, '', v_c, true);             assert (v_j->>'visits')::int = 2, 'second counts';
+    v_j := public.member_door(v_e2, '', v_c, false);            assert v_j->>'result' = 'already', 'already beats limit';
+    v_j := public.member_door(v_x2, '', v_c, true);             assert v_j->>'result' = 'ok', 'non-counting event stays open at the limit';
+    v_j := public.member_door(v_e3, '', v_c, false);            assert v_j->>'result' = 'limit', 'lookup at limit';
+    v_j := public.member_door(v_e3, '', v_c, true);             assert v_j->>'result' = 'limit', 'admit at limit is blocked';
+    select count(*) into n from public.tickets where event_id = v_e3 and contact_id = v_c; assert n = 0, 'blocked = no ticket';
+    v_j := public.member_door(v_e3, '', v_c, true, true);       assert v_j->>'result' = 'ok', 'override lets in';
+    reset role;
+    select count(*) into n from public.pay_orders where org_id = org_a and source_module = 'members' and (metadata->>'override')::boolean; assert n = 1, 'override is recorded on the order';
+    assert not has_function_privilege('anon', 'public.member_door(uuid, text, uuid, boolean, boolean)', 'execute'), 'anon must not run member_door';
+  end;
+
   raise exception 'isolation: all checks passed';
 end $$;

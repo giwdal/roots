@@ -277,14 +277,14 @@ isOneToOne: false
                   ]
                 },"contacts": {
                   Row: {
-                    "birthday": string | null,"city": string | null,"company": string | null,"country": string | null,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"email": string | null,"first_name": string | null,"id": string,"last_name": string | null,"member_code": string | null,"org_id": string,"phone": string | null,"postal_code": string | null,"street": string | null,"tags": (string)[],"unsubscribed_at": string | null,"updated_at": string,"updated_by": string | null,"user_id": string | null
+                    "birthday": string | null,"city": string | null,"company": string | null,"country": string | null,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"custom_search": string | null,"deleted_at": string | null,"deleted_by": string | null,"email": string | null,"first_name": string | null,"id": string,"last_name": string | null,"member_code": string | null,"org_id": string,"phone": string | null,"postal_code": string | null,"street": string | null,"tags": (string)[],"unsubscribed_at": string | null,"updated_at": string,"updated_by": string | null,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id": string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
+                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"custom_search"?: never,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id": string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
                   }
                   Update: {
-                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id"?: string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
+                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"custom_search"?: never,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id"?: string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -789,14 +789,14 @@ isOneToOne: false
                   ]
                 },"events": {
                   Row: {
-                    "capacity": number | null,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"door": NonNullable<Json>,"email_template_id": string | null,"ends_at": string | null,"id": string,"image_path": string | null,"links": NonNullable<Json>,"location_id": string | null,"max_tickets_per_order": number,"org_id": string,"published_at": string | null,"show_code_field": boolean,"slug": string,"starts_at": string,"status": string,"ticket_names": string,"title": string,"updated_at": string,"updated_by": string | null,"venue_address": string | null,"venue_name": string | null
+                    "capacity": number | null,"counts_visit": boolean,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"door": NonNullable<Json>,"email_template_id": string | null,"ends_at": string | null,"id": string,"image_path": string | null,"links": NonNullable<Json>,"location_id": string | null,"max_tickets_per_order": number,"org_id": string,"published_at": string | null,"show_code_field": boolean,"slug": string,"starts_at": string,"status": string,"ticket_names": string,"title": string,"updated_at": string,"updated_by": string | null,"venue_address": string | null,"venue_name": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "capacity"?: number | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id": string,"published_at"?: string | null,"show_code_field"?: boolean,"slug": string,"starts_at": string,"status"?: string,"ticket_names"?: string,"title": string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
+                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id": string,"published_at"?: string | null,"show_code_field"?: boolean,"slug": string,"starts_at": string,"status"?: string,"ticket_names"?: string,"title": string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
                   }
                   Update: {
-                    "capacity"?: number | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id"?: string,"published_at"?: string | null,"show_code_field"?: boolean,"slug"?: string,"starts_at"?: string,"status"?: string,"ticket_names"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
+                    "capacity"?: number | null,"counts_visit"?: boolean,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"door"?: NonNullable<Json>,"email_template_id"?: string | null,"ends_at"?: string | null,"id"?: string,"image_path"?: string | null,"links"?: NonNullable<Json>,"location_id"?: string | null,"max_tickets_per_order"?: number,"org_id"?: string,"published_at"?: string | null,"show_code_field"?: boolean,"slug"?: string,"starts_at"?: string,"status"?: string,"ticket_names"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null,"venue_address"?: string | null,"venue_name"?: string | null
                   }
                   Relationships: [
                     {
@@ -1179,14 +1179,14 @@ isOneToOne: true
                   ]
                 },"membership_types": {
                   Row: {
-                    "active": boolean,"created_at": string,"created_by": string | null,"entry_fee_cents": number,"fee_cents": number,"fee_is_minimum": boolean,"id": string,"interval": string,"name": string,"notice_months": number,"org_id": string,"prorate": boolean,"updated_at": string,"updated_by": string | null
+                    "active": boolean,"created_at": string,"created_by": string | null,"entry_fee_cents": number,"fee_cents": number,"fee_is_minimum": boolean,"id": string,"interval": string,"name": string,"notice_months": number,"org_id": string,"prorate": boolean,"updated_at": string,"updated_by": string | null,"visit_limit": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name": string,"notice_months"?: number,"org_id": string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null
+                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name": string,"notice_months"?: number,"org_id": string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_limit"?: number | null
                   }
                   Update: {
-                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name"?: string,"notice_months"?: number,"org_id"?: string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null
+                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name"?: string,"notice_months"?: number,"org_id"?: string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_limit"?: number | null
                   }
                   Relationships: [
                     {
@@ -2725,6 +2725,9 @@ isOneToOne: false
 "create_org":
 { Args: { "p_name": string,"p_slug": string }; Returns: string
                            },
+"custom_text":
+{ Args: { "p": Json }; Returns: string
+                           },
 "default_module_keys":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
@@ -2839,7 +2842,7 @@ isOneToOne: false
 { Args: { "p_org": string,"p_user": string }; Returns: undefined
                            },
 "member_door":
-{ Args: { "p_admit"?: boolean,"p_code": string,"p_contact"?: string,"p_event": string }; Returns: Json
+{ Args: { "p_admit"?: boolean,"p_code": string,"p_contact"?: string,"p_event": string,"p_override"?: boolean }; Returns: Json
                            },
 "member_door_list":
 { Args: { "p_event": string }; Returns: Json

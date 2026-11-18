@@ -18,7 +18,7 @@ type Ev = Tables<"events">
 
 // Event form (new event page + the event's edit sheet) and the status badge (list + page).
 export function StatusBadge({ t, status }: { t: T; status: string }) {
-  const variant = status === "published" ? "default" : status === "cancelled" ? "destructive" : status === "trashed" ? "outline" : "secondary"
+  const variant = status === "published" ? "success" : status === "cancelled" ? "destructive" : status === "trashed" ? "outline" : "secondary"
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 

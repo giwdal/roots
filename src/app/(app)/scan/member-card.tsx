@@ -17,7 +17,7 @@ export function MemberCard({ t, m, children }: { t: T; m: MemberAtDoor; children
       )}
       <div className="flex flex-wrap gap-1.5">
         {m.state && m.state !== "none" && (
-          <Badge variant={m.state === "active" ? "default" : "destructive"}>
+          <Badge variant={m.state === "active" ? "success" : "destructive"}>
             {m.state === "active" && m.ends_on
               ? t("membership.state.ending", { date: t.date(m.ends_on) })
               : t.dynamic(`door.member.state.${m.state}`)}

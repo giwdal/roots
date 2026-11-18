@@ -236,7 +236,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
               { header: t("tickets.code"), cell: (k) => <span className="font-mono text-xs">{k.code}</span> },
               {
                 header: t("tickets.status"),
-                cell: (k) => <Badge variant={k.status === "valid" ? "default" : k.status === "used" ? "secondary" : "outline"}>{t.dynamic(`tickets.statuses.${k.status}`)}</Badge>,
+                cell: (k) => <Badge variant={k.status === "valid" ? "success" : k.status === "used" ? "secondary" : "outline"}>{t.dynamic(`tickets.statuses.${k.status}`)}</Badge>,
               },
             ]}
           />
@@ -488,7 +488,7 @@ async function Waitlist({ t, ctx, eventId, canManage }: { t: T; ctx: Awaited<Ret
             header: t("tickets.status"),
             cell: (r) => (
               <span className="grid gap-0.5">
-                <Badge variant={r.status === "offered" ? "default" : "outline"}>{t.dynamic(`waitlist.statuses.${r.status}`)}</Badge>
+                <Badge variant={r.status === "offered" ? "info" : "outline"}>{t.dynamic(`waitlist.statuses.${r.status}`)}</Badge>
                 {r.status === "offered" && r.offered_until && (
                   <span className="text-xs text-muted-foreground">{t("waitlist.offeredUntil", { date: t.date(r.offered_until, { dateStyle: "short", timeStyle: "short" }) })}</span>
                 )}

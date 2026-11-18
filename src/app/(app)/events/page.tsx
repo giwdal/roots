@@ -3,7 +3,7 @@ import { BulkBar } from "@/components/bulk-bar"
 import { SubmitButton } from "@/components/submit-button"
 import { bulkRestoreEvents, bulkTrashEvents } from "./actions"
 import { notFound, redirect } from "next/navigation"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { CalendarDaysIcon, PlusIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 import { Segments } from "@/components/segments"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
@@ -80,20 +80,17 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <SearchBox q={q} label={t("common.search")} />
+      <ListToolbar search={<SearchBox q={q} label={t("common.search")} />}>
         {!trash && (
           <>
+            <Segments
+              label={t("eventsPage.when")}
+              items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined }), label: t.dynamic(`eventsPage.${v}`), current: v === view }))}
+            />
             <FilterMenu param="status" label={t("eventsPage.status")} options={STATUSES.map((s) => ({ value: s, label: t.dynamic(`eventsPage.statuses.${s}`) }))} />
-            <div className="ml-auto">
-              <Segments
-                label={t("eventsPage.when")}
-                items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined }), label: t.dynamic(`eventsPage.${v}`), current: v === view }))}
-              />
-            </div>
           </>
         )}
-      </div>
+      </ListToolbar>
       {trash && <p className="text-sm text-muted-foreground">{t("eventsPage.trashHint", { days: 30 })}</p>}
 
       <DataTable

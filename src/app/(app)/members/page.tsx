@@ -1,4 +1,5 @@
 import { paidUntil, type Interval } from "@/members/dues"
+import { contactSearch } from "@/contacts/search"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { MemberImportBody } from "./import/body"
@@ -46,7 +47,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
   if (status === "ended") query = query.lt("ends_on", now)
   if (typeFilter) query = query.eq("type_id", typeFilter)
-  if (q) query = query.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${q}%`).join(","), { referencedTable: "contacts" })
+  if (q) query = query.or(contactSearch(q), { referencedTable: "contacts" })
   const [{ data }, { data: types }, { count: activeCount }] = await Promise.all([
     query,
     ctx.supabase.from("membership_types").select(TYPE_COLS).eq("org_id", ctx.org.id).order("name"),

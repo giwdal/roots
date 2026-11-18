@@ -277,14 +277,14 @@ isOneToOne: false
                   ]
                 },"contacts": {
                   Row: {
-                    "birthday": string | null,"city": string | null,"company": string | null,"country": string | null,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"deleted_at": string | null,"deleted_by": string | null,"email": string | null,"first_name": string | null,"id": string,"last_name": string | null,"member_code": string | null,"org_id": string,"phone": string | null,"postal_code": string | null,"street": string | null,"tags": (string)[],"unsubscribed_at": string | null,"updated_at": string,"updated_by": string | null,"user_id": string | null
+                    "birthday": string | null,"city": string | null,"company": string | null,"country": string | null,"created_at": string,"created_by": string | null,"custom": NonNullable<Json>,"custom_search": string | null,"deleted_at": string | null,"deleted_by": string | null,"email": string | null,"first_name": string | null,"id": string,"last_name": string | null,"member_code": string | null,"org_id": string,"phone": string | null,"postal_code": string | null,"street": string | null,"tags": (string)[],"unsubscribed_at": string | null,"updated_at": string,"updated_by": string | null,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id": string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
+                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"custom_search"?: never,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id": string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
                   }
                   Update: {
-                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id"?: string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
+                    "birthday"?: string | null,"city"?: string | null,"company"?: string | null,"country"?: string | null,"created_at"?: string,"created_by"?: string | null,"custom"?: NonNullable<Json>,"custom_search"?: never,"deleted_at"?: string | null,"deleted_by"?: string | null,"email"?: string | null,"first_name"?: string | null,"id"?: string,"last_name"?: string | null,"member_code"?: string | null,"org_id"?: string,"phone"?: string | null,"postal_code"?: string | null,"street"?: string | null,"tags"?: (string)[],"unsubscribed_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -2724,6 +2724,9 @@ isOneToOne: false
                            },
 "create_org":
 { Args: { "p_name": string,"p_slug": string }; Returns: string
+                           },
+"custom_text":
+{ Args: { "p": Json }; Returns: string
                            },
 "default_module_keys":
 { Args: Record<PropertyKey, never>; Returns: (string)[]

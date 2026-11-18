@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { contactSearch } from "@/contacts/search"
 import { readContact } from "@/app/(app)/contacts/fields"
 import { importContactRows, mergeContacts } from "@/contacts/server"
 import { deliverSoon } from "@/events/worker"
@@ -100,7 +101,7 @@ export const endpoints: Endpoint[] = [
     tag: "Contacts",
     summary: "List contacts",
     query: page.extend({
-      q: z.string().max(100).optional().describe("Search in name, company, email, phone, city"),
+      q: z.string().max(100).optional().describe("Search in name, company, email, phone, city and custom field values"),
       tag: z.string().max(40).optional(),
       email: z.string().max(320).optional().describe("Exact email"),
       updated_since: z.iso.datetime({ offset: true }).optional().describe("For syncing: changed after this time"),
@@ -109,7 +110,7 @@ export const endpoints: Endpoint[] = [
     async handler({ db, orgId, query }) {
       let q = db.from("contacts").select(CONTACT_COLS).eq("org_id", orgId).is("deleted_at", null).order("created_at").range(query.offset, query.offset + query.limit)
       const s = query.q?.replace(/[%,()*]/g, "").trim()
-      if (s) q = q.or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.%${s}%`).join(","))
+      if (s) q = q.or(contactSearch(s))
       if (query.tag) q = q.contains("tags", [query.tag])
       if (query.email) q = q.eq("email", query.email.trim().toLowerCase())
       if (query.updated_since) q = q.gte("updated_at", query.updated_since)

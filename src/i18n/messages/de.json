@@ -6112,10 +6112,6 @@
     "trackRemoved": "Titel entfernt.",
     "variantDigital": "digital",
     "variantDigitalHint": "Digital (nur Download, kein Versand, kein Bestand nötig)",
-    "productTabs": "Produktbereiche",
-    "tabProduct": "Produkt",
-    "tabVariants": "Varianten ({count})",
-    "tabDigital": "Musik & Downloads",
     "allEu": "EU (alle 27 Länder)",
     "audioUpload": "Master hochladen",
     "audioUploadHint": "WAV, AIFF oder FLAC, bis 250 MB pro Titel. Mehrere Dateien auf einmal möglich.",
@@ -6244,8 +6240,7 @@
       "card": "Bereits mit Karte bezahlt am {date} – vielen Dank."
     },
     "lager": {
-      "title": "Lager",
-      "hint": "Bestand je Artikel. Shop-Verkäufe zählen automatisch, alles andere buchst du hier: Zugang, Entnahme, Schwund, Inventur oder Verkauf vor Ort.",
+      "title": "Bestand",
       "item": "Artikel",
       "onHand": "Bestand",
       "reserved": "Reserviert",
@@ -6295,7 +6290,10 @@
       "quantityInvalid": "Bitte eine gültige Menge eingeben.",
       "noChange": "Der gezählte Bestand stimmt schon – nichts zu buchen.",
       "saleHint": "Verkauft (z. B. am Merch-Stand)?",
-      "saleLink": "Als Bestellung erfassen"
+      "saleLink": "Als Bestellung erfassen",
+      "bookItem": "Bestand buchen: {item}",
+      "bookShort": "Bestand buchen",
+      "search": "Artikel suchen"
     },
     "teamOrder": {
       "new": "Neue Bestellung",
@@ -6372,7 +6370,12 @@
     "steps": {
       "label": "Fortschritt der Bestellung",
       "placed": "Bestellt",
-      "paid": "Bezahlt"
+      "paid": "Bezahlt",
+      "title": "Vor dem Veröffentlichen",
+      "text": "Was eine gute Produktseite hat.",
+      "image": "Bild hinzufügen",
+      "description": "Beschreibung schreiben",
+      "content": "Musik oder Downloads hochladen"
     },
     "allOrdersOf": "Alle Bestellungen dieser Person",
     "paymentMethod": "Zahlungsart",
@@ -6397,7 +6400,31 @@
       "company": "Firma",
       "phone": "Telefon"
     },
-    "orderNumber": "Nummer"
+    "orderNumber": "Nummer",
+    "saleCard": "Bestand & Verkauf",
+    "statusDone": {
+      "draft": "Zurück auf Entwurf – nicht mehr im Shop.",
+      "published": "Veröffentlicht – das Produkt ist im Shop.",
+      "archived": "Archiviert."
+    },
+    "trashEmpty": "Der Papierkorb ist leer.",
+    "inTrashBadge": "Im Papierkorb",
+    "recordSale": "Verkauf erfassen",
+    "publish": "Im Shop veröffentlichen",
+    "unpublish": "Zurück auf Entwurf",
+    "confirmUnpublish": "Produkt aus dem Shop nehmen?",
+    "confirmUnpublishHint": "Es steht dann wieder auf Entwurf; die Produktseite ist nicht mehr erreichbar. Bestehende Bestellungen bleiben.",
+    "archive": "Archivieren",
+    "confirmArchive": "Produkt archivieren?",
+    "confirmArchiveHint": "Es verschwindet aus dem Shop und aus der Produktliste (Filter „Archiviert“ zeigt es). Bestellungen und Downloads bleiben.",
+    "stats": {
+      "soldHint": "Stück, bezahlt",
+      "revenue": "Umsatz",
+      "freeHint": "Stück noch frei"
+    },
+    "imageActions": "Bild {n}",
+    "confirmRemoveImage": "Dieses Bild entfernen?",
+    "confirmRemoveImageHint": "Varianten, die es zeigen, haben danach kein eigenes Bild mehr."
   },
   "calendar": {
     "nav": "Kalender",

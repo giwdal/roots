@@ -21,7 +21,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-type Child = { href: string; label: string; module: string | string[]; permission: string | string[] }
+// `gear`: the area's Einstellungen, opened by the header gear and listed in Settings › Bereiche and ⌘K, not in the sidebar.
+type Child = { href: string; label: string; module: string | string[]; permission: string | string[]; gear?: true }
 type Area = { key: string; label: string; icon: LucideIcon; children: Child[] }
 
 export const NAV: Area[] = [
@@ -134,8 +135,7 @@ export const NAV: Area[] = [
     children: [
       { href: "/shop/orders", label: "store.orders", module: "shop", permission: "shop.view" },
       { href: "/shop", label: "store.products", module: "shop", permission: "shop.view" },
-      { href: "/shop/stock", label: "store.lager.title", module: "shop", permission: "shop.view" },
-      { href: "/shop/settings", label: "common.settings", module: "shop", permission: "shop.manage" },
+      { href: "/shop/settings", label: "common.settings", module: "shop", permission: "shop.manage", gear: true },
     ],
   },
   { key: "wiki", label: "wiki.nav", icon: BookOpenIcon, children: [{ href: "/wiki", label: "wiki.nav", module: "wiki", permission: "wiki.view" }] },

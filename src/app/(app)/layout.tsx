@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     href: a.children[0].href,
     label: t.dynamic(a.label),
     icon: <AreaIcon area={a.key} icon={a.icon} />,
-    children: a.children.map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
+    children: a.children.filter((c) => !c.gear).map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
   }))
   const groups = [
     {

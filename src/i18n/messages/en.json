@@ -6112,10 +6112,6 @@
     "trackRemoved": "Track removed.",
     "variantDigital": "digital",
     "variantDigitalHint": "Digital (download only, no shipping, no stock needed)",
-    "productTabs": "Product sections",
-    "tabProduct": "Product",
-    "tabVariants": "Variants ({count})",
-    "tabDigital": "Music & downloads",
     "allEu": "EU (all 27 countries)",
     "audioUpload": "Upload masters",
     "audioUploadHint": "WAV, AIFF or FLAC, up to 250 MB per track. Several files at once.",
@@ -6245,7 +6241,6 @@
     },
     "lager": {
       "title": "Stock",
-      "hint": "Stock per item. Shop sales count automatically; book everything else here: receipt, withdrawal, loss, stocktake or sale on site.",
       "item": "Item",
       "onHand": "On hand",
       "reserved": "Reserved",
@@ -6295,7 +6290,10 @@
       "quantityInvalid": "Please enter a valid quantity.",
       "noChange": "The counted stock already matches – nothing to book.",
       "saleHint": "Sold (e.g. at a merch table)?",
-      "saleLink": "Record as an order"
+      "saleLink": "Record as an order",
+      "bookItem": "Book stock: {item}",
+      "bookShort": "Book stock",
+      "search": "Search items"
     },
     "teamOrder": {
       "new": "New order",
@@ -6372,7 +6370,12 @@
     "steps": {
       "label": "Order progress",
       "placed": "Placed",
-      "paid": "Paid"
+      "paid": "Paid",
+      "title": "Before publishing",
+      "text": "What a good product page has.",
+      "image": "Add a picture",
+      "description": "Write a description",
+      "content": "Upload music or downloads"
     },
     "allOrdersOf": "All orders of this person",
     "paymentMethod": "Payment method",
@@ -6397,7 +6400,31 @@
       "company": "Company",
       "phone": "Phone"
     },
-    "orderNumber": "Number"
+    "orderNumber": "Number",
+    "saleCard": "Stock & sale",
+    "statusDone": {
+      "draft": "Back to draft – no longer in the shop.",
+      "published": "Published – the product is in the shop.",
+      "archived": "Archived."
+    },
+    "trashEmpty": "The trash is empty.",
+    "inTrashBadge": "In the trash",
+    "recordSale": "Record a sale",
+    "publish": "Publish in the shop",
+    "unpublish": "Back to draft",
+    "confirmUnpublish": "Take the product out of the shop?",
+    "confirmUnpublishHint": "It goes back to draft and its page can't be reached any more. Existing orders stay.",
+    "archive": "Archive",
+    "confirmArchive": "Archive the product?",
+    "confirmArchiveHint": "It disappears from the shop and from the product list (the “Archived” filter shows it). Orders and downloads stay.",
+    "stats": {
+      "soldHint": "pieces, paid",
+      "revenue": "Revenue",
+      "freeHint": "pieces still free"
+    },
+    "imageActions": "Picture {n}",
+    "confirmRemoveImage": "Remove this picture?",
+    "confirmRemoveImageHint": "Variants showing it won't have their own picture any more."
   },
   "calendar": {
     "nav": "Calendar",

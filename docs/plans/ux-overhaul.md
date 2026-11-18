@@ -6,6 +6,11 @@ the areas. Rules that are new or sharper than before also go into `docs/design/a
 
 ## 1. Think from the person first
 
+As long as every feature keeps working, layouts, flows and page structure may be redesigned freely. Borrow proven
+patterns from good dashboards (Linear, Stripe Dashboard, Shopify admin, Vercel, Luma/Eventbrite organizer views):
+compact status header, KPI tiles, activity/timeline, the edit form tucked away, keyboard-first lists.
+
+
 For every page ask: **who lands here, why, and what do they need in the first second?** Then build the page around
 that, not around the table columns or the edit form.
 

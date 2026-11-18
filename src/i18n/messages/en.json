@@ -2142,7 +2142,23 @@
     "saved": "Saved.",
     "deleted": "Slot deleted.",
     "needArtistOrTitle": "Please pick an artist or enter a title.",
-    "timetable": "Timetable"
+    "timetable": "Timetable",
+    "created": "Slot added.",
+    "artistSaved": "Artist saved.",
+    "newArtistBadge": "new",
+    "searchArtist": "Search artists…",
+    "createArtist": "Add “{name}” as a new artist",
+    "typeNewArtist": "Type a name to add a new artist",
+    "count": {
+      "one": "1 slot",
+      "other": "{count} slots"
+    },
+    "emptyText": "Plan who plays when on which stage. Public slots show as the timetable on the event page.",
+    "confirmDeleteSlot": "Delete this slot?",
+    "confirmDeleteSlotHint": "It disappears from the timetable. The artist stays.",
+    "createSlot": "Add slot",
+    "artistHint": "Applies to every event the artist plays at.",
+    "linksHint": "Only full links (https://…) are kept, at most 10."
   },
   "door": {
     "tabs": "Door views",

@@ -2142,7 +2142,23 @@
     "saved": "Gespeichert.",
     "deleted": "Slot gelöscht.",
     "needArtistOrTitle": "Bitte einen Artist wählen oder einen Titel eingeben.",
-    "timetable": "Timetable"
+    "timetable": "Timetable",
+    "created": "Slot angelegt.",
+    "artistSaved": "Artist gespeichert.",
+    "newArtistBadge": "neu",
+    "searchArtist": "Artist suchen…",
+    "createArtist": "„{name}“ als neuen Artist anlegen",
+    "typeNewArtist": "Namen tippen, um einen neuen Artist anzulegen",
+    "count": {
+      "one": "1 Slot",
+      "other": "{count} Slots"
+    },
+    "emptyText": "Plane den Ablauf: wer wann auf welcher Bühne spielt. Öffentliche Slots erscheinen als Timetable auf der Eventseite.",
+    "confirmDeleteSlot": "Slot löschen?",
+    "confirmDeleteSlotHint": "Er verschwindet aus dem Timetable. Der Artist selbst bleibt erhalten.",
+    "createSlot": "Slot anlegen",
+    "artistHint": "Gilt für alle Events, in denen der Artist spielt.",
+    "linksHint": "Nur vollständige Links (https://…) werden gespeichert, höchstens 10."
   },
   "door": {
     "tabs": "Einlass-Ansichten",
@@ -4975,7 +4991,7 @@
   "nav": {
     "overview": "Übersicht",
     "import": "Import",
-    "events": "Veranstaltungen",
+    "events": "Events",
     "finance": "Finanzen",
     "communication": "Kommunikation",
     "campaigns": "E-Mail-Kampagnen",

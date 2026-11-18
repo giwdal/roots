@@ -21,7 +21,7 @@ export async function saveSlot(fd: FormData) {
   const eventId = String(fd.get("event") ?? "")
   const { ctx, t, here } = await manager(eventId)
   const id = String(fd.get("id") ?? "")
-  const retry = `${here}?${id ? `slot=${id}` : "new=slot"}`
+  const retry = `${here}?${id ? `edit=${id}` : "new=slot"}`
   const starts = fromLocalInput(String(fd.get("starts_at") ?? ""))
   const endsRaw = String(fd.get("ends_at") ?? "").trim()
   const ends = endsRaw ? fromLocalInput(endsRaw) : null
@@ -49,7 +49,7 @@ export async function saveSlot(fd: FormData) {
     ? await ctx.supabase.from("event_slots").update(row).eq("id", id).eq("event_id", eventId)
     : await ctx.supabase.from("event_slots").insert({ ...row, org_id: ctx.org.id, event_id: eventId })
   if (error) back(retry, { error: dbError(t, error) })
-  back(here, { ok: t("lineup.saved") })
+  back(here, { ok: id ? t("lineup.saved") : t("lineup.created") })
 }
 
 export async function deleteSlot(fd: FormData) {
@@ -69,7 +69,7 @@ export async function saveArtist(fd: FormData) {
     .split(/\s+/)
     .filter((l) => /^https?:\/\/\S+$/.test(l))
     .slice(0, 10)
-  if (!name) back(`${here}?artist=${id}`, { error: t("errors.invalid_input") })
+  if (!name) back(`${here}?edit=${id}`, { error: t("errors.invalid_input") })
   const { error } = await ctx.supabase
     .from("artists")
     .update({
@@ -80,8 +80,8 @@ export async function saveArtist(fd: FormData) {
     })
     .eq("id", id)
     .eq("org_id", ctx.org.id)
-  if (error) back(`${here}?artist=${id}`, { error: dbError(t, error) })
-  back(here, { ok: t("lineup.saved") })
+  if (error) back(`${here}?edit=${id}`, { error: dbError(t, error) })
+  back(here, { ok: t("lineup.artistSaved") })
 }
 
 // "Guest list for this artist": one list per artist and event, link already on.
@@ -101,4 +101,14 @@ export async function artistGuestList(fd: FormData) {
     .single()
   if (error) back(here, { error: dbError(t, error) })
   redirect(`/guestlists/${data.id}`)
+}
+
+/** Artist picker in the slot sheet: the org's artists by name (≤ 20). */
+export async function searchArtists(q: string) {
+  const ctx = await requirePerm("events.manage")
+  const clean = q.replace(/[%,()*]/g, "").trim()
+  let query = ctx.supabase.from("artists").select("id, name").eq("org_id", ctx.org.id).is("deleted_at", null).order("name").limit(20)
+  if (clean) query = query.ilike("name", `%${clean}%`)
+  const { data } = await query
+  return (data ?? []).map((a) => ({ id: a.id, label: a.name }))
 }

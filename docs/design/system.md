@@ -59,17 +59,17 @@ Readability: prose max ~70 characters (`max-w-prose`), never all caps for more t
   separators, the remaining ones soft (`--border` low contrast), spacing does the grouping; neutrals are a slightly
   warm, low-chroma grey (chroma 0.004, hue 75), never blue-leaning; icons small (16 px), fewer of them.
 
-## Taken from Linear's system (adapted, not copied)
+## Our own rules, informed by Linear's *app* redesign posts (not their marketing site)
 - **Kept on purpose:** the coloured area icons (`<AreaIcon>`) — unlike Linear's removed team colours, they are how
   people find a module at a glance (user decision, 19 Nov 2026).
 - One accent, used scarcely: our primary is neutral; colour = `--link` / focus ring (blue) and status/area colours only.
 - Surface ladder instead of shadows: background → card → popover/dialog, 1 px low-contrast hairlines; no drop
   shadows except floating layers.
 - Radius: controls 8 px, cards/groups ~12 px, dialogs/sheets ~16 px, pills/badges full — one rule everywhere
-  (`--radius: 0.5rem`).
+  (`--radius: 0.5rem`, our choice for a calmer, denser look).
 - Type: titles semibold with slight negative tracking (`tracking-tight`), body 400, buttons 500, captions 13 px;
   one family (Geist) from title to body.
-- Buttons ~8 × 14 px padding, inputs ~8 × 12 px; pressed state on every button (1 px push).
+- Pressed state on every button (1 px push).
 - Full state cycle on every screen: skeleton (not spinner) while loading, empty state with the one action, inline
   error under the field, toast only for transient results.
 - **One verb per action, everywhere**: "In den Papierkorb" = soft delete of a record (restorable), "Löschen" =

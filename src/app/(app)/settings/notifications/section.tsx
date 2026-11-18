@@ -95,7 +95,7 @@ export async function NotificationsSection({ sp }: { sp: SearchParams }) {
           {creating === "telegram" && !botConnected ? (
             <p className="text-sm">
               {t("notifications.telegram.notConnected")}{" "}
-              <Link href={withParams(sp, { new: undefined, connect: "telegram" })} scroll={false} className="underline underline-offset-4">
+              <Link href={withParams(sp, { new: undefined, connect: "telegram" })} scroll={false} className="link">
                 {t("payments.toIntegrations")}
               </Link>
             </p>

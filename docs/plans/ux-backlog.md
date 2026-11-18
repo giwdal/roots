@@ -13,11 +13,11 @@ file too; shared items are done once in shared components.
 - [x] A3 (system.md §Type) Type scale used everywhere: page/record title `text-xl font-semibold`, section heading `text-sm font-medium`,
       body `text-sm`, meta/labels `text-xs text-muted-foreground`, numbers `tabular-nums`. One font (Geist).
 - [x] A4 (system.md §Icons) Icon sizes: 16 px in buttons/rows/menus, 20 px tab bar, AreaIcon 20 px tile; lucide only, stroke default.
-- [ ] A5 Contact data and inline links not underlined in bright white (contact page e-mail): `--link` colour or plain
+- [x] A5 (`link` utility in globals.css, applied in App pages; public pages later) Contact data and inline links not underlined in bright white (contact page e-mail): `--link` colour or plain
       text with a small action icon.
-- [ ] A6 Pictures: one `<PictureField>` (tap the picture / "+" tile → upload at once, ⋯ remove) replaces
+- [x] A6 (image-form.tsx + picture-picker.tsx: tap the picture → upload at once, remove asks first; shop keeps its tile) Pictures: one `<PictureField>` (tap the picture / "+" tile → upload at once, ⋯ remove) replaces
       `<ImageForm>`'s native "Choose File · No file chosen · Hochladen" everywhere (event image, profile, logo, org).
-- [ ] A7 No duplicate labels: a section with one field shows the section title only ("Bild / Bild").
+- [x] A7 (ImageForm `labelHidden`, event image) No duplicate labels — keep checking in area passes:: a section with one field shows the section title only ("Bild / Bild").
 
 ## B. Record pages: layout, header, editing
 - [x] B1 (patterns.md §8) Decide and document the record layout (research: Linear issue, Attio/HubSpot record, Stripe customer):

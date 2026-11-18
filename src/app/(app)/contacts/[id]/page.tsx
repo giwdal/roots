@@ -326,7 +326,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 {
                   label: t("contacts.email"),
                   value: c.email && (
-                    <a href={`mailto:${c.email}`} className="break-all underline underline-offset-4">
+                    <a href={`mailto:${c.email}`} className="break-all link">
                       {c.email}
                     </a>
                   ),
@@ -334,7 +334,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 {
                   label: t("contacts.phone"),
                   value: c.phone && tel && (
-                    <a href={`tel:${tel}`} className="underline underline-offset-4">
+                    <a href={`tel:${tel}`} className="link">
                       {c.phone}
                     </a>
                   ),

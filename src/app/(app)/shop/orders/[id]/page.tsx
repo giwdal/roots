@@ -194,7 +194,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
                   {
                     label: t("store.fields.name"),
                     value: o.contacts ? (
-                      <Link href={`/contacts/${o.contacts.id}`} className="underline underline-offset-4">
+                      <Link href={`/contacts/${o.contacts.id}`} className="link">
                         {o.name}
                       </Link>
                     ) : (
@@ -205,7 +205,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
                   pay.customer_email && {
                     label: t("store.fields.email"),
                     value: (
-                      <a href={`mailto:${pay.customer_email}`} className="break-all underline underline-offset-4">
+                      <a href={`mailto:${pay.customer_email}`} className="break-all link">
                         {pay.customer_email}
                       </a>
                     ),
@@ -213,7 +213,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
                   o.phone && {
                     label: t("store.fields.phone"),
                     value: (
-                      <a href={`tel:${o.phone}`} className="underline underline-offset-4">
+                      <a href={`tel:${o.phone}`} className="link">
                         {o.phone}
                       </a>
                     ),

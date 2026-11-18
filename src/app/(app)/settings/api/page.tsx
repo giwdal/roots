@@ -34,7 +34,7 @@ export default async function ApiSettings({ searchParams }: PageProps<"/settings
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-2xl text-sm text-muted-foreground">{t("api.intro")}</p>
-        <a href="/api/docs" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm underline underline-offset-4">
+        <a href="/api/docs" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm link">
           {t("api.docs")} <ExternalLinkIcon className="size-3.5" />
         </a>
       </div>

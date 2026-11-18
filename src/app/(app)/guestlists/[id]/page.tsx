@@ -104,7 +104,7 @@ export default async function GuestListPage({ params, searchParams }: PageProps<
           // The public link only opens for published events (guest_link_info): say so instead of a silent "closed".
           <p className="rounded-lg border bg-muted px-3 py-2 text-sm">
             {t("guestlists.linkNeedsPublished")}{" "}
-            <Link href={`/events/${list.events.id}`} className="text-primary underline underline-offset-4">
+            <Link href={`/events/${list.events.id}`} className=" link">
               {t("guestlists.toEvent")}
             </Link>
           </p>

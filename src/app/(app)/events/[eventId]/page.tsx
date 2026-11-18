@@ -170,7 +170,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
             )}
             <Section id="image" title={t("eventsPage.image")}>
               {canManage ? (
-                <ImageForm action={updateEventImage} id="ev-image" label={t("eventsPage.image")} hint={t("eventsPage.imageHint")} name={ev.title} path={ev.image_path} square hidden={{ id: ev.id }} />
+                <ImageForm labelHidden action={updateEventImage} id="ev-image" label={t("eventsPage.image")} hint={t("eventsPage.imageHint")} name={ev.title} path={ev.image_path} square hidden={{ id: ev.id }} />
               ) : (
                 <Picture path={ev.image_path} name={ev.title} size="lg" square />
               )}

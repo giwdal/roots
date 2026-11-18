@@ -304,7 +304,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
             {!creditorReady && (
               <p className="rounded-lg border bg-muted px-3 py-2 text-sm">
                 {t("membership.creditorMissing")}{" "}
-                <Link href="/members/settings#sepa" className="underline underline-offset-4">
+                <Link href="/members/settings#sepa" className="link">
                   {t("common.settings")}
                 </Link>
               </p>

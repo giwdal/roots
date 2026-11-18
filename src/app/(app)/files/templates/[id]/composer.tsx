@@ -146,7 +146,7 @@ export function Composer({
         </div>
         {!template.letterhead || seller.street ? null : (
           <p className="text-xs text-muted-foreground">
-            <Link href="/invoices/settings" className="underline underline-offset-2">
+            <Link href="/invoices/settings" className="link">
               {t("invoices.settings")}
             </Link>
           </p>

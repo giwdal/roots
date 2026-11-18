@@ -277,7 +277,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
                 ?.filter((c) => c.type_ids.includes(editing.id))
                 .map((c) => (
                   <div key={c.id} className="flex flex-wrap items-center gap-2">
-                    <Link href={withParams(sp, { edit: c.id })} scroll={false} className="font-mono text-sm underline underline-offset-4">
+                    <Link href={withParams(sp, { edit: c.id })} scroll={false} className="font-mono text-sm link">
                       {c.code}
                     </Link>
                     {!c.active && <Badge variant="outline">{t("tickets.inactive")}</Badge>}

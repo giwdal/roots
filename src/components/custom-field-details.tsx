@@ -13,12 +13,12 @@ export function customDetails(t: T, defs: FieldDef[], values: unknown): DetailIt
       : d.type === "money" && typeof x === "number" ? t.money(Math.round(x * 100))
       : d.type === "date" && typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x) ? t.date(`${x}T12:00:00`, { dateStyle: "medium" })
       : d.type === "url" ? (
-        <a href={String(x)} target="_blank" rel="noreferrer" className="break-all underline underline-offset-4">
+        <a href={String(x)} target="_blank" rel="noreferrer" className="break-all link">
           {String(x)}
         </a>
       )
       : d.type === "email" ? (
-        <a href={`mailto:${x}`} className="break-all underline underline-offset-4">
+        <a href={`mailto:${x}`} className="break-all link">
           {String(x)}
         </a>
       )

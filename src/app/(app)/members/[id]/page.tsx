@@ -209,7 +209,7 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
                     m.contacts.email && {
                       label: t("contacts.email"),
                       value: (
-                        <a href={`mailto:${m.contacts.email}`} className="break-all underline underline-offset-4">
+                        <a href={`mailto:${m.contacts.email}`} className="break-all link">
                           {m.contacts.email}
                         </a>
                       ),
@@ -217,7 +217,7 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
                     m.contacts.phone && {
                       label: t("contacts.phone"),
                       value: (
-                        <a href={`tel:${m.contacts.phone.replace(/[^\d+]/g, "")}`} className="underline underline-offset-4">
+                        <a href={`tel:${m.contacts.phone.replace(/[^\d+]/g, "")}`} className="link">
                           {m.contacts.phone}
                         </a>
                       ),

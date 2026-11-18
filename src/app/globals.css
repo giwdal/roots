@@ -114,6 +114,15 @@
   }
 }
 
+/* Inline links in text, facts and lists: the link colour, underlined only on hover (system.md §Buttons). */
+@utility link {
+  color: var(--link);
+  text-underline-offset: 4px;
+  &:hover {
+    text-decoration-line: underline;
+  }
+}
+
 /* Phone bar + round primary button get out of the way of the SaveBar, the keyboard and pages with their own tab bar. */
 @utility bar-hide {
   @media (max-width: 767.98px) {

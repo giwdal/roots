@@ -63,7 +63,7 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
       {org && (
         <p className="text-sm">
           {t("admin.activity.filteredBy", { org: orgName.get(org) ?? org })}{" "}
-          <Link href={href({ org: undefined, page: 1 })} className="underline underline-offset-4">
+          <Link href={href({ org: undefined, page: 1 })} className="link">
             {t("activity.all")}
           </Link>
         </p>

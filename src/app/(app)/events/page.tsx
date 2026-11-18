@@ -39,9 +39,11 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
 
   // All filtering happens here in the query; the UI only writes the URL.
   const now = new Date().toISOString()
+  // The one number per event: tickets out (sold + guest lists) against the capacity, counted in the same query.
+  const tickets = !trash && ctx.modules.has("tickets") && ctx.can("tickets.view")
   let query = ctx.supabase
     .from("events")
-    .select("id, title, slug, status, starts_at, ends_at, venue_name, capacity, deleted_at")
+    .select("id, title, slug, status, starts_at, ends_at, venue_name, capacity, deleted_at, sold:tickets(count)")
     .eq("org_id", ctx.org.id)
     .range(...pageRange(page))
   if (trash) query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
@@ -54,20 +56,10 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
     if (status) query = query.eq("status", status)
   }
   if (q) query = query.or(`title.ilike.%${q}%,venue_name.ilike.%${q}%`)
+  if (tickets) query = query.in("sold.status", ["valid", "used"])
   const { data } = await query
   const rows = data?.slice(0, PAGE_SIZE) ?? []
-  // The one number per event: tickets out (sold + guest lists), against the capacity. One count per row, in parallel.
-  const tickets = !trash && ctx.modules.has("tickets") && ctx.can("tickets.view")
-  const counts = tickets
-    ? new Map(
-        await Promise.all(
-          rows.map(async (r) => {
-            const { count } = await ctx.supabase.from("tickets").select("id", { count: "exact", head: true }).eq("event_id", r.id).in("status", ["valid", "used"])
-            return [r.id, count ?? 0] as const
-          }),
-        ),
-      )
-    : null
+  const counts = tickets ? new Map(rows.map((r) => [r.id, r.sold[0]?.count ?? 0])) : null
   const filtered = !!(q || status || view !== "upcoming")
 
   return (

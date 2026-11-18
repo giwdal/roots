@@ -105,7 +105,7 @@ export default async function TeamPage({ searchParams }: PageProps<"/shifts/team
                 <RecordPicker name="user" label={t("shifts.member")} search={searchTeamCandidates} initial={prefill ? { id: prefill.id, label: prefill.full_name || prefill.email || "–", detail: prefill.full_name ? (prefill.email ?? undefined) : undefined } : null} required />
                 <p className="text-xs text-muted-foreground">
                   {t("shifts.memberHint")}{" "}
-                  <Link href="/settings/team" className="text-[var(--link)] hover:underline">
+                  <Link href="/settings/team" className="link">
                     {t("shifts.inviteLink")}
                   </Link>
                 </p>

@@ -58,7 +58,7 @@ export function PositionRows({ initial, locations }: { initial: PositionRow[]; l
           ))}
         </ul>
       )}
-      <button type="button" onClick={add} className="inline-flex min-h-8 w-fit items-center gap-1.5 text-sm text-[var(--link)] hover:underline">
+      <button type="button" onClick={add} className="inline-flex min-h-8 w-fit items-center gap-1.5 text-sm link">
         <PlusCircleIcon className="size-4" /> {t("shifts.addPosition")}
       </button>
     </div>

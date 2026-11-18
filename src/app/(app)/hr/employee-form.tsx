@@ -37,7 +37,7 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
             <RecordPicker name="user_id" label={t("hr.member")} search={searchMembers} initial={member} required />
             <p className="text-xs text-muted-foreground">
               {t("hr.memberHint")}{" "}
-              <Link href="/settings/team" className="text-[var(--link)] hover:underline">
+              <Link href="/settings/team" className="link">
                 {t("hr.inviteLink")}
               </Link>
             </p>

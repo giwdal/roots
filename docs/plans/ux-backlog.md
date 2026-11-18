@@ -33,6 +33,8 @@ file too; shared items are done once in shared components.
       sheet; no squeezed buttons, no truncated two-line meta.
 - [ ] B6 Remove repetition: titles that repeat the top bar, descriptions that explain the obvious; self-explanatory,
       minimal, clear decisions for the user.
+- [ ] B5 Adopt inline editing in the other record pages: hr/[id] is the first (`patchEmployee` + `<InlineField>`);
+      the shift sheet and the team sheet are small records and stay `?edit=` sheets.
 
 ## C. Overlays on desktop
 - [x] C1 (content-sheet.tsx: centred dialog from md, compact/normal/wide widths, darker backdrop) Desktop: forms/quick creates/confirms as a centred dialog (sizes: compact / default / wide), phones keep the
@@ -57,6 +59,8 @@ file too; shared items are done once in shared components.
 - [ ] E2 Tables: cards on phones (done in DataTable); wide editors (positions, variants) as cards.
 - [ ] E3 Boards/timelines: one column at a time with snap / own scroll box.
 - [ ] E4 Research per component (calendar, table, board, timeline, picker) and note the chosen pattern in mobile.md.
+- [ ] E5 `<CalendarView>` opens on week on phones too (Schichten › Plan, Abwesenheiten); mobile.md §3 wants list/day
+      as the phone default — a phone default view in the shared component (found in the Schichten pass).
 
 ## F. Settings structure
 - [ ] F1 Separate personal settings (Profil, Benachrichtigungen, Sicherheit/Passkeys, KI-Assistent, Sprache, Darstellung)
@@ -140,3 +144,7 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   key API too (`PATCH /<entity>/{id}` with one field), or keep it App-only?
 - Record titles now show in the page *and* the top bar on desktop (crumb + big title, like Linear/Stripe). OK, or only
   in the top bar with badges next to it?
+- Schichten: a team member can only be set inactive, not removed: deleting a `staff` row cascades to their time
+  entries (payroll history). Keep it that way, or add an archive / anonymise step?
+- Personal: an HR record needs an org member (account). Minijobber without a login can't be added — allow HR records
+  without an account (name + email only), as the API's `employees` table would allow?

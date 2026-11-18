@@ -96,7 +96,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
     value: canManage ? <InlineField action={patchEmployee} id={e.id} field={field} value={value} label={label} {...opts} /> : (opts.display ?? value),
   })
   const link = (href: string, text: string) => (
-    <a href={href} className="text-[var(--link)] hover:underline">
+    <a href={href} className="link">
       {text}
     </a>
   )
@@ -127,7 +127,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
         title={t("hr.assignment")}
         action={
           canManage && (
-            <Link href={withParams(sp, { edit: "links", new: undefined })} scroll={false} className="text-sm text-[var(--link)] hover:underline">
+            <Link href={withParams(sp, { edit: "links", new: undefined })} scroll={false} className="text-sm link">
               {t("hr.change")}
             </Link>
           )
@@ -135,7 +135,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
       >
         <DetailList
           items={[
-            { label: t("hr.manager"), value: manager ? <Link href={`/hr/${manager.id}`} className="text-[var(--link)] hover:underline">{manager.name}</Link> : null },
+            { label: t("hr.manager"), value: manager ? <Link href={`/hr/${manager.id}`} className="link">{manager.name}</Link> : null },
             ctx.modules.has("shifts") && { label: t("hr.shiftTeam"), value: e.staff_id ? (staff?.name ?? t("hr.linkedHidden")) : t("hr.noShiftTeam") },
           ]}
         />
@@ -153,7 +153,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
           </p>
           {pay.unapproved_entries > 0 &&
             (seesTeam ? (
-              <Link href={`/shifts/hours/${e.staff_id}`} className="text-xs text-[var(--link)] hover:underline">
+              <Link href={`/shifts/hours/${e.staff_id}`} className="text-xs link">
                 {t("hr.unapproved", { count: pay.unapproved_entries })}
               </Link>
             ) : (
@@ -244,7 +244,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
             <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-1">{properties}</aside>
             <div className="grid min-w-0 content-start gap-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-              <Section id="absences" title={t("hr.absencesYear", { year })} action={<Link href={`/hr/absences?person=${e.id}`} className="text-sm text-[var(--link)] hover:underline">{t("hr.inCalendar")}</Link>}>
+              <Section id="absences" title={t("hr.absencesYear", { year })} action={<Link href={`/hr/absences?person=${e.id}`} className="text-sm link">{t("hr.inCalendar")}</Link>}>
                 {(absences ?? []).length > 0 ? (
                   <ul className="grid divide-y rounded-lg border">
                     {(absences ?? []).map((a) => (
@@ -271,7 +271,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
                   title={t("hr.private")}
                   description={t("hr.privateHint")}
                   action={
-                    <Link href={withParams(sp, { edit: "private", new: undefined })} scroll={false} className="text-sm text-[var(--link)] hover:underline">
+                    <Link href={withParams(sp, { edit: "private", new: undefined })} scroll={false} className="text-sm link">
                       {t("hr.change")}
                     </Link>
                   }

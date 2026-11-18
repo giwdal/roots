@@ -6077,6 +6077,7 @@
     "intro": "Introduction",
     "onlineReady": "Through your connected payment provider.",
     "onlineNotReady": "No payment provider connected yet – see Settings → Integrations.",
+    "onlinePending": "Payment provider connected but can’t take payments yet – finish the setup with the provider (Settings → Integrations).",
     "transferHint": "Bank details from the invoice settings.",
     "transferNoIban": "Please add an IBAN in the invoice settings.",
     "transferDays": "Held for (days)",

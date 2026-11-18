@@ -6077,6 +6077,7 @@
     "intro": "Einleitung",
     "onlineReady": "Über euren verbundenen Zahlungsanbieter.",
     "onlineNotReady": "Noch kein Zahlungsanbieter verbunden – unter Einstellungen → Integrationen.",
+    "onlinePending": "Zahlungsanbieter verbunden, kann aber noch keine Zahlungen annehmen – Einrichtung beim Anbieter abschließen (Einstellungen → Integrationen).",
     "transferHint": "Bankverbindung aus den Rechnungseinstellungen.",
     "transferNoIban": "Bitte hinterlegt eine IBAN in den Rechnungseinstellungen.",
     "transferDays": "Reserviert für (Tage)",

@@ -29,10 +29,12 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sho
   if (!ctx.modules.has("shop")) notFound()
   const t = await getT()
   const sp = await searchParams
-  const [s, ready, { data: bank }] = await Promise.all([
+  const [s, ready, { data: bank }, { data: connected }] = await Promise.all([
     shopSettings(ctx.org.id),
     onlineReady(ctx.org.id),
     ctx.modules.has("invoices") ? ctx.supabase.from("org_billing").select("iban").eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
+    // A provider can be connected but not able to take payments yet (e.g. Stripe onboarding not finished).
+    ctx.supabase.from("org_integrations").select("provider").eq("org_id", ctx.org.id).in("provider", ["stripe", "sumup"]).eq("status", "connected").limit(1),
   ])
   const rates = readShippingRates(s.shipping_rates)
   const mails = (s.mails ?? {}) as Mails
@@ -61,7 +63,7 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sho
       </RowGroup>
 
       <RowGroup id="payment" title={t("store.payment")}>
-        <SettingRow label={t("store.payments.online")} hint={ready ? t("store.onlineReady") : link("/settings/integrations", t("store.onlineNotReady"))}>
+        <SettingRow label={t("store.payments.online")} hint={ready ? t("store.onlineReady") : link("/settings/integrations", connected?.length ? t("store.onlinePending") : t("store.onlineNotReady"))}>
           <SettingSwitch name="pay_online" checked={s.pay_online} label={t("store.payments.online")} />
         </SettingRow>
         <SettingRow label={t("store.payments.transfer")} hint={bank?.iban ? t("store.transferHint") : link("/invoices/settings", t("store.transferNoIban"))}>

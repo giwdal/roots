@@ -8,7 +8,7 @@ import { visibleNav } from "@/modules/nav"
 export default async function AreaSettings() {
   const ctx = await getContext()
   const t = await getT()
-  const areas = visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) => a.children.filter((c) => c.gear || c.label === "common.settings").map((c) => ({ ...a, href: c.href })))
+  const areas = visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) => a.children.filter((c) => c.gear || c.label === "common.settings").map((c) => ({ ...a, href: c.href, page: c.label })))
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">{t("settings.areasIntro")}</p>
@@ -20,7 +20,11 @@ export default async function AreaSettings() {
                 <span className="grid size-9 place-items-center rounded-lg bg-muted text-muted-foreground" aria-hidden>
                   <a.icon className="size-5" />
                 </span>
-                <span className="flex-1 font-medium">{t.dynamic(a.label)}</span>
+                <span className="flex-1 font-medium">
+                  {t.dynamic(a.label)}
+                  {/* An area with more than one page under its gear (Schichten: Einstellungen, Team) names the page. */}
+                  {a.page !== "common.settings" && <span className="font-normal text-muted-foreground"> · {t.dynamic(a.page)}</span>}
+                </span>
                 <ChevronRightIcon className="size-4 text-muted-foreground" />
               </Link>
             </li>

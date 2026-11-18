@@ -98,17 +98,18 @@ export function MenuGroup({ label, children }: { label: string; children: React.
 // also for items that aren't red but still need a yes (unpublish, resend).
 // As a sheet row the button closes the sheet on tap; ConfirmHost then asks and submits the page's hidden form
 // (the row is gone by then, which it handles like a closed dropdown item).
-export function MenuSubmit({ form, icon, children, destructive, confirm }: { form: string; icon?: React.ReactNode; children: React.ReactNode; destructive?: boolean; confirm?: string }) {
+// `count`: a number the question names ("… und 12 zukünftige Schichten löschen?"), as data-confirm-count.
+export function MenuSubmit({ form, icon, children, destructive, confirm, count }: { form: string; icon?: React.ReactNode; children: React.ReactNode; destructive?: boolean; confirm?: string; count?: number }) {
   const inline = useContext(Inline)
   const ask = confirm ?? (destructive ? "common.confirmTrash" : undefined)
   if (inline)
     return (
-      <button type="submit" form={form} data-confirm={ask} onClick={inline.close} className={cn(ROW, destructive && DANGER)}>
+      <button type="submit" form={form} data-confirm={ask} data-confirm-count={count} onClick={inline.close} className={cn(ROW, destructive && DANGER)}>
         {icon} {children}
       </button>
     )
   return (
-    <DropdownMenuItem render={<button type="submit" form={form} className="w-full text-left" data-confirm={ask} />} nativeButton variant={destructive ? "destructive" : "default"}>
+    <DropdownMenuItem render={<button type="submit" form={form} className="w-full text-left" data-confirm={ask} data-confirm-count={count} />} nativeButton variant={destructive ? "destructive" : "default"}>
       {icon} {children}
     </DropdownMenuItem>
   )

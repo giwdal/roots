@@ -65,7 +65,7 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
     },
     shifts: async () => {
       const { data } = await ctx.supabase.from("shifts").select("id, title, starts_at, ends_at, positions(name)").eq("org_id", org).lt("starts_at", to).gte("ends_at", from).limit(2000)
-      return (data ?? []).map((s) => ({ source: "shifts", id: s.id, title: s.title || s.positions?.name || "", starts_at: s.starts_at, ends_at: s.ends_at, all_day: false, color: COLOR.shifts, href: `/shifts?shift=${s.id}` }))
+      return (data ?? []).map((s) => ({ source: "shifts", id: s.id, title: s.title || s.positions?.name || "", starts_at: s.starts_at, ends_at: s.ends_at, all_day: false, color: COLOR.shifts, href: `/shifts?edit=${s.id}` }))
     },
     tasks: async () => {
       const { data } = await ctx.supabase.from("tasks").select("id, title, start_on, due_on, completed_at").eq("org_id", org).is("deleted_at", null).not("due_on", "is", null).lte("due_on", toDay).gte("due_on", fromDay).limit(2000)

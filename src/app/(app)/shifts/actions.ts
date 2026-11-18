@@ -3,7 +3,7 @@
 import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
 import { dbError } from "@/i18n/translate"
-import { requirePerm } from "@/lib/context"
+import { getContext, requirePerm } from "@/lib/context"
 import { fromLocalInput } from "@/lib/time"
 import { back } from "@/lib/url"
 import { generateSeries } from "@/shifts/server"
@@ -38,7 +38,7 @@ export async function saveShift(fd: FormData) {
   const times =
     (!shiftId && starts && ends ? `&start=${encodeURIComponent(starts.toISOString())}&end=${encodeURIComponent(ends.toISOString())}` : "") +
     (assignTo ? `&resource=${assignTo}` : "")
-  const retry = `${back_}${back_.includes("?") ? "&" : "?"}${shiftId ? `shift=${shiftId}` : `new=shift${times}`}`
+  const retry = `${back_}${back_.includes("?") ? "&" : "?"}${shiftId ? `edit=${shiftId}` : `new=shift${times}`}`
   const needed = Number(fd.get("needed") ?? 1)
   if (!starts || !ends) back(retry, { error: t("errors.invalid_time") })
   if (ends <= starts) back(retry, { error: t("errors.end_before_start") })
@@ -83,7 +83,7 @@ export async function assign(fd: FormData) {
   const { ctx, t } = await manager()
   const shift = id(fd, "id")
   const staff = id(fd, "staff")
-  const back_ = `${ret(fd, "/shifts")}${ret(fd, "/shifts").includes("?") ? "&" : "?"}shift=${shift}`
+  const back_ = `${ret(fd, "/shifts")}${ret(fd, "/shifts").includes("?") ? "&" : "?"}edit=${shift}`
   if (!shift || !staff) back(back_, { error: t("errors.invalid_input") })
   const what = String(fd.get("what") ?? "assign")
   const q = ctx.supabase.from("shift_assignments")
@@ -107,8 +107,8 @@ export async function assign(fd: FormData) {
 export async function saveStaff(fd: FormData) {
   const { ctx, t } = await manager()
   const staffId = id(fd, "id")
-  const retry = `/shifts/team?${staffId ? `edit=${staffId}` : "new=staff"}`
   const user = id(fd, "user")
+  const retry = `/shifts/team?${staffId ? `edit=${staffId}` : `new=staff${user ? `&user=${user}` : ""}`}`
   const targetRaw = String(fd.get("target_hours") ?? "").trim().replace(",", ".")
   const target = targetRaw ? Number(targetRaw) : null
   if ((!staffId && !user) || (target !== null && !(target >= 0 && target < 1000))) back(retry, { error: t("errors.invalid_input") })
@@ -126,38 +126,47 @@ export async function saveStaff(fd: FormData) {
     const { data: member } = await ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id).eq("user_id", user!).maybeSingle()
     const { data: profile } = await ctx.supabase.from("profiles").select("full_name, email").eq("id", user!).maybeSingle()
     if (!member) back(retry, { error: t("errors.not_allowed") })
-    const { error } = await ctx.supabase.from("staff").insert({ ...row, org_id: ctx.org.id, user_id: user!, name: profile?.full_name || profile?.email || "–", email: profile?.email ?? null })
+    const { data: added, error } = await ctx.supabase.from("staff").insert({ ...row, org_id: ctx.org.id, user_id: user!, name: profile?.full_name || profile?.email || "–", email: profile?.email ?? null }).select("id").single()
     if (error) back(retry, { error: error.code === "23505" ? t("shifts.memberTaken") : dbError(t, error) })
+    // The HR record of the same account gets its hours from this team member (RLS: only with hr.manage, else nothing).
+    await ctx.supabase.from("employees").update({ staff_id: added.id }).eq("org_id", ctx.org.id).eq("user_id", user!).is("staff_id", null)
   }
   back("/shifts/team", { ok: t("shifts.saved") })
 }
 
 // --- Setup: positions + recurring series --------------------------------------------------------
-export async function savePosition(fd: FormData) {
+/** All positions in one go (the settings page's rows): rows by index, saved rows keep their id, missing ones are deleted. */
+export async function savePositions(fd: FormData) {
   const { ctx, t } = await manager()
-  const posId = id(fd, "id")
-  const name = str(fd, "name", 100)
-  const needed = Number(fd.get("needed") ?? 1)
-  if (!name || !(Number.isInteger(needed) && needed >= 1 && needed <= 100)) back("/shifts/settings", { error: t("errors.invalid_input") })
-  const row = { name, needed, location_id: id(fd, "location") }
-  const { error } = posId
-    ? await ctx.supabase.from("positions").update(row).eq("id", posId).eq("org_id", ctx.org.id)
-    : await ctx.supabase.from("positions").insert({ ...row, org_id: ctx.org.id })
-  if (error) back("/shifts/settings", { error: dbError(t, error) })
-  back("/shifts/settings", { ok: t("shifts.saved") })
-}
-
-export async function deletePosition(fd: FormData) {
-  const { ctx, t } = await manager()
-  const { error } = await ctx.supabase.from("positions").delete().eq("id", String(fd.get("id"))).eq("org_id", ctx.org.id)
-  if (error) back("/shifts/settings", { error: dbError(t, error) })
-  back("/shifts/settings", { ok: t("shifts.deleted") })
+  const here = "/shifts/settings"
+  const ids = fd.getAll("pos_id").map(String)
+  const names = fd.getAll("pos_name").map((v) => String(v).trim().slice(0, 100))
+  const needed = fd.getAll("pos_needed").map((v) => Number(String(v).trim() || 1))
+  const locs = fd.getAll("pos_location").map(String)
+  const rows = names.map((name, i) => ({ id: UUID.test(ids[i] ?? "") ? ids[i] : null, name, needed: needed[i], location_id: UUID.test(locs[i] ?? "") ? locs[i] : null, position: i }))
+  const filled = rows.filter((r) => r.name)
+  if (filled.some((r) => !(Number.isInteger(r.needed) && r.needed >= 1 && r.needed <= 100))) back(here, { error: t("errors.invalid_input") })
+  const { data: existing } = await ctx.supabase.from("positions").select("id").eq("org_id", ctx.org.id)
+  const keep = new Set(filled.map((r) => r.id).filter(Boolean))
+  const gone = (existing ?? []).map((p) => p.id).filter((id) => !keep.has(id))
+  if (gone.length) {
+    const { error } = await ctx.supabase.from("positions").delete().eq("org_id", ctx.org.id).in("id", gone)
+    if (error) back(here, { error: dbError(t, error) })
+  }
+  for (const r of filled) {
+    const row = { name: r.name, needed: r.needed, location_id: r.location_id, position: r.position }
+    const { error } = r.id
+      ? await ctx.supabase.from("positions").update(row).eq("id", r.id).eq("org_id", ctx.org.id)
+      : await ctx.supabase.from("positions").insert({ ...row, org_id: ctx.org.id })
+    if (error) back(here, { error: dbError(t, error) })
+  }
+  back(here, { ok: t("shifts.saved") })
 }
 
 export async function saveSeries(fd: FormData) {
   const { ctx, t } = await manager()
   const seriesId = id(fd, "id")
-  const retry = `/shifts/settings?${seriesId ? `series=${seriesId}` : "new=series"}`
+  const retry = `/shifts/settings?${seriesId ? `edit=${seriesId}` : "new=series"}`
   const weekdays = fd.getAll("weekdays").map(Number).filter((d) => d >= 1 && d <= 7)
   const every = Number(fd.get("every_weeks") ?? 1)
   const start = String(fd.get("start_date") ?? "")
@@ -250,4 +259,43 @@ export async function moveShift(shiftId: string, start: string, end: string): Pr
   if (!UUID.test(shiftId) || isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) return { error: t("errors.invalid_time") }
   const { error } = await ctx.supabase.from("shifts").update({ starts_at: s.toISOString(), ends_at: e.toISOString() }).eq("id", shiftId).eq("org_id", ctx.org.id)
   return error ? { error: dbError(t, error) } : {}
+}
+
+// --- Pickers (server search, ≤ 20 hits) ---------------------------------------------------------
+const clean = (q: string) => q.replace(/[%,()*]/g, "").trim().slice(0, 60)
+
+/** Active team members by name. `position` (bound): people not set up for it say so in the detail. */
+export async function searchStaff(position: string, q: string) {
+  const ctx = await getContext()
+  if (!["shifts.view", "shifts.manage", "shifts.approve"].some((p) => ctx.can(p))) return []
+  const t = await getT()
+  let query = ctx.supabase.from("staff").select("id, name, role_label, position_ids").eq("org_id", ctx.org.id).eq("active", true).order("name").limit(20)
+  if (clean(q)) query = query.ilike("name", `%${clean(q)}%`)
+  const { data } = await query
+  return (data ?? []).map((s) => ({ id: s.id, label: s.name, detail: position && s.position_ids.length && !s.position_ids.includes(position) ? t("shifts.notQualified") : (s.role_label ?? undefined) }))
+}
+
+/** Events for a shift: upcoming first (from yesterday on), by title when typing. */
+export async function searchShiftEvents(q: string) {
+  const { ctx, t } = await manager()
+  let query = ctx.supabase.from("events").select("id, title, starts_at").eq("org_id", ctx.org.id).is("deleted_at", null).order("starts_at").limit(20)
+  query = clean(q) ? query.ilike("title", `%${clean(q)}%`) : query.gte("starts_at", new Date(Date.now() - 86_400_000).toISOString())
+  const { data } = await query
+  return (data ?? []).map((e) => ({ id: e.id, label: e.title, detail: t.date(e.starts_at, { dateStyle: "medium" }) }))
+}
+
+/** Organisation members who aren't on the team yet (name or email). */
+export async function searchTeamCandidates(q: string) {
+  const { ctx } = await manager()
+  const [{ data: members }, { data: team }] = await Promise.all([
+    ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id),
+    ctx.supabase.from("staff").select("user_id").eq("org_id", ctx.org.id),
+  ])
+  const taken = new Set((team ?? []).map((s) => s.user_id))
+  const free = (members ?? []).map((m) => m.user_id).filter((u) => !taken.has(u))
+  if (!free.length) return []
+  let query = ctx.supabase.from("profiles").select("id, full_name, email").in("id", free).order("full_name").limit(20)
+  if (clean(q)) query = query.or(`full_name.ilike.%${clean(q)}%,email.ilike.%${clean(q)}%`)
+  const { data } = await query
+  return (data ?? []).map((p) => ({ id: p.id, label: p.full_name || p.email || "–", detail: p.full_name ? (p.email ?? undefined) : undefined }))
 }

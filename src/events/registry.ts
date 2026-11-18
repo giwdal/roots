@@ -40,7 +40,7 @@ export const eventTypes: EventType[] = [
   { key: "rental.renewed", module: "rentals", audience: { permission: "rentals.view", defaults: ["in_app"] }, href: (p) => `/rentals/r/${p.rental_id}` },
   { key: "task.assigned", module: "projects", audience: { users: true, defaults: ["in_app", "email"] }, href: (p) => `/projects/tasks?task=${p.task_id}` },
   { key: "task.completed", module: "projects", audience: { users: true, defaults: ["in_app"] }, href: (p) => `/projects/tasks?task=${p.task_id}` },
-  { key: "shift.applied", module: "shifts", audience: { permission: "shifts.manage", defaults: ["in_app"] }, href: (p) => `/shifts?shift=${p.shift_id}` },
+  { key: "shift.applied", module: "shifts", audience: { permission: "shifts.manage", defaults: ["in_app"] }, href: (p) => `/shifts?edit=${p.shift_id}` },
   { key: "shop.order_placed", module: "shop", audience: { permission: "shop.view", defaults: ["in_app"] }, href: (p) => `/shop/orders/${p.shop_order_id}` },
   { key: "shop.order_ready", module: "shop" },
   { key: "shop.order_shipped", module: "shop" },

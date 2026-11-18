@@ -65,11 +65,11 @@ export const NAV: Area[] = [
     label: "shifts.nav",
     icon: CalendarClockIcon,
     children: [
-      { href: "/shifts", label: "nav.overview", module: "shifts", permission: "shifts.view" },
-      { href: "/shifts/me", label: "shifts.tabs.me", module: "shifts", permission: "shifts.self" },
+      // Plan opens the week plan, or Meine (/shifts/me, a view on Plan) for people with only the personal permission.
+      { href: "/shifts", label: "shifts.tabs.plan", module: "shifts", permission: ["shifts.view", "shifts.self"] },
       { href: "/shifts/hours", label: "shifts.tabs.hours", module: "shifts", permission: "shifts.view" },
-      { href: "/shifts/team", label: "shifts.tabs.team", module: "shifts", permission: "shifts.view" },
-      { href: "/shifts/settings", label: "common.settings", module: "shifts", permission: "shifts.manage" },
+      { href: "/shifts/settings", label: "common.settings", module: "shifts", permission: "shifts.manage", gear: true },
+      { href: "/shifts/team", label: "shifts.tabs.team", module: "shifts", permission: "shifts.manage", gear: true },
     ],
   },
   {
@@ -77,9 +77,8 @@ export const NAV: Area[] = [
     label: "hr.nav",
     icon: BriefcaseBusinessIcon,
     children: [
-      { href: "/hr", label: "nav.overview", module: "hr", permission: "hr.view" },
+      { href: "/hr", label: "hr.tabs.people", module: "hr", permission: "hr.view" }, // Liste · Organigramm (/hr/chart) as views
       { href: "/hr/absences", label: "hr.tabs.absences", module: "hr", permission: "hr.view" },
-      { href: "/hr/chart", label: "hr.tabs.chart", module: "hr", permission: "hr.view" },
       { href: "/hr/payroll", label: "hr.tabs.payroll", module: "hr", permission: "hr.view" },
     ],
   },

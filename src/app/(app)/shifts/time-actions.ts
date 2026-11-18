@@ -118,3 +118,35 @@ export async function approveMonth(fd: FormData) {
   if (error) back(here, { error: dbError(t, error) })
   back(here, { ok: t(undo ? "time.reopened" : "time.approved") })
 }
+
+/** Approve every finished, open entry of a month (all people), from Stunden. */
+export async function approveAll(fd: FormData) {
+  const ctx = await requirePerm("shifts.approve")
+  const t = await getT()
+  const month = String(fd.get("month") ?? "")
+  const here = `/shifts/hours?month=${month}`
+  if (!/^\d{4}-\d{2}$/.test(month)) back("/shifts/hours", { error: t("errors.invalid_input") })
+  const [y, m] = month.split("-").map(Number)
+  const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`
+  const { error } = await ctx.supabase
+    .from("time_entries")
+    .update({ approved_at: new Date().toISOString() })
+    .eq("org_id", ctx.org.id)
+    .gte("started_at", fromLocalInput(`${month}-01T00:00`)!.toISOString())
+    .lt("started_at", fromLocalInput(`${next}-01T00:00`)!.toISOString())
+    .not("ended_at", "is", null)
+    .is("approved_at", null)
+  if (error) back(here, { error: dbError(t, error) })
+  back(here, { ok: t("time.approvedAll") })
+}
+
+/** Project picker of a time entry: open projects by name (≤ 20). */
+export async function searchProjects(q: string) {
+  const ctx = await getContext()
+  if (!ctx.modules.has("projects") || !(ctx.can("projects.view") || ctx.can("projects.manage"))) return []
+  const clean = q.replace(/[%,()*]/g, "").trim().slice(0, 60)
+  let query = ctx.supabase.from("projects").select("id, name").eq("org_id", ctx.org.id).is("deleted_at", null).is("completed_at", null).order("name").limit(20)
+  if (clean) query = query.ilike("name", `%${clean}%`)
+  const { data } = await query
+  return (data ?? []).map((p) => ({ id: p.id, label: p.name }))
+}

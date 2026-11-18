@@ -1,18 +1,23 @@
 import Link from "next/link"
-import { ActionsMenu, MenuExport } from "@/components/actions-menu"
-import { Page, PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
-import { DataTable } from "@/components/data-table"
+import { PlusIcon } from "lucide-react"
+import { ActionsMenu, MenuExport } from "@/components/actions-menu"
+import { DataTable, ListToolbar } from "@/components/data-table"
 import { Notice } from "@/components/notice"
+import { EmptyState, Page, PageHeader } from "@/components/page"
+import { Stat, Stats } from "@/components/stats"
+import { SubmitButton } from "@/components/submit-button"
 import { hoursText, MonthNav, monthOf } from "@/components/time-entries"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param } from "@/lib/url"
 import { minutes, warnings } from "@/shifts/time"
+import { approveAll } from "../time-actions"
 
-// Time account per person and month: planned (assigned shifts), worked (time entries, net of breaks), target,
-// balance, approval and law warnings. A name opens that person's entries (edit, approve).
+// Schichten › Stunden: the month per person (planned shifts, worked time net of breaks, target, balance, approval,
+// law warnings). The month switch is the toolbar; a row opens the person's month (correct, approve).
 export default async function HoursPage({ searchParams }: PageProps<"/shifts/hours">) {
   const ctx = await requirePerm("shifts.view")
   if (!ctx.modules.has("shifts")) notFound()
@@ -41,13 +46,26 @@ export default async function HoursPage({ searchParams }: PageProps<"/shifts/hou
     })
     .filter((s) => s.active || s.count || s.entries)
   const unapproved = table.reduce((n, s) => n + s.unapproved, 0)
+  const worked = table.reduce((n, s) => n + s.worked, 0)
+  const warned = table.reduce((n, s) => n + s.warned, 0)
+  const canApprove = ctx.can("shifts.approve")
 
   return (
     <Page>
       <PageHeader
         area="shifts"
         title={t("shifts.tabs.hours")}
-        actions={<MonthNav month={month} href={(m) => `/shifts/hours?month=${m}`} />}
+        actions={
+          canApprove &&
+          unapproved > 0 && (
+            <form action={approveAll}>
+              <input type="hidden" name="month" value={month.month} />
+              <SubmitButton size="sm" variant="outline" data-confirm="time.confirmApproveAll" data-confirm-count={unapproved}>
+                {t("time.approveAll")}
+              </SubmitButton>
+            </form>
+          )
+        }
         menu={
           <ActionsMenu>
             <MenuExport entity="hours" query={{ month: month.month }} label={t("time.exportTotals")} />
@@ -56,26 +74,46 @@ export default async function HoursPage({ searchParams }: PageProps<"/shifts/hou
         }
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      <p className="text-sm text-muted-foreground">
-        {t("shifts.hoursHint")} {unapproved > 0 && t("time.exportOnlyApproved", { count: unapproved })}
-      </p>
+      <ListToolbar>
+        <MonthNav month={month} href={(m) => `/shifts/hours?month=${m}`} />
+      </ListToolbar>
+      {table.length > 0 && (
+        <Stats>
+          <Stat label={t("shifts.worked")} value={hoursText(t, worked)} hint={t("shifts.workedHint")} />
+          <Stat label={t("time.openToApprove")} value={unapproved} hint={unapproved > 0 ? t("time.missingInExport") : t("time.allApproved")} tone={unapproved > 0 ? "warn" : undefined} />
+          <Stat label={t("time.notices")} value={warned} hint={t("time.noticesHint")} tone={warned > 0 ? "warn" : undefined} />
+        </Stats>
+      )}
       <DataTable
         rows={table}
         rowKey={(s) => s.id}
-        empty={t("shifts.noStaff")}
+        rowHref={(s) => `/shifts/hours/${s.id}?month=${month.month}`}
+        empty={
+          <EmptyState
+            area="shifts"
+            title={t("shifts.noStaff")}
+            text={t("shifts.noStaffText")}
+            action={
+              ctx.can("shifts.manage") && (
+                <Button render={<Link href="/shifts/team?new=staff" />} nativeButton={false} size="sm">
+                  <PlusIcon /> {t("shifts.addStaff")}
+                </Button>
+              )
+            }
+          />
+        }
         columns={[
           {
             header: t("shifts.name"),
             cell: (s) => (
-              <Link href={`/shifts/hours/${s.id}?month=${month.month}`} className="font-medium underline-offset-4 hover:underline">
-                {s.name}
-              </Link>
+              <span className="grid">
+                <span className="font-medium">{s.name}</span>
+                {s.target_hours != null && <span className="text-xs font-normal text-muted-foreground">{t("shifts.selfTarget", { hours: t.number(Number(s.target_hours)) })}</span>}
+              </span>
             ),
           },
-          { header: t("shifts.shiftCount"), cell: (s) => s.count, className: "tabular-nums" },
-          { header: t("shifts.planned"), cell: (s) => hoursText(t, s.planned), className: "tabular-nums" },
+          { header: t("shifts.planned"), cell: (s) => `${hoursText(t, s.planned)} · ${t("shifts.shiftCountShort", { count: s.count })}`, className: "tabular-nums" },
           { header: t("shifts.worked"), cell: (s) => hoursText(t, s.worked), className: "tabular-nums" },
-          { header: t("shifts.targetHours"), cell: (s) => (s.target_hours != null ? `${t.number(Number(s.target_hours))} h` : "–"), className: "tabular-nums" },
           {
             header: t("shifts.balance"),
             cell: (s) => {
@@ -89,7 +127,7 @@ export default async function HoursPage({ searchParams }: PageProps<"/shifts/hou
             header: t("time.status"),
             cell: (s) => (
               <span className="flex flex-wrap gap-1">
-                {s.entries === 0 ? "–" : s.unapproved ? <Badge variant="outline">{t("time.toApprove", { count: s.unapproved })}</Badge> : <Badge variant="secondary">{t("time.approvedBadge")}</Badge>}
+                {s.entries === 0 ? "–" : s.unapproved ? <Badge variant="warning">{t("time.toApprove", { count: s.unapproved })}</Badge> : <Badge variant="success">{t("time.approvedBadge")}</Badge>}
                 {s.warned > 0 && <Badge variant="destructive">{t("time.warningCount", { count: s.warned })}</Badge>}
               </span>
             ),

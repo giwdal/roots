@@ -1,8 +1,9 @@
-import Link from "next/link"
-import { FormCard, Page, PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
 import { DataTable } from "@/components/data-table"
-import { SubmitButton } from "@/components/submit-button"
+import { Page, PageHeader } from "@/components/page"
+import { Section } from "@/components/section"
+import { Stat, Stats } from "@/components/stats"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
@@ -12,8 +13,10 @@ import { PRESETS, period } from "@/reports/period"
 import { loadReport } from "@/reports/server"
 import { GroupedBars, StackedBars } from "./charts"
 import { DateInput } from "@/components/date-input"
+import { PeriodMenu } from "./period-menu"
 
-// Reports: KPIs per area for a period (presets or own range, in the URL). Each area only for those who may see it.
+// Reports: KPIs per area for a period (presets or own range, in the URL). Each area only for those who may see it;
+// every number links to the list behind it (when that module is on and the person may open it).
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const ctx = await requirePerm("reports.view")
   if (!ctx.modules.has("reports")) notFound()
@@ -27,55 +30,56 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : "–")
   const e = r.events
   const admitted = e ? e.tickets_in + e.members_in + e.guests_in : 0
+  // A tile's link: only when the target's module is on and the person may open it.
+  const to = (module: string, perm: string, href: string) => (ctx.modules.has(module) && ctx.can(perm) ? href : undefined)
+  const source = (k: string) => (t.has(`reports.sources.${k}`) ? t.dynamic(`reports.sources.${k}`) : t.has(`payments.sources.${k}`) ? t.dynamic(`payments.sources.${k}`) : k)
 
   return (
     <Page>
       <PageHeader area="reports" title={t("reports.title")} meta={t("reports.range", { from: day(p.from), to: day(p.to) })} />
       <div className="flex flex-wrap items-end gap-3">
-        <nav aria-label={t("reports.period")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
-          {PRESETS.map((k) => (
-            <Link
-              key={k}
-              href={`/reports?p=${k}`}
-              aria-current={p.preset === k ? "true" : undefined}
-              className="inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm"
-            >
-              {t.dynamic(`reports.presets.${k}`)}
-            </Link>
-          ))}
-        </nav>
-        <form key={`${p.from}:${p.to}`} className="flex flex-wrap items-end gap-3" action="/reports">
+        <PeriodMenu
+          label={t("reports.period")}
+          current={p.preset === "custom" ? t("reports.custom") : t.dynamic(`reports.presets.${p.preset}`)}
+          options={PRESETS.map((k) => ({ value: k, label: t.dynamic(`reports.presets.${k}`), active: p.preset === k }))}
+        />
+        <form key={`${p.from}:${p.to}`} className="flex items-end gap-2" action="/reports">
           <div className="grid gap-1">
-            <Label htmlFor="r-from">{t("reports.from")}</Label>
-            <DateInput id="r-from" name="from" type="date" defaultValue={p.from} className="w-40" />
+            <Label htmlFor="r-from" className="text-xs text-muted-foreground">
+              {t("reports.from")}
+            </Label>
+            <DateInput id="r-from" name="from" type="date" defaultValue={p.from} className="w-36" />
           </div>
           <div className="grid gap-1">
-            <Label htmlFor="r-to">{t("reports.to")}</Label>
-            <DateInput id="r-to" name="to" type="date" defaultValue={p.to} className="w-40" />
+            <Label htmlFor="r-to" className="text-xs text-muted-foreground">
+              {t("reports.to")}
+            </Label>
+            <DateInput id="r-to" name="to" type="date" defaultValue={p.to} className="w-36" />
           </div>
-          <SubmitButton size="sm" variant="outline">
+          <Button type="submit" size="sm" variant="outline">
             {t("reports.show")}
-          </SubmitButton>
+          </Button>
         </form>
       </div>
 
       {r.members && (
         <Section id="members" title={t("reports.members.title")}>
-          <Tiles>
-            <Kpi label={t("reports.members.active")} value={num(r.members.active)} hint={t("reports.today")} />
-            <Kpi label={t("reports.members.joined")} value={num(r.members.joined)} />
-            <Kpi label={t("reports.members.left")} value={num(r.members.left)} />
-            <Kpi label={t("reports.members.paused")} value={num(r.members.paused)} hint={t("reports.today")} />
-            <Kpi label={t("reports.members.feeFree")} value={num(r.members.fee_free)} hint={t("reports.today")} />
-            <Kpi label={t("reports.members.duesPaid")} value={t.money(r.members.dues_paid_cents)} />
-            <Kpi label={t("reports.members.duesOpen")} value={t.money(r.members.dues_open_cents)} hint={t("reports.today")} />
-            <Kpi
+          <Stats>
+            <Stat href={to("members", "members.view", "/members")} label={t("reports.members.active")} value={num(r.members.active)} hint={t("reports.today")} />
+            <Stat href={to("members", "members.view", "/members")} label={t("reports.members.joined")} value={num(r.members.joined)} />
+            <Stat label={t("reports.members.left")} value={num(r.members.left)} />
+            <Stat label={t("reports.members.paused")} value={num(r.members.paused)} hint={t("reports.today")} />
+            <Stat label={t("reports.members.feeFree")} value={num(r.members.fee_free)} hint={t("reports.today")} />
+            <Stat href={to("members", "members.view", "/members/dues?status=paid")} label={t("reports.members.duesPaid")} value={t.money(r.members.dues_paid_cents)} />
+            <Stat href={to("members", "members.view", "/members/dues")} label={t("reports.members.duesOpen")} value={t.money(r.members.dues_open_cents)} hint={t("reports.today")} />
+            <Stat
+              href={to("members", "members.view", "/members/dues")}
               label={t("reports.members.duesOverdue")}
               value={t.money(r.members.dues_overdue_cents)}
               hint={t("reports.members.overduePeople", { count: r.members.dues_overdue_people })}
-              warn={r.members.dues_overdue_cents > 0}
+              tone={r.members.dues_overdue_cents > 0 ? "warn" : undefined}
             />
-          </Tiles>
+          </Stats>
           <div className="grid gap-6 md:grid-cols-2">
             <Bars title={t("reports.members.byType")} rows={r.members.by_type.map((x) => ({ label: x.type, value: x.active }))} t={t} />
             {r.members.months.length > 1 && (
@@ -96,15 +100,15 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {e && (
         <Section id="events" title={t("reports.events.title")}>
-          <Tiles>
-            <Kpi label={t("reports.events.count")} value={num(e.count)} />
-            {e.tickets && <Kpi label={t("reports.events.sold")} value={num(e.sold)} />}
-            {e.tickets && <Kpi label={t("reports.events.revenue")} value={t.money(e.revenue_cents)} />}
-            <Kpi label={t("reports.events.admitted")} value={num(admitted)} />
-            {e.tickets && <Kpi label={t("reports.events.ticketsIn")} value={num(e.tickets_in)} />}
-            {e.tickets && <Kpi label={t("reports.events.membersIn")} value={num(e.members_in)} />}
-            {e.guests && <Kpi label={t("reports.events.guestsIn")} value={num(e.guests_in)} />}
-          </Tiles>
+          <Stats>
+            <Stat href={to("events", "events.view", "/events")} label={t("reports.events.count")} value={num(e.count)} />
+            {e.tickets && <Stat label={t("reports.events.sold")} value={num(e.sold)} />}
+            {e.tickets && <Stat label={t("reports.events.revenue")} value={t.money(e.revenue_cents)} />}
+            <Stat label={t("reports.events.admitted")} value={num(admitted)} />
+            {e.tickets && <Stat label={t("reports.events.ticketsIn")} value={num(e.tickets_in)} />}
+            {e.tickets && <Stat label={t("reports.events.membersIn")} value={num(e.members_in)} />}
+            {e.guests && <Stat label={t("reports.events.guestsIn")} value={num(e.guests_in)} />}
+          </Stats>
           {Object.keys(e.members_by_type).length > 0 && (
             <Bars title={t("reports.events.membersByType")} rows={Object.entries(e.members_by_type).map(([label, value]) => ({ label, value }))} t={t} />
           )}
@@ -123,15 +127,16 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           <DataTable
             rows={e.list}
             rowKey={(x) => x.id}
+            rowHref={(x) => to("events", "events.view", `/events/${x.id}`)}
             empty={t("reports.events.none")}
             columns={[
               {
                 header: t("reports.events.event"),
                 cell: (x) => (
-                  <Link href={`/events/${x.id}`} className="grid underline-offset-4 hover:underline">
-                    <span className="font-medium">{x.title}</span>
-                    <span className="text-xs text-muted-foreground">{t.date(x.starts_at, { dateStyle: "medium" })}</span>
-                  </Link>
+                  <span className="grid min-w-0">
+                    <span className="truncate font-medium">{x.title}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{t.date(x.starts_at, { dateStyle: "medium" })}</span>
+                  </span>
                 ),
               },
               ...(e.tickets
@@ -159,37 +164,37 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {r.payments && (
         <Section id="payments" title={t("reports.payments.title")}>
-          <Tiles>
-            <Kpi label={t("reports.payments.gross")} value={t.money(r.payments.gross_cents)} />
-            <Kpi label={t("reports.payments.orders")} value={num(r.payments.orders)} />
+          <Stats>
+            <Stat href={to("payments", "payments.view", "/payments?status=paid")} label={t("reports.payments.gross")} value={t.money(r.payments.gross_cents)} />
+            <Stat href={to("payments", "payments.view", "/payments?status=paid")} label={t("reports.payments.orders")} value={num(r.payments.orders)} />
             {Object.entries(r.payments.by_source).map(([k, v]) => (
-              <Kpi key={k} label={t.has(`reports.sources.${k}`) ? t.dynamic(`reports.sources.${k}`) : k} value={t.money(v)} />
+              <Stat key={k} href={to("payments", "payments.view", `/payments?status=paid&source=${k}`)} label={source(k)} value={t.money(v)} />
             ))}
-          </Tiles>
+          </Stats>
         </Section>
       )}
 
       {r.invoices && (
         <Section id="invoices" title={t("reports.invoices.title")}>
-          <Tiles>
-            <Kpi label={t("reports.invoices.issued")} value={t.money(r.invoices.issued_cents)} hint={t("reports.invoices.count", { count: r.invoices.issued })} />
-            <Kpi label={t("reports.invoices.paid")} value={t.money(r.invoices.paid_cents)} />
-            <Kpi label={t("reports.invoices.open")} value={t.money(r.invoices.open_cents)} hint={t("reports.today")} />
-            <Kpi label={t("reports.invoices.overdue")} value={t.money(r.invoices.overdue_cents)} hint={t("reports.today")} warn={r.invoices.overdue_cents > 0} />
-          </Tiles>
+          <Stats>
+            <Stat href={to("invoices", "invoices.view", "/invoices?kind=invoice")} label={t("reports.invoices.issued")} value={t.money(r.invoices.issued_cents)} hint={t("reports.invoices.count", { count: r.invoices.issued })} />
+            <Stat href={to("invoices", "invoices.view", "/invoices?kind=invoice&status=paid")} label={t("reports.invoices.paid")} value={t.money(r.invoices.paid_cents)} />
+            <Stat href={to("invoices", "invoices.view", "/invoices?kind=invoice&status=sent")} label={t("reports.invoices.open")} value={t.money(r.invoices.open_cents)} hint={t("reports.today")} />
+            <Stat href={to("invoices", "invoices.view", "/invoices?status=overdue")} label={t("reports.invoices.overdue")} value={t.money(r.invoices.overdue_cents)} hint={t("reports.today")} tone={r.invoices.overdue_cents > 0 ? "warn" : undefined} />
+          </Stats>
         </Section>
       )}
 
       {r.cashbook && (
         <Section id="cashbook" title={t("reports.cashbook.title")}>
-          <Tiles>
-            <Kpi label={t("reports.cashbook.income")} value={t.money(r.cashbook.income_cents)} />
-            <Kpi label={t("reports.cashbook.expenses")} value={t.money(r.cashbook.expense_cents)} />
-            <Kpi label={t("reports.cashbook.result")} value={t.money(r.cashbook.income_cents - r.cashbook.expense_cents)} warn={r.cashbook.income_cents < r.cashbook.expense_cents} />
+          <Stats>
+            <Stat href={to("cashbook", "cashbook.view", "/cashbook")} label={t("reports.cashbook.income")} value={t.money(r.cashbook.income_cents)} />
+            <Stat href={to("cashbook", "cashbook.view", "/cashbook")} label={t("reports.cashbook.expenses")} value={t.money(r.cashbook.expense_cents)} />
+            <Stat label={t("reports.cashbook.result")} value={t.money(r.cashbook.income_cents - r.cashbook.expense_cents)} tone={r.cashbook.income_cents < r.cashbook.expense_cents ? "warn" : undefined} />
             {r.cashbook.accounts.map((a) => (
-              <Kpi key={a.name} label={a.name} value={t.money(a.balance_cents)} hint={t("reports.cashbook.balances")} />
+              <Stat key={a.name} href={to("cashbook", "cashbook.view", "/cashbook")} label={a.name} value={t.money(a.balance_cents)} hint={t("reports.cashbook.balances")} />
             ))}
-          </Tiles>
+          </Stats>
           {Object.keys(r.cashbook.by_sphere).length > 0 && (
             <div className="grid gap-2">
               <h3 className="text-sm text-muted-foreground">{t("reports.cashbook.bySphere")}</h3>
@@ -211,46 +216,26 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {r.shifts && (
         <Section id="shifts" title={t("reports.shifts.title")}>
-          <Tiles>
-            <Kpi label={t("reports.shifts.count")} value={num(r.shifts.count)} />
-            <Kpi label={t("reports.shifts.filled")} value={pct(r.shifts.assigned, r.shifts.needed)} hint={t("reports.shifts.slots", { assigned: r.shifts.assigned, needed: r.shifts.needed })} />
-            <Kpi label={t("reports.shifts.hours")} value={t.number(r.shifts.worked_minutes / 60, { maximumFractionDigits: 1 })} />
-          </Tiles>
+          <Stats>
+            <Stat href={to("shifts", "shifts.view", "/shifts")} label={t("reports.shifts.count")} value={num(r.shifts.count)} />
+            <Stat label={t("reports.shifts.filled")} value={pct(r.shifts.assigned, r.shifts.needed)} hint={t("reports.shifts.slots", { assigned: r.shifts.assigned, needed: r.shifts.needed })} />
+            <Stat href={to("shifts", "shifts.view", "/shifts/hours")} label={t("reports.shifts.hours")} value={t.number(r.shifts.worked_minutes / 60, { maximumFractionDigits: 1 })} />
+          </Stats>
         </Section>
       )}
 
       {(r.contacts || r.forms || r.courses || r.email) && (
         <Section id="more" title={t("reports.more")}>
-          <Tiles>
-            {r.contacts && <Kpi label={t("reports.contacts.new")} value={num(r.contacts.new)} hint={t("reports.contacts.total", { count: r.contacts.total })} />}
-            {r.forms && <Kpi label={t("reports.forms.submissions")} value={num(r.forms.submissions)} />}
-            {r.courses && <Kpi label={t("reports.courses.enrolled")} value={num(r.courses.enrolled)} hint={t("reports.courses.waiting", { count: r.courses.waiting })} />}
-            {r.email && <Kpi label={t("reports.email.sent")} value={num(r.email.sent)} hint={t("reports.email.delivered", { rate: pct(r.email.delivered, r.email.sent) })} />}
-            {r.email && r.email.bounced + r.email.complained > 0 && <Kpi label={t("reports.email.bounced")} value={num(r.email.bounced + r.email.complained)} warn />}
-          </Tiles>
+          <Stats>
+            {r.contacts && <Stat href={to("crm", "crm.view", "/contacts")} label={t("reports.contacts.new")} value={num(r.contacts.new)} hint={t("reports.contacts.total", { count: r.contacts.total })} />}
+            {r.forms && <Stat href={to("forms", "forms.view", "/forms")} label={t("reports.forms.submissions")} value={num(r.forms.submissions)} />}
+            {r.courses && <Stat href={to("courses", "courses.view", "/courses")} label={t("reports.courses.enrolled")} value={num(r.courses.enrolled)} hint={t("reports.courses.waiting", { count: r.courses.waiting })} />}
+            {r.email && <Stat href={to("email", "email.view", "/email/log")} label={t("reports.email.sent")} value={num(r.email.sent)} hint={t("reports.email.delivered", { rate: pct(r.email.delivered, r.email.sent) })} />}
+            {r.email && r.email.bounced + r.email.complained > 0 && <Stat label={t("reports.email.bounced")} value={num(r.email.bounced + r.email.complained)} tone="warn" />}
+          </Stats>
         </Section>
       )}
     </Page>
-  )
-}
-
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
-  return (
-    <FormCard id={id} title={title}>
-      {children}
-    </FormCard>
-  )
-}
-
-const Tiles = ({ children }: { children: React.ReactNode }) => <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{children}</div>
-
-function Kpi({ label, value, hint, warn }: { label: string; value: string; hint?: string; warn?: boolean }) {
-  return (
-    <div className="grid content-start gap-1 rounded-lg border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={warn ? "text-xl font-semibold text-destructive tabular-nums" : "text-xl font-semibold tabular-nums"}>{value}</span>
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </div>
   )
 }
 

@@ -39,6 +39,7 @@
   "pages": [
     {
       "route": "/admin/orgs",
+      "redesign": {"research": "Vercel / Stripe admin consoles: list with search and a trash/archived segment, a record opens a detail page with sections; destructive actions in a menu with a typed or explicit confirm.", "job": "Find an org, create one, manage its modules and people.", "phone": "PageHeader primary Neue Organisation; toolbar search + Segments Aktiv · Papierkorb. Rows open the drawer.", "desktop": "Same.", "moves": ["Neue Organisation (body button) → PageHeader primary", "chips Aktiv/Papierkorb → <Segments>", "module Einschalten/Ausschalten → switches? kept as buttons, Ausschalten asks (admin.orgs.confirmModuleOff)", "member Entfernen → confirm", "In den Papierkorb (red body button) → sheet ⋯ MenuSubmit destructive (asks)", "Gefahrenzone + checkbox + Jetzt endgültig löschen → sheet ⋯ MenuSubmit destructive with confirm (admin.orgs.confirmDelete); server no longer needs the checkbox", "Speichern (details) → SaveBar", "Rolle NativeSelect → Choice"]},
       "file": "src/app/admin/orgs/page.tsx",
       "title": "Organisationen",
       "purpose": "Find, create, edit, open, switch modules for, add/remove members of, trash, restore and permanently delete organisations.",
@@ -252,6 +253,7 @@
     },
     {
       "route": "/admin/users",
+      "redesign": {"job": "Find an account, fix its name, grant/revoke superadmin, remove memberships or delete it.", "phone": "Search, rows; sheet with Name (SaveBar), Superadmin (asks), memberships (Entfernen asks), ⋯ Benutzer löschen (asks).", "desktop": "Same.", "moves": ["Superadmin machen → confirm admin.users.confirmGrant", "Entfernen → confirm", "Gefahrenzone + checkbox → ⋯ destructive confirm", "Speichern → SaveBar", "org names → links to /admin/orgs?edit=<id>"]},
       "file": "src/app/admin/users/page.tsx",
       "title": "Benutzer",
       "purpose": "Find accounts, edit name, grant/revoke superadmin, remove memberships, delete accounts.",
@@ -348,6 +350,7 @@
     },
     {
       "route": "/admin/billing",
+      "redesign": {"job": "Prices per org and month.", "phone": "Unchanged.", "desktop": "Unchanged.", "moves": ["unchanged in this pass (already SaveBar + TypedInput money)"]},
       "file": "src/app/admin/billing/page.tsx",
       "title": "Abrechnung",
       "purpose": "Per month: what roots charges each org (subscription, usage, sales fees, discount), and set default or per-org prices from a future month on.",
@@ -494,6 +497,7 @@
     },
     {
       "route": "/admin/roles",
+      "redesign": {"job": "Define the global roles every org assigns.", "phone": "PageHeader primary Neue Rolle; rows; sheet: names, permissions, SaveBar; ⋯ Rolle löschen (asks, hint: all orgs).", "desktop": "Same.", "moves": ["Neue Rolle (body button) → PageHeader primary", "Löschen (red next to Save) → sheet ⋯ destructive with confirm", "Speichern → SaveBar with confirm (admin.roles.confirmSave: changes rights in every org)"]},
       "file": "src/app/admin/roles/page.tsx",
       "title": "Rollen",
       "purpose": "Define the global roles (names DE/EN, permissions per module) that orgs assign.",
@@ -576,6 +580,7 @@
     },
     {
       "route": "/admin/activity",
+      "redesign": {"job": "Audit log and failures.", "phone": "Unchanged.", "desktop": "Unchanged.", "moves": ["unchanged in this pass"]},
       "file": "src/app/admin/activity/page.tsx",
       "title": "Aktivität",
       "purpose": "Platform-wide change log of core tables, filterable by org and table, plus an 'Fehler' view of failed automation runs and failed org mails.",

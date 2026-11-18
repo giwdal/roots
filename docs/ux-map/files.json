@@ -19,6 +19,7 @@
   "pages": [
     {
       "route": "/files",
+      "redesign": {"research": "Google Drive / Dropbox: folders first, then files; list or grid toggle; drop anywhere to upload into the open folder; a file opens a preview with download / rename / move / trash in a menu; trash restores. Phones: list with big rows, + uploads.", "job": "Find, upload and open the org's documents.", "phone": "Top bar Dateien (⋯ Papierkorb, Vorlagen). Toolbar: search, folder filter, Segments Liste · Kacheln. Folder chips row when no folder is open; inside a folder a '‹ Alle Dateien' chip. Rows: icon/thumbnail · name · folder or record · size. Round + uploads. Tap → sheet: preview (image) or file icon, Öffnen/Herunterladen, 'Zu <Record>' for every record type, Name + Ordner + SaveBar, ⋯ In den Papierkorb (asks).", "desktop": "Same; Kacheln = image thumbnails grid; drop zone over the list uploads into the open folder.", "moves": ["SectionNav Übersicht · Vorlagen → removed: Dateien in nav.ts as an area with children Dateien · Vorlagen (sidebar tree, top bar area › page)", "header icon → area 'files'", "Hochladen (FileUpload primary) → kept as primary", "⋯ Papierkorb / Alle → kept", "Suchen…, Ordner FilterMenu → <ListToolbar>", "new: Segments Liste · Kacheln (?view=grid)", "edit sheet Speichern → SaveBar", "edit sheet In den Papierkorb (outline) → sheet ⋯ MenuSubmit destructive (asks)", "Zu {record} (contacts only) → every entity with a record page (contacts, rentals, rental objects, projects, products, events, employees, invoices)", "Wiederherstellen → kept in the trash sheet as the action", "bulk In den Papierkorb → kept", "new: image preview in the sheet"]},
       "file": "src/app/(app)/files/page.tsx",
       "title": "Dateien (Papierkorb: 'Dateien · Papierkorb')",
       "purpose": "Upload, find, rename, file into folders, open/download and trash the org's files (loose and attached to records).",
@@ -202,6 +203,7 @@
     },
     {
       "route": "/files/templates",
+      "redesign": {"job": "Pick a letter template to fill, or make an own one.", "phone": "Top bar Dateien › Vorlagen; rows name + Eigene/Standard badge; round + Neue Vorlage (sheet with Name, SaveBar 'Vorlage anlegen'). ⋯ Papierkorb.", "desktop": "Same table.", "moves": ["create SubmitButton → SaveBar label always", "letters.intro → removed (area page; badge explains)", "Wiederherstellen → kept in trash", "Own badge default → secondary/outline"]},
       "file": "src/app/(app)/files/templates/page.tsx",
       "title": "Vorlagen (Papierkorb: 'Vorlagen · Papierkorb')",
       "purpose": "List roots' default and the org's own letter templates; create a template; trash view.",
@@ -296,6 +298,7 @@
     },
     {
       "route": "/files/templates/[id]",
+      "redesign": {"job": "Write a letter from a template: recipient, fields, date → PDF, file it or send it.", "phone": "Header: name + badge, primary 'PDF herunterladen'; ⋯ Vorlage bearbeiten, Kopieren & anpassen, In den Papierkorb (asks). Composer form, then the preview. Buttons under the form: In Dateien ablegen, Per E-Mail senden (asks).", "desktop": "Composer left, live preview right.", "moves": ["Vorlage bearbeiten (?edit=1 sheet) → kept as a wide sheet (the editor needs the preview page underneath), SaveBar instead of Speichern", "sheet In den Papierkorb (outline) → header ⋯ MenuSubmit destructive (asks)", "Kopieren & anpassen → header action (default templates: primary)", "date fields native input → <DateInput>", "Per E-Mail senden → confirm (letters.confirmSend)", "PDF herunterladen / In Dateien ablegen → kept"]},
       "file": "src/app/(app)/files/templates/[id]/page.tsx",
       "title": "<Template name>",
       "purpose": "Fill a letter template for a contact (and optionally a rental), preview it on paper, download as PDF, store it in files or send it by email; edit/copy/trash the template.",

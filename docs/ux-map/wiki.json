@@ -6,6 +6,7 @@
   "pages": [
     {
       "route": "/wiki",
+      "redesign": {"research": "Notion (sidebar page tree, 'Move to…' command with a page search, trash with restore, new page = an empty editor that exists on first edit), Linear docs. Phones: the tree opens as a full sheet.", "job": "Find a page (tree, search, recently changed) or start a new one.", "phone": "Toolbar: search + 'Seiten' button (tree in a sheet). Recently changed rows; EmptyState 'Erste Seite anlegen' for a fresh wiki. Round + Neue Seite. ⋯ Papierkorb.", "desktop": "Tree left, search + recent right.", "moves": ["trash text link + ?status=trash → ⋯ menu item, ?trash=1 (old param redirects)", "hand-made lists → kept as rows (title + snippet + date)", "empty wiki → EmptyState with Neue Seite", "tree hidden on phones → 'Seiten' sheet"]},
       "file": "src/app/(app)/wiki/page.tsx",
       "title": "Wissen (Papierkorb view: list heading 'Papierkorb')",
       "purpose": "Browse the page tree, search titles and texts, see recently changed pages, open the trash.",
@@ -42,6 +43,7 @@
     },
     {
       "route": "/wiki/new",
+      "redesign": {"job": "Start a page without creating anything until it's saved.", "phone": "Form: title (+ parent hint) and SaveBar 'Seite anlegen'; the page is created on submit and opens in the editor.", "desktop": "Same.", "moves": ["create on GET (spinner) → form POST newPageAction (title, parent_id)"]},
       "file": "src/app/(app)/wiki/new/page.tsx",
       "title": "Seite wird angelegt …",
       "purpose": "Creates an untitled page (optionally under ?parent=) on mount and redirects to it.",
@@ -57,6 +59,7 @@
     },
     {
       "route": "/wiki/[id]",
+      "redesign": {"job": "Read or edit one page; move it; share it.", "phone": "PageHeader with crumbs (back = parent page). Header actions: Teilen; ⋯ Unterseite, Verschieben nach…, Verlauf, In den Papierkorb (asks). Tree as a sheet from 'Seiten'.", "desktop": "Tree left (drag & drop stays), page right; same header.", "moves": ["hand-built header row → PageHeader (crumbs, actions, menu)", "Unterseite (form button) → ⋯ link /wiki/new?parent=<id>", "Teilen → header action (popover kept)", "new: ⋯ Verschieben nach… → sheet ?edit=move with a page picker (top level or under a page) → movePageAction", "drag & drop → kept on desktop", "Verlauf sheet → kept", "trash state + Wiederherstellen → kept"]},
       "file": "src/app/(app)/wiki/[id]/page.tsx",
       "title": "<Page title>",
       "purpose": "Read or edit a wiki page in place (rich text, autosave), manage sub-pages, sharing/visibility, icon, history and trash.",

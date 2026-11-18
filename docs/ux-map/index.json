@@ -386,6 +386,7 @@
     }
   ],
   "shell": {
+    "lastPass": {"moves": ["Neue Organisation for single-org people → Profil › Deine Organisationen AddLink + single-org switcher shows a small menu too", "shortcuts N, /, ⌘K → '?' key opens a 'Tastenkürzel' sheet; user menu item 'Tastenkürzel'", "Einstellungen sidebar → /settings (grouped index on phones); Konto → Profil"]},
     "files": [
       "src/components/app-shell.tsx",
       "src/app/(app)/layout.tsx",

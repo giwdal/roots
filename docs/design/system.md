@@ -47,6 +47,14 @@ Never hard-code `h-7/h-8/h-9` on a control; use the component sizes.
 Readability: prose max ~70 characters (`max-w-prose`), never all caps for more than a label, text contrast ≥ 4.5:1
 (muted text included), line-height 1.45 for body.
 
+## Contrast & surfaces (after Linear's UI redesign, https://linear.app/now/how-we-redesigned-the-linear-ui)
+- Neutral chrome: greys only (`theme.css`), no tinted UI chrome; colour is for meaning (status, areas, links, focus).
+- Text and neutral icons: darker in light mode, lighter in dark mode than "default" shadcn (foreground 0.17 / 0.96,
+  muted 0.46 / 0.71 L in oklch), so content reads first.
+- Surfaces as elevation steps, each a little lighter in dark mode (darker in light): background → card/panel →
+  popover/dialog; never more than these three. Borders 1 px at low contrast.
+- Light and dark come from the same rules (oklch lightness steps), so they stay in sync.
+
 ## Radius, borders, elevation
 Controls `rounded-lg`, cards/tiles/groups `rounded-xl`, sheets/dialogs `rounded-2xl`, badges/pills `rounded-full`.
 1 px `border-border` for separation; shadows only on floating things (menus, sheets, tab bar).

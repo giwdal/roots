@@ -11,3 +11,9 @@ export async function trashMany(ctx: Ctx, table: string, ids: string[]) {
   const results = await Promise.all(ids.map((id) => ctx.supabase.rpc("soft_delete", { p_table: table, p_id: id })))
   return results.find((r) => r.error)?.error ?? null
 }
+
+/** Restores each id from the trash (permission checked in the DB per row); the first error, if any. */
+export async function restoreMany(ctx: Ctx, table: string, ids: string[]) {
+  const results = await Promise.all(ids.map((id) => ctx.supabase.rpc("restore_deleted", { p_table: table, p_id: id })))
+  return results.find((r) => r.error)?.error ?? null
+}

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { TypedInput } from "@/components/typed-input"
-import { FlaskConicalIcon } from "lucide-react"
+import { FlaskConicalIcon, XIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
 import { FilterMenu } from "@/components/filter-menu"
 import { Page, PageHeader } from "@/components/page"
@@ -40,9 +41,13 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
     .range(...pageRange(page))
   if (q) query = query.or(`customer_email.ilike.%${q}%,customer_name.ilike.%${q}%`)
   if (status && STATUSES.includes(status)) query = query.eq("status", status)
-  const [{ data }, { data: providers }] = await Promise.all([
+  // ?event=<id>: the ticket orders of one event (linked from the event page).
+  const eventId = /^[0-9a-f-]{36}$/.test(param(sp, "event") ?? "") ? param(sp, "event")! : null
+  if (eventId) query = query.eq("source_module", "tickets").eq("source_id", eventId)
+  const [{ data }, { data: providers }, { data: forEvent }] = await Promise.all([
     query,
     ctx.supabase.from("org_integrations").select("provider, status, config").eq("org_id", ctx.org.id).in("provider", ["stripe", "sumup"]),
+    eventId ? ctx.supabase.from("events").select("id, title").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
   ])
   // Any payment provider that can take payments (SumUp needs the payments right too); else a hint.
   const ready = (providers ?? []).some((p) => p.status === "connected" && (p.provider !== "sumup" || (p.config as Record<string, unknown>)?.can_take_payments))
@@ -79,6 +84,11 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox q={q} label={t("common.search")} />
         <FilterMenu param="status" label={t("payments.status")} allLabel={t("payments.all")} options={STATUSES.map((x) => ({ value: x, label: t.dynamic(`payments.statuses.${x}`) }))} />
+        {forEvent && (
+          <Button render={<Link href={withParams(sp, { event: undefined, page: undefined })} aria-label={t("common.clear")} />} nativeButton={false} size="sm" variant="secondary">
+            {t("payments.forEvent", { title: forEvent.title })} <XIcon />
+          </Button>
+        )}
       </div>
 
       <DataTable

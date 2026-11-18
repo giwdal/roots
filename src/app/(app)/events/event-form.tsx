@@ -16,9 +16,9 @@ import { DateInput } from "@/components/date-input"
 
 type Ev = Tables<"events">
 
-// Event form (new event drawer + the event page) and the status badge (list + page).
+// Event form (new event page + the event's edit sheet) and the status badge (list + page).
 export function StatusBadge({ t, status }: { t: T; status: string }) {
-  const variant = status === "published" ? "default" : status === "cancelled" ? "destructive" : "secondary"
+  const variant = status === "published" ? "default" : status === "cancelled" ? "destructive" : status === "trashed" ? "outline" : "secondary"
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 
@@ -55,8 +55,8 @@ export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd
         <FormCard id="where" title={t("eventsPage.where")}>
           {(locations?.length ?? 0) > 0 && (
             <div className="grid gap-2">
-              <Label htmlFor="ev-location">{t("locations.title")}</Label>
-              <Choice id="ev-location" name="location" label={t("locations.title")} defaultValue={ev?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+              <Label htmlFor="ev-location">{t("eventsPage.savedPlace")}</Label>
+              <Choice id="ev-location" name="location" label={t("eventsPage.savedPlace")} defaultValue={ev?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -86,7 +86,7 @@ export async function EventForm({ t, action, ev, disabled }: { t: T; action: (fd
             return (
               <div key={i} className="grid gap-2 sm:grid-cols-[12rem_1fr]">
                 <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
-                <Input name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} inputMode="url" placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
+                <TypedInput kind="url" name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
               </div>
             )
           })}

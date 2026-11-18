@@ -1,76 +1,275 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
+import { CalendarClockIcon, CheckCircle2Icon, CircleIcon, ExternalLinkIcon, FolderKanbanIcon, ListChecksIcon, PlusIcon, ReceiptIcon, ScanLineIcon, WalletIcon, type LucideIcon } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { DetailList } from "@/components/detail-list"
 import { FileList } from "@/components/file-list"
 import { ImageForm } from "@/components/image-form"
 import { Notice } from "@/components/notice"
-import { FormCard, RecordLayout } from "@/components/page"
-import { SubmitButton } from "@/components/submit-button"
+import { RecordLayout } from "@/components/page"
+import { AreaIcon } from "@/components/area-icon"
+import { AddLink, Section } from "../section"
+import { Picture } from "@/components/picture"
+import { Stat, Stats } from "@/components/stats"
+import { UrlSheet } from "@/components/url-sheet"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { param, type SearchParams } from "@/lib/url"
-import { restoreEvent, setEventStatus, updateEvent, updateEventImage } from "../actions"
+import { loadFields, type CustomValues } from "@/lib/custom-fields"
+import { param, siteUrl, type SearchParams } from "@/lib/url"
+import { updateEvent, updateEventImage } from "../actions"
 import { EventForm } from "../event-form"
 
-// Event overview: all details, image, cancelling. (Header with publish + trash, and the tabs: ./layout.tsx.)
+// Event overview: what's the state (tickets, money, check-ins, waiting list), what's still missing before it goes
+// live, the facts, the next slots of the programme. Editing the event's own fields is a sheet (?edit=<id>).
 export default async function EventPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<SearchParams> }) {
   const { eventId } = await params
   const ctx = await requirePerm("events.view")
   const t = await getT()
   const sp = await searchParams
   const canManage = ctx.can("events.manage")
-  const { data: ev } = await ctx.supabase.from("events").select("*").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle()
+  const tickets = ctx.modules.has("tickets") && ctx.can("tickets.view")
+  const none = Promise.resolve({ data: null, count: null })
+  const on = (m: string, p: string) => ctx.modules.has(m) && ctx.can(p)
+  const [{ data: ev }, { data: sold }, { data: types }, { count: waiting }, { data: slots }, defs, { count: orders }, { count: shifts }, { count: lists }, { data: projects }] = await Promise.all([
+    ctx.supabase.from("events").select("*, locations(name, address), email_templates(name)").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
+    tickets ? ctx.supabase.from("tickets").select("type_id, status, price").eq("event_id", eventId).in("status", ["valid", "used"]) : none,
+    tickets ? ctx.supabase.from("ticket_types").select("id, guest_list_id, for_members").eq("event_id", eventId) : none,
+    tickets
+      ? ctx.supabase.from("event_waitlist").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("org_id", ctx.org.id).in("status", ["waiting", "offered"])
+      : none,
+    ctx.supabase.from("event_slots").select("id, title, stage, starts_at, artists(name)").eq("event_id", eventId).order("starts_at").limit(5),
+    loadFields(ctx.supabase, ctx.org.id, "events"),
+    // The event hub's connections to other modules (only those that are on and permitted).
+    on("payments", "payments.view")
+      ? ctx.supabase.from("pay_orders").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).eq("source_module", "tickets").eq("source_id", eventId).neq("status", "open")
+      : none,
+    on("shifts", "shifts.view") ? ctx.supabase.from("shifts").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).eq("event_id", eventId) : none,
+    on("guestlists", "guestlists.view")
+      ? ctx.supabase.from("guest_lists").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).eq("event_id", eventId).is("deleted_at", null)
+      : none,
+    on("projects", "projects.view")
+      ? ctx.supabase.from("project_links").select("projects(id, name)").eq("org_id", ctx.org.id).eq("entity", "events").eq("entity_id", eventId)
+      : none,
+  ])
   if (!ev) notFound()
 
   if (ev.deleted_at)
     return (
-      <div className="grid max-w-xl gap-3">
+      <>
         <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
         <p className="rounded-lg border bg-muted px-3 py-2 text-sm">
           {t("eventsPage.deletedOn", { date: t.date(ev.deleted_at), purge: t.date(new Date(new Date(ev.deleted_at).getTime() + 30 * 86_400_000)) })}
         </p>
-        {canManage && (
-          <form action={restoreEvent}>
-            <input type="hidden" name="id" value={ev.id} />
-            <SubmitButton>{t("eventsPage.restore")}</SubmitButton>
-          </form>
-        )}
-      </div>
+      </>
     )
+
+  const base = `/events/${ev.id}`
+  const shop = new Set((types ?? []).filter((ty) => !ty.guest_list_id && !ty.for_members).map((ty) => ty.id))
+  const shopSold = (sold ?? []).filter((k) => shop.has(k.type_id))
+  const revenue = shopSold.reduce((n, k) => n + (k.price ?? 0), 0)
+  const checkedIn = (sold ?? []).filter((k) => k.status === "used").length
+  const publicUrl = siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)
+  const links = (ev.links as { label: string; url: string }[] | null) ?? []
+  const custom = (ev.custom as CustomValues | null) ?? {}
+  const editing = canManage && param(sp, "edit") === ev.id
+  const door = ev.door as { cash_account_id?: string | null } | null
+  const linkedProjects = (projects ?? []).flatMap((l) => (l.projects ? [l.projects] : []))
+  const connections: { area: string; icon: LucideIcon; label: string; detail?: string | number; href: string; add?: { href: string; label: string } }[] = [
+    ...(on("tickets", "tickets.scan") || on("guestlists", "guestlists.checkin") ? [{ area: "events", icon: ScanLineIcon, label: t("tickets.scanNav"), href: `/scan?event=${ev.id}` }] : []),
+    ...(on("payments", "payments.view") ? [{ area: "finance", icon: ReceiptIcon, label: t("eventsPage.linked.orders"), detail: orders ?? 0, href: `/payments?event=${ev.id}` }] : []),
+    ...(on("guestlists", "guestlists.view")
+      ? [{ area: "events", icon: ListChecksIcon, label: t("guestlists.title"), detail: lists ?? 0, href: `${base}/guestlists`, add: ctx.can("guestlists.manage") ? { href: `/guestlists/new?event=${ev.id}`, label: t("guestlists.new") } : undefined }]
+      : []),
+    ...(on("shifts", "shifts.view")
+      ? [
+          {
+            area: "shifts",
+            icon: CalendarClockIcon,
+            label: t("shifts.title"),
+            detail: shifts ?? 0,
+            href: `/shifts?event=${ev.id}`,
+            add: ctx.can("shifts.manage") ? { href: `/shifts?event=${ev.id}&new=shift&start=${encodeURIComponent(ev.starts_at)}`, label: t("eventsPage.linked.planShifts") } : undefined,
+          },
+        ]
+      : []),
+    ...(on("cashbook", "cashbook.view") && door?.cash_account_id
+      ? [{ area: "finance", icon: WalletIcon, label: t("eventsPage.linked.cashbook"), href: `/cashbook?account=${door.cash_account_id}&month=${ev.starts_at.slice(0, 7)}` }]
+      : []),
+    ...linkedProjects.map((p) => ({ area: "projects", icon: FolderKanbanIcon, label: p.name, href: `/projects/${p.id}` })),
+  ]
+
+  // Before going live: what a good event page has (Luma/Eventbrite-style checklist), each step one click away.
+  const steps =
+    ev.status === "draft"
+      ? [
+          { done: !!(ev.venue_name || ev.location_id), label: t("eventsPage.steps.place"), href: `${base}?edit=${ev.id}` },
+          { done: !!ev.description, label: t("eventsPage.steps.description"), href: `${base}?edit=${ev.id}` },
+          { done: !!ev.image_path, label: t("eventsPage.steps.image"), href: `${base}#image` },
+          ...(tickets ? [{ done: shop.size > 0, label: t("eventsPage.steps.tickets"), href: `${base}/tickets?new=type` }] : []),
+        ]
+      : []
 
   return (
     <>
-      <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+      <Notice error={editing ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
+      {tickets && (
+        <Stats>
+          <Stat
+            label={t("eventsPage.stats.sold")}
+            value={ev.capacity ? `${shopSold.length} / ${ev.capacity}` : shopSold.length}
+            hint={ev.capacity ? t("eventsPage.stats.left", { count: Math.max(0, ev.capacity - (sold?.length ?? 0)) }) : undefined}
+            href={`${base}/tickets`}
+          />
+          <Stat label={t("eventsPage.stats.revenue")} value={t.money(revenue)} hint={t("eventsPage.stats.revenueHint")} href={`${base}/tickets#sold`} />
+          <Stat label={t("eventsPage.stats.checkedIn")} value={`${checkedIn} / ${sold?.length ?? 0}`} hint={t("eventsPage.stats.checkedInHint")} />
+          <Stat label={t("eventsPage.stats.waitlist")} value={waiting ?? 0} href={waiting ? `${base}/tickets#waitlist` : undefined} />
+        </Stats>
+      )}
       <RecordLayout
         aside={
           <>
-            {ctx.can("org.files.view") && (
-              <FormCard id="files" title={t("files.title")}>
-                <FileList ctx={ctx} entity="events" entityId={ev.id} back={`/events/${ev.id}`} hideTitle />
-              </FormCard>
+            {connections.length > 0 && (
+              <Section id="linked" title={t("eventsPage.linked.title")}>
+                <ul className="-mx-2 grid gap-0.5">
+                  {connections.map((c) => (
+                    <li key={c.href} className="flex items-center gap-1">
+                      <Link href={c.href} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-sm hover:bg-muted">
+                        <AreaIcon area={c.area} icon={c.icon} />
+                        <span className="min-w-0 flex-1 truncate">{c.label}</span>
+                        {c.detail != null && <span className="text-muted-foreground tabular-nums">{c.detail}</span>}
+                      </Link>
+                      {c.add && (
+                        <Tooltip>
+                          <TooltipTrigger render={<Button render={<Link href={c.add.href} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={c.add.label} />}>
+                            <PlusIcon />
+                          </TooltipTrigger>
+                          <TooltipContent>{c.add.label}</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
             )}
-            {canManage && (
-            <>
-              <FormCard id="image" title={t("eventsPage.image")}>
+            <Section id="image" title={t("eventsPage.image")}>
+              {canManage ? (
                 <ImageForm action={updateEventImage} id="ev-image" label={t("eventsPage.image")} hint={t("eventsPage.imageHint")} name={ev.title} path={ev.image_path} square hidden={{ id: ev.id }} />
-              </FormCard>
-              {ev.status === "published" && (
-                <FormCard id="cancel" title={t("eventsPage.cancel")} description={t("eventsPage.cancelConfirm")}>
-                  <form action={setEventStatus}>
-                    <input type="hidden" name="id" value={ev.id} />
-                    <input type="hidden" name="status" value="cancelled" />
-                    <SubmitButton variant="destructive" size="sm">
-                      {t("eventsPage.cancel")}
-                    </SubmitButton>
-                  </form>
-                </FormCard>
+              ) : (
+                <Picture path={ev.image_path} name={ev.title} size="lg" square />
               )}
-            </>
+            </Section>
+            {ctx.can("org.files.view") && (
+              <Section id="files" title={t("files.title")}>
+                <FileList ctx={ctx} entity="events" entityId={ev.id} back={base} hideTitle />
+              </Section>
             )}
           </>
         }
       >
-        {!canManage && <p className="text-sm text-muted-foreground">{t("eventsPage.readOnly")}</p>}
-        <EventForm t={t} action={updateEvent} ev={ev} disabled={!canManage} />
+        {steps.length > 0 && (
+          <Section id="steps" title={t("eventsPage.steps.title")} description={t("eventsPage.steps.text")}>
+            <ul className="grid gap-1">
+              {steps.map((s) => (
+                <li key={s.label}>
+                  <Link href={s.href} scroll={false} className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm hover:bg-muted">
+                    {s.done ? <CheckCircle2Icon className="size-4 text-primary" /> : <CircleIcon className="size-4 text-muted-foreground" />}
+                    <span className={s.done ? "text-muted-foreground line-through" : ""}>{s.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+        <Section
+          id="details"
+          title={t("eventsPage.details")}
+          action={
+            canManage && (
+              <Button render={<Link href={`${base}?edit=${ev.id}`} scroll={false} />} nativeButton={false} size="sm" variant="ghost">
+                {t("common.edit")}
+              </Button>
+            )
+          }
+        >
+          <DetailList
+            items={[
+              { label: t("eventsPage.startsAtShort"), value: t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" }) },
+              ev.ends_at && { label: t("eventsPage.endsAtShort"), value: t.date(ev.ends_at, { dateStyle: "full", timeStyle: "short" }) },
+              {
+                label: t("eventsPage.where"),
+                value: [ev.venue_name ?? ev.locations?.name, ev.venue_address ?? ev.locations?.address].filter(Boolean).join(", "),
+              },
+              { label: t("eventsPage.capacityShort"), value: ev.capacity ?? t("eventsPage.unlimited") },
+              {
+                label: t("eventsPage.publicPage"),
+                value:
+                  ev.status === "draft" ? (
+                    <span className="text-muted-foreground">{t("eventsPage.notLiveYet", { path: `/e/${ev.slug}` })}</span>
+                  ) : (
+                    <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 break-all underline underline-offset-4">
+                      /e/{ev.slug} <ExternalLinkIcon className="size-3.5" />
+                    </a>
+                  ),
+              },
+              links.length > 0 && {
+                label: t("eventsPage.links"),
+                value: (
+                  <span className="flex flex-wrap gap-x-3 gap-y-1">
+                    {links.map((l) => (
+                      <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                        {l.label}
+                      </a>
+                    ))}
+                  </span>
+                ),
+              },
+              ev.email_templates && { label: t("eventsPage.emailTemplate"), value: ev.email_templates.name },
+              ...defs.map((d) => ({ label: d.label, value: custom[d.key] == null ? null : String(custom[d.key]) })),
+            ]}
+          />
+        </Section>
+        {ev.description && (
+          <Section id="about" title={t("eventsPage.description")}>
+            <p className="text-sm whitespace-pre-line">{ev.description}</p>
+          </Section>
+        )}
+        <Section
+          id="programme"
+          title={t("eventsPage.programme")}
+          action={
+            slots?.length ? (
+              <Button render={<Link href={`${base}/lineup`} />} nativeButton={false} size="sm" variant="ghost">
+                {t("common.showAll")}
+              </Button>
+            ) : undefined
+          }
+        >
+          {slots?.length ? (
+            <ul className="grid gap-2 text-sm">
+              {slots.map((s) => (
+                <li key={s.id} className="flex gap-3">
+                  <span className="w-24 shrink-0 text-muted-foreground tabular-nums">{t.date(s.starts_at, { weekday: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="min-w-0 truncate font-medium">
+                    {s.artists?.name ?? s.title}
+                    {s.stage && <span className="font-normal text-muted-foreground"> · {s.stage}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : canManage ? (
+            <AddLink href={`${base}/lineup?new=slot`}>{t("lineup.newSlot")}</AddLink>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("lineup.empty")}</p>
+          )}
+        </Section>
       </RecordLayout>
+      {editing && (
+        <UrlSheet params={["edit"]} title={t("eventsPage.editTitle")}>
+          <Notice error={param(sp, "error")} />
+          <EventForm t={t} action={updateEvent} ev={ev} />
+        </UrlSheet>
+      )}
     </>
   )
 }

@@ -1,60 +1,113 @@
 import { notFound } from "next/navigation"
-import { CalendarClockIcon, ExternalLinkIcon, EyeOffIcon, ScanLineIcon, SendIcon, Trash2Icon } from "lucide-react"
-import { NavLink } from "@/components/nav-link"
+import { CalendarClockIcon, ExternalLinkIcon, EyeOffIcon, PencilIcon, RotateCcwIcon, ScanLineIcon, SendIcon, Trash2Icon, UndoIcon, XCircleIcon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { SubmitButton } from "@/components/submit-button"
-import { PageHeader } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { siteUrl } from "@/lib/url"
-import { setEventStatus, trashEvent } from "../actions"
+import { restoreEvent, setEventStatus, trashEvent } from "../actions"
 import { StatusBadge } from "../event-form"
+import { EventViews } from "./event-views"
+import Link from "next/link"
 
-// One event: header (title, date, status, public page) and its own tabs; shifts, guest lists and the door are the
-// other areas, filtered to this event.
+// One event: a compact status header (status, date, place; the next step as the primary button), the sub-views as
+// one segmented row, then the page. Shifts and the door are their own areas, linked filtered to this event.
 export default async function EventLayout({ children, params }: { children: React.ReactNode; params: Promise<{ eventId: string }> }) {
   const { eventId } = await params
   if (!/^[0-9a-f-]{36}$/.test(eventId)) notFound()
   const ctx = await requirePerm("events.view")
   if (!ctx.modules.has("events")) notFound()
   const t = await getT()
-  const { data: ev } = await ctx.supabase.from("events").select("id, title, slug, status, starts_at, deleted_at").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle()
+  const { data: ev } = await ctx.supabase
+    .from("events")
+    .select("id, title, slug, status, starts_at, ends_at, venue_name, deleted_at, locations(name)")
+    .eq("id", eventId)
+    .eq("org_id", ctx.org.id)
+    .maybeSingle()
   if (!ev) notFound()
   const on = (m: string, p: string) => ctx.modules.has(m) && ctx.can(p)
   const canManage = ctx.can("events.manage")
+  const canDoor = on("tickets", "tickets.scan") || on("guestlists", "guestlists.checkin")
+  const live = !ev.deleted_at
+  const base = `/events/${ev.id}`
+  const sameDay = ev.ends_at && t.date(ev.ends_at, { dateStyle: "short" }) === t.date(ev.starts_at, { dateStyle: "short" })
+  const when = `${t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" })}${ev.ends_at ? ` – ${t.date(ev.ends_at, sameDay ? { timeStyle: "short" } : { dateStyle: "medium", timeStyle: "short" })}` : ""}`
+  const place = ev.venue_name ?? ev.locations?.name
+  const statusForm = (status: string) => (
+    <form id={`ev-status-${status}`} action={setEventStatus} hidden>
+      <input type="hidden" name="id" value={ev.id} />
+      <input type="hidden" name="status" value={status} />
+    </form>
+  )
+  const views = [
+    { href: base, label: t("nav.overview") },
+    ...(on("tickets", "tickets.view") ? [{ href: `${base}/tickets`, label: t("tickets.title") }] : []),
+    { href: `${base}/lineup`, label: t("eventsPage.views.lineup") },
+    ...(on("guestlists", "guestlists.view") ? [{ href: `${base}/guestlists`, label: t("guestlists.title") }] : []),
+  ]
+
   return (
-    <div className="grid max-w-6xl gap-6">
+    <Page size="record">
       <PageHeader
         crumbs={[{ href: "/events", label: t("eventsPage.nav") }, { label: ev.title }]}
         title={ev.title}
-        badge={<StatusBadge t={t} status={ev.status} />}
-        meta={t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" })}
+        badge={live ? <StatusBadge t={t} status={ev.status} /> : <StatusBadge t={t} status="trashed" />}
+        meta={
+          <>
+            <span>{when}</span>
+            {place && <span>· {place}</span>}
+          </>
+        }
         actions={
-          ev.status !== "draft" &&
-          !ev.deleted_at && (
-            <Button render={<a href={siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)} target="_blank" rel="noreferrer" />} nativeButton={false} size="sm" variant="outline">
-              <ExternalLinkIcon /> {t("eventsPage.publicLink")}
-            </Button>
+          live && (
+            <>
+              {canManage && (
+                <Button render={<Link href={`${base}?edit=${ev.id}`} scroll={false} />} nativeButton={false} size="sm" variant="outline">
+                  <PencilIcon /> {t("common.edit")}
+                </Button>
+              )}
+              {ev.status !== "draft" && (
+                <Button render={<a href={siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)} target="_blank" rel="noreferrer" />} nativeButton={false} size="sm" variant="outline">
+                  <ExternalLinkIcon /> {t("eventsPage.publicLink")}
+                </Button>
+              )}
+            </>
           )
         }
         menu={
-          !ev.deleted_at &&
-          (canManage || on("shifts", "shifts.view") || on("tickets", "tickets.scan") || on("guestlists", "guestlists.checkin")) && (
+          live &&
+          (canManage || on("shifts", "shifts.view") || canDoor) && (
             <ActionsMenu>
+              {canDoor && ev.status !== "published" && (
+                <MenuLink href={`/scan?event=${ev.id}`} icon={<ScanLineIcon />}>
+                  {t("tickets.scanNav")}
+                </MenuLink>
+              )}
               {on("shifts", "shifts.view") && (
                 <MenuLink href={`/shifts?event=${ev.id}`} icon={<CalendarClockIcon />}>
                   {t("shifts.title")}
                 </MenuLink>
               )}
-              {(on("tickets", "tickets.scan") || on("guestlists", "guestlists.checkin")) && (
-                <MenuLink href={`/scan?event=${ev.id}`} icon={<ScanLineIcon />}>
-                  {t("tickets.scanNav")}
-                </MenuLink>
+              {canManage && ev.status === "published" && (
+                <MenuSubmit form="ev-status-draft" icon={<EyeOffIcon />} confirm="eventsPage.confirmUnpublish">
+                  {t("eventsPage.unpublish")}
+                </MenuSubmit>
+              )}
+              {canManage && ev.status === "cancelled" && (
+                <MenuSubmit form="ev-status-draft" icon={<UndoIcon />}>
+                  {t("eventsPage.uncancel")}
+                </MenuSubmit>
               )}
               {canManage && (
                 <>
                   <MenuSeparator />
+                  {ev.status === "published" && (
+                    <MenuSubmit form="ev-status-cancelled" icon={<XCircleIcon />} destructive confirm="eventsPage.confirmCancel">
+                      {t("eventsPage.cancel")}
+                    </MenuSubmit>
+                  )}
                   <MenuSubmit form="trash-event" icon={<Trash2Icon />} destructive>
                     {t("eventsPage.toTrash")}
                   </MenuSubmit>
@@ -64,36 +117,42 @@ export default async function EventLayout({ children, params }: { children: Reac
           )
         }
         primary={
-          canManage &&
-          !ev.deleted_at &&
-          ev.status !== "cancelled" && (
-            <form action={setEventStatus}>
-              <input type="hidden" name="id" value={ev.id} />
-              <input type="hidden" name="status" value={ev.status === "published" ? "draft" : "published"} />
-              <SubmitButton size="sm" variant={ev.status === "published" ? "outline" : "default"}>
-                {ev.status === "published" ? <EyeOffIcon /> : <SendIcon />} {ev.status === "published" ? t("eventsPage.unpublish") : t("eventsPage.publish")}
-              </SubmitButton>
-            </form>
-          )
+          !canManage && !canDoor ? undefined : !live ? (
+            canManage && (
+              <form action={restoreEvent}>
+                <input type="hidden" name="id" value={ev.id} />
+                <SubmitButton size="sm">
+                  <RotateCcwIcon /> {t("eventsPage.restore")}
+                </SubmitButton>
+              </form>
+            )
+          ) : ev.status === "draft" ? (
+            canManage && (
+              <form action={setEventStatus}>
+                <input type="hidden" name="id" value={ev.id} />
+                <input type="hidden" name="status" value="published" />
+                <SubmitButton size="sm">
+                  <SendIcon /> {t("eventsPage.publish")}
+                </SubmitButton>
+              </form>
+            )
+          ) : ev.status === "published" && canDoor ? (
+            { href: `/scan?event=${ev.id}`, label: t("tickets.scanNav"), icon: ScanLineIcon }
+          ) : undefined
         }
       />
-      {canManage && !ev.deleted_at && (
-        <form id="trash-event" action={trashEvent} hidden>
-          <input type="hidden" name="id" value={ev.id} />
-        </form>
+      {canManage && live && (
+        <>
+          {statusForm("draft")}
+          {statusForm("cancelled")}
+          <form id="trash-event" action={trashEvent} hidden>
+            <input type="hidden" name="id" value={ev.id} />
+          </form>
+        </>
       )}
-      {!ev.deleted_at && (
-        <nav aria-label={ev.title} className="-mx-1 flex gap-1 overflow-x-auto border-b px-1 pb-2">
-          <NavLink href={`/events/${ev.id}`} exact>
-            {t("nav.overview")}
-          </NavLink>
-          <NavLink href={`/events/${ev.id}/lineup`}>{t("lineup.title")}</NavLink>
-          {on("tickets", "tickets.view") && <NavLink href={`/events/${ev.id}/tickets`}>{t("tickets.title")}</NavLink>}
-          {on("guestlists", "guestlists.view") && <NavLink href={`/events/${ev.id}/guestlists`}>{t("guestlists.title")}</NavLink>}
-        </nav>
-      )}
+      {live && views.length > 1 && <EventViews label={ev.title} items={views} />}
       {children}
-    </div>
+    </Page>
   )
 }
 

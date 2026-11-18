@@ -49,7 +49,13 @@
     },
     "confirmTrashManyHint": "They can be restored from the trash for 30 days.",
     "confirmDelete": "Really delete?",
-    "confirmDeleteHint": "This can't be undone."
+    "confirmDeleteHint": "This can't be undone.",
+    "edit": "Edit",
+    "showAll": "Show all",
+    "bulkRestored": {
+      "one": "1 item restored.",
+      "other": "{count} items restored."
+    }
   },
   "auth": {
     "title": "Sign in to roots",
@@ -1066,7 +1072,8 @@
     "refundLeft": "Leave empty = everything refundable: {amount}.",
     "feeKept": "The service fee ({amount}) isn't refunded.",
     "noTerminal": "No card terminal set up.",
-    "refundInShop": "Refund in the shop order (pieces, stock, invoice)"
+    "refundInShop": "Refund in the shop order (pieces, stock, invoice)",
+    "forEvent": "Event: {title}"
   },
   "checkout": {
     "title": "Order",
@@ -1292,7 +1299,7 @@
     "slug": "Slug",
     "startsAt": "Starts",
     "endsAt": "Ends (optional)",
-    "venueName": "Venue",
+    "venueName": "Venue name",
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
@@ -1305,7 +1312,8 @@
     "statuses": {
       "draft": "Draft",
       "published": "Published",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "trashed": "In the trash"
     },
     "publish": "Publish",
     "unpublish": "Back to draft",
@@ -1334,7 +1342,54 @@
     "links": "Links",
     "linksHint": "Up to 3 links with a title, e.g. Telegram group, Instagram, Resident Advisor – as buttons on the event page.",
     "linkTitle": "Title",
-    "linkUrl": "Link (https://…)"
+    "linkUrl": "Link (https://…)",
+    "views": {
+      "lineup": "Lineup"
+    },
+    "uncancel": "Undo cancellation",
+    "confirmUnpublish": "Back to draft?",
+    "confirmUnpublishHint": "The public page and the ticket shop go offline. Sold tickets stay valid.",
+    "confirmCancel": "Cancel the event?",
+    "confirmCancelHint": "The public page shows it as cancelled and subscribers (webhooks, Telegram) are notified. Tickets are not refunded by this.",
+    "noMatch": "No events found.",
+    "event": "Event",
+    "savedPlace": "Saved place",
+    "stats": {
+      "sold": "Sold",
+      "left": {
+        "one": "1 place left",
+        "other": "{count} places left"
+      },
+      "revenue": "Revenue",
+      "revenueHint": "Ticket prices, without guest lists",
+      "checkedIn": "Checked in",
+      "checkedInHint": "of all tickets incl. guest lists",
+      "waitlist": "Waiting list"
+    },
+    "steps": {
+      "title": "Before you publish",
+      "text": "Still a draft: only your team sees this event.",
+      "place": "Add the place",
+      "description": "Write a description",
+      "image": "Upload a picture",
+      "tickets": "Add a ticket type"
+    },
+    "details": "Details",
+    "startsAtShort": "Starts",
+    "endsAtShort": "Ends",
+    "capacityShort": "Capacity",
+    "unlimited": "unlimited",
+    "notLiveYet": "{path} – reachable once published",
+    "programme": "Programme",
+    "editTitle": "Edit event",
+    "guestlistsEmptyText": "Guest lists for this event, e.g. for artists, crew or friends – each with its own sign-up link.",
+    "guestlistsHint": "This event's lists and permanent lists (valid at every event).",
+    "linked": {
+      "title": "Linked",
+      "orders": "Orders",
+      "planShifts": "Plan shifts",
+      "cashbook": "Cash book (door)"
+    }
   },
   "contacts": {
     "nav": "Contacts",

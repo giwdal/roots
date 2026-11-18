@@ -47,7 +47,6 @@ export function MenuDownload({ href, icon, children }: { href: string; icon?: Re
   )
 }
 
-// Destructive items ask first (<ConfirmHost>); `confirm` = the question's message key.
 /** A titled group of items (e.g. "Mail erneut senden" → one item per mail). */
 export function MenuGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -58,9 +57,11 @@ export function MenuGroup({ label, children }: { label: string; children: React.
   )
 }
 
-export function MenuSubmit({ form, icon, children, destructive, confirm = "common.confirmTrash" }: { form: string; icon?: React.ReactNode; children: React.ReactNode; destructive?: boolean; confirm?: string }) {
+// Destructive items ask first (<ConfirmHost>, default: the trash question); `confirm` = the question's message key,
+// also for items that aren't red but still need a yes (unpublish, resend).
+export function MenuSubmit({ form, icon, children, destructive, confirm }: { form: string; icon?: React.ReactNode; children: React.ReactNode; destructive?: boolean; confirm?: string }) {
   return (
-    <DropdownMenuItem render={<button type="submit" form={form} className="w-full text-left" data-confirm={destructive ? confirm : undefined} />} nativeButton variant={destructive ? "destructive" : "default"}>
+    <DropdownMenuItem render={<button type="submit" form={form} className="w-full text-left" data-confirm={confirm ?? (destructive ? "common.confirmTrash" : undefined)} />} nativeButton variant={destructive ? "destructive" : "default"}>
       {icon} {children}
     </DropdownMenuItem>
   )

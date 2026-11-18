@@ -1,6 +1,6 @@
 "use server"
 
-import { pickedIds, trashMany } from "@/lib/bulk"
+import { pickedIds, restoreMany, trashMany } from "@/lib/bulk"
 import { revalidatePath } from "next/cache"
 import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
@@ -75,16 +75,17 @@ export async function updateEvent(fd: FormData) {
   const id = idOf(fd)
   const r = readEvent(fd)
   const here = `${PATH}/${id}`
-  if ("error" in r) back(here, { error: t.dynamic(r.error!) })
+  const retry = `${here}?edit=${id}` // errors keep the edit sheet open
+  if ("error" in r) back(retry, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
-  if ("error" in c) back(here, { error: `${c.field}: ${t.dynamic(c.error)}` })
+  if ("error" in c) back(retry, { error: `${c.field}: ${t.dynamic(c.error)}` })
   const { error, count } = await ctx.supabase
     .from("events")
     .update({ ...r.row!, custom: c.custom, ...(r.slug ? { slug: r.slug } : {}) }, { count: "exact" })
     .eq("id", id)
     .eq("org_id", ctx.org.id)
   if (error || !count)
-    back(here, { error: error?.code === "23505" ? t("errors.slug_taken") : error ? dbError(t, error) : t("errors.not_allowed") })
+    back(retry, { error: error?.code === "23505" ? t("errors.slug_taken") : error ? dbError(t, error) : t("errors.not_allowed") })
   deliverSoon()
   refreshPublic(ctx.org.id) // public pages show this
   back(here, { ok: t("eventsPage.saved") })
@@ -151,4 +152,13 @@ export async function bulkTrashEvents(fd: FormData) {
   const error = ids.length ? await trashMany(ctx, "public.events", ids) : null
   refreshPublic(ctx.org.id)
   back(PATH, error ? { error: dbError(t, error) } : { ok: t("common.bulkTrashed", { count: ids.length }) })
+}
+
+/** Bulk bar in the trash: restore the ticked events. */
+export async function bulkRestoreEvents(fd: FormData) {
+  const { ctx, t } = await manager()
+  const ids = pickedIds(fd)
+  const error = ids.length ? await restoreMany(ctx, "public.events", ids) : null
+  refreshPublic(ctx.org.id)
+  back(`${PATH}?trash=1`, error ? { error: error.code === "23505" ? t("errors.slug_taken") : dbError(t, error) } : { ok: t("common.bulkRestored", { count: ids.length }) })
 }

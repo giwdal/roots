@@ -49,7 +49,13 @@
     },
     "confirmTrashManyHint": "Aus dem Papierkorb lassen sie sich 30 Tage lang wiederherstellen.",
     "confirmDelete": "Wirklich löschen?",
-    "confirmDeleteHint": "Das lässt sich nicht rückgängig machen."
+    "confirmDeleteHint": "Das lässt sich nicht rückgängig machen.",
+    "edit": "Bearbeiten",
+    "showAll": "Alle anzeigen",
+    "bulkRestored": {
+      "one": "1 Eintrag wiederhergestellt.",
+      "other": "{count} Einträge wiederhergestellt."
+    }
   },
   "auth": {
     "title": "Bei roots anmelden",
@@ -1066,7 +1072,8 @@
     "refundLeft": "Leer lassen = alles Erstattbare: {amount}.",
     "feeKept": "Die Servicegebühr ({amount}) wird nicht erstattet.",
     "noTerminal": "Kein Kartenterminal eingerichtet.",
-    "refundInShop": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)"
+    "refundInShop": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)",
+    "forEvent": "Event: {title}"
   },
   "checkout": {
     "title": "Bestellung",
@@ -1292,7 +1299,7 @@
     "slug": "Slug",
     "startsAt": "Beginn",
     "endsAt": "Ende (optional)",
-    "venueName": "Ort",
+    "venueName": "Name des Orts",
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
@@ -1305,7 +1312,8 @@
     "statuses": {
       "draft": "Entwurf",
       "published": "Veröffentlicht",
-      "cancelled": "Abgesagt"
+      "cancelled": "Abgesagt",
+      "trashed": "Im Papierkorb"
     },
     "publish": "Veröffentlichen",
     "unpublish": "Zurück zu Entwurf",
@@ -1323,10 +1331,10 @@
     "restored": "Wiederhergestellt.",
     "deletedOn": "Gelöscht am {date}, wird am {purge} endgültig entfernt.",
     "readOnly": "Du kannst Events ansehen, aber nicht bearbeiten.",
-    "emptyText": "Lege eine Veranstaltung an, verkaufe Tickets oder sammle Anmeldungen und plane Schichten und Gästeliste dazu.",
+    "emptyText": "Lege ein Event an, verkaufe Tickets oder sammle Anmeldungen und plane Schichten und Gästeliste dazu.",
     "basics": "Titel & Zeit",
     "publicPage": "Öffentliche Seite",
-    "create": "Veranstaltung anlegen",
+    "create": "Event anlegen",
     "emails": "E-Mails",
     "emailsHint": "Ticket-, Gästelisten- und Wartelisten-Mails dieses Events. Ohne Auswahl: {fallback}.",
     "emailTemplate": "Vorlage",
@@ -1334,7 +1342,54 @@
     "links": "Links",
     "linksHint": "Bis zu 3 Links mit Titel, z. B. Telegram-Gruppe, Instagram, Resident Advisor – als Buttons auf der Eventseite.",
     "linkTitle": "Titel",
-    "linkUrl": "Link (https://…)"
+    "linkUrl": "Link (https://…)",
+    "views": {
+      "lineup": "Lineup"
+    },
+    "uncancel": "Absage zurücknehmen",
+    "confirmUnpublish": "Zurück zu Entwurf?",
+    "confirmUnpublishHint": "Die öffentliche Seite und der Ticketshop sind dann nicht mehr erreichbar. Verkaufte Tickets bleiben gültig.",
+    "confirmCancel": "Event absagen?",
+    "confirmCancelHint": "Die öffentliche Seite zeigt es als abgesagt, und wer es abonniert hat (Webhooks, Telegram), wird informiert. Tickets werden dabei nicht erstattet.",
+    "noMatch": "Keine Events gefunden.",
+    "event": "Event",
+    "savedPlace": "Gespeicherter Ort",
+    "stats": {
+      "sold": "Verkauft",
+      "left": {
+        "one": "noch 1 Platz frei",
+        "other": "noch {count} Plätze frei"
+      },
+      "revenue": "Umsatz",
+      "revenueHint": "Ticketpreise, ohne Gästeliste",
+      "checkedIn": "Eingecheckt",
+      "checkedInHint": "von allen Tickets inkl. Gästeliste",
+      "waitlist": "Warteliste"
+    },
+    "steps": {
+      "title": "Vor dem Veröffentlichen",
+      "text": "Noch ein Entwurf: nur dein Team sieht dieses Event.",
+      "place": "Ort eintragen",
+      "description": "Beschreibung schreiben",
+      "image": "Bild hochladen",
+      "tickets": "Ticketart anlegen"
+    },
+    "details": "Details",
+    "startsAtShort": "Beginn",
+    "endsAtShort": "Ende",
+    "capacityShort": "Kapazität",
+    "unlimited": "unbegrenzt",
+    "notLiveYet": "{path} – erst nach dem Veröffentlichen erreichbar",
+    "programme": "Programm",
+    "editTitle": "Event bearbeiten",
+    "guestlistsEmptyText": "Gästelisten für dieses Event, z. B. für Artists, Crew oder Freunde – mit eigenem Link zum Eintragen.",
+    "guestlistsHint": "Listen dieses Events und dauerhafte Listen (gelten bei jedem Event).",
+    "linked": {
+      "title": "Verknüpft",
+      "orders": "Bestellungen",
+      "planShifts": "Schichten planen",
+      "cashbook": "Kassenbuch (Abendkasse)"
+    }
   },
   "contacts": {
     "nav": "Kontakte",

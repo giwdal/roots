@@ -24,6 +24,11 @@ node_modules/next/dist/docs/ when unsure.
   shop/stock-sheet.tsx (one sheet used from list and record), the order page's next-step button + progress row,
   the `?contact=` filter chip + the module's rows on the contact page, lineup/artist-field.tsx (RecordPicker with
   create-from-typed-name), the `gear: true` flag in src/modules/nav.ts (settings reachable by gear, not in the sidebar).
+- From Finanzen: components/link-rows.tsx (`<LinkRows>`: the "Verknüpft" section of a record, icon · title · detail ·
+  badge ›), `<SaveBar confirm="<key>">` (a save that asks first: book, close a month), payments/badges.tsx +
+  invoices/badges.tsx (payment / document status → colour), a header form button that submits the page's form with
+  `form="<id>" formAction={…}` (Ausstellen = save + issue), invoices/new (the record's editor on /new, created on save),
+  `<NumberRangeFields suffix>` (number ranges inside a bigger form), reports/period-menu.tsx (presets as a dropdown).
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

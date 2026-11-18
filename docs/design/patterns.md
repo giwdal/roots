@@ -133,7 +133,7 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Schichten | Plan · Stunden | Meine Schichten → segment "Meine" on Plan + Start; Team & Positionen, Einstellungen → gear |
 | Personal | Personen · Abwesenheiten · Lohn | Organigramm → segment on Personen |
 | Kurse | – | |
-| Finanzen | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
+| Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
 | Kommunikation | E-Mails · Formulare | Automationen → segment on E-Mails (Kampagnen · Automationen · Versand); Vorlagen → E-Mail Einstellungen |
 | Automationen | – | |
 | Projekte | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |

@@ -9,20 +9,21 @@
       "href": "/invoices"
     },
     {
-      "label": "Kassenbuch",
-      "key": "cashbook.nav",
-      "href": "/cashbook"
-    },
-    {
       "label": "Zahlungen",
       "key": "payments.nav",
       "href": "/payments"
     },
     {
+      "label": "Kassenbuch",
+      "key": "cashbook.nav",
+      "href": "/cashbook"
+    },
+    {
       "label": "Einstellungen",
       "key": "common.settings",
       "href": "/invoices/settings",
-      "permission": "invoices.manage"
+      "permission": "invoices.manage",
+      "notes": "gear only (nav child gear: true), listed in Settings › Bereiche"
     }
   ],
   "pages": [
@@ -369,8 +370,19 @@
           "?new=entry sheet: direction native radios → <SegmentGroup> Einnahme · Ausgabe; amount TypedInput money, date, description, category (datalist kept: suggestions without a new table), sphere NativeSelect → <Choice> (4 → segments), counterparty, invoice NativeSelect (100) → <RecordPicker> with server search of open invoices; bookHint kept; 'Buchen' SubmitButton → <SaveBar label='Buchen' always> with confirm cashbook.confirmBook",
           "?new=account / ?edit_account sheet: name, kind NativeSelect → <Choice> segments, opening Input decimal → TypedInput money, opening_on, active checkbox; 'Speichern' → SaveBar (create: 'Kasse anlegen' always)",
           "?edit=<entry> sheet: DetailList (unchanged) + invoice link, Belege FileList (unchanged), 'Stornieren' → sheet header action with confirm cashbook.confirmReverse + Hint"
-        ]
-      }
+        ],
+        "built": true,
+        "kept": "uxNote 6 kept: categories stay free text with suggestions (no new table). uxNote 8: 'Kasse bearbeiten' moved into ⋯ next to 'Neue Kasse'; no delete – entries reference the account, it is switched off with 'Aktiv'. ?edit_account= kept (?edit= is the entry sheet). A negative opening balance can't be typed any more (money input); the server still accepts it."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7
+      ]
     }
   ]
 }

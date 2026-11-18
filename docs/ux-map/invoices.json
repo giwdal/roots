@@ -9,20 +9,21 @@
       "href": "/invoices"
     },
     {
-      "label": "Kassenbuch",
-      "key": "cashbook.nav",
-      "href": "/cashbook"
-    },
-    {
       "label": "Zahlungen",
       "key": "payments.nav",
       "href": "/payments"
     },
     {
+      "label": "Kassenbuch",
+      "key": "cashbook.nav",
+      "href": "/cashbook"
+    },
+    {
       "label": "Einstellungen",
       "key": "common.settings",
       "href": "/invoices/settings",
-      "permission": "invoices.manage"
+      "permission": "invoices.manage",
+      "notes": "gear only (nav child gear: true), listed in Settings › Bereiche"
     }
   ],
   "pages": [
@@ -151,8 +152,16 @@
           "new: ⋯ Export (xlsx/csv, entity documents, same filters)",
           "empty text → <EmptyState> with 'Neue Rechnung' for a first-time org; filtered empty keeps a short text",
           "Pager → unchanged"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
     },
     {
       "route": "/invoices/new",
@@ -201,8 +210,13 @@
           "?kind=quote → kind of the new document (unchanged)",
           "?contact=<id> → recipient prefilled from the contact (unchanged meaning)",
           "redirect to /invoices/<id> → after saving (draft) or issuing"
-        ]
-      }
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ]
     },
     {
       "route": "/invoices/[id]",
@@ -592,8 +606,20 @@
           "'In Rechnung umwandeln' → header primary for quotes (Versendet/Angenommen)",
           "'Duplizieren' → ⋯",
           "new: Verknüpft section — shop order, payment (via the shop order), cash book entries that paid it, source document / cancellation, contact (with 'Alle Rechnungen' → /invoices?contact=)"
-        ]
-      }
+        ],
+        "built": true,
+        "kept": "uxNote 6 kept: sending invoices by email is a new feature (mail with PDF attachment, log), not part of this UX pass. Quantity stays a decimal text input (German '1,5'); a 'Mahnung' step does not exist yet."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
     },
     {
       "route": "/invoices/settings",
@@ -863,8 +889,14 @@
           "invoice/quote intro/outro textareas → own FormCard 'Texte' (Textarea)",
           "Nummernkreise: NumberRangeForm per kind with own Speichern → number range fields inside the one form, saved with the SaveBar (saveBilling also saves both ranges); preview line kept",
           "SaveBar → unchanged (now the only save)"
-        ]
-      }
+        ],
+        "built": true,
+        "kept": "uxNote 0 kept: the cash book and payments have nothing to set up; the bank hint now says the shop uses this account. uxNote 2 kept: Kleinunternehmer per document stays (API and existing documents set it per document; the default comes from here)."
+      },
+      "uxNotesDone": [
+        1,
+        3
+      ]
     }
   ]
 }

@@ -150,8 +150,17 @@
           "charts (members by type, joined/left per month, admitted per event, cash book by sphere) → unchanged",
           "event table (link → /events/<id>) → rowHref instead of a link inside the first cell",
           "Weitere Zahlen tiles → unchanged content, linked"
-        ]
-      }
+        ],
+        "built": true,
+        "kept": "uxNote 3 partly: sections are Section blocks now; an export of the report is not built. 'Umsatz' keeps its name (it sums payments of all sources)."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        4,
+        5
+      ]
     }
   ]
 }

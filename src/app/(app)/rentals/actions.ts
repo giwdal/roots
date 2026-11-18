@@ -5,8 +5,10 @@ import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
 import { dbError, type T } from "@/i18n/translate"
 import { pickedIds, trashMany } from "@/lib/bulk"
-import { requirePerm } from "@/lib/context"
-import { loadFields, readCustom } from "@/lib/custom-fields"
+import { getContext, requirePerm } from "@/lib/context"
+import { loadFields, readCustom, type FieldDef } from "@/lib/custom-fields"
+import { formatMoney } from "@/lib/inputs"
+import type { TablesUpdate } from "@/lib/supabase/types"
 import { fromLocalInput } from "@/lib/time"
 import { back } from "@/lib/url"
 import { FAMILY_DEFAULTS, familyOf, readObject, readRate, readRental } from "@/rentals/fields"
@@ -67,7 +69,7 @@ export async function addChildrenAction(fd: FormData) {
   const count = Math.max(1, Math.min(100, Number(s(fd, "count")) || 1))
   const deposit = s(fd, "deposit").trim() ? Math.round(Number(s(fd, "deposit").replace(",", ".")) * 100) || null : null
   const r = await rentals.addChildren(ctx.supabase, ctx.org.id, parent, kind, family, s(fd, "prefix").trim().slice(0, 40) || t.dynamic(`rentals.kinds.${kind}`), count, { ...FAMILY_DEFAULTS[family], deposit_cents: deposit })
-  back(`${PATH}/${parent}`, "error" in r ? { error: message(t, r) } : { ok: t("rentals.childrenAdded", { count: r.ids.length }) })
+  back("error" in r ? `${PATH}/${parent}?new=children` : `${PATH}/${parent}`, "error" in r ? { error: message(t, r) } : { ok: t("rentals.childrenAdded", { count: r.ids.length }) })
 }
 
 // ---------- rates ----------
@@ -75,10 +77,11 @@ export async function addChildrenAction(fd: FormData) {
 export async function saveRateAction(fd: FormData) {
   const { ctx, t } = await manager()
   const object = idOf(fd, "object_id")
+  const sheet = `${PATH}/${object}?${idOf(fd) ? `edit=${idOf(fd)}` : "new=rate"}`
   const r = readRate((k) => s(fd, k))
-  if ("error" in r) back(`${PATH}/${object}`, { error: fieldError(t, r) })
+  if ("error" in r) back(sheet, { error: fieldError(t, r) })
   const x = await rentals.saveRate(ctx.supabase, ctx.org.id, object, idOf(fd) || null, r.row)
-  back(`${PATH}/${object}`, "error" in x ? { error: message(t, x) } : { ok: t("rentals.rateSaved") })
+  back("error" in x ? sheet : `${PATH}/${object}`, "error" in x ? { error: message(t, x) } : { ok: t("rentals.rateSaved") })
 }
 
 export async function deleteRateAction(fd: FormData) {
@@ -125,19 +128,7 @@ export async function createRentalAction(fd: FormData) {
     r.row.unit === "month" || r.row.unit === "year"
       ? await ctx.supabase.from("letter_templates").select("id, org_id").or(`org_id.is.null,org_id.eq.${ctx.org.id}`).is("deleted_at", null).ilike("body", "%{rental\\_%").order("org_id", { nullsFirst: false }).limit(1).maybeSingle()
       : { data: null }
-  back(tpl && people.length && ctx.can("org.files.view") ? `${PATH}/r/${x.id}?contract=${tpl.id}` : `${PATH}/r/${x.id}`, { ok: t(tpl && people.length ? "rentals.createdContract" : "rentals.created") })
-}
-
-export async function updateRentalAction(fd: FormData) {
-  const { ctx, t } = await manager()
-  const id = idOf(fd)
-  const here = `${PATH}/r/${id}`
-  const r = readRental((k) => (k === "starts_at" ? when(s(fd, k)) : k === "ends_at" ? when(s(fd, k), true) : s(fd, k)))
-  if ("error" in r) back(here, { error: fieldError(t, r) })
-  const c = readCustom(await loadFields(ctx.supabase, ctx.org.id, "rentals"), (k) => s(fd, `custom.${k}`))
-  if ("error" in c) back(here, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  const x = await rentals.updateRental(ctx.supabase, ctx.org.id, id, r.row, c.custom)
-  back(here, "error" in x ? { error: message(t, x) } : { ok: t("rentals.saved") })
+  back(tpl && people.length && ctx.can("org.files.view") ? `${PATH}/r/${x.id}?new=contract&template=${tpl.id}` : `${PATH}/r/${x.id}`, { ok: t(tpl && people.length ? "rentals.createdContract" : "rentals.created") })
 }
 
 export async function addPersonAction(fd: FormData) {
@@ -145,17 +136,17 @@ export async function addPersonAction(fd: FormData) {
   const id = idOf(fd)
   const contact = idOf(fd, "contact_id")
   const role = s(fd, "role") === "member" ? "member" : "main"
-  if (!contact) back(`${PATH}/r/${id}`, { error: t("errors.invalid_input") })
+  if (!contact) back(`${PATH}/r/${id}?new=person`, { error: t("courses.pickContact") })
   const { error } = await ctx.supabase.from("rental_contacts").upsert({ org_id: ctx.org.id, rental_id: id, contact_id: contact, role }, { onConflict: "rental_id,contact_id" })
   deliverSoon()
-  back(`${PATH}/r/${id}#people`, error ? { error: dbError(t, error) } : { ok: t("rentals.saved") })
+  back(error ? `${PATH}/r/${id}?new=person` : `${PATH}/r/${id}#people`, error ? { error: dbError(t, error) } : { ok: t("rentals.personAdded") })
 }
 
 export async function removePersonAction(fd: FormData) {
   const { ctx, t } = await manager()
   const id = idOf(fd)
   const { error } = await ctx.supabase.from("rental_contacts").delete().eq("rental_id", id).eq("contact_id", idOf(fd, "contact_id")).eq("org_id", ctx.org.id)
-  back(`${PATH}/r/${id}#people`, error ? { error: dbError(t, error) } : { ok: t("rentals.saved") })
+  back(`${PATH}/r/${id}#people`, error ? { error: dbError(t, error) } : { ok: t("rentals.personRemoved") })
 }
 
 export async function giveNoticeAction(fd: FormData) {
@@ -163,7 +154,7 @@ export async function giveNoticeAction(fd: FormData) {
   const id = idOf(fd)
   const x = await rentals.giveNotice(ctx.supabase, ctx.org.id, id, s(fd, "ends_on") || null, today())
   deliverSoon()
-  back(`${PATH}/r/${id}`, "error" in x ? { error: message(t, x) } : { ok: t("rentals.noticeGiven", { date: t.date(`${x.ends}T12:00:00`, { dateStyle: "medium" }) }) })
+  back("error" in x ? `${PATH}/r/${id}?edit=notice` : `${PATH}/r/${id}`, "error" in x ? { error: message(t, x) } : { ok: t("rentals.noticeGiven", { date: t.date(`${x.ends}T12:00:00`, { dateStyle: "medium" }) }) })
 }
 
 /** Key / device handed out to one person (optionally on the rental of the parent object). */
@@ -171,13 +162,15 @@ export async function handOutAction(fd: FormData) {
   const { ctx, t } = await manager()
   const object = idOf(fd, "object_id")
   const to = backTo(fd, `${PATH}/${object}`)
+  // Errors reopen the sheet (?new=handout, &item= when it was a part of the page's object).
+  const sheet = `${to}?new=handout${s(fd, "item") ? `&item=${object}` : ""}`
   const contact = idOf(fd, "contact_id")
-  if (!contact) back(to, { error: t("errors.invalid_input") })
+  if (!contact) back(sheet, { error: t("courses.pickContact") })
   const r = readRental((k) => (k === "starts_at" ? when(s(fd, k) || today()) : k === "ends_at" ? "" : s(fd, k)))
-  if ("error" in r) back(to, { error: fieldError(t, r) })
+  if ("error" in r) back(sheet, { error: fieldError(t, r) })
   const x = await rentals.createRental(ctx.supabase, ctx.org.id, { object_id: object, parent_id: idOf(fd, "parent_id") || null, row: r.row, people: [{ contact_id: contact, role: "main" }] })
   deliverSoon()
-  back(to, "error" in x ? { error: message(t, x) } : { ok: t("rentals.handedOut") })
+  back("error" in x ? sheet : to, "error" in x ? { error: message(t, x) } : { ok: t("rentals.handedOut") })
 }
 
 export async function returnAction(fd: FormData) {
@@ -208,5 +201,157 @@ export async function restoreObjectAction(fd: FormData) {
 export async function restoreRentalAction(fd: FormData) {
   const { ctx, t } = await manager()
   const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.rentals", p_id: idOf(fd) })
-  back(error ? `${PATH}/list?view=trash` : `${PATH}/r/${idOf(fd)}`, error ? { error: dbError(t, error) } : { ok: t("rentals.restored") })
+  back(error ? `${PATH}/list?trash=1` : `${PATH}/r/${idOf(fd)}`, error ? { error: dbError(t, error) } : { ok: t("rentals.restored") })
+}
+
+// ---------- in place (record pages, patterns.md §8) ----------
+
+/** Objects for a search picker ("Gehört zu", "Welches Objekt?"): name match, ≤ 20. */
+export async function searchObjects(q: string) {
+  const ctx = await getContext()
+  if (!ctx.modules.has("rentals") || !ctx.can("rentals.view")) return []
+  const t = await getT()
+  const clean = q.replace(/[%,()*]/g, "").trim()
+  let query = ctx.supabase.from("rental_objects").select("id, name, kind").eq("org_id", ctx.org.id).is("deleted_at", null).order("name").limit(20)
+  if (clean) query = query.ilike("name", `%${clean}%`)
+  const { data } = await query
+  return (data ?? []).map((o) => ({ id: o.id, label: o.name, detail: t.has(`rentals.kinds.${o.kind}`) ? t.dynamic(`rentals.kinds.${o.kind}`) : o.kind }))
+}
+
+// Stored custom values in form format ("12,50", "true"), so readCustom checks the record with one changed value.
+const customAsForm = (defs: FieldDef[], stored: unknown) => {
+  const v = (stored ?? {}) as Record<string, unknown>
+  return Object.fromEntries(defs.map((d) => [d.key, v[d.key] == null ? "" : d.type === "money" && typeof v[d.key] === "number" ? (v[d.key] as number).toFixed(2).replace(".", ",") : String(v[d.key])]))
+}
+const OBJECT_FIELDS: Record<string, keyof TablesUpdate<"rental_objects">> = { name: "name", kind: "kind", location_id: "location_id", status: "status", description: "description", rentable: "rentable", lendable: "lendable", included: "included", capacity: "capacity", deposit: "deposit_cents" }
+
+/** One property of an object (InlineField): the stored object in form format with the new value, checked by readObject. */
+export async function patchRentalObject(fd: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("rentals.manage")
+  const t = await getT()
+  const id = idOf(fd)
+  const field = s(fd, "field")
+  const value = s(fd, "value")
+  if (!id || !ctx.modules.has("rentals") || (!OBJECT_FIELDS[field] && !/^custom\.[a-z0-9_]+$/.test(field))) return { error: t("errors.invalid_input") }
+  const { data: o } = await ctx.supabase.from("rental_objects").select(rentals.OBJECT_COLS).eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
+  if (!o) return { error: t("errors.not_allowed") }
+  let update: TablesUpdate<"rental_objects">
+  if (field.startsWith("custom.")) {
+    const defs = await loadFields(ctx.supabase, ctx.org.id, "rental_objects")
+    const current = { ...customAsForm(defs, o.custom), [field.slice(7)]: value }
+    const c = readCustom(defs, (k) => current[k] ?? "")
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    update = { custom: c.custom as TablesUpdate<"rental_objects">["custom"] }
+  } else {
+    const current: Record<string, string> = {
+      ...Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v == null ? "" : String(v)])),
+      deposit: o.deposit_cents != null ? formatMoney(o.deposit_cents) : "",
+      [field]: value,
+    }
+    const r = readObject((k) => current[k] ?? "")
+    if ("error" in r) return { error: fieldError(t, r) }
+    const column = OBJECT_FIELDS[field]
+    update = { [column]: r.row[column as keyof typeof r.row] }
+    if (field === "kind") update.family = r.row.family
+  }
+  const { error } = await ctx.supabase.from("rental_objects").update(update).eq("id", id).eq("org_id", ctx.org.id)
+  if (error) return { error: dbError(t, error) }
+  revalidatePath(PATH, "layout")
+  return {}
+}
+
+/** "Gehört zu" (?edit=parent): the object above this one, or the top level. */
+export async function saveParentAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const parent = idOf(fd, "parent_id") || null
+  if (parent === id) back(`${PATH}/${id}?edit=parent`, { error: t("errors.invalid_input") })
+  const { error } = await ctx.supabase.from("rental_objects").update({ parent_id: parent }).eq("id", id).eq("org_id", ctx.org.id)
+  back(error ? `${PATH}/${id}?edit=parent` : `${PATH}/${id}`, error ? { error: dbError(t, error) } : { ok: t("rentals.saved") })
+}
+
+/** The stored rental as readRental input (times as ISO), with `changes` on top: one check for every partial change. */
+async function rentalWith(ctx: Awaited<ReturnType<typeof requirePerm>>, id: string, changes: Record<string, string>) {
+  const { data: r } = await ctx.supabase.from("rentals").select("starts_at, ends_at, status, price_cents, unit, renew_months, notice_months, deposit_cents, note, custom").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
+  if (!r) return null
+  const current: Record<string, string> = {
+    starts_at: r.starts_at,
+    ends_at: r.ends_at ?? "",
+    status: r.status,
+    price: r.price_cents != null ? formatMoney(r.price_cents) : "",
+    unit: r.unit ?? "",
+    renew_months: r.renew_months != null ? String(r.renew_months) : "",
+    notice_months: r.notice_months != null ? String(r.notice_months) : "",
+    deposit: r.deposit_cents != null ? formatMoney(r.deposit_cents) : "",
+    note: r.note ?? "",
+    ...changes,
+  }
+  return { stored: r, checked: readRental((k) => current[k] ?? "") }
+}
+const RENTAL_FIELDS: Record<string, keyof TablesUpdate<"rentals">> = { price: "price_cents", unit: "unit", deposit: "deposit_cents", note: "note" }
+
+/** One property of a rental (InlineField): price, unit, deposit, note, rate, custom fields. */
+export async function patchRental(fd: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("rentals.manage")
+  const t = await getT()
+  const id = idOf(fd)
+  const field = s(fd, "field")
+  const value = s(fd, "value")
+  if (!id || !ctx.modules.has("rentals")) return { error: t("errors.invalid_input") }
+  let update: TablesUpdate<"rentals">
+  if (field === "rate_id") {
+    // A rate of the rental's own object, or none.
+    if (value) {
+      const { data: r } = await ctx.supabase.from("rentals").select("object_id").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
+      const { data: rate } = r && UUID.test(value) ? await ctx.supabase.from("rental_rates").select("id").eq("id", value).eq("object_id", r.object_id).eq("org_id", ctx.org.id).maybeSingle() : { data: null }
+      if (!rate) return { error: t("errors.invalid_input") }
+    }
+    update = { rate_id: value || null }
+  } else if (/^custom\.[a-z0-9_]+$/.test(field)) {
+    const [{ data: r }, defs] = await Promise.all([ctx.supabase.from("rentals").select("custom").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(), loadFields(ctx.supabase, ctx.org.id, "rentals")])
+    if (!r) return { error: t("errors.not_allowed") }
+    const current = { ...customAsForm(defs, r.custom), [field.slice(7)]: value }
+    const c = readCustom(defs, (k) => current[k] ?? "")
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    update = { custom: c.custom as TablesUpdate<"rentals">["custom"] }
+  } else if (RENTAL_FIELDS[field]) {
+    const x = await rentalWith(ctx, id, { [field]: value })
+    if (!x) return { error: t("errors.not_allowed") }
+    if ("error" in x.checked) return { error: fieldError(t, x.checked) }
+    const column = RENTAL_FIELDS[field] as "price_cents" | "unit" | "deposit_cents" | "note"
+    update = { [column]: x.checked.row[column] }
+  } else return { error: t("errors.invalid_input") }
+  const { error } = await ctx.supabase.from("rentals").update(update).eq("id", id).eq("org_id", ctx.org.id)
+  if (error) return { error: dbError(t, error) }
+  revalidatePath(PATH, "layout")
+  return {}
+}
+
+/** The term (?edit=term): start, end, renewal, notice period — the rest of the rental stays. */
+export async function saveTermAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const sheet = `${PATH}/r/${id}?edit=term`
+  const changes: Record<string, string> = { starts_at: when(s(fd, "starts_at")), ends_at: when(s(fd, "ends_at"), true) }
+  if (fd.has("term_mode")) {
+    changes.renew_months = s(fd, "renew_months")
+    changes.notice_months = s(fd, "notice_months")
+  }
+  const x = await rentalWith(ctx, id, changes)
+  if (!x) back(`${PATH}/list`, { error: t("errors.not_allowed") })
+  if ("error" in x.checked) back(sheet, { error: fieldError(t, x.checked) })
+  const { starts_at, ends_at, renew_months, notice_months } = x.checked.row
+  const r = await rentals.updateRental(ctx.supabase, ctx.org.id, id, { starts_at, ends_at, renew_months, notice_months })
+  back("error" in r ? sheet : `${PATH}/r/${id}`, "error" in r ? { error: message(t, r) } : { ok: t("rentals.saved") })
+}
+
+/** Confirm a request, cancel, or confirm again (header actions; cancelling asks first). */
+export async function setRentalStatusAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const status = (["confirmed", "cancelled", "request"] as const).find((x) => x === s(fd, "status"))
+  if (!id || !status) back(`${PATH}/list`, { error: t("errors.invalid_input") })
+  const r = await rentals.updateRental(ctx.supabase, ctx.org.id, id, { status })
+  deliverSoon()
+  back(`${PATH}/r/${id}`, "error" in r ? { error: message(t, r) } : { ok: t(status === "cancelled" ? "rentals.cancelledOk" : "rentals.confirmedOk") })
 }

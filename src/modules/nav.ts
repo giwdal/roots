@@ -120,9 +120,8 @@ export const NAV: Area[] = [
     label: "rentals.nav",
     icon: KeyRoundIcon,
     children: [
-      { href: "/rentals", label: "nav.overview", module: "rentals", permission: "rentals.view" },
+      { href: "/rentals", label: "rentals.objects", module: "rentals", permission: "rentals.view" },
       { href: "/rentals/list", label: "rentals.tabs.rentals", module: "rentals", permission: "rentals.view" },
-      { href: "/rentals/calendar", label: "rentals.tabs.calendar", module: "rentals", permission: "rentals.view" },
     ],
   },
   {

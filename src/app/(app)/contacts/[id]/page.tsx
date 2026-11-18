@@ -46,7 +46,7 @@ import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
 import { param } from "@/lib/url"
-import { rentalState } from "@/rentals/fields"
+import { StateBadge } from "@/app/(app)/rentals/badges"
 import { DocBadge } from "@/app/(app)/invoices/badges"
 import { MemberStateBadge, memberState } from "@/app/(app)/members/badges"
 import { PayStatusBadge } from "@/app/(app)/payments/badges"
@@ -490,7 +490,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
           )}
 
           {!!rentals?.length && (
-            <Section id="rentals" title={t("rentals.title")}>
+            <Section id="rentals" title={t("rentals.title")} action={<Link href={`/rentals/list?contact=${c.id}&view=all`} className="text-sm link">{t("common.showAll")}</Link>}>
               <LinkRows
                 rows={rentals.map((x) => ({
                   key: x.rentals.id,
@@ -498,7 +498,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                   href: `/rentals/r/${x.rentals.id}`,
                   title: x.rentals.rental_objects?.name ?? "–",
                   detail: [t.dynamic(`rentals.roles.${x.role}`), day(x.rentals.starts_at), x.rentals.ends_at && `– ${day(x.rentals.ends_at)}`].filter(Boolean).join(" "),
-                  badge: <Badge variant="outline">{t.dynamic(`rentals.states.${rentalState(x.rentals)}`)}</Badge>,
+                  badge: <StateBadge t={t} r={x.rentals} />,
                 }))}
               />
             </Section>

@@ -1,5 +1,12 @@
 # Probe-Besuchszähler an der Tür – Implementierungsplan
 
+> **Stand: umgesetzt in PR [giwdal/roots#42](https://github.com/giwdal/roots/pull/42)** (Issue [#17](https://github.com/giwdal/roots/issues/17)). Abweichungen vom ursprünglichen Plan:
+> - Die Migration heißt `20261118140000_visit_limit.sql` (Version `130000` war vergeben). Dazu `20261118160000_visit_limit_live_events.sql`: Besuche an Events im Papierkorb zählen nicht.
+> - **Nicht zählende Events sperren nie**, auch wenn das Limit erreicht ist (im Plan unten schon so beschrieben).
+> - Die Voreinstellung für `events.counts_visit` kommt aus dem **Event-Typ** (`event_types.counts_visit`), siehe [2026-11-18-event-types.md](2026-11-18-event-types.md). Die Tür liest weiter nur `events.counts_visit`.
+> - Die Beschriftung des Schalters wurde später allgemeiner/anders benannt (siehe de.json `eventsPage.countsVisit`).
+> - Der Override zählt als Besuch (z. B. „3 von 2 Besuchen genutzt“).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Die Tür zählt Mitgliederbesuche nur bei Veranstaltungen, die „als Besuch zählen“. Sie zeigt „x von N“ für Mitgliedsarten mit Besuchslimit und sperrt den Einlass, sobald das Limit erreicht ist. Mit `tickets.scan` lässt sich die Sperre bewusst übergehen (Override).

@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Input } from "@/components/ui/input"
+import { Segment, SegmentGroup } from "@/components/choice"
+import { TypedInput } from "@/components/typed-input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { useT } from "@/i18n/client"
 
 // Kind, value and limit of a ticket code. Unlock-only codes ("none") have neither: they open hidden ticket types,
@@ -11,33 +11,34 @@ import { useT } from "@/i18n/client"
 export function CodeKindFields({ kind: initial, value, maxUses }: { kind: string; value: string; maxUses: number | null }) {
   const t = useT()
   const [kind, setKind] = useState(initial)
-  const discount = kind !== "none"
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="c-kind">{t("tickets.discount")}</Label>
-        <NativeSelect id="c-kind" name="kind" value={kind} onChange={(e) => setKind(e.target.value)} className="w-full">
+        <SegmentGroup id="c-kind" label={t("tickets.discount")}>
           {(["percent", "amount", "none"] as const).map((k) => (
-            <NativeSelectOption key={k} value={k}>
-              {t.dynamic(`tickets.kinds.${k}`)}
-            </NativeSelectOption>
+            <Segment key={k} name="kind" value={k} label={t.dynamic(`tickets.kinds.${k}`)} checked={kind === k} onPick={setKind} />
           ))}
-        </NativeSelect>
+        </SegmentGroup>
       </div>
-      {discount ? (
-        <>
+      {kind !== "none" ? (
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="c-value">{t("tickets.codeValueLabel")}</Label>
-            <Input id="c-value" name="value" inputMode="decimal" defaultValue={value} placeholder="20" />
+            <Label htmlFor="c-value">{kind === "amount" ? t("tickets.codeAmount") : t("tickets.codePercent")}</Label>
+            {kind === "amount" ? (
+              <TypedInput key="amount" kind="money" id="c-value" name="value" defaultValue={kind === initial ? value : ""} required />
+            ) : (
+              <TypedInput key="percent" kind="number" id="c-value" name="value" min={1} max={100} step={1} defaultValue={kind === initial ? value : ""} placeholder="20" required />
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="c-max">{t("tickets.maxUses")}</Label>
-            <Input id="c-max" name="max_uses" type="number" min={1} defaultValue={maxUses ?? ""} placeholder="∞" />
+            <TypedInput kind="number" id="c-max" name="max_uses" min={1} step={1} defaultValue={maxUses ?? ""} placeholder="∞" />
+            <p className="text-xs text-muted-foreground">{t("tickets.maxUsesHint")}</p>
           </div>
-          <p className="text-xs text-muted-foreground sm:col-span-3">{t("tickets.maxUsesHint")}</p>
-        </>
+        </div>
       ) : (
-        <p className="self-end text-sm text-muted-foreground sm:col-span-2">{t("tickets.unlockLimitHint")}</p>
+        <p className="text-sm text-muted-foreground">{t("tickets.unlockLimitHint")}</p>
       )}
     </div>
   )

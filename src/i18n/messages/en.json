@@ -1555,7 +1555,7 @@
     "notPublished": "The event isn't published yet – the ticket shop appears on the public page once it is.",
     "types": "Ticket types",
     "newType": "New ticket type",
-    "noTypes": "No ticket types yet. Add e.g. “Regular” and “Reduced”.",
+    "noTypes": "Add e.g. “Regular” and “Reduced” – then sales can start.",
     "typeName": "Ticket type",
     "typeNamePlaceholder": "e.g. Regular, Reduced, VIP",
     "typeDescription": "Description (optional)",
@@ -1691,7 +1691,36 @@
     "noUnlockCode": "No code unlocks this ticket type yet – nobody can buy it.",
     "maxUsesHint": "Empty = unlimited (until the ticket type's quota is reached). E.g. 30 = only the first 30 get the discount.",
     "allVisibleTypes": "all visible",
-    "unlockLimitHint": "Unlocks only: how many tickets exist is the selected ticket type's quota."
+    "unlockLimitHint": "Unlocks only: how many tickets exist is the selected ticket type's quota.",
+    "settings": "Ticket settings",
+    "unlimited": "unlimited",
+    "leftCount": {
+      "one": "1 left",
+      "other": "{count} left"
+    },
+    "noTypesTitle": "No ticket types yet",
+    "noMatch": "No tickets found.",
+    "typeMeta": {
+      "one": "1 sold",
+      "other": "{count} sold"
+    },
+    "confirmDeleteType": "Delete this ticket type?",
+    "confirmDeleteTypeHint": "It disappears from the shop. Not possible once tickets were sold – pause sales instead.",
+    "confirmDeleteCode": "Delete this code?",
+    "confirmDeleteCodeHint": "Its link stops working. Not possible once the code was used – make it inactive instead.",
+    "confirmDeleteTier": "Remove this price tier?",
+    "confirmDeleteTierHint": "It is deleted when you save. Not possible once tickets were sold in it.",
+    "onSale": "On sale",
+    "moreOptions": "More options: sales window, description, hidden, price tiers",
+    "createType": "Create ticket type",
+    "createCode": "Create code",
+    "codeAmount": "Discount in €",
+    "codePercent": "Discount in %",
+    "typeCreated": "Ticket type created.",
+    "typeDeleted": "Ticket type deleted.",
+    "codeCreated": "Code created.",
+    "codeDeleted": "Code deleted.",
+    "settingsSaved": "Ticket settings saved."
   },
   "shop": {
     "title": "Tickets",
@@ -2203,7 +2232,7 @@
       "overCapacity": "Over capacity ({left} left) – you can still sell.",
       "seatsLeft": "{left} seats left",
       "total": "Total",
-      "noMethods": "No payment method is active at the door for this event (Tickets → Door sales).",
+      "noMethods": "No payment method is active at the door for this event.",
       "summary": "Door sales today",
       "summaryMeta": "{sales} sales · {tickets} tickets",
       "savedOffline": "Saved without connection – sent as soon as the device is online again.",
@@ -2217,7 +2246,8 @@
       "via": {
         "qr": "{provider} pay code",
         "terminal": "{provider} terminal"
-      }
+      },
+      "toSettings": "Set up door sales"
     },
     "settings": {
       "title": "Door sales",
@@ -2235,7 +2265,8 @@
       "toIntegrations": "Go to integrations",
       "cashAccount": "Cash book account for cash payments",
       "noCashAccount": "Don't book into the cash book",
-      "cashAccountHint": "Every cash sale is booked there as income."
+      "cashAccountHint": "Every cash sale is booked there as income.",
+      "noCashAccounts": "No active cash account in the cash book yet."
     },
     "stats": {
       "checkedIn": "Checked in",
@@ -3609,7 +3640,10 @@
     "offeredUntil": "until {date}",
     "remove": "Remove",
     "removed": "Removed from the waiting list.",
-    "hint": "When a spot frees up, the next person automatically gets an email and can secure it for 24 hours."
+    "hint": "When a spot frees up, the next person automatically gets an email and can secure it for 24 hours.",
+    "person": "Person",
+    "confirmRemove": "Remove from the waiting list?",
+    "confirmRemoveHint": "A seat held for them goes to the next person. They are not notified."
   },
   "time": {
     "title": "Time tracking",

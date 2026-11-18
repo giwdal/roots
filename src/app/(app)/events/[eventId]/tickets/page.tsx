@@ -1,36 +1,43 @@
 import Link from "next/link"
-import { SaveBar } from "@/components/save-bar"
-import { FormCard } from "@/components/page"
-import { notFound } from "next/navigation"
-import { ExternalLinkIcon, ScanLineIcon } from "lucide-react"
+import { notFound, redirect } from "next/navigation"
+import { ExternalLinkIcon, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { CopyButton } from "@/components/copy-button"
 import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DateInput } from "@/components/date-input"
+import { Choice } from "@/components/choice"
+import { EmptyState } from "@/components/page"
 import { Notice } from "@/components/notice"
+import { SaveBar } from "@/components/save-bar"
+import { Segments } from "@/components/segments"
+import { SubmitButton } from "@/components/submit-button"
+import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
 import { getContext, requirePerm } from "@/lib/context"
-import { posMethods, posReaders } from "@/payments/pos"
-import { DOOR_METHODS, readDoor } from "@/tickets/door-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { pageParam, param, siteUrl, withParams } from "@/lib/url"
+import { posMethods, posReaders } from "@/payments/pos"
+import { DOOR_METHODS, readDoor } from "@/tickets/door-fields"
 import { priceInput } from "@/tickets/price"
-import { deleteCode, deleteTicketType, deleteTier, removeFromWaitlist, setTicketTypeActive, saveCode, saveDoorSettings, saveTicketSettings, saveTicketType, saveTier } from "./actions"
-import { SubmitButton } from "@/components/submit-button"
-import { CopyButton } from "@/components/copy-button"
+import { AddLink, RowGroup, Section, SettingRow } from "../../section"
+import { deleteCode, deleteTicketType, removeFromWaitlist, saveCode, saveTicketSettings, saveTicketType } from "./actions"
 import { CodeKindFields } from "./code-kind-fields"
-import { DateInput } from "@/components/date-input"
+import { TierRows } from "./tier-rows"
 
 type TicketType = Tables<"ticket_types">
-type Tier = Tables<"ticket_tiers">
 type Code = Tables<"ticket_codes">
 const STATUSES = ["valid", "used", "reserved", "void"] as const
 
+// Tickets of one event: what's on sale (types), codes, who bought, who waits. Each record opens in a sheet
+// (?edit=<type or code id>, ?new=type|code); the event's shop + door settings are one sheet (?edit=settings).
 export default async function EventTickets({ params, searchParams }: PageProps<"/events/[eventId]/tickets">) {
   const ctx = await requirePerm("tickets.view")
   if (!ctx.modules.has("tickets")) notFound()
@@ -38,6 +45,8 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
   const sp = await searchParams
   const t = await getT()
   const canManage = ctx.can("tickets.manage")
+  // Old sheet links (?code=<id>) → ?edit=<id>.
+  if (param(sp, "code")) redirect(`/events/${eventId}/tickets?edit=${param(sp, "code")}`)
   const q = param(sp, "q")
     ?.replace(/[%,()*]/g, "")
     .trim()
@@ -52,420 +61,289 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
     .range(...pageRange(page))
   list = status ? list.eq("status", status) : list.neq("status", "reserved")
   if (q) list = list.or(`code.ilike.%${q}%,holder_name.ilike.%${q}%`)
-  const [{ data: ev }, { data: types }, { data: tickets }, { data: avail }, { data: counts }, { data: tiers }, { data: codes }] =
-    await Promise.all([
-      ctx.supabase
-        .from("events")
-        .select("id, title, slug, status, starts_at, ticket_names, max_tickets_per_order, show_code_field")
-        .eq("id", eventId)
-        .eq("org_id", ctx.org.id)
-        .maybeSingle(),
-      ctx.supabase.from("ticket_types").select("*").eq("event_id", eventId).order("position").order("price"),
-      list,
-      ctx.supabase.rpc("ticket_availability", { p_event: eventId }),
-      ctx.supabase.from("tickets").select("type_id, tier_id, code_id, status").eq("event_id", eventId).in("status", ["valid", "used"]),
-      ctx.supabase
-        .from("ticket_tiers")
-        .select("*, ticket_types!inner(event_id)")
-        .eq("ticket_types.event_id", eventId)
-        .order("position")
-        .order("created_at"),
-      ctx.supabase.from("ticket_codes").select("*").eq("event_id", eventId).order("created_at"),
-    ])
+  const [{ data: ev }, { data: types }, { data: tickets }, { data: avail }, { data: counts }, { data: tiers }, { data: codes }] = await Promise.all([
+    ctx.supabase.from("events").select("id, title, slug, status, starts_at, ticket_names, max_tickets_per_order, show_code_field").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
+    ctx.supabase.from("ticket_types").select("*").eq("event_id", eventId).order("position").order("price"),
+    list,
+    ctx.supabase.rpc("ticket_availability", { p_event: eventId }),
+    ctx.supabase.from("tickets").select("type_id, tier_id, code_id, status").eq("event_id", eventId).in("status", ["valid", "used"]),
+    ctx.supabase.from("ticket_tiers").select("*, ticket_types!inner(event_id)").eq("ticket_types.event_id", eventId).order("position").order("created_at"),
+    ctx.supabase.from("ticket_codes").select("*").eq("event_id", eventId).order("created_at"),
+  ])
   if (!ev) notFound()
   // Shop types vs. the automatic ones (guest lists, members): counted apart; guest lists sit on top of the capacity.
   const shopTypes = (types ?? []).filter((ty) => !ty.guest_list_id && !ty.for_members)
   const isShop = new Set(shopTypes.map((ty) => ty.id))
   const sold = (typeId?: string) => counts?.filter((c) => (typeId ? c.type_id === typeId : isShop.has(c.type_id))).length ?? 0
-  const listTypes = (types ?? []).filter((ty) => ty.guest_list_id).map((ty) => ({ name: ty.name.replace(/^Gästeliste: /, ""), n: sold(ty.id) })).filter((x) => x.n)
-  const members = (types ?? []).filter((ty) => ty.for_members).reduce((n, ty) => n + sold(ty.id), 0)
-  const guests = listTypes.reduce((n, x) => n + x.n, 0)
   const checkedIn = counts?.filter((c) => c.status === "used").length ?? 0
   const left = new Map(avail?.map((a) => [a.type_id, a.remaining]))
-  const editing = types?.find((ty) => ty.id === param(sp, "edit"))
+  const editId = param(sp, "edit")
+  const editing = canManage ? types?.find((ty) => ty.id === editId) : undefined
+  const editingCode = canManage ? codes?.find((c) => c.id === editId) : undefined
+  const settings = canManage && editId === "settings"
   const creating = canManage && param(sp, "new") === "type"
   const creatingCode = canManage && param(sp, "new") === "code"
-  const editingCode = codes?.find((c) => c.id === param(sp, "code"))
+  const sheet = !!(editing || editingCode || settings || creating || creatingCode)
   const used = (key: "tier_id" | "code_id", id: string) => counts?.filter((c) => c[key] === id).length ?? 0
-  const shopUrl = siteUrl(ctx.org.slug, `/e/${ev?.slug}`, ctx.org.site_domain)
+  const shopUrl = siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)
+  const codeUrl = (c: Code) => `${shopUrl}?code=${encodeURIComponent(c.code)}`
   const rows = tickets?.slice(0, PAGE_SIZE) ?? []
+  const typeTiers = (id: string) => tiers?.filter((r) => r.type_id === id) ?? []
 
   return (
-    <div className="grid max-w-5xl gap-6">
-      <div className="grid gap-1">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-medium">{t("tickets.title")}</h2>
-          <div className="flex flex-wrap gap-2">
-            {ctx.can("tickets.scan") && (
-              <Button render={<Link href={`/scan?event=${ev.id}`} />} nativeButton={false} size="sm" variant="outline">
-                <ScanLineIcon /> {t("tickets.scan")}
-              </Button>
-            )}
-            {ev.status === "published" && (
-              <Button
-                render={<a href={siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)} target="_blank" rel="noreferrer" />}
-                nativeButton={false}
-                size="sm"
-                variant="outline"
-              >
-                {t("tickets.shop")} <ExternalLinkIcon />
-              </Button>
-            )}
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t("tickets.summary", { sold: sold(), checkedIn })}
-          {shopTypes.length > 1 && sold() > 0 && ` (${shopTypes.filter((ty) => sold(ty.id)).map((ty) => `${sold(ty.id)} ${ty.name}`).join(", ")})`}
-          {guests > 0 && ` · ${t("tickets.onGuestLists", { count: guests })} (${listTypes.map((x) => `${x.n} ${x.name}`).join(", ")})`}
-          {members > 0 && ` · ${t("tickets.membersIn", { count: members })}`}
-        </p>
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-auto text-sm text-muted-foreground">{t("tickets.summary", { sold: sold(), checkedIn })}</p>
+        {canManage && (
+          <Tooltip>
+            <TooltipTrigger render={<Button render={<Link href={withParams(sp, { edit: "settings", new: undefined })} scroll={false} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={t("tickets.settings")} />}>
+              <SettingsIcon />
+            </TooltipTrigger>
+            <TooltipContent>{t("tickets.settings")}</TooltipContent>
+          </Tooltip>
+        )}
+        {ev.status === "published" && (
+          <Button render={<a href={shopUrl} target="_blank" rel="noreferrer" />} nativeButton={false} size="sm" variant="outline">
+            {t("tickets.shop")} <ExternalLinkIcon />
+          </Button>
+        )}
+        {canManage && shopTypes.length > 0 && (
+          <Button render={<Link href={withParams(sp, { new: "type", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
+            <PlusIcon /> {t("tickets.newType")}
+          </Button>
+        )}
       </div>
-      <Notice error={!editing && !creating && !editingCode && !creatingCode ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
-      {ev.status !== "published" && <p className="rounded-lg border bg-muted px-3 py-2 text-sm">{t("tickets.notPublished")}</p>}
+      <Notice error={sheet ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
+      {ev.status !== "published" && <p className="rounded-lg bg-muted px-3 py-2 text-sm">{t("tickets.notPublished")}</p>}
 
-      <section className="grid gap-3" aria-labelledby="types">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="types" className="font-medium">
-            {t("tickets.types")}
-          </h2>
-          {canManage && (
-            <Button render={<Link href={withParams(sp, { new: "type", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
-              {t("tickets.newType")}
-            </Button>
-          )}
-        </div>
-        <DataTable
-          rows={shopTypes}
-          rowKey={(ty) => ty.id}
-          rowHref={canManage ? (ty) => withParams(sp, { edit: ty.id, new: undefined }) : undefined}
-          empty={t("tickets.noTypes")}
-          columns={[
-            {
-              header: t("tickets.typeName"),
-              cell: (ty) => (
-                <span className="font-medium">
-                  {ty.name} {!ty.active && <Badge variant="secondary">{t("tickets.inactive")}</Badge>}{" "}
-                  {ty.hidden && <Badge variant="outline">{t("tickets.hiddenBadge")}</Badge>}
-                  {(tiers?.filter((r) => r.type_id === ty.id).length ?? 0) > 0 && (
-                    <span className="block text-xs font-normal text-muted-foreground">
-                      {tiers!
-                        .filter((r) => r.type_id === ty.id)
-                        .map((r) => r.name)
-                        .join(" → ")}
+      <div className="grid gap-6">
+        <Section id="types" title={t("tickets.types")}>
+          {shopTypes.length ? (
+            <DataTable
+              rows={shopTypes}
+              rowKey={(ty) => ty.id}
+              rowHref={canManage ? (ty) => withParams(sp, { edit: ty.id, new: undefined }) : undefined}
+              empty={t("tickets.noTypes")}
+              columns={[
+                {
+                  header: t("tickets.typeName"),
+                  cell: (ty) => (
+                    <span className="grid min-w-0 gap-0.5">
+                      <span className="flex flex-wrap items-center gap-1.5 font-medium">
+                        {ty.name}
+                        {!ty.active && <Badge variant="secondary">{t("tickets.inactive")}</Badge>}
+                        {ty.hidden && <Badge variant="outline">{t("tickets.hiddenBadge")}</Badge>}
+                      </span>
+                      {typeTiers(ty.id).length > 0 && <span className="text-xs text-muted-foreground">{typeTiers(ty.id).map((r) => r.name).join(" → ")}</span>}
                     </span>
-                  )}
-                </span>
-              ),
-            },
-            { header: t("tickets.price"), cell: (ty) => (ty.price === 0 ? t("shop.free") : t.money(ty.price, ty.currency)) },
-            { header: t("tickets.sold"), cell: (ty) => `${sold(ty.id)}${ty.quota ? ` / ${ty.quota}` : ""}`, className: "tabular-nums" },
-            {
-              header: t("tickets.left"),
-              cell: (ty) => (left.get(ty.id) == null ? "∞" : String(left.get(ty.id))),
-              className: "tabular-nums",
-            },
-            {
-              header: t("tickets.window"),
-              cell: (ty) =>
-                ty.sales_start || ty.sales_end ? (
-                  <span className="text-xs text-muted-foreground">
-                    {ty.sales_start ? t.date(ty.sales_start, { dateStyle: "short", timeStyle: "short" }) : "…"} –{" "}
-                    {ty.sales_end ? t.date(ty.sales_end, { dateStyle: "short", timeStyle: "short" }) : "…"}
+                  ),
+                },
+                { header: t("tickets.price"), cell: (ty) => (ty.price === 0 ? t("shop.free") : t.money(ty.price, ty.currency)), className: "text-right tabular-nums" },
+                {
+                  header: t("tickets.sold"),
+                  cell: (ty) => (
+                    <span className="grid tabular-nums">
+                      <span>{`${sold(ty.id)}${ty.quota ? ` / ${ty.quota}` : ""}`}</span>
+                      <span className="text-xs text-muted-foreground">{left.get(ty.id) == null ? t("tickets.unlimited") : t("tickets.leftCount", { count: left.get(ty.id)! })}</span>
+                    </span>
+                  ),
+                  className: "text-right",
+                },
+                {
+                  header: t("tickets.window"),
+                  cell: (ty) =>
+                    ty.sales_start || ty.sales_end ? (
+                      <span className="text-xs text-muted-foreground">
+                        {ty.sales_start ? t.date(ty.sales_start, { dateStyle: "short", timeStyle: "short" }) : "…"} – {ty.sales_end ? t.date(ty.sales_end, { dateStyle: "short", timeStyle: "short" }) : "…"}
+                      </span>
+                    ) : null,
+                },
+              ]}
+            />
+          ) : (
+            <EmptyState
+              area="events"
+              title={t("tickets.noTypesTitle")}
+              text={t("tickets.noTypes")}
+              action={
+                canManage && (
+                  <Button render={<Link href={withParams(sp, { new: "type", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
+                    <PlusIcon /> {t("tickets.newType")}
+                  </Button>
+                )
+              }
+            />
+          )}
+        </Section>
+
+        <Section id="codes" title={t("tickets.codes")} description={codes?.length ? undefined : t("tickets.noCodes")}>
+          {!!codes?.length && (
+            <DataTable
+              rows={codes}
+              rowKey={(c) => c.id}
+              rowHref={canManage ? (c) => withParams(sp, { edit: c.id, new: undefined }) : undefined}
+              empty={t("tickets.noCodes")}
+              columns={[
+                {
+                  header: t("tickets.code"),
+                  cell: (c) => (
+                    <span className="grid gap-0.5">
+                      <span className="flex flex-wrap items-center gap-1.5 font-mono font-medium">
+                        {c.code} {!c.active && <Badge variant="secondary">{t("tickets.inactive")}</Badge>}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {c.kind === "percent" ? `−${c.value} %` : c.kind === "amount" ? `−${t.money(c.value, "eur")}` : t("tickets.unlockOnly")} ·{" "}
+                        {c.type_ids.length ? shopTypes.filter((ty) => c.type_ids.includes(ty.id)).map((ty) => ty.name).join(", ") : t("tickets.allVisibleTypes")}
+                      </span>
+                    </span>
+                  ),
+                },
+                { header: t("tickets.uses"), cell: (c) => `${used("code_id", c.id)}${c.max_uses ? ` / ${c.max_uses}` : ""}`, className: "text-right tabular-nums" },
+                { header: t("tickets.link"), cell: (c) => <CopyButton value={codeUrl(c)} label={t("tickets.copyLink")} /> },
+              ]}
+            />
+          )}
+          {canManage && <AddLink href={withParams(sp, { new: "code", edit: undefined })}>{t("tickets.newCode")}</AddLink>}
+        </Section>
+
+        <Section id="sold" title={t("tickets.soldTickets")}>
+          <div className="flex flex-wrap items-center gap-2">
+            <SearchBox q={q} label={t("tickets.search")} />
+            <div className="max-w-full overflow-x-auto md:ml-auto">
+              <Segments
+                label={t("tickets.status")}
+                className="flex-nowrap [&>a]:shrink-0 [&>a]:whitespace-nowrap"
+                items={[undefined, ...STATUSES].map((s) => ({ href: withParams(sp, { status: s, page: undefined }), label: s ? t.dynamic(`tickets.statuses.${s}`) : t("tickets.allSold"), current: s === status }))}
+              />
+            </div>
+          </div>
+          <DataTable
+            rows={rows}
+            rowKey={(k) => k.id}
+            empty={q || status ? t("tickets.noMatch") : t("tickets.noTickets")}
+            rowHref={ctx.can("payments.view") && ctx.modules.has("payments") ? (k) => `/payments?edit=${k.order_id}` : undefined}
+            columns={[
+              {
+                header: t("tickets.holder"),
+                cell: (k) => (
+                  <span className="grid min-w-0">
+                    <span className="font-medium">{k.holder_name ?? k.pay_orders?.customer_name ?? "–"}</span>
+                    {k.pay_orders?.customer_email && <span className="truncate text-xs text-muted-foreground">{k.pay_orders.customer_email}</span>}
                   </span>
-                ) : null,
-            },
-          ]}
-        />
-      </section>
-
-      {canManage && (
-        <form action={saveTicketSettings} id="shop-settings" className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-          <input type="hidden" name="event" value={ev.id} />
-          <h2 className="font-medium sm:col-span-3">{t("tickets.shopSettings")}</h2>
-          <div className="grid gap-2">
-            <Label htmlFor="t-names">{t("tickets.names")}</Label>
-            <NativeSelect id="t-names" name="ticket_names" defaultValue={ev.ticket_names} className="w-full">
-              {(["off", "optional", "required"] as const).map((n) => (
-                <NativeSelectOption key={n} value={n}>
-                  {t.dynamic(`tickets.namesMode.${n}`)}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="t-max">{t("tickets.maxPerOrder")}</Label>
-            <Input id="t-max" name="max_tickets_per_order" type="number" min={1} max={100} defaultValue={ev.max_tickets_per_order} />
-          </div>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input type="checkbox" name="show_code_field" defaultChecked={ev.show_code_field} className="size-4 accent-primary" />
-            <span>
-              {t("tickets.showCodeField")}
-              <span className="block text-xs text-muted-foreground">{t("tickets.showCodeFieldHint")}</span>
-            </span>
-          </label>
-          <SubmitButton variant="outline">
-            {t("common.save")}
-          </SubmitButton>
-        </form>
-      )}
-
-      {canManage && <DoorSettings eventId={ev.id} />}
-
-      <section className="grid gap-3" aria-labelledby="codes">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="codes" className="font-medium">
-            {t("tickets.codes")}
-          </h2>
-          {canManage && (
-            <Button
-              render={<Link href={withParams(sp, { new: "code", code: undefined, edit: undefined })} scroll={false} />}
-              nativeButton={false}
-              size="sm"
-              variant="outline"
-            >
-              {t("tickets.newCode")}
-            </Button>
-          )}
-        </div>
-        <DataTable
-          rows={codes ?? []}
-          rowKey={(c) => c.id}
-          rowHref={canManage ? (c) => withParams(sp, { code: c.id, new: undefined, edit: undefined }) : undefined}
-          empty={t("tickets.noCodes")}
-          columns={[
-            { header: t("tickets.code"), cell: (c) => <span className="font-mono">{c.code}</span> },
-            {
-              header: t("tickets.discount"),
-              cell: (c) =>
-                c.kind === "percent" ? `−${c.value} %` : c.kind === "amount" ? `−${t.money(c.value, "eur")}` : t("tickets.unlockOnly"),
-            },
-            {
-              header: t("tickets.codeTypes"),
-              cell: (c) => (c.type_ids.length ? (types ?? []).filter((ty) => c.type_ids.includes(ty.id)).map((ty) => ty.name).join(", ") : t("tickets.allVisibleTypes")),
-            },
-            {
-              header: t("tickets.uses"),
-              cell: (c) => `${used("code_id", c.id)}${c.max_uses ? ` / ${c.max_uses}` : ""}`,
-              className: "tabular-nums",
-            },
-            {
-              header: t("tickets.link"),
-              cell: (c) => (
-                <span className="flex items-center gap-1">
-                  <span className="text-xs break-all text-muted-foreground">{`${shopUrl}?code=${c.code}`}</span>
-                  <CopyButton value={`${shopUrl}?code=${encodeURIComponent(c.code)}`} label={t("tickets.copyLink")} />
-                </span>
-              ),
-            },
-            { header: t("tickets.status"), cell: (c) => (c.active ? null : <Badge variant="secondary">{t("tickets.inactive")}</Badge>) },
-          ]}
-        />
-      </section>
-
-
-      <FormCard id="sold" title={t("tickets.soldTickets")}>
-        <div className="flex flex-wrap items-center gap-3">
-          <SearchBox q={q} label={t("tickets.search")} />
-          <nav aria-label={t("tickets.status")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
-            {[undefined, ...STATUSES].map((s) => (
-              <Link
-                key={s ?? "all"}
-                href={withParams(sp, { status: s, page: undefined })}
-                aria-current={s === status ? "true" : undefined}
-                className="inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm"
-              >
-                {s ? t.dynamic(`tickets.statuses.${s}`) : t("tickets.allSold")}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <DataTable
-          rows={rows}
-          rowKey={(k) => k.id}
-          empty={t("tickets.noTickets")}
-          rowHref={ctx.can("payments.view") && ctx.modules.has("payments") ? (k) => `/payments?edit=${k.order_id}` : undefined}
-          columns={[
-            { header: t("tickets.code"), cell: (k) => <span className="font-mono">{k.code}</span> },
-            { header: t("tickets.typeName"), cell: (k) => k.ticket_types?.name },
-            { header: t("tickets.holder"), cell: (k) => k.holder_name ?? k.pay_orders?.customer_name },
-            { header: t("tickets.buyer"), cell: (k) => <span className="break-all">{k.pay_orders?.customer_email}</span> },
-            {
-              header: t("tickets.status"),
-              cell: (k) => (
-                <Badge variant={k.status === "valid" ? "default" : k.status === "used" ? "secondary" : "outline"}>
-                  {t.dynamic(`tickets.statuses.${k.status}`)}
-                </Badge>
-              ),
-            },
-          ]}
-        />
-        <Pager sp={sp} page={page} hasNext={(tickets?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
-      </FormCard>
-
-      <Waitlist t={t} ctx={ctx} eventId={eventId} canManage={canManage} />
-
-      {creating && (
-        <UrlSheet params={["new"]} title={t("tickets.newType")}>
-          <Notice error={param(sp, "error")} />
-          <TypeForm t={t} eventId={ev.id} />
-        </UrlSheet>
-      )}
-      {canManage && editing && (
-        <UrlSheet params={["edit"]} title={editing.name}>
-          <Notice error={param(sp, "error")} />
-          <TypeForm t={t} eventId={ev.id} ty={editing} />
-          {editing.hidden && (
-            // Hidden types are only sold through codes that name them (Codes & Rabatt-Links below).
-            <section className="grid gap-2 rounded-lg border p-3">
-              <h3 className="font-medium">{t("tickets.unlockedBy")}</h3>
-              {codes?.filter((c) => c.type_ids.includes(editing.id)).map((c) => (
-                <div key={c.id} className="flex flex-wrap items-center gap-2">
-                  <Link href={withParams(sp, { edit: undefined, code: c.id })} scroll={false} className="font-mono text-sm underline underline-offset-4">
-                    {c.code}
-                  </Link>
-                  {!c.active && <Badge variant="outline">{t("tickets.inactive")}</Badge>}
-                  <CopyButton value={`${shopUrl}?code=${encodeURIComponent(c.code)}`} label={t("tickets.copyLink")} />
-                </div>
-              ))}
-              {!codes?.some((c) => c.type_ids.includes(editing.id)) && <p className="text-sm text-destructive">{t("tickets.noUnlockCode")}</p>}
-              <Button render={<Link href={withParams(sp, { edit: undefined, new: "code" })} scroll={false} />} nativeButton={false} size="sm" variant="outline" className="justify-self-start">
-                {t("tickets.newCode")}
-              </Button>
-            </section>
-          )}
-          <TierList
-            t={t}
-            eventId={ev.id}
-            typeId={editing.id}
-            tiers={tiers?.filter((r) => r.type_id === editing.id) ?? []}
-            used={(id) => used("tier_id", id)}
+                ),
+              },
+              { header: t("tickets.typeName"), cell: (k) => k.ticket_types?.name },
+              { header: t("tickets.code"), cell: (k) => <span className="font-mono text-xs">{k.code}</span> },
+              {
+                header: t("tickets.status"),
+                cell: (k) => <Badge variant={k.status === "valid" ? "default" : k.status === "used" ? "secondary" : "outline"}>{t.dynamic(`tickets.statuses.${k.status}`)}</Badge>,
+              },
+            ]}
           />
-          <form action={setTicketTypeActive} className="grid gap-2 rounded-lg border p-3">
-            <input type="hidden" name="event" value={ev.id} />
-            <input type="hidden" name="id" value={editing.id} />
-            <input type="hidden" name="active" value={editing.active ? "0" : "1"} />
-            <p className="text-sm text-muted-foreground">{editing.active ? t("tickets.pauseHint") : t("tickets.pausedHint")}</p>
-            <SubmitButton size="sm" variant="outline" className="justify-self-start">
-              {editing.active ? t("tickets.pause") : t("tickets.activate")}
-            </SubmitButton>
-          </form>
-          <section className="grid gap-3 rounded-lg border border-destructive/30 p-3">
-            <h3 className="font-medium text-destructive">{t("admin.dangerZone")}</h3>
-            <p className="text-sm text-muted-foreground">{t("tickets.deleteHint")}</p>
-            <form action={deleteTicketType}>
+          <Pager sp={sp} page={page} hasNext={(tickets?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
+        </Section>
+
+        <Waitlist t={t} ctx={ctx} eventId={eventId} canManage={canManage} />
+      </div>
+
+      {(creating || editing) && (
+        <UrlSheet
+          params={["new", "edit"]}
+          title={editing ? editing.name : t("tickets.newType")}
+          meta={editing && t("tickets.typeMeta", { sold: sold(editing.id) })}
+          menu={
+            editing && (
+              <ActionsMenu>
+                <MenuSubmit form="delete-type" icon={<Trash2Icon />} destructive confirm="tickets.confirmDeleteType">
+                  {t("tickets.deleteType")}
+                </MenuSubmit>
+              </ActionsMenu>
+            )
+          }
+        >
+          <Notice error={param(sp, "error")} />
+          <TypeForm t={t} eventId={ev.id} ty={editing} tiers={editing ? typeTiers(editing.id).map((r) => ({ id: r.id, name: r.name, price: priceInput(r.price), quota: r.quota ? String(r.quota) : "", sales_end: r.sales_end ? toLocalInput(r.sales_end) : "", sold: used("tier_id", r.id) })) : []} />
+          {editing && (
+            <form id="delete-type" action={deleteTicketType} hidden>
               <input type="hidden" name="event" value={ev.id} />
               <input type="hidden" name="id" value={editing.id} />
-              <SubmitButton variant="outline" size="sm">
-                {t("tickets.deleteType")}
-              </SubmitButton>
             </form>
-          </section>
+          )}
+          {editing?.hidden && (
+            // Hidden types are only sold through codes that name them.
+            <section className="grid gap-2 border-t pt-4">
+              <h3 className="text-sm font-medium">{t("tickets.unlockedBy")}</h3>
+              {codes
+                ?.filter((c) => c.type_ids.includes(editing.id))
+                .map((c) => (
+                  <div key={c.id} className="flex flex-wrap items-center gap-2">
+                    <Link href={withParams(sp, { edit: c.id })} scroll={false} className="font-mono text-sm underline underline-offset-4">
+                      {c.code}
+                    </Link>
+                    {!c.active && <Badge variant="outline">{t("tickets.inactive")}</Badge>}
+                    <CopyButton value={codeUrl(c)} label={t("tickets.copyLink")} />
+                  </div>
+                ))}
+              {!codes?.some((c) => c.type_ids.includes(editing.id)) && <p className="text-sm text-destructive">{t("tickets.noUnlockCode")}</p>}
+              <AddLink href={withParams(sp, { edit: undefined, new: "code" })}>{t("tickets.newCode")}</AddLink>
+            </section>
+          )}
         </UrlSheet>
       )}
-      {(creatingCode || (canManage && editingCode)) && (
-        <UrlSheet params={["new", "code"]} title={editingCode ? editingCode.code : t("tickets.newCode")}>
+      {(creatingCode || editingCode) && (
+        <UrlSheet
+          params={["new", "edit"]}
+          title={editingCode ? editingCode.code : t("tickets.newCode")}
+          meta={
+            editingCode && (
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="truncate">{codeUrl(editingCode)}</span>
+                <CopyButton value={codeUrl(editingCode)} label={t("tickets.copyLink")} />
+              </span>
+            )
+          }
+          menu={
+            editingCode && (
+              <ActionsMenu>
+                <MenuSubmit form="delete-code" icon={<Trash2Icon />} destructive confirm="tickets.confirmDeleteCode">
+                  {t("tickets.deleteCode")}
+                </MenuSubmit>
+              </ActionsMenu>
+            )
+          }
+        >
           <Notice error={param(sp, "error")} />
           <CodeForm t={t} eventId={ev.id} c={editingCode} types={shopTypes} />
           {editingCode && (
-            <>
-              <p className="text-sm">
-                {t("tickets.link")}: <span className="break-all font-mono text-xs">{`${shopUrl}?code=${editingCode.code}`}</span>
-              </p>
-              <section className="grid gap-3 rounded-lg border border-destructive/30 p-3">
-                <h3 className="font-medium text-destructive">{t("admin.dangerZone")}</h3>
-                <form action={deleteCode}>
-                  <input type="hidden" name="event" value={ev.id} />
-                  <input type="hidden" name="id" value={editingCode.id} />
-                  <SubmitButton variant="outline" size="sm">
-                    {t("tickets.deleteCode")}
-                  </SubmitButton>
-                </form>
-              </section>
-            </>
+            <form id="delete-code" action={deleteCode} hidden>
+              <input type="hidden" name="event" value={ev.id} />
+              <input type="hidden" name="id" value={editingCode.id} />
+            </form>
           )}
         </UrlSheet>
       )}
-    </div>
-  )
-}
-
-function TierList({
-  t,
-  eventId,
-  typeId,
-  tiers,
-  used,
-}: {
-  t: T
-  eventId: string
-  typeId: string
-  tiers: Tier[]
-  used: (id: string) => number
-}) {
-  const row = (r?: Tier) => (
-    <form key={r?.id ?? "new"} action={saveTier} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2">
-      <input type="hidden" name="event" value={eventId} />
-      <input type="hidden" name="type" value={typeId} />
-      {r && <input type="hidden" name="id" value={r.id} />}
-      <Input
-        name="name"
-        defaultValue={r?.name}
-        required
-        maxLength={100}
-        placeholder={t("tickets.tierNamePlaceholder")}
-        aria-label={t("tickets.tierName")}
-      />
-      <Input
-        name="price"
-        defaultValue={r ? priceInput(r.price) : ""}
-        required
-        inputMode="decimal"
-        placeholder={t("tickets.priceEur")}
-        aria-label={t("tickets.priceEur")}
-      />
-      <Input
-        name="quota"
-        type="number"
-        min={1}
-        defaultValue={r?.quota ?? ""}
-        placeholder={t("tickets.tierQuota")}
-        aria-label={t("tickets.tierQuota")}
-      />
-      <DateInput
-        name="sales_end"
-        type="datetime-local"
-        defaultValue={r?.sales_end ? toLocalInput(r.sales_end) : undefined}
-        aria-label={t("tickets.tierEnd")}
-      />
-      <Input
-        name="position"
-        type="number"
-        defaultValue={r?.position ?? tiers.length}
-        aria-label={t("tickets.tierPosition")}
-        className="sm:w-24"
-      />
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        {r && <span className="text-xs text-muted-foreground">{t("tickets.tierSold", { count: used(r.id) })}</span>}
-        <SubmitButton size="sm" variant={r ? "outline" : "default"}>
-          {r ? t("common.save") : t("tickets.addTier")}
-        </SubmitButton>
-        {r && (
-          <SubmitButton size="sm" variant="ghost" formAction={deleteTier}>
-            {t("tickets.deleteTier")}
-          </SubmitButton>
-        )}
-      </div>
-    </form>
-  )
-  return (
-    <section className="grid gap-3" aria-labelledby="tiers">
-      <h3 id="tiers" className="font-medium">
-        {t("tickets.tiers")}
-      </h3>
-      <p className="text-sm text-muted-foreground">{t("tickets.tiersHint")}</p>
-      {tiers.map((r) => row(r))}
-      {row()}
-    </section>
+      {settings && (
+        <UrlSheet params={["edit"]} title={t("tickets.settings")}>
+          <Notice error={param(sp, "error")} />
+          <form action={saveTicketSettings} className="grid gap-6">
+            <input type="hidden" name="event" value={ev.id} />
+            <RowGroup id="shop-settings" title={t("tickets.shopSettings")}>
+              <SettingRow label={t("tickets.names")} htmlFor="t-names">
+                <Choice id="t-names" name="ticket_names" label={t("tickets.names")} required defaultValue={ev.ticket_names} options={(["off", "optional", "required"] as const).map((n) => ({ value: n, label: t.dynamic(`tickets.namesMode.${n}`) }))} />
+              </SettingRow>
+              <SettingRow label={t("tickets.maxPerOrder")} htmlFor="t-max">
+                <TypedInput kind="number" id="t-max" name="max_tickets_per_order" min={1} max={100} step={1} required defaultValue={ev.max_tickets_per_order} />
+              </SettingRow>
+              <SettingRow label={t("tickets.showCodeField")} hint={t("tickets.showCodeFieldHint")} htmlFor="t-code-field">
+                <input id="t-code-field" type="checkbox" name="show_code_field" defaultChecked={ev.show_code_field} className="size-5 accent-primary" />
+              </SettingRow>
+            </RowGroup>
+            <DoorFields eventId={ev.id} />
+            <SaveBar />
+          </form>
+        </UrlSheet>
+      )}
+    </>
   )
 }
 
@@ -476,57 +354,39 @@ function CodeForm({ t, eventId, c, types }: { t: T; eventId: string; c?: Code; t
       {c && <input type="hidden" name="id" value={c.id} />}
       <div className="grid gap-2">
         <Label htmlFor="c-code">{t("tickets.code")}</Label>
-        <Input
-          id="c-code"
-          name="code"
-          defaultValue={c?.code}
-          required
-          maxLength={40}
-          placeholder="CREW-2026"
-          className="font-mono uppercase"
-        />
+        <Input id="c-code" name="code" defaultValue={c?.code} required maxLength={40} placeholder="CREW-2026" autoCapitalize="characters" className="font-mono uppercase" />
       </div>
       <CodeKindFields kind={c?.kind ?? "percent"} value={c ? (c.kind === "amount" ? priceInput(c.value) : String(c.value)) : ""} maxUses={c?.max_uses ?? null} />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="c-from">{t("tickets.validFrom")}</Label>
-          <DateInput
-            id="c-from"
-            name="valid_from"
-            type="datetime-local"
-            defaultValue={c?.valid_from ? toLocalInput(c.valid_from) : undefined}
-          />
+          <DateInput id="c-from" name="valid_from" type="datetime-local" defaultValue={c?.valid_from ? toLocalInput(c.valid_from) : undefined} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="c-until">{t("tickets.validUntil")}</Label>
-          <DateInput
-            id="c-until"
-            name="valid_until"
-            type="datetime-local"
-            defaultValue={c?.valid_until ? toLocalInput(c.valid_until) : undefined}
-          />
+          <DateInput id="c-until" name="valid_until" type="datetime-local" defaultValue={c?.valid_until ? toLocalInput(c.valid_until) : undefined} />
         </div>
       </div>
       <fieldset className="grid gap-2">
         <legend className="mb-1 text-sm font-medium">{t("tickets.codeTypes")}</legend>
         {types.map((ty) => (
-          <label key={ty.id} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="type_ids" value={ty.id} defaultChecked={c?.type_ids.includes(ty.id)} className="size-4" />
+          <label key={ty.id} className="flex min-h-8 items-center gap-2 text-sm">
+            <input type="checkbox" name="type_ids" value={ty.id} defaultChecked={c?.type_ids.includes(ty.id)} className="size-4 accent-primary" />
             {ty.name} {ty.hidden && <Badge variant="outline">{t("tickets.hiddenBadge")}</Badge>}
           </label>
         ))}
         <p className="text-xs text-muted-foreground">{t("tickets.codeTypesHint")}</p>
       </fieldset>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="active" value="1" defaultChecked={c?.active ?? true} className="size-4" />
+        <input type="checkbox" name="active" value="1" defaultChecked={c?.active ?? true} className="size-4 accent-primary" />
         {t("tickets.codeActive")}
       </label>
-      <SaveBar label={c ? undefined : t("tickets.newCode")} always={!c} />
+      <SaveBar label={c ? undefined : t("tickets.createCode")} always={!c} />
     </form>
   )
 }
 
-function TypeForm({ t, eventId, ty }: { t: T; eventId: string; ty?: TicketType }) {
+function TypeForm({ t, eventId, ty, tiers }: { t: T; eventId: string; ty?: TicketType; tiers: React.ComponentProps<typeof TierRows>["initial"] }) {
   return (
     <form action={saveTicketType} className="grid gap-4">
       <input type="hidden" name="event" value={eventId} />
@@ -538,47 +398,56 @@ function TypeForm({ t, eventId, ty }: { t: T; eventId: string; ty?: TicketType }
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="ty-price">{t("tickets.priceEur")}</Label>
-          <Input
-            id="ty-price"
-            name="price"
-            inputMode="decimal"
-            defaultValue={ty ? priceInput(ty.price) : ""}
-            required
-            placeholder="12,50"
-          />
+          <TypedInput kind="money" id="ty-price" name="price" defaultValue={ty ? priceInput(ty.price) : ""} required />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="ty-quota">{t("tickets.quota")}</Label>
-          <Input id="ty-quota" name="quota" type="number" min={1} defaultValue={ty?.quota ?? ""} placeholder="∞" />
+          <TypedInput kind="number" id="ty-quota" name="quota" min={1} step={1} defaultValue={ty?.quota ?? ""} placeholder="∞" />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="ty-start">{t("tickets.salesStart")}</Label>
-          <DateInput
-            id="ty-start"
-            name="sales_start"
-            type="datetime-local"
-            defaultValue={ty?.sales_start ? toLocalInput(ty.sales_start) : undefined}
-          />
+      {ty && (
+        <label className="flex items-start gap-2 text-sm">
+          <input type="hidden" name="active_field" value="1" />
+          <input type="checkbox" name="active" value="1" defaultChecked={ty.active} className="mt-0.5 size-4 accent-primary" />
+          <span>
+            {t("tickets.onSale")}
+            <span className="block text-xs text-muted-foreground">{t("tickets.pauseHint")}</span>
+          </span>
+        </label>
+      )}
+      {/* Rarely needed: sale window, description, hidden, price tiers (progressive disclosure). */}
+      <details className="group grid gap-4" open={!!(ty?.sales_start || ty?.sales_end || ty?.description || ty?.hidden || tiers.length)}>
+        <summary className="min-h-8 cursor-pointer text-sm text-[var(--link)] select-none">{t("tickets.moreOptions")}</summary>
+        <div className="mt-4 grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="ty-start">{t("tickets.salesStart")}</Label>
+              <DateInput id="ty-start" name="sales_start" type="datetime-local" defaultValue={ty?.sales_start ? toLocalInput(ty.sales_start) : undefined} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ty-end">{t("tickets.salesEnd")}</Label>
+              <DateInput id="ty-end" name="sales_end" type="datetime-local" defaultValue={ty?.sales_end ? toLocalInput(ty.sales_end) : undefined} />
+            </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ty-desc">{t("tickets.typeDescription")}</Label>
+            <Input id="ty-desc" name="description" defaultValue={ty?.description ?? ""} maxLength={1000} />
+          </div>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="hidden" value="1" defaultChecked={ty?.hidden} className="mt-0.5 size-4 accent-primary" />
+            <span>
+              {t("tickets.hiddenLabel")}
+              <span className="block text-xs text-muted-foreground">{t("tickets.hiddenHint")}</span>
+            </span>
+          </label>
+          <div className="grid gap-2">
+            <h3 className="text-sm font-medium">{t("tickets.tiers")}</h3>
+            <p className="text-xs text-muted-foreground">{t("tickets.tiersHint")}</p>
+            <TierRows initial={tiers} />
+          </div>
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="ty-end">{t("tickets.salesEnd")}</Label>
-          <DateInput id="ty-end" name="sales_end" type="datetime-local" defaultValue={ty?.sales_end ? toLocalInput(ty.sales_end) : undefined} />
-        </div>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="ty-desc">{t("tickets.typeDescription")}</Label>
-        <Input id="ty-desc" name="description" defaultValue={ty?.description ?? ""} maxLength={1000} />
-      </div>
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="hidden" value="1" defaultChecked={ty?.hidden} className="mt-0.5 size-4" />
-        <span>
-          {t("tickets.hiddenLabel")}
-          <span className="block text-xs text-muted-foreground">{t("tickets.hiddenHint")}</span>
-        </span>
-      </label>
-      <SaveBar label={ty ? undefined : t("tickets.newType")} always={!ty} />
+      </details>
+      <SaveBar label={ty ? undefined : t("tickets.createType")} always={!ty} />
     </form>
   )
 }
@@ -597,21 +466,24 @@ async function Waitlist({ t, ctx, eventId, canManage }: { t: T; ctx: Awaited<Ret
     .limit(500)
   if (!rows?.length) return null
   return (
-    <section className="grid gap-3" aria-labelledby="waitlist">
-      <div className="grid gap-1">
-        <h2 id="waitlist" className="font-medium">
-          {t("waitlist.admin")}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t("waitlist.hint")}</p>
-      </div>
+    <Section id="waitlist" title={t("waitlist.admin")} description={t("waitlist.hint")}>
       <DataTable
         rows={rows}
         rowKey={(r) => r.id}
         empty={t("waitlist.empty")}
         columns={[
-          { header: t("waitlist.name"), cell: (r) => <span className="font-medium">{r.name}</span> },
-          { header: t("waitlist.email"), cell: (r) => <span className="break-all">{r.email}</span> },
-          { header: t("waitlist.seats"), cell: (r) => r.quantity, className: "tabular-nums" },
+          {
+            header: t("waitlist.person"),
+            cell: (r) => (
+              <span className="grid min-w-0">
+                <span className="font-medium">{r.name}</span>
+                <a href={`mailto:${r.email}`} className="truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
+                  {r.email}
+                </a>
+              </span>
+            ),
+          },
+          { header: t("waitlist.seats"), cell: (r) => r.quantity, className: "text-right tabular-nums" },
           {
             header: t("tickets.status"),
             cell: (r) => (
@@ -631,7 +503,7 @@ async function Waitlist({ t, ctx, eventId, canManage }: { t: T; ctx: Awaited<Ret
                 <form action={removeFromWaitlist}>
                   <input type="hidden" name="id" value={r.id} />
                   <input type="hidden" name="event" value={eventId} />
-                  <SubmitButton size="sm" variant="outline">
+                  <SubmitButton size="sm" variant="ghost" data-confirm="waitlist.confirmRemove">
                     {t("waitlist.remove")}
                   </SubmitButton>
                 </form>
@@ -639,12 +511,13 @@ async function Waitlist({ t, ctx, eventId, canManage }: { t: T; ctx: Awaited<Ret
           },
         ]}
       />
-    </section>
+    </Section>
   )
 }
 
-// Abendkasse: which payment methods the door offers for this event, which card terminal, which cash book account.
-async function DoorSettings({ eventId }: { eventId: string }) {
+// Abendkasse fields inside the settings form: which payment methods the door offers, which card terminal, which
+// cash book account. (The door itself is Einlass → Verkauf; its gear links here.)
+async function DoorFields({ eventId }: { eventId: string }) {
   const ctx = await getContext()
   const t = await getT()
   const cashbook = ctx.modules.has("cashbook")
@@ -656,66 +529,35 @@ async function DoorSettings({ eventId }: { eventId: string }) {
   ])
   const d = readDoor(ev?.door)
   return (
-    <form action={saveDoorSettings} id="door" className="grid gap-4 rounded-lg border p-4">
-      <input type="hidden" name="event" value={eventId} />
-      <div>
-        <h2 className="font-medium">{t("door.settings.title")}</h2>
-        <p className="text-sm text-muted-foreground">{t("door.settings.description")}</p>
-      </div>
-      <fieldset className="grid gap-2">
-        <legend className="mb-1 text-sm font-medium">{t("door.settings.methods")}</legend>
-        {DOOR_METHODS.map((m) => (
-          <label key={m} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="methods" value={m} defaultChecked={d.methods.includes(m)} disabled={!can[m]} className="size-4 accent-primary" />
-            <span>
-              {t.dynamic(`door.sale.method.${m}`)}
-              {!can[m] && <span className="block text-xs text-muted-foreground">{t.dynamic(`door.settings.unavailable.${m}`)}</span>}
-            </span>
-          </label>
-        ))}
-      </fieldset>
+    <RowGroup id="door" title={t("door.settings.title")} description={t("door.settings.description")}>
+      <input type="hidden" name="door_present" value="1" />
+      {DOOR_METHODS.map((m) => (
+        <SettingRow key={m} label={t.dynamic(`door.sale.method.${m}`)} hint={can[m] ? undefined : t.dynamic(`door.settings.unavailable.${m}`)} htmlFor={`door-${m}`}>
+          <input id={`door-${m}`} type="checkbox" name="methods" value={m} defaultChecked={d.methods.includes(m)} disabled={!can[m]} className="size-5 accent-primary" />
+        </SettingRow>
+      ))}
       {can.terminal && (
-        <div className="grid gap-2">
-          <Label htmlFor="door-reader">{t("door.settings.reader")}</Label>
+        <SettingRow label={t("door.settings.reader")} htmlFor="door-reader">
           {readers === null ? (
             <p className="text-sm text-destructive">{t("door.settings.readersFailed")}</p>
           ) : readers.length ? (
-            <NativeSelect id="door-reader" name="reader_id" defaultValue={d.reader_id ?? ""} className="w-full">
-              <NativeSelectOption value="">{t("door.settings.noReader")}</NativeSelectOption>
-              {readers.map((r) => (
-                <NativeSelectOption key={r.id} value={r.id}>
-                  {r.name}
-                  {r.model ? ` (${r.model})` : ""}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Choice id="door-reader" name="reader_id" label={t("door.settings.reader")} defaultValue={d.reader_id} options={readers.map((r) => ({ value: r.id, label: `${r.name}${r.model ? ` (${r.model})` : ""}` }))} />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("door.settings.pairFirst")}{" "}
-              <Link href="/settings/integrations" className="underline">
-                {t("door.settings.toIntegrations")}
-              </Link>
-            </p>
+            <Link href="/settings/integrations" className="text-sm text-[var(--link)] hover:underline">
+              {t("door.settings.pairFirst")} {t("door.settings.toIntegrations")}
+            </Link>
           )}
-        </div>
+        </SettingRow>
       )}
       {cashbook && (
-        <div className="grid gap-2">
-          <Label htmlFor="door-account">{t("door.settings.cashAccount")}</Label>
-          <NativeSelect id="door-account" name="cash_account_id" defaultValue={d.cash_account_id ?? ""} className="w-full">
-            <NativeSelectOption value="">{t("door.settings.noCashAccount")}</NativeSelectOption>
-            {accounts?.map((a) => (
-              <NativeSelectOption key={a.id} value={a.id}>
-                {a.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <p className="text-xs text-muted-foreground">{t("door.settings.cashAccountHint")}</p>
-        </div>
+        <SettingRow label={t("door.settings.cashAccount")} hint={t("door.settings.cashAccountHint")} htmlFor="door-account">
+          {accounts?.length ? (
+            <Choice id="door-account" name="cash_account_id" label={t("door.settings.cashAccount")} defaultValue={d.cash_account_id} options={accounts.map((a) => ({ value: a.id, label: a.name }))} />
+          ) : (
+            <span className="text-sm text-muted-foreground">{t("door.settings.noCashAccounts")}</span>
+          )}
+        </SettingRow>
       )}
-      <SubmitButton variant="outline" className="justify-self-start">
-        {t("common.save")}
-      </SubmitButton>
-    </form>
+    </RowGroup>
   )
 }

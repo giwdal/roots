@@ -10,7 +10,7 @@ export function EventViews({ label, items }: { label: string; items: { href: str
   return (
     <Segments
       label={label}
-      className="justify-self-start"
+      className="flex-nowrap justify-self-start overflow-x-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap"
       items={items.map((it, i) => ({ ...it, current: i === 0 ? path === it.href : path.startsWith(it.href) }))}
     />
   )

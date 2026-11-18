@@ -28,3 +28,31 @@ export function AddLink({ href, children }: { href: string; children: React.Reac
     </Link>
   )
 }
+
+/** A settings group (docs/design/patterns.md §2): small heading, then a rounded box of rows. */
+export function RowGroup({ id, title, description, children }: { id?: string; title: React.ReactNode; description?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section id={id} className="grid scroll-mt-20 gap-2">
+      <div className="grid gap-0.5 px-1">
+        <h3 className="text-sm font-medium">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      <div className="divide-y rounded-xl border">{children}</div>
+    </section>
+  )
+}
+
+/** One setting: label + one-line hint left, the control right (below on narrow phones). */
+export function SettingRow({ label, hint, htmlFor, children }: { label: React.ReactNode; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+      <div className="grid min-w-0 flex-1 basis-48 gap-0.5">
+        <label htmlFor={htmlFor} className="text-sm">
+          {label}
+        </label>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      <div className="flex max-w-full shrink-0 items-center">{children}</div>
+    </div>
+  )
+}

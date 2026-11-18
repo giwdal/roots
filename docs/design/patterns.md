@@ -144,3 +144,40 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 
 Old URLs keep working (redirect to the new place). An area's Einstellungen stays in `src/modules/nav.ts` with
 `gear: true`: not in the sidebar or the Menü sheet, but in ⌘K and Settings › Bereiche (Shop is the first area using it).
+
+## 8. Record pages (decided)
+
+Research: Linear issue view, Attio / HubSpot records, Stripe customer & invoice pages, Shopify order page — all use the
+same shape: identity on top, the work in a main column, the properties in a rail you edit in place.
+
+**Layout**
+```
+Desktop (xl)                                         Tablet / phone
+┌ crumbs ─────────────────────────────── ⋯  Primary ┐  ┌ ‹  Name               ⋯ ┐
+│ Name  [Badge] [Badge]                              │  │ Name  [Badge]           │
+│ meta · meta                                        │  │ meta                    │
+│ [Stat] [Stat] [Stat] [Stat]                        │  │ [Stat] [Stat]           │
+├───────────────────────────────┬───────────────────┤  │ [Stat] [Stat]           │
+│ Main: what happens            │ Eigenschaften     │  │ Eigenschaften (top 4,   │
+│  – next-step box (if any)     │  label  value ✎   │  │  "Alle anzeigen")       │
+│  – related lists (Sections)   │  label  value ✎   │  │ Main sections           │
+│  – activity / timeline        │ Verknüpft         │  │ Verknüpft               │
+│                               │ Dateien           │  │ Aktivität               │
+└───────────────────────────────┴───────────────────┘  └ (round primary button) ─┘
+```
+- **Identity header** (`<PageHeader crumbs title badge meta>`): the name is shown in the page together with its badges
+  — never a lone badge pill above the content. The crumbs stay in the top bar.
+- **Main column** = what the person works with (lists, activity, the next-step box). **Right rail** (`xl:` ~340 px,
+  `<Section>`s) = properties, connections ("Verknüpft"), files. From `lg` down everything is one column: identity →
+  stats → properties (first 4, rest behind "Alle anzeigen") → main sections → connections.
+- Simple records (a few fields, no related content) are one column, or a dialog (`?edit=`) if they don't need a page.
+
+**Editing**
+- Single values (name, email, phone, dates, status, a choice) are edited **in place** with `<InlineField action id field
+  value kind>` (`src/components/inline-field.tsx`): pencil on hover (always visible on touch), Enter / leaving saves,
+  Esc cancels, error → toast. The area provides a `patch<Entity>` server action that validates the one field with the
+  module's `fields.ts` and updates only that column.
+- Compound values (address, bank details, a schedule) open a compact dialog (`?edit=<part>`) with those fields and a
+  SaveBar. Long text (description) edits in place as a textarea / rich text block.
+- No "Bearbeiten" button that opens the whole record form on record pages; the full form remains for **creating**.
+- Status changes are the primary / ⋯ actions (Veröffentlichen, Stornieren …), not a select in a form.

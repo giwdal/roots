@@ -3,6 +3,7 @@
     "description": "Run your club, business or events in one place."
   },
   "common": {
+    "editField": "Edit {field}",
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",

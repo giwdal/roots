@@ -3,6 +3,7 @@
     "description": "Verein, Betrieb oder Events an einem Ort organisieren."
   },
   "common": {
+    "editField": "{field} bearbeiten",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "close": "Schließen",

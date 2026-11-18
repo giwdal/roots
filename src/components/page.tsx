@@ -54,7 +54,9 @@ export function PageHeader({
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
   // (pages with their own icon are in the sidebar too: Benachrichtigungen, Dateien …)
   const overview = !!(area || icon) && !crumbs
-  const inTopBar = overview || (typeof title === "string" && crumbs?.at(-1)?.label === title)
+  // Record pages always show who/what they are in the page (title + badges + meta together, like Linear/Stripe), even
+  // though the crumbs in the top bar end with the same name; only area overviews leave their title to the top bar.
+  const inTopBar = overview
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.

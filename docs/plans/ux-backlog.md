@@ -20,12 +20,12 @@ file too; shared items are done once in shared components.
 - [ ] A7 No duplicate labels: a section with one field shows the section title only ("Bild / Bild").
 
 ## B. Record pages: layout, header, editing
-- [ ] B1 Decide and document the record layout (research: Linear issue, Attio/HubSpot record, Stripe customer):
+- [x] B1 (patterns.md §8) Decide and document the record layout (research: Linear issue, Attio/HubSpot record, Stripe customer):
       desktop = main column (what happens: related lists, activity) + right rail (~320 px) with the properties;
       phones = identity header → key properties → main content. Single column only for simple records.
-- [ ] B2 Identity header on record pages: name + badges (+ avatar/area icon) together in the page; a lone badge pill
+- [x] B2 (page.tsx: record pages always show title + badges in the page) Identity header on record pages: name + badges (+ avatar/area icon) together in the page; a lone badge pill
       above the content (contact page "Tickets") must not happen.
-- [ ] B3 Inline editing of properties (click value → field, Enter/blur saves, Esc cancels, error toast + revert) in the
+- [ ] B3 (component done: inline-field.tsx + patterns.md §8; areas still to adopt with patch actions) Inline editing of properties (click value → field, Enter/blur saves, Esc cancels, error toast + revert) in the
       right rail instead of a "Bearbeiten" sheet for single values; compound values (address, bank) open a small dialog;
       create flows stay forms. Needs per-field "patch" server actions that only update the given field.
 - [ ] B4 Stat tiles: short values only (unit/period into the hint, no wrapping "30,00 € / Quartal").
@@ -88,6 +88,14 @@ Today there is no manifest, no app icons, no service worker.
 - [ ] J3 Voice: dictation button in the search/Sprout field on phones (the comment form already dictates).
 - [ ] J4 ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
 
+## K. Start page & notifications
+- [ ] K1 Start (home) per person: "Für dich" first — my next shift (with Einchecken), my tasks due, things waiting for me
+      (approvals, new submissions, overdue dues/invoices I handle), today's events; then quick actions; tiles only for
+      modules that are on. Research: Linear inbox/My issues, Notion home, Shopify home.
+- [ ] K2 Notifications: one inbox (grouped by day, unread first, mark all read, filter by area with AreaIcon), every
+      row opens the record (switching org visibly when it belongs to another org), settings per channel in the person's
+      settings (F1); push + app badge on phones (I4).
+
 ## H. Code
 - [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,
       Section/RowGroup, picker search actions, inline-row editors) instead of near-copies per area; no repetition
@@ -101,3 +109,9 @@ Today there is no manifest, no app icons, no service worker.
       state-of-the-art UX/UI.
 - [ ] G2 Re-check every redesigned area on phones (Events, Einlass, Shop, Finanzen, Kontakte, Mitglieder, E-Mails,
       Formulare, Gästelisten) against mobile.md §5.
+
+## Z. To discuss tomorrow
+- Inline editing needs one `patch<Entity>` server action per record type (validated per field) — fine to add to the
+  key API too (`PATCH /<entity>/{id}` with one field), or keep it App-only?
+- Record titles now show in the page *and* the top bar on desktop (crumb + big title, like Linear/Stripe). OK, or only
+  in the top bar with badges next to it?

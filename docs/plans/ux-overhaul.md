@@ -122,6 +122,10 @@ Rules:
 
 ## 7. Phones (native-app feel)
 
+The full concept is `docs/design/mobile.md` (binding): shell, overlays as action sheets on phones, list/record/form
+screens, touch rules, checks. Short version:
+
+
 - Check every changed screen at 375 px: header facts first, primary action as the round button, tables as cards, sheets
   full width with the SaveBar at the bottom, nothing only on hover, touch targets ≥ 44 px in bars.
 - Record pages: facts and the next step before anything long; the aside comes before the long edit form on phones
@@ -130,7 +134,8 @@ Rules:
 
 ## 8. Order of work (one commit per area at least)
 
-1. Foundation: ConfirmHost for client buttons (done), `<RecordPicker>`, `<StatCard>` row, trash `?trash=1` helper.
+1. Foundation: ConfirmHost for client buttons, `<RecordPicker>`, `<Stats>`, look + area colours (done).
+1b. Phone shell (`docs/design/mobile.md` §6.1): top bar back + phone ⋯, search sheet, menus/popovers as action sheets.
 2. Events (overview, tickets, lineup, guest lists, Einlass settings) · Einlass
 3. Shop (products, orders, Lager, settings)
 4. Finanzen (Rechnungen, Zahlungen, Kasse, Berichte)

@@ -82,6 +82,9 @@ UI's dialog/drawer. A new exception goes into that test's allowed list *and* int
 
 ## Phones first
 
+The complete phone concept is `docs/design/mobile.md` (binding for every screen below `md`).
+
+
 The App is used on the go (door, shifts, looking someone up), so phones are a first-class device, not a squeezed
 desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
 

@@ -9,7 +9,7 @@ import { requirePerm } from "@/lib/context"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 import { TAX_RATES, UNITS } from "@/documents/calc"
-import { copyDocument as copyDraft, createDraft, issueDraft, validRangeFormat, VAT_ID, writeDraft } from "@/documents/drafts"
+import { copyDocument as copyDraft, createDraft, issueDraft, recipientOf, validRangeFormat, VAT_ID, writeDraft } from "@/documents/drafts"
 import { TEMPLATES } from "@/documents/templates"
 import { parsePrice } from "@/tickets/price"
 import { bicValid, ibanValid } from "@/lib/inputs"
@@ -32,13 +32,12 @@ type T = Awaited<ReturnType<typeof getT>>
 // Shared draft logic reports "not_found" for documents of other orgs; the App says "not allowed" there.
 const draftError = (t: T, e: { code?: string; message: string }) => (e.message === "not_found" ? t("errors.not_allowed") : dbError(t, e))
 
-export async function createDocument(fd: FormData) {
-  const { ctx, t } = await manager()
-  const kind = fd.get("kind") === "quote" ? "quote" : "invoice"
-  const contactId = String(fd.get("contact") ?? "")
-  const { id, error } = await createDraft(ctx.supabase, ctx.org.id, kind, /^[0-9a-f-]{36}$/.test(contactId) ? contactId : null)
-  if (error) back(PATH, { error: dbError(t, error) })
-  redirect(`${PATH}/${id}`)
+/** Name, address and email of a contact for the editor's recipient fields (null if it isn't one of the org's). */
+export async function recipientFor(contactId: string) {
+  const { ctx } = await manager()
+  if (!/^[0-9a-f-]{36}$/.test(contactId) || !ctx.modules.has("crm") || !ctx.can("crm.view")) return null
+  const r = await recipientOf(ctx.supabase, ctx.org.id, contactId)
+  return r && { name: r.recipient_name ?? "", address: r.recipient_address ?? "", email: r.recipient_email ?? "" }
 }
 
 const ItemInput = z.object({
@@ -50,10 +49,12 @@ const ItemInput = z.object({
   tax_rate: z.coerce.number().refine((v) => (TAX_RATES as readonly number[]).includes(v)),
 })
 
-// Saves header + items of a draft (items are replaced as a whole). Returns the id or redirects with an error.
+// Saves header + items of a draft (items are replaced as a whole). Without an id (the "new" page) the draft is created
+// here, after the input was checked, so opening /invoices/new never leaves a draft behind. Returns the id or redirects.
 async function save(ctx: Ctx, t: T, fd: FormData) {
-  const id = String(fd.get("id") ?? "")
-  const here = `${PATH}/${id}`
+  let id = String(fd.get("id") ?? "")
+  const kind = fd.get("kind") === "quote" ? "quote" : "invoice"
+  let here = id ? `${PATH}/${id}` : `${PATH}/new${kind === "quote" ? "?kind=quote" : ""}`
   let raw: unknown
   try {
     raw = JSON.parse(String(fd.get("items") ?? "[]"))
@@ -69,6 +70,12 @@ async function save(ctx: Ctx, t: T, fd: FormData) {
   })
   if (items.some((i) => !(i.quantity > 0) || i.quantity > 1e8 || i.unit_price === null)) back(here, { error: t("invoices.itemsInvalid") })
   const contact = String(fd.get("contact_id") ?? "")
+  if (!id) {
+    const created = await createDraft(ctx.supabase, ctx.org.id, kind)
+    if (created.error) back(here, { error: dbError(t, created.error) })
+    id = created.id!
+    here = `${PATH}/${id}`
+  }
   const error = await writeDraft(
     ctx.supabase,
     ctx.org.id,
@@ -165,6 +172,16 @@ export async function saveBilling(fd: FormData) {
   if (iban && !ibanValid(iban)) back(here, { error: t("invoices.ibanInvalid") })
   if (bic && !bicValid(bic)) back(here, { error: t("invoices.bicInvalid") })
   const template = TEMPLATES.find((x) => x === fd.get("template")) ?? "classic"
+  // Number ranges are part of the same form (one SaveBar): fields <name>_invoice / <name>_quote.
+  const ranges = (["invoice", "quote"] as const).map((kind) => ({
+    org_id: ctx.org.id,
+    kind,
+    format: String(fd.get(`format_${kind}`) ?? "").trim().slice(0, 60),
+    next_number: Math.floor(Number(fd.get(`next_number_${kind}`))),
+    yearly_reset: fd.get(`yearly_reset_${kind}`) === "1",
+  }))
+  if (ranges.some((r) => !validRangeFormat(r.format))) back(here, { error: t("invoices.formatInvalid") })
+  if (ranges.some((r) => !(r.next_number >= 1 && r.next_number < 1e9))) back(here, { error: t("errors.invalid_input") })
   const days = (k: string, d: number) => Math.min(365, Math.max(0, Math.floor(Number(fd.get(k)) || d)))
   const { error } = await ctx.supabase.from("org_billing").upsert({
     org_id: ctx.org.id,
@@ -193,21 +210,8 @@ export async function saveBilling(fd: FormData) {
     template,
   })
   if (error) back(here, { error: dbError(t, error) })
+  const { error: rangeError } = await ctx.supabase.from("number_ranges").upsert(ranges, { onConflict: "org_id,kind" })
+  if (rangeError) back(here, { error: dbError(t, rangeError) })
   refreshPublic(ctx.org.id) // public pages show this
-  back(here, { ok: t("invoices.saved") })
-}
-
-export async function saveNumberRange(fd: FormData) {
-  const { ctx, t } = await manager()
-  const here = `${PATH}/settings#numbers`
-  const kind = fd.get("kind") === "quote" ? "quote" : "invoice"
-  const format = String(fd.get("format") ?? "").trim().slice(0, 60)
-  const next = Math.floor(Number(fd.get("next_number")))
-  if (!validRangeFormat(format)) back(here, { error: t("invoices.formatInvalid") })
-  if (!(next >= 1 && next < 1e9)) back(here, { error: t("errors.invalid_input") })
-  const { error } = await ctx.supabase
-    .from("number_ranges")
-    .upsert({ org_id: ctx.org.id, kind, format, next_number: next, yearly_reset: fd.get("yearly_reset") === "1" }, { onConflict: "org_id,kind" })
-  if (error) back(here, { error: dbError(t, error) })
   back(here, { ok: t("invoices.saved") })
 }

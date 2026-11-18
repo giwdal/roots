@@ -17,10 +17,13 @@ const SENT_KEY = "roots-form-sent"
  * Abbrechen · Speichern"), and leaving the page (links in the App, reload, closing the tab) asks first.
  * Create forms pass `always` + their label ("Kontakt anlegen"): the bar is there from the start.
  * In a drawer it sticks to the drawer's bottom instead of the page's.
+ * `confirm` (a message key): saving asks first through <ConfirmHost> (money: book, close a month), via a hidden submit
+ * button that carries data-confirm.
  */
-export function SaveBar({ label, always }: { label?: string; always?: boolean }) {
+export function SaveBar({ label, always, confirm }: { label?: string; always?: boolean; confirm?: string }) {
   const t = useT()
   const ref = useRef<HTMLSpanElement>(null)
+  const asker = useRef<HTMLButtonElement>(null)
   const [target, setTarget] = useState<Element | null>(null)
   const [dirty, setDirty] = useState(false)
   // The form is looked up when needed, never remembered: React may swap the <form> element after the first render
@@ -127,12 +130,17 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
             {t("common.cancel")}
           </Button>
         )}
-        <Save submit={() => form()?.requestSubmit()} label={label ?? t("common.save")} onDone={() => (setDirty(false), tryRestore(search))} />
+        <Save submit={() => (confirm && asker.current ? form()?.requestSubmit(asker.current) : form()?.requestSubmit())} label={label ?? t("common.save")} onDone={() => (setDirty(false), tryRestore(search))} />
       </div>
     </div>
   )
   return (
     <span ref={ref} className="contents">
+      {confirm && (
+        <button ref={asker} type="submit" data-confirm={confirm} hidden>
+          {label ?? t("common.save")}
+        </button>
+      )}
       {target && bar ? createPortal(bar, target) : bar}
     </span>
   )

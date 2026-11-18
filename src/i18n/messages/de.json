@@ -1023,22 +1023,22 @@
     "notReady": "Ein Zahlungsanbieter ist verbunden, aber noch nicht bereit für Zahlungen (Einrichtung nicht abgeschlossen oder fehlende Berechtigung).",
     "toIntegrations": "Zu den Integrationen",
     "date": "Datum",
-    "customer": "Kunde",
+    "customer": "Kund:in",
     "what": "Wofür",
     "amount": "Betrag",
     "status": "Status",
     "all": "Alle",
-    "empty": "Noch keine Bestellungen.",
+    "empty": "Noch keine Zahlungen.",
     "statuses": {
-      "open": "offen",
-      "paid": "bezahlt",
-      "failed": "fehlgeschlagen",
-      "expired": "abgelaufen",
-      "cancelled": "storniert",
-      "refunded": "erstattet",
-      "partially_refunded": "teilweise erstattet",
-      "pending": "ausstehend",
-      "succeeded": "erfolgreich"
+      "open": "Offen",
+      "paid": "Bezahlt",
+      "failed": "Fehlgeschlagen",
+      "expired": "Abgelaufen",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet",
+      "partially_refunded": "Teilweise erstattet",
+      "pending": "Ausstehend",
+      "succeeded": "Erfolgreich"
     },
     "sources": {
       "test": "Testzahlung",
@@ -1059,7 +1059,7 @@
     "cancelTicket": "Stornieren",
     "confirmCancelTicket": "Ticket stornieren? Der Ticketpreis wird erstattet und der QR-Code ist ungültig.",
     "ticketCancelled": "Ticket storniert.",
-    "refundPending": "Erstattung angefragt. Stripe bestätigt sie gleich.",
+    "refundPending": "Erstattung angefragt. Der Zahlungsanbieter bestätigt sie gleich.",
     "refunded": "Erstattet.",
     "testPayment": "Testzahlung",
     "testHelp": "Erzeugt eine Bestellung über den Betrag und öffnet den Stripe-Checkout. Nur für Plattform-Admins.",
@@ -1074,7 +1074,28 @@
     "feeKept": "Die Servicegebühr ({amount}) wird nicht erstattet.",
     "noTerminal": "Kein Kartenterminal eingerichtet.",
     "refundInShop": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)",
-    "forEvent": "Event: {title}"
+    "forEvent": "Event: {title}",
+    "search": "Name oder E-Mail suchen…",
+    "emptyFiltered": "Keine Zahlungen für diese Auswahl.",
+    "emptyTitle": "Noch keine Zahlungen",
+    "emptyText": "Hier landet jede Zahlung: Ticketverkäufe, Shop-Bestellungen und Verkäufe an der Abendkasse.",
+    "payment": "Zahlung",
+    "attempts": "Vorgänge",
+    "links": "Verknüpft",
+    "link": {
+      "event": "Event",
+      "shopOrder": "Bestellung im Shop",
+      "contact": "Kontakt"
+    },
+    "provider": "Anbieter",
+    "providers": {
+      "stripe": "Stripe",
+      "sumup": "SumUp",
+      "cash": "Bar",
+      "transfer": "Überweisung"
+    },
+    "confirmRefund": "Geld erstatten?",
+    "confirmRefundHint": "Der Betrag geht über den Zahlungsanbieter an die Kund:in zurück. Das lässt sich nicht rückgängig machen."
   },
   "checkout": {
     "title": "Bestellung",
@@ -1816,7 +1837,7 @@
   },
   "invoices": {
     "nav": "Rechnungen",
-    "title": "Angebote & Rechnungen",
+    "title": "Rechnungen",
     "settings": "Einstellungen",
     "newInvoice": "Neue Rechnung",
     "newQuote": "Neues Angebot",
@@ -1836,7 +1857,8 @@
       "overdue": "Überfällig",
       "paid": "Bezahlt",
       "accepted": "Angenommen",
-      "cancelled": "Storniert"
+      "cancelled": "Storniert",
+      "declined": "Abgelehnt"
     },
     "statuses": {
       "invoice": {
@@ -2026,7 +2048,51 @@
     "fromShopOrder": "Shop-Bestellung #{number}",
     "confirmCancel": "Stornorechnung erstellen? Sie bekommt eine eigene Nummer und negative Beträge, diese Rechnung gilt dann als storniert. Für eine Korrektur danach eine neue Rechnung ausstellen.",
     "creatingInvoice": "Rechnung wird angelegt …",
-    "creatingQuote": "Angebot wird angelegt …"
+    "creatingQuote": "Angebot wird angelegt …",
+    "clearContact": "Filter {name} entfernen",
+    "kindsPlural": {
+      "invoice": "Rechnungen",
+      "quote": "Angebote",
+      "cancellation": "Storno"
+    },
+    "emptyFiltered": "Keine Dokumente für diese Auswahl.",
+    "emptyTitle": "Noch keine Rechnungen",
+    "emptyText": "Schreib deine erste Rechnung oder ein Angebot. Shop-Bestellungen bekommen ihre Rechnungen automatisch, wenn du das in den Shop-Einstellungen einschaltest.",
+    "document": "Dokument",
+    "dueColumn": "Fällig / gültig bis",
+    "taxTotal": "USt.",
+    "bankShopHint": "Diese Bankverbindung steht auch bei Shop-Bestellungen mit Überweisung.",
+    "iban": "IBAN",
+    "bic": "BIC",
+    "texts": "Texte",
+    "textsHint": "Vorgaben für neue Dokumente; im Entwurf änderbar.",
+    "contact": "Kontakt",
+    "unitPriceGross": "Einzelpreis brutto",
+    "itemTitleN": "Bezeichnung Position {n}",
+    "vatIncluded": "darin {rate} % USt.",
+    "createDraft": "Entwurf anlegen",
+    "confirmIssue": "Rechnung ausstellen?",
+    "confirmIssueHint": "Sie bekommt ihre Nummer und lässt sich danach nicht mehr ändern (GoBD). Korrekturen gehen nur über Stornieren und eine neue Rechnung.",
+    "confirmIssueQuote": "Angebot ausstellen?",
+    "confirmIssueQuoteHint": "Es bekommt seine Nummer und lässt sich danach nicht mehr ändern. Für Änderungen duplizierst du es.",
+    "confirmPaid": "Als bezahlt markieren?",
+    "confirmPaidHint": "Nur wenn das Geld wirklich eingegangen ist. Bar bezahlt? Dann besser im Kassenbuch buchen und die Rechnung dort auswählen.",
+    "confirmUnpaid": "Wieder auf offen setzen?",
+    "confirmUnpaidHint": "Die Rechnung gilt dann wieder als unbezahlt und zählt zu den offenen Beträgen.",
+    "confirmDeclined": "Angebot als abgelehnt markieren?",
+    "confirmDeclinedHint": "Danach lässt es sich nicht mehr in eine Rechnung umwandeln, nur noch duplizieren.",
+    "link": {
+      "cancels": "storniert durch dieses Dokument",
+      "source": "erstellt aus",
+      "cancelledBy": "Stornorechnung",
+      "derived": "daraus erstellt",
+      "shopOrder": "Bestellung im Shop",
+      "payment": "Zahlung",
+      "paymentDetail": "der Shop-Bestellung"
+    },
+    "allOfContact": "Alle Rechnungen dieses Kontakts",
+    "links": "Verknüpft",
+    "notesTitle": "Interne Notiz"
   },
   "guestlists": {
     "nav": "Gästelisten",
@@ -4725,8 +4791,8 @@
       "perMonth": "Eintritte und Austritte pro Monat"
     },
     "events": {
-      "title": "Veranstaltungen & Einlass",
-      "count": "Veranstaltungen",
+      "title": "Events & Einlass",
+      "count": "Events",
       "sold": "Tickets verkauft",
       "revenue": "Ticketumsatz",
       "admitted": "Eingelassen",
@@ -4734,9 +4800,9 @@
       "membersIn": "Mitglieder",
       "guestsIn": "Gäste",
       "membersByType": "Eingelassene Mitglieder nach Mitgliedsart",
-      "event": "Veranstaltung",
+      "event": "Event",
       "occupancy": "Auslastung",
-      "none": "Keine Veranstaltungen in diesem Zeitraum.",
+      "none": "Keine Events in diesem Zeitraum.",
       "perEvent": "Eingelassen pro Veranstaltung"
     },
     "payments": {
@@ -4748,7 +4814,9 @@
       "tickets": "davon Tickets",
       "members": "davon Mitglieder",
       "invoices": "davon Rechnungen",
-      "guestlists": "davon Gästelisten"
+      "guestlists": "davon Gästelisten",
+      "shop": "davon Shop",
+      "test": "davon Testzahlungen"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -4792,16 +4860,17 @@
       "bySphere": "Nach Bereich",
       "balances": "Bestände zum Ende des Zeitraums",
       "noSphere": "ohne Bereich"
-    }
+    },
+    "custom": "Eigener Zeitraum"
   },
   "cashbook": {
     "nav": "Kassenbuch",
     "title": "Kassenbuch",
     "accounts": "Kassen & Konten",
-    "newAccount": "Kasse / Konto",
-    "editAccount": "Konto bearbeiten",
+    "newAccount": "Neue Kasse",
+    "editAccount": "Kasse bearbeiten",
     "inactive": "inaktiv",
-    "noAccounts": "Noch keine Kasse – leg zuerst eine Kasse oder ein Konto an (z. B. „Barkasse“ oder „Abendkasse“).",
+    "noAccounts": "Leg zuerst eine Kasse oder ein Konto an, z. B. „Barkasse“ oder „Abendkasse“.",
     "prevMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "monthClosed": "Abgeschlossen",
@@ -4809,7 +4878,7 @@
     "income": "Einnahmen",
     "expenses": "Ausgaben",
     "closingBalance": "Endbestand",
-    "newEntry": "Buchung",
+    "newEntry": "Neue Buchung",
     "entry": "Buchung",
     "number": "Nummer",
     "date": "Datum",
@@ -4845,7 +4914,7 @@
     "accountName": "Name",
     "accountPlaceholder": "z. B. Barkasse, Abendkasse, Girokonto",
     "accountKind": "Art",
-    "opening": "Anfangsbestand (€)",
+    "opening": "Anfangsbestand",
     "openingOn": "Stand vom",
     "accountActive": "Aktiv",
     "accountSaved": "Gespeichert.",
@@ -4859,7 +4928,7 @@
     "closing": "Monatsabschluss",
     "closeLater": "Abschließen geht, sobald der Monat vorbei ist.",
     "closeHint": "Endbestand laut Buchungen: {balance}. Nach dem Abschluss nimmt der Monat keine Buchungen mehr an.",
-    "counted": "Gezählter Bestand (Kassensturz, €)",
+    "counted": "Gezählter Bestand (Kassensturz)",
     "note": "Notiz",
     "closeMonth": "Monat abschließen",
     "closed": "Monat abgeschlossen.",
@@ -4870,7 +4939,21 @@
     "descriptionRequired": "Bitte eine Beschreibung angeben.",
     "invoiceNotOpen": "Nur offene Rechnungen lassen sich mit einer Einnahme bezahlen.",
     "cantReverseReversal": "Ein Storno lässt sich nicht stornieren.",
-    "alreadyReversed": "Diese Buchung ist schon storniert."
+    "alreadyReversed": "Diese Buchung ist schon storniert.",
+    "createAccount": "Kasse anlegen",
+    "noAccountsTitle": "Noch keine Kasse",
+    "categoryOptional": "Kategorie (optional)",
+    "counterpartyOptional": "Von / an (optional)",
+    "invoiceSearch": "Offene Rechnung suchen…",
+    "closeDue": "{month} ist vorbei. Endbestand laut Buchungen: {balance}.",
+    "closeTitle": "{month} abschließen",
+    "countedHint": "Optional: Was in der Kasse liegt. Die Differenz zum Endbestand wird festgehalten.",
+    "confirmBook": "Buchung speichern?",
+    "confirmBookHint": "Sie bekommt eine Nummer und lässt sich danach nicht mehr ändern – Fehler werden storniert.",
+    "confirmReverse": "Buchung stornieren?",
+    "confirmReverseHint": "Es wird eine Gegenbuchung mit heutigem Datum angelegt; die Buchung selbst bleibt sichtbar.",
+    "confirmClose": "Monat abschließen?",
+    "confirmCloseHint": "Danach nimmt der Monat keine Buchungen mehr an. Das lässt sich nicht rückgängig machen."
   },
   "wiki": {
     "nav": "Wissen",

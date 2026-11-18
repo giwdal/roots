@@ -90,9 +90,9 @@ export const NAV: Area[] = [
     icon: LandmarkIcon,
     children: [
       { href: "/invoices", label: "invoices.nav", module: "invoices", permission: "invoices.view" },
-      { href: "/cashbook", label: "cashbook.nav", module: "cashbook", permission: "cashbook.view" },
       { href: "/payments", label: "payments.nav", module: "payments", permission: "payments.view" },
-      { href: "/invoices/settings", label: "common.settings", module: "invoices", permission: "invoices.manage" },
+      { href: "/cashbook", label: "cashbook.nav", module: "cashbook", permission: "cashbook.view" },
+      { href: "/invoices/settings", label: "common.settings", module: "invoices", permission: "invoices.manage", gear: true },
     ],
   },
   {

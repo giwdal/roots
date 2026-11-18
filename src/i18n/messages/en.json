@@ -1028,17 +1028,17 @@
     "amount": "Amount",
     "status": "Status",
     "all": "All",
-    "empty": "No orders yet.",
+    "empty": "No payments yet.",
     "statuses": {
-      "open": "open",
-      "paid": "paid",
-      "failed": "failed",
-      "expired": "expired",
-      "cancelled": "cancelled",
-      "refunded": "refunded",
-      "partially_refunded": "partly refunded",
-      "pending": "pending",
-      "succeeded": "succeeded"
+      "open": "Open",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded",
+      "partially_refunded": "Partially refunded",
+      "pending": "Pending",
+      "succeeded": "Succeeded"
     },
     "sources": {
       "test": "Test payment",
@@ -1059,7 +1059,7 @@
     "cancelTicket": "Cancel",
     "confirmCancelTicket": "Cancel this ticket? Its price is refunded and the QR code stops working.",
     "ticketCancelled": "Ticket cancelled.",
-    "refundPending": "Refund requested. Stripe will confirm it shortly.",
+    "refundPending": "Refund requested. The payment provider confirms it shortly.",
     "refunded": "Refunded.",
     "testPayment": "Test payment",
     "testHelp": "Creates an order for the amount and opens Stripe Checkout. Platform admins only.",
@@ -1074,7 +1074,28 @@
     "feeKept": "The service fee ({amount}) isn't refunded.",
     "noTerminal": "No card terminal set up.",
     "refundInShop": "Refund in the shop order (pieces, stock, invoice)",
-    "forEvent": "Event: {title}"
+    "forEvent": "Event: {title}",
+    "search": "Search name or email…",
+    "emptyFiltered": "No payments match.",
+    "emptyTitle": "No payments yet",
+    "emptyText": "Every payment shows up here: ticket sales, shop orders and door sales.",
+    "payment": "Payment",
+    "attempts": "Transactions",
+    "links": "Linked",
+    "link": {
+      "event": "Event",
+      "shopOrder": "Shop order",
+      "contact": "Contact"
+    },
+    "provider": "Provider",
+    "providers": {
+      "stripe": "Stripe",
+      "sumup": "SumUp",
+      "cash": "Cash",
+      "transfer": "Bank transfer"
+    },
+    "confirmRefund": "Refund money?",
+    "confirmRefundHint": "The amount goes back to the customer through the payment provider. This can't be undone."
   },
   "checkout": {
     "title": "Order",
@@ -1816,7 +1837,7 @@
   },
   "invoices": {
     "nav": "Invoices",
-    "title": "Quotes & invoices",
+    "title": "Invoices",
     "settings": "Settings",
     "newInvoice": "New invoice",
     "newQuote": "New quote",
@@ -1836,7 +1857,8 @@
       "overdue": "Overdue",
       "paid": "Paid",
       "accepted": "Accepted",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "declined": "Declined"
     },
     "statuses": {
       "invoice": {
@@ -2026,7 +2048,51 @@
     "fromShopOrder": "Shop order #{number}",
     "confirmCancel": "Create a cancellation invoice? It gets its own number and negative amounts, and this invoice counts as cancelled. For a correction, issue a new invoice afterwards.",
     "creatingInvoice": "Creating invoice …",
-    "creatingQuote": "Creating quote …"
+    "creatingQuote": "Creating quote …",
+    "clearContact": "Remove filter {name}",
+    "kindsPlural": {
+      "invoice": "Invoices",
+      "quote": "Quotes",
+      "cancellation": "Cancellations"
+    },
+    "emptyFiltered": "No documents match.",
+    "emptyTitle": "No invoices yet",
+    "emptyText": "Write your first invoice or quote. Shop orders get their invoices automatically if you switch that on in the shop settings.",
+    "document": "Document",
+    "dueColumn": "Due / valid until",
+    "taxTotal": "VAT",
+    "bankShopHint": "This account is also shown for shop orders paid by bank transfer.",
+    "iban": "IBAN",
+    "bic": "BIC",
+    "texts": "Texts",
+    "textsHint": "Defaults for new documents; editable in each draft.",
+    "contact": "Contact",
+    "unitPriceGross": "Unit price (gross)",
+    "itemTitleN": "Description of item {n}",
+    "vatIncluded": "incl. {rate} % VAT",
+    "createDraft": "Create draft",
+    "confirmIssue": "Issue the invoice?",
+    "confirmIssueHint": "It gets its number and can't be changed afterwards. Corrections only by cancelling and issuing a new invoice.",
+    "confirmIssueQuote": "Issue the quote?",
+    "confirmIssueQuoteHint": "It gets its number and can't be changed afterwards. Duplicate it to make changes.",
+    "confirmPaid": "Mark as paid?",
+    "confirmPaidHint": "Only once the money has really arrived. Paid in cash? Then book it in the cash book and pick the invoice there.",
+    "confirmUnpaid": "Set back to open?",
+    "confirmUnpaidHint": "The invoice counts as unpaid again.",
+    "confirmDeclined": "Mark the quote as declined?",
+    "confirmDeclinedHint": "It can't be turned into an invoice afterwards, only duplicated.",
+    "link": {
+      "cancels": "cancelled by this document",
+      "source": "created from",
+      "cancelledBy": "Cancellation",
+      "derived": "created from this",
+      "shopOrder": "Shop order",
+      "payment": "Payment",
+      "paymentDetail": "of the shop order"
+    },
+    "allOfContact": "All invoices of this contact",
+    "links": "Linked",
+    "notesTitle": "Internal note"
   },
   "guestlists": {
     "nav": "Guest lists",
@@ -4748,7 +4814,9 @@
       "tickets": "of which tickets",
       "members": "of which members",
       "invoices": "of which invoices",
-      "guestlists": "of which guest lists"
+      "guestlists": "of which guest lists",
+      "shop": "of which shop",
+      "test": "of which test payments"
     },
     "invoices": {
       "title": "Invoices",
@@ -4792,16 +4860,17 @@
       "bySphere": "By area",
       "balances": "Balances at the end of the period",
       "noSphere": "no area"
-    }
+    },
+    "custom": "Custom range"
   },
   "cashbook": {
     "nav": "Cash book",
     "title": "Cash book",
     "accounts": "Cash boxes & accounts",
-    "newAccount": "Cash box / account",
+    "newAccount": "New account",
     "editAccount": "Edit account",
     "inactive": "inactive",
-    "noAccounts": "No cash box yet – create a cash box or account first (e.g. \"Petty cash\" or \"Door\").",
+    "noAccounts": "Create a cash box or account first, e.g. “Petty cash” or “Door”.",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
     "monthClosed": "Closed",
@@ -4809,7 +4878,7 @@
     "income": "Income",
     "expenses": "Expenses",
     "closingBalance": "Closing balance",
-    "newEntry": "Entry",
+    "newEntry": "New entry",
     "entry": "Entry",
     "number": "Number",
     "date": "Date",
@@ -4845,7 +4914,7 @@
     "accountName": "Name",
     "accountPlaceholder": "e.g. Petty cash, Door, Current account",
     "accountKind": "Kind",
-    "opening": "Opening balance (€)",
+    "opening": "Opening balance",
     "openingOn": "As of",
     "accountActive": "Active",
     "accountSaved": "Saved.",
@@ -4859,7 +4928,7 @@
     "closing": "Month closing",
     "closeLater": "You can close the month once it is over.",
     "closeHint": "Closing balance from the entries: {balance}. After closing, the month takes no more entries.",
-    "counted": "Counted cash (€)",
+    "counted": "Counted cash",
     "note": "Note",
     "closeMonth": "Close month",
     "closed": "Month closed.",
@@ -4870,7 +4939,21 @@
     "descriptionRequired": "Please enter a description.",
     "invoiceNotOpen": "Only open invoices can be paid with an income entry.",
     "cantReverseReversal": "A reversal can't be reversed.",
-    "alreadyReversed": "This entry is already reversed."
+    "alreadyReversed": "This entry is already reversed.",
+    "createAccount": "Create account",
+    "noAccountsTitle": "No account yet",
+    "categoryOptional": "Category (optional)",
+    "counterpartyOptional": "From / to (optional)",
+    "invoiceSearch": "Search open invoice…",
+    "closeDue": "{month} is over. Balance from the entries: {balance}.",
+    "closeTitle": "Close {month}",
+    "countedHint": "Optional: what is in the cash box. The difference to the balance is recorded.",
+    "confirmBook": "Book this entry?",
+    "confirmBookHint": "It gets a number and can't be changed afterwards; mistakes are reversed.",
+    "confirmReverse": "Reverse this entry?",
+    "confirmReverseHint": "A counter entry with today's date is booked; the entry itself stays visible.",
+    "confirmClose": "Close the month?",
+    "confirmCloseHint": "The month takes no more entries afterwards. This can't be undone."
   },
   "wiki": {
     "nav": "Knowledge",

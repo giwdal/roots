@@ -74,6 +74,90 @@ export const EXPORTERS: Record<string, Exporter> = {
       }
     },
   },
+  documents: {
+    perm: "invoices.view",
+    module: "invoices",
+    name: "rechnungen",
+    async load(ctx, t, sp) {
+      // Same filters as Rechnungen (kind, status incl. overdue, search, contact).
+      const kind = ["invoice", "quote", "cancellation"].find((k) => k === sp.get("kind"))
+      const status = ["draft", "sent", "paid", "accepted", "declined", "cancelled"].find((s) => s === sp.get("status"))
+      const q = clean(sp.get("q"))
+      const contact = /^[0-9a-f-]{36}$/.test(sp.get("contact") ?? "") ? sp.get("contact")! : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("documents")
+          .select("kind, status, number, recipient_name, recipient_email, issue_date, due_date, valid_until, paid_at, net_total, tax_total, gross_total")
+          .eq("org_id", ctx.org.id)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+        if (kind) x = x.eq("kind", kind)
+        if (status) x = x.eq("status", status)
+        if (sp.get("status") === "overdue") x = x.eq("kind", "invoice").eq("status", "sent").lt("due_date", today())
+        if (q) x = x.or(`number.ilike.%${q}%,recipient_name.ilike.%${q}%`)
+        if (contact) x = x.eq("contact_id", contact)
+        return x
+      })
+      return {
+        headers: [t("invoices.number"), t("invoices.kind"), t("invoices.status"), t("invoices.recipient"), t("invoices.recipientEmail"), t("invoices.issueDate"), t("invoices.dueColumn"), t("invoices.paidAt"), t("invoices.net"), t("invoices.taxTotal"), t("invoices.gross")],
+        rows: rows.map((d) => [
+          d.number ?? "",
+          t.dynamic(`invoices.kinds.${d.kind}`),
+          t.dynamic(`invoices.statuses.${d.kind}.${d.status}`),
+          d.recipient_name,
+          d.recipient_email,
+          d.issue_date,
+          d.kind === "quote" ? d.valid_until : d.due_date,
+          d.paid_at ? new Date(d.paid_at).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) : "",
+          d.net_total / 100,
+          d.tax_total / 100,
+          d.gross_total / 100,
+        ]),
+      }
+    },
+  },
+  payments: {
+    perm: "payments.view",
+    module: "payments",
+    name: "zahlungen",
+    async load(ctx, t, sp) {
+      // Same filters as Zahlungen (status, source, event, contact's email, search).
+      const q = clean(sp.get("q"))
+      const uuid = (k: string) => (/^[0-9a-f-]{36}$/.test(sp.get(k) ?? "") ? sp.get(k)! : null)
+      const event = uuid("event")
+      const contact = uuid("contact")
+      const email = contact ? ((await ctx.supabase.from("contacts").select("email").eq("id", contact).eq("org_id", ctx.org.id).maybeSingle()).data?.email ?? "-") : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("pay_orders")
+          .select("created_at, paid_at, customer_name, customer_email, source_module, amount_total, application_fee, status, provider")
+          .eq("org_id", ctx.org.id)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+        if (sp.get("status")) x = x.eq("status", sp.get("status")!)
+        if (sp.get("source")) x = x.eq("source_module", sp.get("source")!)
+        if (event) x = x.eq("source_module", "tickets").eq("source_id", event)
+        if (email) x = x.ilike("customer_email", email.replace(/[%_\\]/g, "\\$&"))
+        if (q) x = x.or(`customer_email.ilike.%${q}%,customer_name.ilike.%${q}%`)
+        return x
+      })
+      const at = (iso: string | null) => (iso ? new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Berlin" }).slice(0, 16) : "")
+      return {
+        headers: [t("payments.date"), t("payments.paidAt"), t("payments.customer"), t("contacts.email"), t("payments.what"), t("payments.amount"), t("payments.fee"), t("payments.status"), t("payments.provider")],
+        rows: rows.map((o) => [
+          at(o.created_at),
+          at(o.paid_at),
+          o.customer_name,
+          o.customer_email,
+          label(t, `payments.sources.${o.source_module}`),
+          o.amount_total / 100,
+          o.application_fee / 100,
+          label(t, `payments.statuses.${o.status}`),
+          o.provider ?? "",
+        ]),
+      }
+    },
+  },
   contacts: {
     perm: "crm.view",
     module: "crm",

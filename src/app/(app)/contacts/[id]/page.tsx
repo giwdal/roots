@@ -66,9 +66,13 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   ])
   if (!c) notFound()
   // Team access: the linked account, and (for managers) the team members who could be linked.
-  const [{ data: team }, { data: linkedElsewhere }] = await Promise.all([
+  // Payments don't point at contacts: the contact's email links them (same rule as Zahlungen › ?contact=).
+  const [{ data: team }, { data: linkedElsewhere }, { data: payments }] = await Promise.all([
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
+    on("payments", "payments.view") && c.email
+      ? ctx.supabase.from("pay_orders").select("id, status, source_module, amount_total, currency, created_at").eq("org_id", ctx.org.id).ilike("customer_email", c.email.replace(/[%_\\]/g, "\\$&")).order("created_at", { ascending: false }).limit(LIMIT)
+      : Promise.resolve({ data: null }),
   ])
   const { data: people } = team?.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", team.map((m) => m.user_id)) : { data: [] }
   const linked = people?.find((p) => p.id === c.user_id)
@@ -271,6 +275,29 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                     badge: t.dynamic(`invoices.statuses.${d.kind}.${d.status}`),
                   }))}
                 />
+                {docs.length >= LIMIT && (
+                  <Link href={`/invoices?contact=${c.id}`} className="text-sm text-[var(--link)] hover:underline">
+                    {t("common.showAll")}
+                  </Link>
+                )}
+              </Section>
+            )}
+            {!!payments?.length && (
+              <Section id="payments" title={t("payments.title")}>
+                <Rows
+                  rows={payments.map((o) => ({
+                    key: o.id,
+                    href: `/payments?contact=${c.id}&edit=${o.id}`,
+                    title: t.dynamic(`payments.sources.${o.source_module}`),
+                    detail: [t.money(o.amount_total, o.currency), day(o.created_at)].join(" · "),
+                    badge: t.dynamic(`payments.statuses.${o.status}`),
+                  }))}
+                />
+                {payments.length >= LIMIT && (
+                  <Link href={`/payments?contact=${c.id}`} className="text-sm text-[var(--link)] hover:underline">
+                    {t("common.showAll")}
+                  </Link>
+                )}
               </Section>
             )}
             {!!subs?.length && (

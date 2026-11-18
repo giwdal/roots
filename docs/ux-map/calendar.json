@@ -1,0 +1,65 @@
+{
+  "area": "calendar",
+  "label": "Kalender",
+  "module": null,
+  "moduleNote": "Shown when any of events, shifts, projects, rentals, courses is on and the person has its .view permission (nav entry + sourcesFor()).",
+  "nav": [
+    { "label": "Kalender", "key": "calendar.nav", "href": "/calendar", "permission": "events.view | shifts.view | projects.view | rentals.view | courses.view" }
+  ],
+  "pages": [
+    {
+      "route": "/calendar",
+      "file": "src/app/(app)/calendar/page.tsx",
+      "title": "Kalender",
+      "purpose": "One read-only calendar over everything dated the person may see (events, shifts, tasks, projects, rentals, courses), coloured by source; a click opens the record.",
+      "permission": "any source's module + .view permission (none → 404)",
+      "size": "list",
+      "header": {
+        "area": "calendar",
+        "primary": {
+          "label": "Neues Event (first creatable item)",
+          "key": "eventsPage.new",
+          "href": "/events/new",
+          "more": [
+            { "label": "Neue Schicht", "key": "shifts.newShift", "href": "/shifts?new=shift", "permission": "shifts.manage" },
+            { "label": "Neues Projekt", "key": "projects.newProject", "href": "/projects/new", "permission": "projects.manage" },
+            { "label": "Neuer Kurs", "key": "courses.new", "href": "/courses/new", "permission": "courses.manage" },
+            { "label": "Neue Vergabe", "key": "rentals.newRentalAny", "href": "/rentals/r/new", "permission": "rentals.manage" }
+          ],
+          "notes": "List built from modules on + .manage permissions (events.manage first); the first one becomes the button, the rest 'more'. Hidden when the person can create nothing."
+        }
+      },
+      "urlState": [
+        { "param": "src", "meaning": "FilterMenu Bereich: events | shifts | tasks | projects | rentals | courses (one source)" },
+        { "param": "view", "meaning": "month (default) | week | day | agenda" },
+        { "param": "date", "meaning": "focused day; loads 42 days before to 70 days after" }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            { "name": "src", "label": "Bereich", "key": "calendar.source", "type": "select", "component": "FilterMenu", "notes": "options calendar.sources.*: Veranstaltungen, Schichten, Aufgaben, Projekte, Vermietung, Kurse" }
+          ]
+        },
+        {
+          "title": "Kalender",
+          "kind": "Calendar",
+          "notes": "CalendarView month/week/day/agenda, all entries readOnly (no drag, no slot click). Click targets: events → /events/<id>; shifts → /shifts?shift=<id>; tasks (all-day, '✓' when done) → /projects/tasks?task=<id>; projects (all-day bar start–end, project colour) → /projects/<id>; rentals → /rentals/r/<id> (short rentals as time span, long ones as all-day marks 'Mietbeginn' / 'letzter Tag für Kündigung' / 'Vertragsende'); courses (each session) → /courses/<id>. Cancelled events prefixed '✕'. Events coloured by the first select custom field with option colours."
+        }
+      ],
+      "actions": [
+        { "label": "Neu … (primary + more)", "where": "header", "kind": "link", "target": "/events/new | /shifts?new=shift | /projects/new | /courses/new | /rentals/r/new", "confirm": false }
+      ],
+      "links": ["/events/[id]", "/shifts", "/projects/tasks", "/projects/[id]", "/rentals/r/[id]", "/courses/[id]", "/events/new", "/projects/new", "/courses/new", "/rentals/r/new"],
+      "phone": "Primary as round + with a glass menu of all create choices; CalendarView on phones.",
+      "uxNotes": [
+        "Calendar is read-only: no drag and no click-to-create on an empty day, although the module calendars (shifts, absences, tasks) support both; the '+' menu ignores the clicked date.",
+        "Only one source can be filtered at a time (FilterMenu single value), no multi-select of sources; no legend for source colours (events can use their own custom colours too, so colours are ambiguous).",
+        "Clicking an entry leaves the calendar (navigates to the module page / opens its drawer there) instead of a preview in place.",
+        "HR absences are not a source (CALENDAR_SOURCES has no hr), so who is away doesn't show next to shifts.",
+        "'Neue Schicht' from here opens /shifts?new=shift with the default date (today 18:00), not the calendar's focused date."
+      ]
+    }
+  ]
+}

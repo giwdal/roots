@@ -1,0 +1,86 @@
+{
+  "area": "notifications",
+  "label": "Benachrichtigungen",
+  "module": null,
+  "nav": [],
+  "navNotes": "Not in src/modules/nav.ts; the App layout puts \"Benachrichtigungen\" (InboxIcon) in the sidebar top group under Start, with the unread count as a badge (also on the phone menu tile). Also reached via the Home inbox card.",
+  "pages": [
+    {
+      "route": "/notifications",
+      "file": "src/app/(app)/notifications/page.tsx",
+      "title": "Benachrichtigungen",
+      "purpose": "Personal inbox across all of the person's orgs (and platform events for platform admins); open one, mark all read.",
+      "permission": "signed-in member (own rows only, RLS)",
+      "size": "form",
+      "header": {
+        "icon": "InboxIcon",
+        "title": "Benachrichtigungen",
+        "actions": [
+          {
+            "label": "Alle als gelesen markieren",
+            "key": "inbox.markAllRead",
+            "target": "markAllRead (notifications/actions.ts)",
+            "notes": "icon-only on phones (label sr-only)"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "filter",
+          "meaning": "unread = only unread"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Alle · Ungelesen",
+          "kind": "custom",
+          "notes": "Hand-made segmented links (not <Segments>), right-aligned above the table."
+        },
+        {
+          "title": "Benachrichtigungen",
+          "kind": "DataTable",
+          "columns": [
+            "Was (badge 'Ungelesen' + event title)",
+            "Organisation (or 'admin.title' for platform events)",
+            "Wann"
+          ],
+          "notes": "Row → /notifications/<id>"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Alle als gelesen markieren",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "markAllRead",
+          "confirm": false,
+          "result": "revalidates layout; no toast"
+        },
+        {
+          "label": "(row)",
+          "where": "row",
+          "kind": "link",
+          "target": "/notifications/<id> (route handler)",
+          "result": "marks read, switches the active org to the notification's org, redirects to the event's href (or back to /notifications); prefetch requests are ignored"
+        }
+      ],
+      "links": [
+        "/notifications/[id] → any record",
+        "/settings/profile#notifications (not linked from here)"
+      ],
+      "empty": "Keine Benachrichtigungen. (DataTable empty text)",
+      "phone": "Cards; mark-all button icon only.",
+      "uxNotes": [
+        "Opening a notification silently switches the active org – the user lands in another org without a hint.",
+        "No link from the inbox to the personal notification preferences (Settings › Profil #notifications) or vice versa.",
+        "Filter is a custom segmented control instead of <Segments>; PageHeader uses an icon (app.md: no area icon in PageHeader).",
+        "'Alle als gelesen markieren' gives no toast/feedback beyond the badges disappearing.",
+        "Notifications cannot be deleted or marked unread individually."
+      ]
+    }
+  ]
+}

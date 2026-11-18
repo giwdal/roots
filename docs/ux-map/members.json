@@ -1,0 +1,1175 @@
+{
+  "area": "members",
+  "label": "Mitgliedschaften",
+  "module": "members",
+  "nav": [
+    {
+      "label": "Mitglieder",
+      "href": "/members"
+    },
+    {
+      "label": "Mitgliedsarten",
+      "href": "/members/types"
+    },
+    {
+      "label": "Beiträge",
+      "href": "/members/dues"
+    },
+    {
+      "label": "Einstellungen",
+      "href": "/members/settings"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/members",
+      "file": "src/app/(app)/members/page.tsx",
+      "title": "Mitglieder (trash: \"Mitglieder · Papierkorb\")",
+      "purpose": "List memberships (one row per person, other periods folded out), filter by status and type, see who is behind on fees, import/export.",
+      "permission": "members.view",
+      "size": "list (no <Page>; layout wraps a max-w-6xl grid)",
+      "header": {
+        "area": "members",
+        "meta": "{count} aktive Mitgliedschaft(en) (membership.activeCount)",
+        "settings": "/members/settings (members.manage)",
+        "menu": [
+          {
+            "label": "Importieren",
+            "key": "membership.import",
+            "target": "?import=1",
+            "permission": "members.manage + crm.manage"
+          },
+          {
+            "label": "Exportieren › Excel (.xlsx) / CSV",
+            "key": "export.button",
+            "target": "/export/members?status=&type=&q=&format="
+          },
+          {
+            "label": "Papierkorb / Aktiv",
+            "key": "membership.filters.trash / membership.filters.active",
+            "target": "/members?status=trash | /members",
+            "permission": "members.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neue Mitgliedschaft",
+          "key": "membership.new",
+          "href": "/members/new",
+          "notes": "only with members.manage, at least one type, not in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search contact first/last name, company, email"
+        },
+        {
+          "param": "status",
+          "meaning": "active (default) | ended | all | trash"
+        },
+        {
+          "param": "type",
+          "meaning": "membership type id (FilterMenu, only with >1 type)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "import",
+          "meaning": "1 = import sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "legacy → /members/<id>"
+        },
+        {
+          "param": "new (+contact)",
+          "meaning": "legacy → /members/new?contact="
+        }
+      ],
+      "sections": [
+        {
+          "title": "No types notice",
+          "kind": "custom",
+          "notes": "When no membership types: 'Lege zuerst eine Mitgliedsart an (z. B. Vollmitglied, ermäßigt).' + link 'Mitgliedsarten' (manage only)."
+        },
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "key": "common.search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "status",
+              "label": "Aktiv · Ausgetreten · Alle",
+              "key": "membership.filters.*",
+              "component": "hand-built chip <nav> (same look as Segments)",
+              "notes": "hidden in trash view"
+            },
+            {
+              "name": "type",
+              "label": "Mitgliedsart",
+              "key": "membership.type",
+              "component": "FilterMenu"
+            }
+          ]
+        },
+        {
+          "title": "Mitglieder",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ 'Team' badge if linked to an App user, 'Nr. …', '+ n weitere Mitgliedschaften' <details>)",
+            "Mitgliedsart",
+            "Mitglied seit",
+            "Status (Aktiv / Ausgetreten / Endet am / Ab / Pausiert [bis])",
+            "Bezahlt bis (red when behind)"
+          ],
+          "notes": "Row → /members/<id>. Grouping by person happens per page (a person can appear on two pages)."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Exportieren",
+          "key": "common.exportSelected",
+          "where": "bulk",
+          "kind": "download",
+          "target": "GET /export/members?format=xlsx (ticked ids)",
+          "notes": "only bulk action"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?import=1",
+          "component": "UrlSheet (wide)",
+          "title": "Mitgliedschaften importieren",
+          "key": "membership.importTitle",
+          "fields": [
+            {
+              "name": "file",
+              "type": "file",
+              "component": "CsvImport"
+            },
+            {
+              "name": "mapping[]",
+              "type": "select",
+              "component": "NativeSelect per column",
+              "notes": "IMPORT_FIELDS (src/members/fields) + contact custom fields"
+            },
+            {
+              "name": "mode",
+              "label": "Wenn es schon einen Eintrag mit dieser E-Mail gibt",
+              "key": "import.existing",
+              "type": "radio"
+            }
+          ],
+          "actions": [
+            {
+              "label": "import.submit",
+              "kind": "client",
+              "target": "importMembers (actions.ts)",
+              "result": "toast import.done; 'zur Liste' → /members"
+            }
+          ],
+          "notes": "Long hint membership.importHint (type names must match). Without types: notice instead of form. Requires a type column when >1 type. Needs crm.manage too."
+        }
+      ],
+      "links": [
+        "/members/new",
+        "/members/[id]",
+        "/members/types",
+        "/members/settings",
+        "/export/members"
+      ],
+      "empty": "Plain text: 'Noch keine Mitgliedschaften.' / filtered 'Keine Mitgliedschaften gefunden.' (no <EmptyState>)",
+      "phone": "Cards; no bulk bar; primary as round +.",
+      "uxNotes": [
+        "Status filter is a hand-built chip nav instead of <Segments>; trash is both a ⋯ item and a status value (?status=trash).",
+        "No <EmptyState> component (contacts, types and email campaigns have one).",
+        "Primary 'Neue Mitgliedschaft' silently disappears when no types exist; the reason is a muted notice above the toolbar.",
+        "Import requires crm.manage in addition to members.manage, without telling a members-only manager.",
+        "Only bulk action is export; marking paid/reminding lives on /members/dues."
+      ]
+    },
+    {
+      "route": "/members/new",
+      "file": "src/app/(app)/members/new/page.tsx",
+      "title": "Neue Mitgliedschaft",
+      "purpose": "Admit a member: pick an existing contact or type a new person, then the membership terms.",
+      "permission": "members.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Mitgliedschaften",
+          "Neue Mitgliedschaft"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "contact",
+          "meaning": "preselects a contact in the picker"
+        },
+        {
+          "param": "error",
+          "meaning": "error notice"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Person",
+          "key": "membership.person",
+          "anchor": "#person",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "contact_id",
+              "label": "Bestehender Kontakt",
+              "key": "membership.existingContact",
+              "type": "search-select",
+              "component": "ContactPicker"
+            },
+            {
+              "name": "first_name",
+              "label": "Vorname",
+              "key": "contacts.firstName",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "last_name",
+              "label": "Nachname",
+              "key": "contacts.lastName",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "email",
+              "label": "E-Mail",
+              "key": "contacts.email",
+              "type": "email",
+              "component": "TypedInput:email"
+            }
+          ],
+          "notes": "Hint between picker and name fields: 'Oder neue Person: Name und/oder E-Mail eintragen, sie wird als Kontakt angelegt.'"
+        },
+        {
+          "title": "Mitgliedschaft",
+          "key": "membership.period",
+          "anchor": "#membership",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "type_id",
+              "label": "Mitgliedsart",
+              "key": "membership.type",
+              "type": "select",
+              "component": "NativeSelect",
+              "required": true,
+              "notes": "options 'Name · fee / interval', active types only"
+            },
+            {
+              "name": "starts_on",
+              "label": "Mitglied seit",
+              "key": "membership.since",
+              "type": "date",
+              "component": "TypedInput:date",
+              "required": true,
+              "notes": "default today"
+            }
+          ]
+        },
+        {
+          "title": "Beitrag",
+          "key": "membership.feeOwn",
+          "anchor": "#fee",
+          "kind": "FormCard",
+          "description": "membership.feeOwnHint",
+          "fields": [
+            {
+              "name": "fee",
+              "label": "Beitrag (€)",
+              "key": "membership.fee",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "empty = type's fee (placeholder shows it)"
+            },
+            {
+              "name": "fee_interval",
+              "label": "Rhythmus",
+              "key": "membership.interval",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "empty = type's interval"
+            },
+            {
+              "name": "payment_method",
+              "label": "Zahlungsart",
+              "key": "membership.paymentMethod",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "empty = automatic (SEPA if IBAN, else Überweisung); SEPA, Überweisung, Bar, PayPal, Andere"
+            },
+            {
+              "name": "fee_free_until",
+              "label": "Beitragsfrei bis",
+              "key": "membership.feeFreeUntil",
+              "type": "date",
+              "component": "TypedInput:date"
+            }
+          ]
+        },
+        {
+          "title": "SEPA-Lastschriftmandat",
+          "key": "membership.mandate",
+          "anchor": "#mandate",
+          "kind": "FormCard",
+          "description": "membership.mandateHint",
+          "fields": [
+            {
+              "name": "account_holder",
+              "label": "Kontoinhaber:in (falls abweichend)",
+              "key": "membership.accountHolder",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "iban",
+              "label": "IBAN",
+              "type": "iban",
+              "component": "TypedInput:iban",
+              "notes": "label hard-coded, not translated"
+            },
+            {
+              "name": "bic",
+              "label": "BIC (optional)",
+              "key": "membership.bicOptional",
+              "type": "bic",
+              "component": "TypedInput:bic"
+            },
+            {
+              "name": "mandate_ref",
+              "label": "Mandatsreferenz",
+              "key": "membership.mandateRef",
+              "type": "text",
+              "component": "Input",
+              "notes": "placeholder 'automatisch aus der Mitgliedsnummer'"
+            },
+            {
+              "name": "mandate_signed_on",
+              "label": "Mandat erteilt am",
+              "key": "membership.mandateSigned",
+              "type": "date",
+              "component": "TypedInput:date"
+            }
+          ]
+        },
+        {
+          "title": "Weitere Angaben / Notiz",
+          "key": "membership.moreFields / membership.note",
+          "anchor": "#more",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "custom.<key>",
+              "type": "custom",
+              "component": "CustomFieldInputs",
+              "notes": "entity memberships"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "membership.note",
+              "type": "textarea",
+              "component": "Textarea"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Aufnehmen",
+          "key": "membership.create",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveMembership",
+          "result": "→ /members/<id> toast membership.created; new person without name/email → error membership.personRequired; email taken → errors.email_taken"
+        }
+      ],
+      "links": [
+        "/members"
+      ],
+      "uxNotes": [
+        "Two ways to name the person on one card (picker OR free fields); if both are filled it is not visible which wins.",
+        "Five cards (~15 inputs) for a new member; fee, mandate and custom fields are all optional but shown expanded.",
+        "Type and interval/payment method use NativeSelect, not <Choice> as the design guide asks for ≤ 15 options.",
+        "Crumb says 'Mitgliedschaften' while the sidebar entry and list title say 'Mitglieder'."
+      ]
+    },
+    {
+      "route": "/members/[id]",
+      "file": "src/app/(app)/members/[id]/page.tsx",
+      "title": "Mitgliedschaft (contact name)",
+      "purpose": "One membership: edit terms, see and settle its dues, pause, cancel, member card, files.",
+      "permission": "members.view",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Mitgliedschaften",
+          "<Name>"
+        ],
+        "badge": "Papierkorb (when deleted)",
+        "meta": "Nr. … · type · bezahlt bis …",
+        "actions": [
+          {
+            "label": "Zum Kontakt",
+            "key": "membership.openContact",
+            "kind": "link",
+            "target": "/contacts/<contact>"
+          }
+        ],
+        "menu": [
+          {
+            "label": "In den Papierkorb",
+            "key": "membership.toTrash",
+            "target": "trashMembership",
+            "confirm": true,
+            "notes": "only when members.manage, not deleted and the membership has NO dues"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Mitgliedschaft / Beitrag / SEPA-Lastschriftmandat / Weitere Angaben",
+          "kind": "FormCard",
+          "notes": "Same MembershipFields as /members/new plus 'Mitglied bis' (ends_on, DateInput). Fieldset disabled unless members.manage and not deleted. SaveBar on change."
+        },
+        {
+          "title": "Mitgliedskarte",
+          "key": "membership.card",
+          "anchor": "#card",
+          "kind": "custom",
+          "description": "membership.cardHint",
+          "notes": "IdCard with QR/code; only when contact has member_code"
+        },
+        {
+          "title": "Beiträge",
+          "key": "membership.tabs.dues",
+          "anchor": "#dues",
+          "kind": "custom",
+          "notes": "Up to 100 dues: description, amount, due date, status badge, 'Rücklastschrift <date>' badge; row buttons below. Empty: 'Keine Beiträge.'"
+        },
+        {
+          "title": "Pausieren",
+          "key": "membership.pause",
+          "anchor": "#pause",
+          "kind": "FormCard",
+          "description": "membership.pauseHint",
+          "fields": [
+            {
+              "name": "paused_from",
+              "label": "Pause ab",
+              "key": "membership.pauseFrom",
+              "type": "date",
+              "component": "TypedInput:date",
+              "notes": "default today"
+            },
+            {
+              "name": "paused_until",
+              "label": "Pause bis (optional)",
+              "key": "membership.pauseUntil",
+              "type": "date",
+              "component": "TypedInput:date"
+            },
+            {
+              "name": "pause_reason",
+              "label": "Grund (optional)",
+              "key": "membership.pauseReason",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "When paused shows range + 'Pause beenden'. Only for active, not-ended memberships."
+        },
+        {
+          "title": "Kündigen",
+          "key": "membership.cancel",
+          "anchor": "#cancel",
+          "kind": "FormCard",
+          "description": "membership.cancelHint (earliest end date + notice months)",
+          "fields": [
+            {
+              "name": "ends_on",
+              "label": "Anderes Enddatum (optional)",
+              "key": "membership.cancelOtherDate",
+              "type": "date",
+              "component": "TypedInput:date"
+            }
+          ],
+          "notes": "Only when no ends_on yet."
+        },
+        {
+          "title": "Dateien",
+          "kind": "FileList",
+          "notes": "entity memberships"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveMembership",
+          "permission": "members.manage",
+          "result": "toast membership.saved"
+        },
+        {
+          "label": "Neue Karte (alte wird ungültig)",
+          "key": "membership.cardReset",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "resetMemberCode",
+          "permission": "members.manage",
+          "confirm": false,
+          "result": "toast membership.cardResetDone"
+        },
+        {
+          "label": "Erinnern",
+          "key": "membership.remind",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "sendReminders (one due)",
+          "permission": "members.manage",
+          "confirm": false,
+          "notes": "open + overdue dues only; sends an email"
+        },
+        {
+          "label": "Rücklastschrift",
+          "key": "membership.markReturned",
+          "where": "row",
+          "kind": "confirm",
+          "target": "setDueStatus status=failed",
+          "confirm": true,
+          "notes": "paid dues"
+        },
+        {
+          "label": "Wieder offen",
+          "key": "membership.markOpen",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "setDueStatus status=open",
+          "confirm": false,
+          "notes": "paid by hand (no SEPA run)"
+        },
+        {
+          "label": "Bezahlt",
+          "key": "membership.markPaid",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "setDueStatus status=paid",
+          "confirm": false
+        },
+        {
+          "label": "Pausieren / Pause beenden",
+          "key": "membership.pause / membership.resume",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "pauseMembership / resumeMembership",
+          "confirm": false
+        },
+        {
+          "label": "Kündigen",
+          "key": "membership.cancel",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "endMembership",
+          "confirm": false,
+          "result": "toast membership.ended with date"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "membership.restore",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restoreMembership",
+          "notes": "deleted: notice membership.deletedOn above the (disabled) form"
+        }
+      ],
+      "links": [
+        "/members",
+        "/contacts/[id]"
+      ],
+      "phone": "Aside (card, dues, pause, cancel, files) stacks below the long edit form.",
+      "uxNotes": [
+        "Cancelling a membership (Kündigen) and issuing a new member card (invalidates the old one) run without confirmation, while 'Rücklastschrift' asks.",
+        "Trash is only offered when no dues exist, with no hint why the ⋯ menu is missing otherwise.",
+        "Dues on a phone sit below 5 form cards; status of payments is only summarised in the meta line.",
+        "Pause and cancel are separate cards with own submit buttons next to a SaveBar form – three save mechanisms on one page.",
+        "No 'storniert' (cancel a due) button in the UI although the action accepts status=cancelled."
+      ]
+    },
+    {
+      "route": "/members/dues",
+      "file": "src/app/(app)/members/dues/page.tsx",
+      "title": "Beiträge",
+      "purpose": "Treasurer's view: all dues by status, generate period fees, add a levy, build SEPA files, remind and mark paid in bulk.",
+      "permission": "members.view",
+      "size": "list (no <Page>)",
+      "header": {
+        "area": "members",
+        "meta": "Offen: {open} · davon überfällig: {overdue}",
+        "actions": [
+          {
+            "label": "Erinnerung an alle Überfälligen",
+            "key": "membership.remindAll",
+            "kind": "confirm",
+            "target": "sendReminders (all overdue)",
+            "confirm": true,
+            "notes": "only when someone would be reminded; confirm shows count + amount"
+          },
+          {
+            "label": "Umlage",
+            "key": "membership.levy",
+            "kind": "sheet",
+            "target": "?new=levy"
+          },
+          {
+            "label": "SEPA-Lastschrift",
+            "key": "membership.sepa",
+            "kind": "sheet",
+            "target": "?new=sepa"
+          }
+        ],
+        "menu": [
+          {
+            "label": "Exportieren › Excel (.xlsx) / CSV",
+            "target": "/export/dues?status=&format="
+          }
+        ],
+        "primary": {
+          "label": "Beiträge erzeugen",
+          "key": "membership.generate",
+          "href": "?new=generate",
+          "notes": "RefreshCw icon; members.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "status",
+          "meaning": "open (default) | failed | paid | cancelled | all"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "new",
+          "meaning": "generate | levy | sepa sheet"
+        },
+        {
+          "param": "run",
+          "meaning": "highlights a SEPA run (set after creating one)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Lastschriftdateien",
+          "key": "membership.runs",
+          "anchor": "#runs",
+          "kind": "custom",
+          "notes": "Last 10 runs: 'Einzug am {date} · {count} Posten · {total}', status badge Erstellt/Eingezogen/Verworfen; buttons XML (download /members/sepa/<id>), 'Als eingezogen markieren' (confirm), 'Verwerfen' (no confirm). Only when runs exist."
+        },
+        {
+          "title": "Status filter",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "status",
+              "label": "Offen · Rücklastschrift · Bezahlt · Storniert · Alle",
+              "component": "hand-built chip nav, right-aligned"
+            }
+          ]
+        },
+        {
+          "title": "Beiträge",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ description)",
+            "Fällig am",
+            "Betrag (€)",
+            "Status (Überfällig/Offen/Bezahlt/Storniert + 'in Lastschrift', 'Rücklastschrift', 'erinnert')"
+          ],
+          "notes": "Row → /members/<membership>."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Bezahlt",
+          "key": "membership.markPaid",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkDues intent=paid",
+          "confirm": true
+        },
+        {
+          "label": "Erinnern",
+          "key": "membership.remind",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkDues intent=remind",
+          "confirm": true
+        },
+        {
+          "label": "Exportieren",
+          "key": "common.exportSelected",
+          "where": "bulk",
+          "kind": "download",
+          "target": "/export/dues?format=xlsx"
+        },
+        {
+          "label": "XML",
+          "key": "membership.downloadXml",
+          "where": "section",
+          "kind": "download",
+          "target": "/members/sepa/<run> (route.ts, pain.008)"
+        },
+        {
+          "label": "Als eingezogen markieren",
+          "key": "membership.markCollected",
+          "where": "section",
+          "kind": "confirm",
+          "target": "setRunStatus status=collected",
+          "confirm": true
+        },
+        {
+          "label": "Verwerfen",
+          "key": "membership.cancelRun",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "setRunStatus status=cancelled",
+          "confirm": false
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=generate",
+          "component": "UrlSheet",
+          "title": "Beiträge erzeugen",
+          "fields": [
+            {
+              "name": "from",
+              "label": "Von",
+              "key": "membership.from",
+              "type": "date",
+              "component": "DateInput",
+              "required": true,
+              "notes": "default Jan 1"
+            },
+            {
+              "name": "to",
+              "label": "Bis",
+              "key": "membership.to",
+              "type": "date",
+              "component": "DateInput",
+              "required": true,
+              "notes": "default Dec 31"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Beiträge erzeugen",
+              "kind": "serverAction",
+              "target": "generateDues",
+              "result": "toast membership.duesGenerated"
+            }
+          ],
+          "notes": "Hint membership.generateHint."
+        },
+        {
+          "param": "?new=levy",
+          "component": "UrlSheet",
+          "title": "Umlage",
+          "fields": [
+            {
+              "name": "description",
+              "label": "Text",
+              "key": "membership.levyText",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "amount",
+              "label": "Betrag (€)",
+              "key": "membership.amount",
+              "type": "money",
+              "component": "TypedInput:money",
+              "required": true
+            },
+            {
+              "name": "due_on",
+              "label": "Fällig am",
+              "key": "membership.dueOn",
+              "type": "date",
+              "component": "DateInput",
+              "required": true
+            },
+            {
+              "name": "tag",
+              "label": "Für",
+              "key": "membership.levyGroup",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "'Alle aktiven Mitglieder' or a contact tag"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Umlage anlegen",
+              "key": "membership.addLevy",
+              "kind": "serverAction",
+              "target": "addLevy",
+              "confirm": false
+            }
+          ]
+        },
+        {
+          "param": "?new=sepa",
+          "component": "UrlSheet",
+          "title": "SEPA-Lastschrift",
+          "fields": [
+            {
+              "name": "collection_on",
+              "label": "Einzug am",
+              "key": "membership.collectionOn",
+              "type": "date",
+              "component": "DateInput",
+              "required": true,
+              "notes": "default today+7, min tomorrow"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Lastschriftdatei erstellen",
+              "key": "membership.createRun",
+              "kind": "serverAction",
+              "target": "createSepaRun",
+              "result": "→ /members/dues?run=<id> toast membership.runCreated"
+            }
+          ],
+          "notes": "Hint membership.sepaHint."
+        }
+      ],
+      "links": [
+        "/members/[id]",
+        "/members/sepa/[id]",
+        "/export/dues"
+      ],
+      "empty": "'Keine Beiträge.' (plain)",
+      "phone": "Three outline header buttons + primary move to the top bar; bulk mark-paid/remind unavailable on phones (cards without tick boxes).",
+      "uxNotes": [
+        "No search on the dues list (can't find one person's dues here; only via their membership page).",
+        "Status filter chips sit below the runs card, right-aligned and separated from the table toolbar pattern used elsewhere.",
+        "Header holds 3 outline actions + primary + ⋯; 'Beiträge erzeugen' (primary) vs 'Umlage' vs 'SEPA-Lastschrift' are all 'create' flows in sheets that use a plain SubmitButton, not SaveBar.",
+        "'Verwerfen' of a SEPA run has no confirm while 'Als eingezogen markieren' has.",
+        "No settings gear here, although members and types pages have one; SEPA creditor data needed for runs lives in /members/settings."
+      ]
+    },
+    {
+      "route": "/members/types",
+      "file": "src/app/(app)/members/types/page.tsx",
+      "title": "Mitgliedsarten",
+      "purpose": "Define membership types: fee, rhythm, entry fee, notice period, prorating, active.",
+      "permission": "members.manage",
+      "size": "list",
+      "header": {
+        "area": "members",
+        "meta": "{active} aktiv · {total} gesamt",
+        "description": "Beitrag, Zahlungsrhythmus, Aufnahmegebühr und Kündigungsfrist je Art.",
+        "settings": "/members/settings",
+        "primary": {
+          "label": "Neue Mitgliedsart",
+          "key": "membership.newType",
+          "href": "/members/types?new=type"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "type = create sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "<type id> = edit sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Mitgliedsarten",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ anteilig · Mindestbeitrag)",
+            "Beitrag (€)",
+            "Aufnahme (€)",
+            "Frist",
+            "Mitglieder (active count)",
+            "Status (Aktiv/Inaktiv)"
+          ],
+          "notes": "Row → ?edit=<id>"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=type | ?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Hinzufügen (new) / type name (edit)",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "membership.typeName",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "fee",
+              "label": "Beitrag (€)",
+              "key": "membership.fee",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "interval",
+              "label": "Rhythmus",
+              "key": "membership.interval",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Monat, Quartal, Halbjahr, Jahr, einmalig; default Jahr"
+            },
+            {
+              "name": "entry_fee",
+              "label": "Aufnahme (€)",
+              "key": "membership.entryFee",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "notice_months",
+              "label": "Frist (Monate)",
+              "key": "membership.noticeMonths",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "0–24, default 3"
+            },
+            {
+              "name": "prorate",
+              "label": "anteilig",
+              "key": "membership.prorate",
+              "type": "checkbox"
+            },
+            {
+              "name": "fee_is_minimum",
+              "label": "Mindestbeitrag („ab“)",
+              "key": "membership.feeIsMinimum",
+              "type": "checkbox"
+            },
+            {
+              "name": "active",
+              "label": "aktiv",
+              "key": "membership.typeActive",
+              "type": "checkbox",
+              "notes": "edit only"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Hinzufügen / Speichern",
+              "key": "membership.addType",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveType",
+              "result": "toast membership.typeSaved"
+            },
+            {
+              "label": "Mitgliedsart löschen",
+              "key": "membership.deleteType",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteType",
+              "confirm": false,
+              "result": "in use → error membership.typeInUse ('Setze sie stattdessen auf inaktiv.')"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/members/settings"
+      ],
+      "empty": "EmptyState 'Lege zuerst eine Mitgliedsart an (z. B. Vollmitglied, ermäßigt).' + 'Neue Mitgliedsart'",
+      "uxNotes": [
+        "Delete is a red ghost button at the bottom of the sheet without confirm, not a ⋯ destructive item as the guide prescribes.",
+        "Create sheet title is 'Hinzufügen' (a verb) while the primary says 'Neue Mitgliedsart'.",
+        "Area page shows a description sentence although the guide says area pages show no description.",
+        "Settings gear points to /members/settings which is also the next sidebar item."
+      ]
+    },
+    {
+      "route": "/members/settings",
+      "file": "src/app/(app)/members/settings/page.tsx",
+      "title": "Einstellungen",
+      "purpose": "SEPA creditor data, member number format, link to the member portal.",
+      "permission": "members.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Mitgliedschaften",
+          "Einstellungen"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "new / edit",
+          "meaning": "legacy → /members/types?…"
+        }
+      ],
+      "sections": [
+        {
+          "title": "SEPA-Lastschrift",
+          "key": "membership.sepa",
+          "anchor": "#sepa",
+          "kind": "FormCard",
+          "description": "membership.creditorHint",
+          "fields": [
+            {
+              "name": "creditor_name",
+              "label": "Name (Zahlungsempfänger)",
+              "key": "membership.creditorName",
+              "type": "text",
+              "component": "Input",
+              "notes": "default org name"
+            },
+            {
+              "name": "creditor_id",
+              "label": "Gläubiger-ID",
+              "key": "membership.creditorId",
+              "type": "text",
+              "component": "Input (mono)"
+            },
+            {
+              "name": "iban",
+              "label": "IBAN",
+              "type": "iban",
+              "component": "TypedInput:iban"
+            },
+            {
+              "name": "bic",
+              "label": "BIC (optional)",
+              "key": "membership.bicOptional",
+              "type": "bic",
+              "component": "TypedInput:bic"
+            },
+            {
+              "name": "due_day",
+              "label": "Fälligkeitstag",
+              "key": "membership.dueDay",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "1–28, default 15"
+            }
+          ],
+          "notes": "Own <form> with SaveBar → saveSettings."
+        },
+        {
+          "title": "Mitgliedsnummern",
+          "key": "membership.numberRange",
+          "anchor": "#numbers",
+          "kind": "FormCard",
+          "description": "membership.numberRangeHint",
+          "fields": [
+            {
+              "name": "format",
+              "label": "Format der Mitgliedsnummer",
+              "key": "membership.numberFormat",
+              "type": "text",
+              "component": "Input (mono)",
+              "required": true
+            },
+            {
+              "name": "next_number",
+              "label": "Nächste Nummer",
+              "key": "numbers.next",
+              "type": "number",
+              "component": "Input"
+            },
+            {
+              "name": "yearly_reset",
+              "label": "Jedes Jahr bei 1 beginnen",
+              "key": "numbers.yearlyReset",
+              "type": "checkbox"
+            }
+          ],
+          "notes": "NumberRangeForm with its own 'Speichern' button (no SaveBar) → saveMemberRange; preview line below."
+        },
+        {
+          "title": "Mitgliederbereich",
+          "key": "portal.title",
+          "anchor": "#portal",
+          "kind": "custom",
+          "description": "membership.portalHint",
+          "notes": "Portal URL + CopyButton 'Kopieren'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveSettings",
+          "result": "toast membership.settingsSaved; IBAN/BIC/Gläubiger-ID checked"
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveMemberRange"
+        }
+      ],
+      "links": [
+        "/members"
+      ],
+      "uxNotes": [
+        "Two save mechanisms on one page: SaveBar for SEPA, an inline 'Speichern' button for number range.",
+        "Membership types are not here but a sibling sidebar page; legacy ?new/?edit links redirect there."
+      ]
+    },
+    {
+      "route": "/members/setup",
+      "file": "src/app/(app)/members/setup/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Legacy route → /members/settings.",
+      "links": [
+        "/members/settings"
+      ]
+    },
+    {
+      "route": "/members/import",
+      "file": "src/app/(app)/members/import/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Legacy route → /members?import=1.",
+      "links": [
+        "/members?import=1"
+      ]
+    }
+  ]
+}

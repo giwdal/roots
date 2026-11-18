@@ -1,0 +1,339 @@
+{
+  "area": "automations",
+  "label": "Automationen",
+  "module": "automations",
+  "nav": [
+    {
+      "label": "Automationen",
+      "key": "automations.nav",
+      "href": "/automations"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/automations",
+      "file": "src/app/(app)/automations/page.tsx",
+      "title": "Automationen",
+      "purpose": "List workflows with trigger, on/off and run counts; create one blank, from a template or by importing JSON.",
+      "permission": "automations.view (create: automations.manage)",
+      "size": "list",
+      "header": {
+        "area": "automations",
+        "title": "Automationen",
+        "description": "automations.intro",
+        "primary": {
+          "label": "Neue Automation",
+          "key": "automations.new",
+          "href": "?new=1",
+          "permission": "automations.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "1 = create sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Automationen",
+          "kind": "DataTable",
+          "columns": [
+            "Name (link)",
+            "Auslöser (event type or '<Objekt> · <angelegt/geändert/gelöscht>')",
+            "Status (aktiv / aus)",
+            "Durchläufe (total + 'wartet' + 'Fehler' badges, link to runs)"
+          ],
+          "notes": "No rowHref: only the name and the runs cell are links."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=1",
+          "component": "UrlSheet",
+          "title": "Neue Automation",
+          "fields": [
+            {
+              "name": "template",
+              "label": "Aus einer Vorlage: list of templates (name + text) each with 'Verwenden'",
+              "key": "automations.fromTemplate",
+              "type": "button",
+              "component": "form per template",
+              "notes": "only templates of active modules"
+            },
+            {
+              "name": "name",
+              "label": "Leer beginnen (placeholder 'z. B. Willkommen für neue Mitglieder')",
+              "key": "automations.blank",
+              "type": "text",
+              "component": "Input",
+              "notes": "+ 'Anlegen'"
+            },
+            {
+              "name": "file",
+              "label": "Importieren (JSON-Datei)",
+              "key": "automations.import",
+              "type": "file",
+              "component": "Input type=file",
+              "required": true,
+              "notes": "+ 'Importieren'"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Verwenden / Anlegen / Importieren",
+              "kind": "serverAction",
+              "target": "createWorkflow (automations/actions.ts)",
+              "result": "redirect /automations/<id>; import errors: automations.importInvalid"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/automations/[id]",
+        "/automations/[id]/runs"
+      ],
+      "empty": "EmptyState area=automations, 'Noch keine Automationen.' + 'Neue Automation' button",
+      "phone": "Table becomes cards; round + opens the sheet.",
+      "uxNotes": [
+        "Rows have no rowHref – on phones (cards) only the small name link opens a workflow.",
+        "No trash view although workflows are soft-deleted (trashWorkflow); deleted workflows cannot be restored from the UI.",
+        "automations.intro is passed as description but not rendered on an area page (PageHeader hides it) – the list has no explanation for first-time users beyond the EmptyState."
+      ]
+    },
+    {
+      "route": "/automations/[id]",
+      "file": "src/app/(app)/automations/[id]/page.tsx",
+      "title": "<Workflow name>",
+      "purpose": "Build the workflow on a canvas (trigger → steps), configure each step, test run against real data, save, export, activate/deactivate, trash.",
+      "permission": "automations.view (edit: automations.manage)",
+      "size": "record (full width canvas)",
+      "header": {
+        "crumbs": [
+          "Automationen",
+          "<Name>"
+        ],
+        "badge": "aktiv / aus",
+        "actions": [
+          "Durchläufe (→ /automations/<id>/runs)"
+        ],
+        "menu": [
+          {
+            "label": "In den Papierkorb",
+            "key": "automations.toTrash",
+            "target": "trashWorkflow (MenuSubmit destructive, confirm)",
+            "permission": "automations.manage"
+          }
+        ],
+        "primary": {
+          "label": "Aktivieren / Deaktivieren",
+          "key": "automations.activate / automations.deactivate",
+          "kind": "serverAction setActive",
+          "permission": "automations.manage",
+          "notes": "primary is a form button, not a link"
+        }
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Hint (active)",
+          "kind": "custom",
+          "notes": "'Aktiv: Änderungen gelten für neue Schritte, auch bei Durchläufen, die gerade warten.'"
+        },
+        {
+          "title": "Editor toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "automations.name",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "description",
+              "label": "(placeholder automations.descriptionPlaceholder)",
+              "type": "textarea",
+              "component": "Textarea"
+            }
+          ],
+          "notes": "Buttons: Aufräumen (auto layout), Testlauf / stop, Exportieren (JSON download), Speichern (enabled when dirty)."
+        },
+        {
+          "title": "Testlauf panel",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "sample",
+              "label": "testSample: recent real events of the trigger type, or 'own pick'",
+              "type": "select",
+              "component": "NativeSelect"
+            },
+            {
+              "name": "picks",
+              "label": "per object (own pick)",
+              "type": "select",
+              "component": "NativeSelect per object"
+            }
+          ],
+          "notes": "'Test starten' runs simulate on the server (nothing sent); shows trace per node and the loaded data (<details>)."
+        },
+        {
+          "title": "Problems",
+          "kind": "custom",
+          "notes": "red outline badges per validation problem (automations.problems.*)"
+        },
+        {
+          "title": "Palette (left, 10rem, managers only)",
+          "kind": "custom",
+          "notes": "Sections: Logik (Bedingung, Warten), Daten abfragen (Datensatz suchen, Zählen & berechnen, Für jeden), Senden & benachrichtigen (E-Mail senden, In-App-Benachrichtigung, Telegram-Nachricht – disabled without bot), Daten ändern (Tag hinzufügen, Tag entfernen, Datensatz ändern, Datensatz anlegen, Datensatz löschen), Verbinden (Webhook). Click adds a node."
+        },
+        {
+          "title": "Canvas",
+          "kind": "custom",
+          "notes": "@xyflow ReactFlow, 70dvh; drag nodes, connect handles (conditions have Ja/Nein outputs), Backspace/Delete removes (trigger can't be removed), Controls, MiniMap (md+)."
+        },
+        {
+          "title": "Inspector (right, 20rem)",
+          "kind": "custom",
+          "notes": "Fields of the selected node: trigger picker (search, grouped by module: Allgemein incl. 'Datum erreicht' and 'Zeitplan', module events, record triggers), watched fields, once per person/record; condition rules (field/op/value, Alle/Eine), wait (für/bis, unit), find/aggregate/for-each (object, filters, sort, limit), email (subject, body with placeholders), tags, set/create record fields with calculations, Telegram chat, webhook URL. Mostly NativeSelects; value pickers list the newest 200 events/forms/courses/guest lists."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "section",
+          "kind": "client",
+          "target": "saveWorkflow",
+          "permission": "automations.manage",
+          "result": "toast 'Gespeichert' or 'Als Entwurf gespeichert – vor dem Aktivieren die Hinweise beheben.'"
+        },
+        {
+          "label": "Aktivieren / Deaktivieren",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "setActive",
+          "permission": "automations.manage",
+          "confirm": false,
+          "result": "toast activated/deactivated; refuses with 'Bitte erst die markierten Hinweise beheben.'"
+        },
+        {
+          "label": "Testlauf",
+          "key": "automations.testRun",
+          "where": "section",
+          "kind": "client",
+          "target": "testSamples / testPickers / testRun",
+          "notes": "disabled without trigger"
+        },
+        {
+          "label": "Exportieren",
+          "key": "automations.export",
+          "where": "section",
+          "kind": "download",
+          "target": "client JSON blob"
+        },
+        {
+          "label": "Aufräumen",
+          "key": "automations.tidy",
+          "where": "section",
+          "kind": "client"
+        },
+        {
+          "label": "In den Papierkorb",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashWorkflow",
+          "confirm": true,
+          "result": "→ /automations, toast automations.trashed"
+        }
+      ],
+      "links": [
+        "/automations",
+        "/automations/[id]/runs"
+      ],
+      "phone": "Page comment: 'desktop works best; phones can view and switch it on/off'. Palette/canvas/inspector stack; MiniMap hidden.",
+      "uxNotes": [
+        "Explicit Speichern button in the editor toolbar instead of <SaveBar>; unsaved changes are not guarded (no leave warning found) and 'Aktivieren' in the header activates the last saved graph, not the one on screen.",
+        "Activating (starts sending emails/changing data) has no confirm.",
+        "Two places with save-like controls: toolbar 'Speichern' and header 'Aktivieren'.",
+        "Many NativeSelects with up to 200 records each instead of server-searching pickers (app.md).",
+        "Delete step only via keyboard (Backspace/Delete) or inspector; no touch-friendly path on the canvas.",
+        "Trashed workflows have no trash view to restore from."
+      ]
+    },
+    {
+      "route": "/automations/[id]/runs",
+      "file": "src/app/(app)/automations/[id]/runs/page.tsx",
+      "title": "Durchläufe",
+      "purpose": "See every run of a workflow, its person, status and step log; cancel waiting runs.",
+      "permission": "automations.view (cancel: automations.manage)",
+      "header": {
+        "crumbs": [
+          "Automationen",
+          "<Name>",
+          "Durchläufe"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "status",
+          "meaning": "'' | waiting | done | failed | cancelled (Segments)"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Status filter",
+          "kind": "custom",
+          "notes": "<Segments>: Alle · wartet · fertig · Fehler · abgebrochen"
+        },
+        {
+          "title": "Durchläufe",
+          "kind": "DataTable",
+          "columns": [
+            "Gestartet",
+            "Person (link to contact)",
+            "Status (badge, 'bis {when}', error)",
+            "Schritte (<details> step log)",
+            "(Abbrechen)"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Abbrechen",
+          "key": "automations.cancel",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "cancelRun",
+          "permission": "automations.manage",
+          "confirm": false,
+          "result": "toast automations.runCancelled"
+        }
+      ],
+      "links": [
+        "/contacts/[id]",
+        "/automations/[id]"
+      ],
+      "empty": "Noch keine Durchläufe.",
+      "uxNotes": [
+        "Status filter is <Segments> with 5 items (ok per app.md) but uses 'queued' runs nowhere in the filter (they show only under Alle).",
+        "Cancel has no confirm; no bulk cancel."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "area": "finance",
+  "label": "Rechnungen",
+  "module": "invoices",
+  "nav": [
+    { "label": "Rechnungen", "key": "invoices.nav", "href": "/invoices" },
+    { "label": "Kassenbuch", "key": "cashbook.nav", "href": "/cashbook" },
+    { "label": "Zahlungen", "key": "payments.nav", "href": "/payments" },
+    { "label": "Einstellungen", "key": "common.settings", "href": "/invoices/settings", "permission": "invoices.manage" }
+  ],
+  "pages": [
+    {
+      "route": "/invoices",
+      "file": "src/app/(app)/invoices/page.tsx",
+      "title": "Angebote & Rechnungen",
+      "purpose": "List quotes, invoices and cancellations; filter by kind and status (incl. overdue); create a new invoice or quote.",
+      "permission": "invoices.view (module invoices)",
+      "size": "list",
+      "header": {
+        "area": "finance",
+        "settings": "/invoices/settings",
+        "primary": { "label": "Neue Rechnung", "key": "invoices.newInvoice", "href": "/invoices/new", "permission": "invoices.manage", "more": [{ "label": "Neues Angebot", "key": "invoices.newQuote", "href": "/invoices/new?kind=quote" }] }
+      },
+      "urlState": [
+        { "param": "q", "meaning": "search number + recipient name" },
+        { "param": "kind", "meaning": "invoice | quote | cancellation (chip nav; none = Alle)" },
+        { "param": "status", "meaning": "draft | sent | overdue | paid | accepted | cancelled (FilterMenu; overdue = sent invoices past due date)" },
+        { "param": "page", "meaning": "pagination" },
+        { "param": "ok / error", "meaning": "toast" }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            { "name": "q", "label": "Nummer oder Empfänger suchen…", "key": "invoices.search", "type": "search", "component": "SearchBox" },
+            { "name": "kind", "label": "Alle · Rechnung · Angebot · Storno", "key": "invoices.all / invoices.kinds.*", "type": "segments", "component": "hand-built chip nav" },
+            { "name": "status", "label": "Status", "key": "invoices.status", "type": "select", "component": "FilterMenu", "notes": "all-label 'Alle Status'; options Entwurf, Offen, Überfällig, Bezahlt, Angenommen, Storniert (no 'Abgelehnt')" }
+          ]
+        },
+        {
+          "title": "Dokumente",
+          "kind": "DataTable",
+          "columns": ["Nummer (or 'Entwurf') + kind", "Empfänger", "Datum", "Gesamtbetrag (right, tabular)", "Status (red 'Überfällig' when past due)"],
+          "notes": "Row → /invoices/<id>."
+        }
+      ],
+      "actions": [],
+      "links": ["/invoices/new", "/invoices/new?kind=quote", "/invoices/[id]", "/invoices/settings"],
+      "empty": "'Noch keine Angebote oder Rechnungen.' (plain text, no EmptyState, also when filtered)",
+      "phone": "Cards; round + opens a glass menu with Neue Rechnung / Neues Angebot.",
+      "uxNotes": [
+        "Title drift: nav says 'Rechnungen', page title says 'Angebote & Rechnungen'.",
+        "Kind switch is a hand-built chip nav instead of <Segments>.",
+        "Status filter offers 'Angenommen' but not 'Abgelehnt' for quotes.",
+        "No EmptyState for a first-time org; filtered and unfiltered empty use the same text.",
+        "No ExportMenu (accounting data, other money lists like cashbook have one)."
+      ]
+    },
+    {
+      "route": "/invoices/new",
+      "file": "src/app/(app)/invoices/new/page.tsx",
+      "title": "(none: spinner 'Rechnung wird angelegt …' / 'Angebot wird angelegt …')",
+      "purpose": "Transit page: creates a draft invoice or quote on open (client effect) and redirects to it.",
+      "permission": "invoices.manage",
+      "size": "form",
+      "header": {},
+      "urlState": [
+        { "param": "kind", "meaning": "quote = new quote, else invoice" },
+        { "param": "contact", "meaning": "contact id to prefill the recipient (e.g. from a contact page)" }
+      ],
+      "sections": [],
+      "actions": [
+        { "label": "(automatic) createDocument", "where": "section", "kind": "client", "target": "createDocument (invoices/actions.ts)", "permission": "invoices.manage", "confirm": false, "result": "redirect → /invoices/<new id> (draft)" }
+      ],
+      "links": ["/invoices/[id]"],
+      "uxNotes": [
+        "Every visit creates a draft immediately: backing out of the editor leaves an empty draft that must be deleted by hand (Entwurf löschen).",
+        "Unlike other /new pages it has no form and no NewPage header; the page is only a loading line."
+      ]
+    },
+    {
+      "route": "/invoices/[id]",
+      "file": "src/app/(app)/invoices/[id]/page.tsx",
+      "title": "Rechnung | Angebot | Stornorechnung <number>",
+      "purpose": "Edit a draft (recipient, dates, positions, texts) and issue it; for issued documents view, mark paid/accepted/declined, convert, duplicate, cancel, print.",
+      "permission": "invoices.view",
+      "size": "list",
+      "header": {
+        "crumbs": ["Angebote & Rechnungen (→ /invoices?kind=<kind>)", "<Doc title> <number>"],
+        "badge": "status per kind (Entwurf / Offen / Bezahlt / Storniert / Versendet / Angenommen / Abgelehnt)",
+        "meta": "link 'Storniert Rechnung <n> →' or 'Erstellt aus einem anderen Dokument' or 'Shop-Bestellung #<n>'",
+        "actions": [{ "label": "Vorschau / PDF", "key": "invoices.pdf", "target": "/print/documents/<id> (new tab)" }],
+        "menu": [
+          { "label": "PDF herunterladen", "key": "invoices.pdfDownload", "target": "/print/documents/<id>/pdf (download)" },
+          { "label": "Stornieren", "key": "invoices.cancel", "target": "cancelInvoice via #cancel-invoice", "permission": "invoices.manage", "notes": "sent/paid invoices not from a shop order; destructive, confirm invoices.confirmCancel" },
+          { "label": "Entwurf löschen", "key": "invoices.deleteDraft", "target": "deleteDraft via #delete-draft", "permission": "invoices.manage", "notes": "drafts; destructive, confirm common.confirmDelete" }
+        ]
+      },
+      "urlState": [{ "param": "ok / error", "meaning": "toast" }],
+      "sections": [
+        {
+          "title": "Billing hint",
+          "kind": "custom",
+          "notes": "Drafts when org billing data is incomplete: invoices.billingMissing + link 'Einstellungen' → /invoices/settings."
+        },
+        {
+          "title": "Empfänger (draft editor)",
+          "kind": "custom",
+          "fields": [
+            { "name": "contact_id", "label": "Aus Kontakten wählen…", "key": "invoices.pickContact", "type": "select", "component": "NativeSelect", "notes": "up to 1000 contacts (crm.view); fills name/address/email" },
+            { "name": "recipient_name", "label": "Name / Firma", "key": "invoices.recipientName", "type": "text", "component": "Input" },
+            { "name": "recipient_address", "label": "Anschrift", "key": "invoices.recipientAddress", "type": "textarea", "component": "native textarea" },
+            { "name": "recipient_email", "label": "E-Mail", "key": "invoices.recipientEmail", "type": "email", "component": "Input type=email" },
+            { "name": "recipient_vat_id", "label": "USt-IdNr. Empfänger", "key": "invoices.recipientVat", "type": "text", "component": "Input" }
+          ]
+        },
+        {
+          "title": "Angaben (draft editor)",
+          "kind": "custom",
+          "fields": [
+            { "name": "title", "label": "Überschrift (optional)", "key": "invoices.titleLabel", "type": "text", "component": "Input" },
+            { "name": "issue_date", "label": "Datum", "key": "invoices.issueDate", "type": "date", "component": "DateInput:date" },
+            { "name": "due_date", "label": "Fällig am", "key": "invoices.dueDate", "type": "date", "component": "DateInput:date", "notes": "invoices" },
+            { "name": "valid_until", "label": "Gültig bis", "key": "invoices.validUntil", "type": "date", "component": "DateInput:date", "notes": "quotes" },
+            { "name": "service_from / service_to", "label": "Leistung von / Leistung bis (optional)", "key": "invoices.serviceFrom / serviceTo", "type": "date", "component": "DateInput:date", "notes": "invoices" },
+            { "name": "tax_mode", "label": "Kleinunternehmer (§ 19 UStG)", "key": "invoices.smallBusiness", "type": "checkbox", "component": "checkbox", "notes": "per document, also set in settings" }
+          ],
+          "notes": "hint invoices.datesHint"
+        },
+        { "title": "Text oben", "kind": "custom", "fields": [{ "name": "intro", "label": "Text oben", "key": "invoices.intro", "type": "textarea", "component": "native textarea" }] },
+        {
+          "title": "Positionen (draft editor)",
+          "anchor": "#items",
+          "kind": "custom",
+          "fields": [
+            { "name": "title", "label": "Bezeichnung", "key": "invoices.itemTitle", "type": "text", "component": "Input", "required": true },
+            { "name": "description", "label": "Beschreibung (optional)", "key": "invoices.itemDescription", "type": "textarea", "component": "native textarea" },
+            { "name": "quantity", "label": "Menge", "key": "invoices.quantity", "type": "number", "component": "Input inputMode=decimal" },
+            { "name": "unit", "label": "Einheit", "key": "invoices.unit", "type": "select", "component": "NativeSelect" },
+            { "name": "unit_price", "label": "Einzelpreis netto", "key": "invoices.unitPriceNet", "type": "money", "component": "Input inputMode=decimal" },
+            { "name": "tax_rate", "label": "USt.", "key": "invoices.taxRate", "type": "select", "component": "NativeSelect", "notes": "disabled for small business" }
+          ],
+          "notes": "Rows in client state; per row icon buttons Nach oben / Nach unten / Position entfernen (tooltips); 'Position hinzufügen'; totals Netto, zzgl. n % USt., Gesamtbetrag."
+        },
+        { "title": "Text unten / Interne Notiz", "kind": "custom", "fields": [
+          { "name": "outro", "label": "Text unten", "key": "invoices.outro", "type": "textarea", "component": "native textarea" },
+          { "name": "notes", "label": "Interne Notiz (wird nicht gedruckt)", "key": "invoices.notes", "type": "textarea", "component": "native textarea" }
+        ] },
+        {
+          "title": "Issued document",
+          "kind": "DetailList",
+          "notes": "Non-draft (or no invoices.manage): DetailList Empfänger, Datum, Fällig am, Bezahlt am, Gesamtbetrag + numbered item list (title · qty unit, line total). Read-only users see a draft this way too."
+        }
+      ],
+      "actions": [
+        { "label": "Speichern", "key": "common.save", "where": "section", "kind": "serverAction", "target": "saveDocument", "permission": "invoices.manage", "confirm": false, "result": "toast 'Gespeichert.'", "notes": "outline button at the end of the editor, no SaveBar" },
+        { "label": "Rechnung ausstellen / Angebot ausstellen", "key": "invoices.issueInvoice / issueQuote", "where": "section", "kind": "serverAction", "target": "issueDocument (formAction)", "permission": "invoices.manage", "confirm": false, "result": "toast 'Ausgestellt: <number>'; document frozen (hint invoices.issueHint)" },
+        { "label": "Als bezahlt markieren / Doch nicht bezahlt", "key": "invoices.markPaid / markUnpaid", "where": "section", "kind": "serverAction", "target": "setDocumentStatus", "permission": "invoices.manage", "confirm": false, "result": "toast 'Als bezahlt markiert.' / 'Status geändert.'", "notes": "not for shop invoices" },
+        { "label": "Angenommen / Abgelehnt", "key": "invoices.markAccepted / markDeclined", "where": "section", "kind": "serverAction", "target": "setDocumentStatus", "permission": "invoices.manage", "confirm": false, "result": "toast 'Angebot angenommen.' / 'Angebot abgelehnt.'" },
+        { "label": "In Rechnung umwandeln", "key": "invoices.toInvoice", "where": "section", "kind": "serverAction", "target": "copyDocument as=invoice", "permission": "invoices.manage", "confirm": false, "result": "→ new draft invoice" },
+        { "label": "Duplizieren", "key": "invoices.duplicate", "where": "section", "kind": "serverAction", "target": "copyDocument", "permission": "invoices.manage", "confirm": false, "result": "→ new draft" },
+        { "label": "Stornieren", "key": "invoices.cancel", "where": "menu", "kind": "confirm", "target": "cancelInvoice", "permission": "invoices.manage", "confirm": true, "result": "→ the Stornorechnung, toast 'Stornorechnung erstellt.'" },
+        { "label": "Entwurf löschen", "key": "invoices.deleteDraft", "where": "menu", "kind": "confirm", "target": "deleteDraft", "permission": "invoices.manage", "confirm": true, "result": "→ /invoices, toast 'Entwurf gelöscht.'" },
+        { "label": "Vorschau / PDF", "key": "invoices.pdf", "where": "header", "kind": "link", "target": "/print/documents/<id>" },
+        { "label": "PDF herunterladen", "key": "invoices.pdfDownload", "where": "menu", "kind": "download", "target": "/print/documents/<id>/pdf" }
+      ],
+      "links": ["/invoices", "/invoices/settings", "/invoices/[id] (source / cancelled invoice)", "/shop/orders/[id]", "/print/documents/[id]"],
+      "phone": "Editor: item rows stack to a 2-column grid; recipient/details stack; Speichern + Ausstellen at the end of a long form (no sticky SaveBar).",
+      "uxNotes": [
+        "Issuing (number assigned, document frozen by GoBD) has no confirm, while cancelling and deleting a draft do.",
+        "Draft editor has explicit 'Speichern' + 'Ausstellen' buttons at the bottom instead of <SaveBar>; leaving with unsaved changes is not guarded.",
+        "Contact picker is a NativeSelect of up to 1000 contacts instead of <ContactPicker> (server search) used in the shop's new order.",
+        "Money and quantity use Input inputMode=decimal instead of <TypedInput kind=money|number>; email is Input type=email.",
+        "'Einzelpreis netto' label is shown even for documents with prices_gross (shop invoices).",
+        "Page uses <Page> default (list) size for a record/form; the editor is not grouped into FormCards like other records.",
+        "No 'send by email' action for invoices/quotes; only print/PDF.",
+        "Status buttons (bezahlt, angenommen, abgelehnt) sit below the item list, not in the header, so on phones they are at the very bottom.",
+        "Crumb label 'Angebote & Rechnungen' differs from the nav label 'Rechnungen'."
+      ]
+    },
+    {
+      "route": "/invoices/settings",
+      "file": "src/app/(app)/invoices/settings/page.tsx",
+      "title": "Einstellungen",
+      "purpose": "Org data printed on documents, tax status, bank details, defaults and texts, number ranges.",
+      "permission": "invoices.manage",
+      "size": "form",
+      "header": { "crumbs": ["Angebote & Rechnungen", "Einstellungen"] },
+      "urlState": [{ "param": "ok / error", "meaning": "toast" }],
+      "sections": [
+        {
+          "title": "Deine Angaben auf Dokumenten",
+          "anchor": "#seller",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "legal_name", "label": "Name / Firma (wie im Register)", "key": "invoices.legalName", "type": "text", "component": "Input", "required": true, "notes": "default org name" },
+            { "name": "street", "label": "Straße", "key": "contacts.street", "type": "text", "component": "Input" },
+            { "name": "postal_code", "label": "PLZ", "key": "contacts.postalCode", "type": "postcode", "component": "TypedInput:postcode" },
+            { "name": "city", "label": "Ort", "key": "contacts.city", "type": "text", "component": "Input" },
+            { "name": "email", "label": "E-Mail", "key": "contacts.email", "type": "email", "component": "TypedInput:email" },
+            { "name": "phone", "label": "Telefon", "key": "contacts.phone", "type": "phone", "component": "TypedInput:phone" },
+            { "name": "website", "label": "Website", "key": "invoices.website", "type": "url", "component": "Input", "notes": "not TypedInput kind=url" },
+            { "name": "representatives", "label": "Vertreten durch", "key": "invoices.representatives", "type": "text", "component": "Input" },
+            { "name": "register", "label": "Register (optional)", "key": "invoices.register", "type": "text", "component": "Input" }
+          ]
+        },
+        {
+          "title": "Steuer",
+          "anchor": "#tax",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "tax_mode", "label": "Umsatzsteuer", "key": "invoices.taxStatus", "type": "select", "component": "Choice", "required": true, "notes": "Regelbesteuerung / Kleinunternehmer" },
+            { "name": "tax_number", "label": "Steuernummer", "key": "invoices.taxNumber", "type": "text", "component": "Input" },
+            { "name": "vat_id", "label": "USt-IdNr.", "key": "invoices.vatId", "type": "text", "component": "Input" }
+          ]
+        },
+        {
+          "title": "Bankverbindung",
+          "anchor": "#bank",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "bank_name", "label": "Bank", "key": "invoices.bankName", "type": "text", "component": "Input" },
+            { "name": "iban", "label": "IBAN", "type": "iban", "component": "TypedInput:iban", "notes": "label hard-coded, no i18n key" },
+            { "name": "bic", "label": "BIC", "type": "bic", "component": "TypedInput:bic", "notes": "label hard-coded" }
+          ]
+        },
+        {
+          "title": "Vorgaben",
+          "anchor": "#defaults",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "short_invoices", "label": "Rechnungen bis 250 € ohne Adresse erlauben", "key": "invoices.shortInvoices", "type": "checkbox", "component": "checkbox", "notes": "default on" },
+            { "name": "payment_days", "label": "Zahlungsziel (Tage)", "key": "invoices.paymentDays", "type": "number", "component": "Input type=number" },
+            { "name": "quote_days", "label": "Angebote gültig (Tage)", "key": "invoices.quoteDays", "type": "number", "component": "Input type=number" },
+            { "name": "template", "label": "Vorlage", "key": "invoices.template", "type": "select", "component": "NativeSelect" },
+            { "name": "invoice_intro / invoice_outro / quote_intro / quote_outro", "label": "Rechnung: Text oben / unten, Angebot: Text oben / unten", "key": "invoices.invoiceIntro …", "type": "textarea", "component": "native textarea" }
+          ]
+        },
+        {
+          "title": "Nummernkreise",
+          "anchor": "#numbers",
+          "kind": "custom",
+          "fields": [
+            { "name": "format", "label": "Rechnung / Angebot (format)", "key": "invoices.kinds.*", "type": "text", "component": "Input (mono)", "required": true },
+            { "name": "next_number", "label": "numbers.next", "key": "numbers.next", "type": "number", "component": "Input type=number" },
+            { "name": "yearly_reset", "label": "numbers.yearlyReset", "key": "numbers.yearlyReset", "type": "checkbox", "component": "checkbox" }
+          ],
+          "notes": "NumberRangeForm per kind (outside the main form) with own 'Speichern' button and live preview line; description invoices.numberHint."
+        }
+      ],
+      "actions": [
+        { "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "saveBilling", "permission": "invoices.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
+        { "label": "Speichern (per number range)", "key": "common.save", "where": "section", "kind": "serverAction", "target": "saveNumberRange", "permission": "invoices.manage", "confirm": false, "result": "toast 'Gespeichert.'" }
+      ],
+      "links": ["/invoices"],
+      "uxNotes": [
+        "This page is the only 'Einstellungen' entry for the whole Finanzen area, but it only holds invoice settings; the cash book and payments have none, and the IBAN here also feeds the shop's transfer payment.",
+        "Two save paths: SaveBar for the main form and separate 'Speichern' buttons per number range below it.",
+        "'Kleinunternehmer' can be set here and again per document in the editor checkbox.",
+        "IBAN/BIC labels are hard-coded strings, not from de.json."
+      ]
+    }
+  ]
+}

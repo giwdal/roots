@@ -1,0 +1,89 @@
+{
+  "area": "reports",
+  "label": "Auswertungen",
+  "module": "reports",
+  "nav": [{ "label": "Auswertungen", "key": "reports.nav", "href": "/reports" }],
+  "pages": [
+    {
+      "route": "/reports",
+      "file": "src/app/(app)/reports/page.tsx",
+      "title": "Auswertungen",
+      "purpose": "Read KPIs per area for a period (members, events & door, revenue, invoices, cash book, shifts, more), each section only for those who may see it.",
+      "permission": "reports.view (module reports)",
+      "size": "list",
+      "header": { "area": "reports", "meta": "'<from> – <to>' (reports.range)" },
+      "urlState": [
+        { "param": "p", "meaning": "preset: 30d | month | last_month | quarter | year | last_year" },
+        { "param": "from / to", "meaning": "own date range (GET form)" }
+      ],
+      "sections": [
+        {
+          "title": "Zeitraum",
+          "kind": "custom",
+          "fields": [
+            { "name": "p", "label": "Letzte 30 Tage · Dieser Monat · Letzter Monat · Dieses Quartal · Dieses Jahr · Letztes Jahr", "key": "reports.presets.*", "type": "segments", "component": "hand-built chip nav (6 items)" },
+            { "name": "from", "label": "Von", "key": "reports.from", "type": "date", "component": "DateInput:date" },
+            { "name": "to", "label": "Bis", "key": "reports.to", "type": "date", "component": "DateInput:date" }
+          ],
+          "notes": "Button 'Anzeigen' (reports.show) submits a GET form to /reports."
+        },
+        {
+          "title": "Mitglieder",
+          "anchor": "#members",
+          "kind": "custom",
+          "notes": "KPI tiles: Aktive Mitglieder, Eintritte, Austritte, Pausiert, Beitragsfrei, dues paid / open / overdue (red, with people count); 'Stand heute' hints. Bars per membership type; grouped bars joined/left per month (recharts, charts.tsx)."
+        },
+        {
+          "title": "Veranstaltungen & Einlass",
+          "anchor": "#events",
+          "kind": "DataTable",
+          "columns": ["Veranstaltung (title + date, link → /events/<id>)", "Tickets verkauft", "Ticketumsatz", "mit Ticket", "Mitglieder", "Gäste", "Auslastung"],
+          "notes": "KPI tiles: Veranstaltungen, Tickets verkauft, Ticketumsatz, Eingelassen, mit Ticket / Mitglieder / Gäste; bars 'Eingelassene Mitglieder nach Mitgliedsart'; stacked bars 'Eingelassen pro Veranstaltung'. Empty: 'Keine Veranstaltungen in diesem Zeitraum.' Columns depend on tickets/guestlists modules."
+        },
+        {
+          "title": "Umsatz",
+          "anchor": "#payments",
+          "kind": "custom",
+          "notes": "Tiles: Eingegangen, Bezahlte Bestellungen, one tile per source ('davon Tickets' …; unknown source keys are shown raw)."
+        },
+        {
+          "title": "Rechnungen",
+          "anchor": "#invoices",
+          "kind": "custom",
+          "notes": "Tiles: Ausgestellt (+ count), Bezahlt, Offen (Stand heute), Überfällig (red)."
+        },
+        {
+          "title": "Kassenbuch",
+          "anchor": "#cashbook",
+          "kind": "custom",
+          "notes": "Tiles: Einnahmen, Ausgaben, Überschuss (red when negative), one balance tile per account; grouped bars by sphere."
+        },
+        {
+          "title": "Schichten",
+          "anchor": "#shifts",
+          "kind": "custom",
+          "notes": "Tiles: Schichten, Besetzt (% + 'n von m Plätzen'), Gearbeitete Stunden."
+        },
+        {
+          "title": "Weitere Zahlen",
+          "anchor": "#more",
+          "kind": "custom",
+          "notes": "Tiles: Neue Kontakte, Formular-Einsendungen, Kursteilnahmen, E-Mails verschickt (+ delivery rate), Unzustellbar / Spam (red)."
+        }
+      ],
+      "actions": [
+        { "label": "Anzeigen", "key": "reports.show", "where": "toolbar", "kind": "link", "target": "/reports?from=…&to=…", "confirm": false }
+      ],
+      "links": ["/events/[eventId]"],
+      "phone": "Tiles in 2 columns; charts and event table stack; 6 preset chips wrap over several lines.",
+      "uxNotes": [
+        "Six presets in a hand-built chip nav; docs/design/app.md caps <Segments> at 5 items.",
+        "KPI tiles link nowhere (e.g. 'Überfällig' does not open /invoices?status=overdue, open dues do not open Beiträge): numbers are dead ends except the event titles.",
+        "Payment source labels exist only for tickets/members/invoices/guestlists; shop and test revenue tiles show the raw key ('shop', 'test').",
+        "Sections are FormCards (form groups) used as report panels; no export of any report.",
+        "Custom range uses a SubmitButton (spinner) for a plain GET navigation.",
+        "Section order and naming differ from the nav: 'Umsatz' summarises Zahlungen, 'Veranstaltungen & Einlass' vs nav 'Events'."
+      ]
+    }
+  ]
+}

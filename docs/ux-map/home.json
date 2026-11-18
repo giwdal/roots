@@ -1,0 +1,43 @@
+{
+  "area": "home",
+  "label": "Start (Heute)",
+  "module": null,
+  "nav": [{ "label": "Start", "key": "shell.home", "href": "/" }],
+  "navNotes": "Home is not a nav.ts area; it is the APP_HOME target of the logo/'Start' tab in the phone bar and the sidebar header.",
+  "pages": [
+    {
+      "route": "/",
+      "file": "src/app/(app)/page.tsx",
+      "title": "Heute",
+      "purpose": "What needs this person now: Sprout question box, own open tasks, next shifts, next events, overdue dues, unread notifications.",
+      "permission": "signed-in member; cards depend on module + permission",
+      "size": "list",
+      "header": { "icon": "SunIcon", "title": "Heute", "key": "home.today", "meta": "<Org name> · <full date>" },
+      "urlState": [
+        { "param": "task", "meaning": "task id → TaskDrawer (projects) opens over Home" },
+        { "param": "ok / error", "meaning": "toast (via TaskDrawer)" }
+      ],
+      "sections": [
+        { "title": "Sprout ask box", "kind": "custom", "fields": [{ "name": "question", "label": "Frag Sprout …", "key": "sprout.placeholder", "type": "textarea", "component": "SproutAsk (Enter sends)" }], "notes": "Three idea chips: „Was steht heute an?“, „Welche Aufgaben sind überfällig?“, „Hilf mir, ein Event anzulegen“ (sprout.ideas.*) send a preset question; opens the Sprout panel with a new chat (window event 'sprout:ask')." },
+        { "title": "Meine Aufgaben", "key": "home.myTasks", "anchor": "#tasks", "kind": "FormCard", "notes": "projects + projects.view; 6 open tasks assigned to me, due date (red when overdue); row → /?task=<id>; 'Alle' → /projects/tasks?assignee=me&view=list; empty 'Keine offenen Aufgaben für dich.'" },
+        { "title": "Meine nächsten Schichten", "key": "home.myShifts", "anchor": "#shifts", "kind": "FormCard", "notes": "shifts + shifts.self and a staff record; 4 upcoming assigned shifts; rows → /shifts/me; empty 'Keine Schichten geplant.'" },
+        { "title": "Nächste Veranstaltungen", "key": "home.nextEvents", "anchor": "#events", "kind": "FormCard", "notes": "events + events.view; 4 upcoming (not cancelled), draft badge; row → /events/<id>; 'Alle' → /events" },
+        { "title": "Überfällige Beiträge", "key": "home.overdueDues", "anchor": "#dues", "kind": "FormCard", "notes": "members + members.view; red sum + count of open dues past due; 'Alle' → /members/dues; 'Nichts überfällig.'" },
+        { "title": "Benachrichtigungen", "key": "inbox.title", "anchor": "#inbox", "kind": "FormCard", "notes": "5 unread; row → /notifications/<id>; 'Alle' → /notifications; empty 'Alles gelesen.'" }
+      ],
+      "actions": [
+        { "label": "Senden (Sprout)", "key": "sprout.send", "where": "section", "kind": "client", "target": "opens Sprout panel" },
+        { "label": "Alle", "key": "home.all", "where": "section", "kind": "link", "target": "per card" }
+      ],
+      "overlays": [{ "param": "?task=<id>", "component": "TaskDrawer (UrlSheet from projects)", "title": "<task>", "notes": "same task panel as in Projekte" }],
+      "links": ["/projects/tasks", "/shifts/me", "/events", "/events/[id]", "/members/dues", "/notifications", "/notifications/[id]"],
+      "phone": "Cards stack in one column; Sprout box first.",
+      "uxNotes": [
+        "Shift rows all link to /shifts/me, not to the shift itself (no deep link).",
+        "Overdue dues 'Alle' goes to /members/dues without an overdue filter.",
+        "Card 'Alle' links use FormCard action slots; no primary action on the home page, so the phone + button is absent here.",
+        "Opening a notification from Home may switch the active org (see notifications)."
+      ]
+    }
+  ]
+}

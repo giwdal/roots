@@ -1,0 +1,184 @@
+{
+  "area": "marketing",
+  "label": "roots-Website (Landing, Produkt, Rechtliches) + Style-Referenz",
+  "module": null,
+  "surface": "Bare domain only. src/proxy.ts rewrites '/' → /site and the English page paths (SITE_PAGES: /product, /imprint, /privacy) → /site/<path>; /site and /style are public paths. Look: docs/design/site.md (paper & ink, Hanken Grotesk, old master paintings), styles scoped to .site in src/app/site/site.css, texts under landing.* (German first; voice: 'ihr', calm, no exclamation marks).",
+  "nav": [
+    { "label": "Produkt", "key": "landing.nav.product", "kind": "mega menu (ProductMenu)", "href": "/product#<area>" },
+    { "label": "Preise", "key": "landing.nav.pricing", "href": "/#pricing" },
+    { "label": "Fragen", "key": "landing.nav.faq", "href": "/#faq" },
+    { "label": "Anmelden", "key": "landing.nav.login", "href": "/app" },
+    { "label": "Kostenlos starten", "key": "landing.nav.start", "href": "/login", "kind": "Pill (primary)" }
+  ],
+  "frame": {
+    "name": "Website SiteFrame",
+    "files": ["src/app/site/layout.tsx", "src/app/site/_components/site-shell.tsx", "src/app/site/_components/frame.tsx", "src/app/site/_components/product-menu.tsx", "src/app/site/_components/mobile-menu.tsx", "src/app/site/_components/scroll-flag.tsx"],
+    "summary": "SiteShell = div.site with the Hanken Grotesk variable + site.css. SiteFrame (used by every page itself, not by the layout) = sticky nav that shrinks to a framed bar while scrolling (ScrollFlag + scroll-driven CSS), page content on paper with a shadow, and a footer revealed underneath (sticky, full-bleed painting).",
+    "metadata": "Layout: title absolute 'roots', description landing.meta.description ('Mitglieder, Beiträge, Tickets, Schichten, Rechnungen, Formulare und E-Mails für Vereine, Kollektive und Veranstalter:innen. Ein Ort statt zehn Tools.').",
+    "parts": [
+      {
+        "name": "Nav",
+        "shows": "Wordmark 'roots' → /. From md: 'Produkt' (ProductMenu), 'Preise', 'Fragen'. Right: 'Anmelden' text link (hidden below sm) → /app, Pill 'Kostenlos starten' → /login, burger (below md).",
+        "actions": [
+          { "label": "Produkt", "key": "landing.nav.product", "kind": "client", "target": "opens the mega menu on hover (60 ms) or click; closes on Escape, outside click, leaving (180 ms)" },
+          { "label": "Anmelden", "key": "landing.nav.login", "kind": "link", "target": "/app" },
+          { "label": "Kostenlos starten", "key": "landing.nav.start", "kind": "link", "target": "/login" },
+          { "label": "Menü / Menü schließen", "key": "landing.nav.menu / landing.nav.close", "kind": "client", "target": "MobileMenu panel" }
+        ]
+      },
+      {
+        "name": "Produkt mega menu",
+        "shows": "Panel under the nav (content width ≤ 1120px): intro 'Was roots für euch übernimmt' (landing.menu.intro); 13 areas in 2 columns, each icon + title + one line (landing.menu.items.<area>.title/text: members, tickets, events, shifts, hr, invoices, cashbook, reports, forms, automations, wiki, contacts, portal) → /product#<area>; painting card (Dürer turf) 'Wo Ideen Wurzeln schlagen.' + 'Warum roots' → /#why; bottom links 'Alle Funktionen' → /product, 'Preise' → /#pricing, 'API-Dokumentation' → /api/docs.",
+        "uxNotes": ["Only 8 of the 13 areas have an icon in ICONS; hr, cashbook, reports, automations and wiki fall back to the same FileTextIcon."]
+      },
+      {
+        "name": "Mobile menu",
+        "shows": "Below md: burger toggles a panel under the nav (locks page scroll): group 1 = the 13 area titles → /product#<area>; group 2 = 'Alle Funktionen', 'Preise', 'Fragen', 'Anmelden'. Escape / outside tap closes.",
+        "phone": "The only nav on phones; 'Kostenlos starten' stays visible in the bar."
+      },
+      {
+        "name": "Footer",
+        "shows": "Sticky footer revealed under the page: Bruegel/pastoral painting with gradient, claim (landing.footer.claim), column 'Produkt' (first 6 areas → /product#…), column 'Konto' (Anmelden → /app, Kostenlos starten → /login, Preise → /#pricing, 'API' → /api/docs), huge wordmark 'roots', line 'Grassroots – wie die Bewegung. © roots, Berlin', 'Impressum' → /imprint, 'Datenschutz' → /privacy, painting credits (links to Wikimedia, new tab).",
+        "uxNotes": ["Footer label 'API' is hard-coded (not in de.json), while the mega menu uses landing.menu.api 'API-Dokumentation'."]
+      }
+    ],
+    "uxNotes": [
+      "'Anmelden' (→ /app, which sends signed-out people to /login) and 'Kostenlos starten' (→ /login) end on the same login page; there is no separate sign-up entry.",
+      "Hand-written menus (ProductMenu, MobileMenu) with their own open/close logic instead of shared primitives; the mega menu opens on hover."
+    ]
+  },
+  "pages": [
+    {
+      "route": "/",
+      "file": "src/app/site/page.tsx",
+      "components": ["src/app/site/_components/ui.tsx", "src/app/site/_components/devices.tsx", "src/app/site/_components/mocks.tsx", "src/app/site/_components/wireframes.tsx", "src/app/site/_components/halftone.tsx", "src/app/site/paintings.ts"],
+      "title": "roots (Landing)",
+      "purpose": "Marketing landing page: what roots is, for whom, main modules, price (free in beta), FAQ, sign-up CTA.",
+      "audience": "anonymous",
+      "header": { "shows": "SiteFrame nav." },
+      "urlState": [
+        { "param": "#top", "meaning": "hero" },
+        { "param": "#why", "meaning": "values ('Warum roots')" },
+        { "param": "#product", "meaning": "feature list ('Produkt ansehen')" },
+        { "param": "#pricing", "meaning": "price box" },
+        { "param": "#faq", "meaning": "FAQ" }
+      ],
+      "sections": [
+        { "title": "Hero", "anchor": "#top", "kind": "custom", "notes": "Eyebrow 'Für Vereine, Kollektive und Veranstalter:innen', h1 'Wo Ideen Wurzeln schlagen.' (accent), lead (landing.hero.lead), Pill 'Kostenlos starten' + link 'Produkt ansehen' → #product. Below: Bruegel 'Harvesters' full width, pinned (145svh stage), a laptop mock (DashboardMock) rises into it; painting caption from sm." },
+        { "title": "Gemacht für", "key": "landing.audience.label", "kind": "custom", "notes": "Sportvereine · Kulturvereine · Clubs · Festivals · Kollektive · Initiativen." },
+        { "title": "Statement", "kind": "custom", "notes": "'Eine Software [ALLE MODULE ↗] für die ganze Arbeit dahinter.' – inline pill → /product." },
+        { "title": "Warum roots (values)", "anchor": "#why", "key": "landing.values.*", "kind": "custom", "notes": "Tag + h2 'Ein Ort für alles, was eure Organisation trägt.'; 3 cards with line-art: 'Ein Ort statt zehn Tools', 'Gewachsen von unten', 'Alles hängt zusammen'." },
+        { "title": "Features", "anchor": "#product", "kind": "custom", "notes": "5 numbered rows (01–05): members, tickets, shifts, forms, invoices – label, h3, text, 3 bullets (landing.features.<key>.*) + a device mock (MembersMock, phone ScannerMock on the 'dance' painting, ShiftsMock, FormMailMock, InvoiceMock)." },
+        { "title": "Manifest", "key": "landing.manifesto.*", "kind": "custom", "notes": "Dark band: Dürer turf painting + 'Warum roots' / 'Grassroots heißt: selbst organisiert.' + 2 paragraphs." },
+        { "title": "Für Clubs und Veranstalter:innen", "key": "landing.events.*", "kind": "custom", "notes": "Renoir 'galette' painting with a paper card: 'Von der Ankündigung bis zur letzten Schicht.' + Pill 'Kostenlos starten'." },
+        { "title": "Prinzipien", "key": "landing.trust.*", "kind": "custom", "notes": "4 columns: gdpr, data, easy, berlin (title + text)." },
+        { "title": "Preise", "anchor": "#pricing", "key": "landing.pricing.*", "kind": "custom", "notes": "'Kostenlos starten. Fair bleiben.' + text (free during beta, later per module); right panel 'Beta' · '0 €' · 'Alle Module, ohne Kreditkarte.' · bullets 'Alle Module inklusive', 'Unbegrenzt Mitglieder und Kontakte', 'Export und API jederzeit' · Pill 'Kostenlos starten'." },
+        { "title": "Fragen", "anchor": "#faq", "key": "landing.faq.*", "kind": "custom", "notes": "Native <details> × 6: Für wen ist roots gedacht? · Wo liegen unsere Daten? · Können wir aus Excel oder unserer alten Software umziehen? · Wie kommt das Geld aus dem Ticketverkauf zu uns? · Was kostet roots nach der Beta? · Können wir unsere eigene Website behalten?" },
+        { "title": "Final CTA", "key": "landing.final.*", "kind": "custom", "notes": "HalftoneBand (Bauerntanz builds up as a dot grid on a canvas): 'Fangt heute an, gemeinsam.' + text + light Pill 'Kostenlos starten'." }
+      ],
+      "actions": [
+        { "label": "Kostenlos starten", "key": "landing.hero.cta / landing.final.pill", "where": "section", "kind": "link", "target": "/login", "notes": "4× on the page (hero, events card, pricing, final band) + nav" },
+        { "label": "Produkt ansehen", "key": "landing.hero.secondary", "where": "section", "kind": "link", "target": "#product" },
+        { "label": "Alle Module", "key": "landing.statement.pill", "where": "section", "kind": "link", "target": "/product" }
+      ],
+      "links": ["/login", "/app", "/product", "/imprint", "/privacy", "/api/docs"],
+      "phone": "One column; hero copy stacks above the buttons; laptop mock 86% wide; painting captions hidden below sm; value cards and principles stack; pricing panel stacks.",
+      "uxNotes": [
+        "The landing shows 5 features; shop, website builder, rentals, courses and projects (all live modules) are not mentioned anywhere on the landing.",
+        "Unused keys: landing.meta.title ('roots – Wo Ideen Wurzeln schlagen'), landing.hero.title2, landing.faq.heading – the tab title is just 'roots'.",
+        "'Warum roots' is used twice as a label (values tag and manifesto label) and as the menu card link."
+      ]
+    },
+    {
+      "route": "/product",
+      "file": "src/app/site/product/page.tsx",
+      "title": "roots (Produkt)",
+      "purpose": "Every product area with its own anchor (targets of the Produkt menu), then a typographic module table.",
+      "audience": "anonymous",
+      "header": { "shows": "Tag 'Produkt', h1 'Alles, was ihr organisiert. An einem Ort.', lead (landing.productPage.lead), jump chips for the 13 areas." },
+      "urlState": [{ "param": "#<area>", "meaning": "members | tickets | events | shifts | hr | invoices | cashbook | reports | forms | automations | wiki | contacts | portal" }],
+      "sections": [
+        { "title": "Bereiche", "kind": "custom", "notes": "13 alternating rows (FeatureText: number, label, title, text, 3 bullets + a mock or painting: MembersMock, ScannerMock on painting, LineupMock, ShiftsMock, PayrollMock, InvoiceMock, CashbookMock, ReportsMock, FormMailMock, AutomationsMock, WikiMock, ContactsMock, PortalMock on painting)." },
+        { "title": "Module", "key": "landing.nav.modules / landing.modulesSection.*", "kind": "custom", "notes": "ModuleRow table of 19 modules (crm, members, events, tickets, guestlists, courses, shifts, hr, forms, email, automations, reports, invoices, cashbook, projects, wiki, files, portal, api)." },
+        { "title": "Final CTA", "kind": "custom", "notes": "Same HalftoneBand as the landing." }
+      ],
+      "actions": [
+        { "label": "<area chip>", "where": "header", "kind": "link", "target": "#<area>" },
+        { "label": "Kostenlos starten", "key": "landing.final.pill", "where": "section", "kind": "link", "target": "/login" }
+      ],
+      "links": ["/login"],
+      "phone": "Rows stack (text above the visual); chips wrap.",
+      "uxNotes": [
+        "Shop, Website (own domain, page builder) and Vermietung are neither areas nor rows in the module table.",
+        "Tab title is 'roots' like every other website page; landing.productPage.meta ('roots – Produkt') exists but is unused."
+      ]
+    },
+    {
+      "route": "/imprint",
+      "file": "src/app/site/imprint/page.tsx",
+      "components": ["src/app/site/legal.tsx"],
+      "title": "Impressum",
+      "purpose": "roots' imprint (German only, hard-coded prose, operator data from COMPANY).",
+      "audience": "anonymous",
+      "header": { "shows": "SiteFrame nav; h1 'Impressum'." },
+      "sections": [
+        { "title": "Angaben gemäß § 5 DDG", "kind": "custom", "notes": "Name, street, city, country; representation/register/VAT only when filled." },
+        { "title": "Kontakt / Verantwortlich nach § 18 Abs. 2 MStV / Verbraucherstreitbeilegung / Haftung für Inhalte / Haftung für Links / Urheberrecht und Bildnachweise", "kind": "custom" }
+      ],
+      "links": ["/"],
+      "uxNotes": [
+        "COMPANY.represented, email and register are empty (code comment: board members, contact email and Vereinsregister number still missing), so the imprint currently has no email contact.",
+        "Tab title is 'roots' (no 'Impressum'); text is hard-coded German (lang=de), not in de.json."
+      ]
+    },
+    {
+      "route": "/privacy",
+      "file": "src/app/site/privacy/page.tsx",
+      "components": ["src/app/site/legal.tsx"],
+      "title": "Datenschutzerklärung",
+      "purpose": "roots' privacy policy (German only, hard-coded).",
+      "audience": "anonymous",
+      "header": { "shows": "SiteFrame nav; h1 'Datenschutzerklärung'; 'Stand: Oktober 2026' at the end." },
+      "sections": [{ "title": "1. Verantwortlicher … 8. Eure Rechte", "kind": "custom", "notes": "Verantwortlicher, Besuch der Website, Cookies, Konto und Nutzung, E-Mails, Zahlungen, Dienstleister/Drittländer, Rechte." }],
+      "links": ["/"],
+      "uxNotes": ["Footer link says 'Datenschutz', page heading 'Datenschutzerklärung'; tab title 'roots'."]
+    },
+    {
+      "route": "/style",
+      "file": "src/app/style/page.tsx",
+      "title": "Style",
+      "purpose": "Internal design reference index (English, noindex): two cards → /style/app and /style/site.",
+      "audience": "anonymous (not linked anywhere)",
+      "sections": [{ "title": "Index", "kind": "custom", "notes": "Cards 'App' and 'Website' with one line each." }],
+      "links": ["/style/app", "/style/site"],
+      "uxNotes": ["The App card says the rules are in 'AGENTS.md › Design system'; they now live in docs/design/app.md."]
+    },
+    {
+      "route": "/style/app",
+      "file": "src/app/style/app/page.tsx",
+      "components": ["src/app/style/app/demos.tsx"],
+      "title": "App style",
+      "purpose": "Living reference of the App look: page anatomy (Page, PageHeader, ActionsMenu, EmptyState), forms (FormCard, TypedInput iban/bic/money/postcode/date, Choice, SaveBar), colour tokens, type, buttons, badges, form controls, cards, DataTable, feedback (toast demo).",
+      "audience": "anonymous (noindex), outside AppShell",
+      "sections": [
+        { "title": "Page anatomy / Forms / Colour tokens / Type / Buttons / Badges / Forms / Cards / DataTable / Feedback", "kind": "custom", "notes": "Each a Block with demo components and sample data (Lena Krüger …)." }
+      ],
+      "actions": [{ "label": "Success toast / Error toast", "where": "section", "kind": "client", "target": "sonner toast demo" }],
+      "uxNotes": ["Two blocks are both titled 'Forms'.", "No phone-specific demos (MobileBar, UrlSheet/ContentSheet, ConfirmHost) although app.md makes them binding."]
+    },
+    {
+      "route": "/style/site",
+      "file": "src/app/style/site/page.tsx",
+      "title": "Website style",
+      "purpose": "Every building block of the marketing site in one place (inside SiteShell): colour, type, buttons/tags/links, section head, inline CTA, halftone band, value cards, paintings, device mocks, feature text / module table / FAQ.",
+      "audience": "anonymous (noindex)",
+      "sections": [{ "title": "Colour … Feature text, module table, FAQ", "kind": "custom", "notes": "Blocks with notes from docs/design/site.md." }],
+      "uxNotes": ["No SiteFrame nav/footer demo here, although both are custom components."]
+    }
+  ],
+  "uxNotes": [
+    "All four website pages share the tab title 'roots' (landing.meta.title and landing.productPage.meta exist but are unused).",
+    "Voice is consistent ('ihr', no exclamation marks) – unlike the org public pages, which use 'du' and exclamation marks in success messages.",
+    "The website lists 13 areas / 19 modules but not shop, website/domains or rentals, which the App and AGENTS.md treat as full modules."
+  ]
+}

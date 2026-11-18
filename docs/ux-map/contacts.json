@@ -1,0 +1,606 @@
+{
+  "area": "contacts",
+  "label": "Kontakte",
+  "module": "crm",
+  "nav": [
+    {
+      "label": "Übersicht",
+      "href": "/contacts"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/contacts",
+      "file": "src/app/(app)/contacts/page.tsx",
+      "title": "Kontakte (Papierkorb: \"Kontakte · Papierkorb\")",
+      "purpose": "Find, filter, bulk-tag, import, export and trash contacts; entry point to every contact page.",
+      "permission": "crm.view",
+      "size": "list",
+      "header": {
+        "area": "contacts",
+        "actions": [],
+        "menu": [
+          {
+            "label": "Importieren",
+            "key": "contacts.import",
+            "target": "?import=1",
+            "permission": "crm.manage"
+          },
+          {
+            "label": "Exportieren › Excel (.xlsx) / CSV",
+            "key": "export.button",
+            "target": "/export/contacts?q=&tag=&format=xlsx|csv",
+            "notes": "MenuExport, applies current q + tag"
+          },
+          {
+            "label": "Papierkorb (in trash view: Alle)",
+            "key": "contacts.trash / contacts.all",
+            "target": "/contacts?trash=1 | /contacts",
+            "permission": "crm.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neuer Kontakt",
+          "key": "contacts.new",
+          "href": "/contacts/new",
+          "permission": "crm.manage",
+          "notes": "hidden in trash view"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search over first/last name, company, email, phone, city (ilike)"
+        },
+        {
+          "param": "tag",
+          "meaning": "filter by one tag (FilterMenu)"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view (crm.manage only)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination (Pager: Neuer / Älter)"
+        },
+        {
+          "param": "import",
+          "meaning": "1 = import sheet open"
+        },
+        {
+          "param": "edit",
+          "meaning": "legacy: redirects to /contacts/<id>"
+        },
+        {
+          "param": "new",
+          "meaning": "legacy: redirects to /contacts/new"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "key": "common.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "tag",
+              "label": "Tags",
+              "key": "contacts.tags",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "only when the org has tags and not in trash view"
+            }
+          ],
+          "notes": "Toolbar hidden entirely when the org has no contacts yet (empty state)."
+        },
+        {
+          "title": "Kontakte",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Firma / Verein underneath)",
+            "E-Mail",
+            "Telefon",
+            "Ort",
+            "Tags"
+          ],
+          "notes": "Row → /contacts/<id>. Trash view shows hint 'Gelöschte Kontakte werden nach 30 Tagen endgültig entfernt.' (contacts.trashHint)."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Tag hinzufügen",
+          "key": "common.addTag",
+          "where": "bulk",
+          "kind": "serverAction",
+          "target": "bulkContacts intent=tag-add (actions.ts)",
+          "permission": "crm.manage",
+          "confirm": false,
+          "result": "toast common.bulkDone; tag typed in a free-text Input with datalist of existing tags"
+        },
+        {
+          "label": "Tag entfernen",
+          "key": "common.removeTag",
+          "where": "bulk",
+          "kind": "serverAction",
+          "target": "bulkContacts intent=tag-remove",
+          "permission": "crm.manage",
+          "confirm": false
+        },
+        {
+          "label": "Exportieren",
+          "key": "common.exportSelected",
+          "where": "bulk",
+          "kind": "download",
+          "target": "GET /export/contacts?format=xlsx&ids=…",
+          "notes": "xlsx only (header menu offers xlsx + csv)"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "common.toTrash",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkContacts intent=trash (soft_delete per id, max 500)",
+          "permission": "crm.manage",
+          "confirm": true,
+          "result": "toast common.bulkTrashed; confirm text common.confirmTrashMany"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?import=1",
+          "component": "UrlSheet (wide)",
+          "title": "Kontakte importieren",
+          "key": "contacts.importTitle",
+          "fields": [
+            {
+              "name": "file",
+              "label": "import.file",
+              "type": "file",
+              "component": "CsvImport"
+            },
+            {
+              "name": "mapping[]",
+              "label": "per CSV column → contact field or 'ignorieren'",
+              "type": "select",
+              "component": "NativeSelect (one per column)"
+            },
+            {
+              "name": "mode",
+              "label": "Wenn es schon einen Eintrag mit dieser E-Mail gibt",
+              "key": "import.existing",
+              "type": "radio",
+              "component": "native radio",
+              "notes": "Überspringen / Aktualisieren"
+            }
+          ],
+          "actions": [
+            {
+              "label": "import.submit ({count})",
+              "kind": "client",
+              "target": "importContacts (actions.ts)",
+              "result": "toast import.done + result panel with 'import.toList' (→ /contacts) and 'import.another'"
+            }
+          ],
+          "notes": "Hint contacts.importHint. Mapping check: needs a name/company/email column; required custom fields when mode=skip. Max 5000 rows."
+        }
+      ],
+      "links": [
+        "/contacts/new",
+        "/contacts/[id]",
+        "/export/contacts"
+      ],
+      "empty": "EmptyState: 'Noch keine Kontakte.' / 'Kontakte sind Personen und Firmen, mit denen ihr zu tun habt: Mitglieder, Gäste, Partner. Lege den ersten an oder importiere eine Liste.' + button 'Neuer Kontakt'. Filtered: 'Keine Kontakte gefunden.' Trash: 'Der Papierkorb ist leer.'",
+      "phone": "DataTable as cards (no tick boxes, so no bulk bar); primary as round + next to tab bar.",
+      "uxNotes": [
+        "Empty state mentions importing, but its only button is 'Neuer Kontakt'; import is hidden in the ⋯ menu.",
+        "Bulk tag uses a free-text Input + datalist instead of <TagSelect> used everywhere else for tags.",
+        "Bulk export is xlsx only, while the header export offers xlsx and CSV.",
+        "No sort options; list sorted by last name, first name, company.",
+        "Trash view rows still link to the contact page; restore happens there (no restore button in the list), unlike /forms trash which restores inline.",
+        "Email/phone cells in the list are plain text, not mailto:/tel: (row is a link)."
+      ]
+    },
+    {
+      "route": "/contacts/new",
+      "file": "src/app/(app)/contacts/new/page.tsx",
+      "title": "Neuer Kontakt",
+      "purpose": "Create a contact.",
+      "permission": "crm.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Kontakte",
+          "Neuer Kontakt"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "error",
+          "meaning": "error shown by NewPage <Notice>"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Person",
+          "key": "contacts.person",
+          "anchor": "#person",
+          "kind": "FormCard",
+          "description": "Name oder Firma reicht.",
+          "fields": [
+            {
+              "name": "first_name",
+              "label": "Vorname",
+              "key": "contacts.firstName",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            },
+            {
+              "name": "last_name",
+              "label": "Nachname",
+              "key": "contacts.lastName",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            },
+            {
+              "name": "company",
+              "label": "Firma / Verein",
+              "key": "contacts.company",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            },
+            {
+              "name": "birthday",
+              "label": "Geburtstag",
+              "key": "contacts.birthday",
+              "type": "date",
+              "component": "TypedInput:date",
+              "required": false
+            }
+          ]
+        },
+        {
+          "title": "Erreichbarkeit",
+          "key": "contacts.reach",
+          "anchor": "#reach",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "email",
+              "label": "E-Mail",
+              "key": "contacts.email",
+              "type": "email",
+              "component": "TypedInput:email",
+              "required": false
+            },
+            {
+              "name": "phone",
+              "label": "Telefon",
+              "key": "contacts.phone",
+              "type": "tel",
+              "component": "TypedInput:phone",
+              "required": false
+            }
+          ]
+        },
+        {
+          "title": "Adresse",
+          "key": "contacts.address",
+          "anchor": "#address",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "street",
+              "label": "Straße und Nr.",
+              "key": "contacts.street",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "postal_code",
+              "label": "PLZ",
+              "key": "contacts.postalCode",
+              "type": "text",
+              "component": "TypedInput:postcode"
+            },
+            {
+              "name": "city",
+              "label": "Ort",
+              "key": "contacts.city",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "country",
+              "label": "Land",
+              "key": "contacts.country",
+              "type": "select",
+              "component": "Choice",
+              "notes": "18 countries (COUNTRIES), names via Intl.DisplayNames"
+            }
+          ]
+        },
+        {
+          "title": "Tags & eigene Felder",
+          "key": "contacts.more",
+          "anchor": "#more",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "tags",
+              "label": "Tags",
+              "key": "contacts.tags",
+              "type": "tags",
+              "component": "TagSelect (creatable)",
+              "notes": "help: contacts.tagsHelp"
+            },
+            {
+              "name": "custom.<key>",
+              "label": "org-defined",
+              "type": "custom",
+              "component": "CustomFieldInputs",
+              "notes": "from Settings → Felder (entity contacts)"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Kontakt anlegen",
+          "key": "contacts.create",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "createContact (actions.ts)",
+          "permission": "crm.manage",
+          "result": "→ /contacts/<id> with toast 'Kontakt angelegt.'; error → /contacts/new?error=…"
+        }
+      ],
+      "links": [
+        "/contacts"
+      ],
+      "uxNotes": [
+        "No field is marked required; validation (name/company/email) only reported on submit.",
+        "On error the page reloads via redirect, so typed values are lost (plain form post, no useActionState)."
+      ]
+    },
+    {
+      "route": "/contacts/import",
+      "file": "src/app/(app)/contacts/import/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Legacy route: redirects to /contacts?import=1.",
+      "permission": null,
+      "links": [
+        "/contacts?import=1"
+      ]
+    },
+    {
+      "route": "/contacts/[id]",
+      "file": "src/app/(app)/contacts/[id]/page.tsx",
+      "title": "Kontakt (Name)",
+      "purpose": "Everything about one person: edit details, notes/timeline, team link, membership, and related tickets, rentals, invoices, form submissions, emails, files.",
+      "permission": "crm.view",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Kontakte",
+          "<Name>"
+        ],
+        "badge": "Papierkorb (destructive) when deleted",
+        "meta": "company (if different from name) + tag badges",
+        "actions": [
+          {
+            "label": "E-Mail",
+            "key": "contacts.email",
+            "kind": "link",
+            "target": "mailto:<email>",
+            "notes": "only with email, not when deleted"
+          },
+          {
+            "label": "Telefon",
+            "key": "contacts.phone",
+            "kind": "link",
+            "target": "tel:<phone>",
+            "notes": "only with phone"
+          }
+        ],
+        "menu": [
+          {
+            "label": "Brief erstellen",
+            "key": "contacts.writeLetter",
+            "target": "/files/templates?contact=<id>",
+            "permission": "org.files.view"
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "contacts.toTrash",
+            "target": "trashContact (MenuSubmit destructive)",
+            "permission": "crm.manage",
+            "confirm": true
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Person / Erreichbarkeit / Adresse / Tags & eigene Felder",
+          "kind": "FormCard",
+          "notes": "Same ContactForm as /contacts/new (see there), fieldset disabled without crm.manage plus line 'Du kannst Kontakte ansehen, aber nicht bearbeiten.' (contacts.readOnly). SaveBar appears on change."
+        },
+        {
+          "title": "Verlauf",
+          "key": "contacts.timeline",
+          "anchor": "#activity",
+          "kind": "ActivityFeed",
+          "fields": [
+            {
+              "name": "body",
+              "label": "Notiz hinzufügen…",
+              "key": "contacts.notePlaceholder",
+              "type": "textarea",
+              "component": "Textarea",
+              "required": true,
+              "notes": "placeholder only as label; max 10000"
+            }
+          ],
+          "notes": "Notes, field changes from change log (old → new, with author, 'über KI-App'/'über API'), creation entry; newest first. Custom hand-made timeline, not <ActivityFeed>."
+        },
+        {
+          "title": "Teamzugang",
+          "key": "contacts.team.title",
+          "anchor": "#team",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "user_id",
+              "label": "Teammitglied wählen …",
+              "key": "contacts.team.pick",
+              "type": "select",
+              "component": "NativeSelect"
+            }
+          ],
+          "notes": "Linked person + 'Hat Zugang zur App', or picker + 'Verknüpfen'. Hint contacts.team.hint. Shown when linked or crm.manage."
+        },
+        {
+          "title": "Mitgliedschaften",
+          "key": "membership.nav",
+          "anchor": "#membership",
+          "kind": "custom",
+          "notes": "Latest membership as link card (type · number, 'Mitglied seit', 'Endet am'); else 'Als Mitglied aufnehmen' button (members.manage) or 'Kein Mitglied.'. Needs members module + members.view."
+        },
+        {
+          "title": "Tickets",
+          "key": "tickets.title",
+          "anchor": "#tickets",
+          "kind": "custom",
+          "notes": "last 10, link to /events/<event>/tickets (not the ticket). Only when rows exist."
+        },
+        {
+          "title": "Vermietung",
+          "key": "rentals.title",
+          "anchor": "#rentals",
+          "kind": "custom",
+          "notes": "last 10, → /rentals/r/<id>"
+        },
+        {
+          "title": "Rechnungen & Angebote",
+          "key": "contacts.invoices",
+          "anchor": "#invoices",
+          "kind": "custom",
+          "notes": "last 10, → /invoices/<id>"
+        },
+        {
+          "title": "Formulare",
+          "key": "contacts.submissions",
+          "anchor": "#forms",
+          "kind": "custom",
+          "notes": "last 10, → /forms/<form>/submissions?sub=<id>"
+        },
+        {
+          "title": "E-Mails",
+          "key": "contacts.emails",
+          "anchor": "#emails",
+          "kind": "custom",
+          "notes": "last 10 campaign/automation sends, every row → /email/log (unfiltered)"
+        },
+        {
+          "title": "Dateien",
+          "kind": "FileList",
+          "notes": "entity contacts"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "updateContact",
+          "permission": "crm.manage",
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Notiz speichern",
+          "key": "contacts.addNote",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addNote",
+          "permission": "crm.manage",
+          "result": "toast contacts.noteAdded"
+        },
+        {
+          "label": "Notiz löschen",
+          "key": "contacts.deleteNote",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "deleteNote (icon button with tooltip)",
+          "permission": "crm.manage",
+          "confirm": false,
+          "result": "hard delete, toast contacts.noteDeleted"
+        },
+        {
+          "label": "Verknüpfen / Verknüpfung lösen",
+          "key": "contacts.team.link / contacts.team.unlink",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "linkContactUser → /contacts/<id>#team",
+          "permission": "crm.manage",
+          "confirm": false
+        },
+        {
+          "label": "Als Mitglied aufnehmen",
+          "key": "membership.makeMember",
+          "where": "section",
+          "kind": "link",
+          "target": "/members?new=1&contact=<id> (redirects to /members/new?contact=<id>)",
+          "permission": "members.manage"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "contacts.restore",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restoreContact",
+          "permission": "crm.manage",
+          "notes": "deleted contacts only: replaces the whole page with notice contacts.deletedOn + this button"
+        }
+      ],
+      "links": [
+        "/contacts",
+        "/members/[id]",
+        "/members/new",
+        "/events/[id]/tickets",
+        "/rentals/r/[id]",
+        "/invoices/[id]",
+        "/forms/[id]/submissions?sub=",
+        "/email/log",
+        "/files/templates?contact="
+      ],
+      "phone": "RecordLayout stacks: the form and timeline first, the aside cards (team, membership, tickets, …, files) below them.",
+      "uxNotes": [
+        "Related-record cards (membership, tickets, invoices…) are in the aside, which on phones comes after the whole edit form + timeline – far down for the 'look someone up' flow.",
+        "Ticket rows link to the event's ticket list, email rows to the unfiltered send log – neither opens the actual record.",
+        "Note deletion has no confirm; contact trash does.",
+        "Membership link goes through a legacy redirect (/members?new=1&contact=) instead of /members/new?contact= directly.",
+        "No way to create an invoice, ticket or membership from here other than the membership button and 'Brief erstellen'.",
+        "Uses NativeSelect for the team picker instead of a server-search picker."
+      ]
+    }
+  ]
+}

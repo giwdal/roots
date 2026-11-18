@@ -8,11 +8,12 @@ import { useT } from "@/i18n/client"
 /**
  * "Wirklich?" before destructive submits. Any submit button with data-confirm="<message key>" (gets { count } = ticked
  * "ids" of its form, for bulk bars) is held back until the dialog is confirmed, then submitted again with the same
- * button, so server actions and formAction work unchanged. Mounted once in <AppShell>.
+ * button, so server actions and formAction work unchanged. Other elements with data-confirm (client buttons, links)
+ * have their click held back the same way. Mounted once in <AppShell>.
  */
 export function ConfirmHost() {
   const t = useT()
-  const [ask, setAsk] = useState<{ form: HTMLFormElement; button: HTMLElement; key: string; vars: { count: number; amount: string }; label: string; n: number } | null>(null)
+  const [ask, setAsk] = useState<{ form: HTMLFormElement | null; button: HTMLElement; key: string; vars: { count: number; amount: string }; label: string; n: number } | null>(null)
   const passed = useRef<HTMLElement | null>(null)
   const n = useRef(0) // new key per ask so a reopened sheet mounts fresh
 
@@ -30,15 +31,30 @@ export function ConfirmHost() {
       const count = Number(button.dataset.confirmCount ?? new FormData(form, button).getAll("ids").length)
       setAsk({ form, button, key, vars: { count, amount: button.dataset.confirmAmount ?? "" }, label: button.textContent?.trim() ?? "", n: ++n.current })
     }
+    // Client buttons (type="button", onClick does the work) and links: the same question, then the click again.
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as Element).closest?.<HTMLElement>("[data-confirm]")
+      if (!el || (el instanceof HTMLButtonElement && el.type === "submit" && el.form)) return
+      if (passed.current === el) return void (passed.current = null)
+      e.preventDefault()
+      e.stopPropagation()
+      const count = Number(el.dataset.confirmCount ?? 0)
+      setAsk({ form: null, button: el, key: el.dataset.confirm!, vars: { count, amount: el.dataset.confirmAmount ?? "" }, label: el.textContent?.trim() ?? "", n: ++n.current })
+    }
     document.addEventListener("submit", onSubmit, true)
-    return () => document.removeEventListener("submit", onSubmit, true)
+    document.addEventListener("click", onClick, true)
+    return () => {
+      document.removeEventListener("submit", onSubmit, true)
+      document.removeEventListener("click", onClick, true)
+    }
   }, [])
 
   const confirm = () => {
     if (!ask) return
     passed.current = ask.button
+    if (!ask.form) ask.button.click()
     // Menu items are gone once their menu closed; they carry no formAction/value, so a plain submit is the same.
-    if (ask.button.isConnected) ask.form.requestSubmit(ask.button)
+    else if (ask.button.isConnected) ask.form.requestSubmit(ask.button)
     else ask.form.requestSubmit()
     setAsk(null)
   }

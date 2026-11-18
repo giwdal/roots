@@ -1,0 +1,259 @@
+{
+  "area": "hr",
+  "label": "Personal",
+  "module": "hr",
+  "nav": [
+    { "label": "Übersicht", "key": "nav.overview", "href": "/hr", "permission": "hr.view" },
+    { "label": "Abwesenheiten", "key": "hr.tabs.absences", "href": "/hr/absences", "permission": "hr.view" },
+    { "label": "Organigramm", "key": "hr.tabs.chart", "href": "/hr/chart", "permission": "hr.view" },
+    { "label": "Lohnvorbereitung", "key": "hr.tabs.payroll", "href": "/hr/payroll", "permission": "hr.view" }
+  ],
+  "pages": [
+    {
+      "route": "/hr",
+      "file": "src/app/(app)/hr/page.tsx",
+      "title": "Personal (trash: \"Personal · Papierkorb\")",
+      "purpose": "List of employees (who works here, on what terms); search, export, trash view; entry to each person's page.",
+      "permission": "hr.view (layout also requires the hr module)",
+      "size": "list",
+      "header": {
+        "area": "hr",
+        "menu": [
+          { "label": "Exportieren", "target": "/export/employees", "notes": "MenuExport (no query; search not applied)" },
+          { "label": "Papierkorb | Zurück zur Liste", "key": "hr.trash / hr.backToList", "target": "/hr?status=trash | /hr", "permission": "hr.manage" }
+        ],
+        "primary": { "label": "Neue Person", "key": "hr.new", "href": "/hr/new", "permission": "hr.manage", "notes": "hidden in trash view" }
+      },
+      "urlState": [
+        { "param": "q", "meaning": "search name, job title, department, e-mail" },
+        { "param": "status", "meaning": "trash = trash view (hr.manage)" },
+        { "param": "page", "meaning": "Pager (Neuer / Älter)" },
+        { "param": "new", "meaning": "legacy: redirects to /hr/new" }
+      ],
+      "sections": [
+        { "title": "Toolbar", "kind": "custom", "fields": [{ "name": "q", "label": "Name, Funktion oder Abteilung suchen…", "key": "hr.search", "type": "search", "component": "SearchBox" }] },
+        { "title": "Mitarbeitende", "kind": "DataTable", "columns": ["Name (+ Funktion; link → /hr/<id>)", "Beschäftigung", "Abteilung", "Berichtet an", "Seit (+ badge 'ausgeschieden')"] }
+      ],
+      "actions": [],
+      "links": ["/hr/new", "/hr/[id]", "/export/employees"],
+      "empty": "DataTable empty text 'Noch keine Mitarbeitenden.' / 'Niemand gefunden.' (no <EmptyState> with action)",
+      "phone": "DataTable cards; primary as round +.",
+      "uxNotes": [
+        "Trash view uses ?status=trash while contacts uses ?trash=1.",
+        "No <EmptyState> on a never-used list (docs require EmptyState); only a table empty text.",
+        "Export ignores the current search.",
+        "No filters (employment type, department, left/active) although those columns exist."
+      ]
+    },
+    {
+      "route": "/hr/new",
+      "file": "src/app/(app)/hr/new/page.tsx",
+      "title": "Neue Person",
+      "purpose": "Create an employee record for an existing org member.",
+      "permission": "hr.manage",
+      "size": "form (NewPage)",
+      "header": { "crumbs": ["Personal", "Neue Person"] },
+      "sections": [
+        {
+          "title": "Person & Rolle",
+          "anchor": "#role",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "user_id", "label": "Mitglied der Organisation", "key": "hr.member", "type": "select", "component": "NativeSelect", "required": true, "notes": "'Mitglied wählen…'; members not yet employees ('Name · E-Mail'); hint hr.memberHint" },
+            { "name": "job_title", "label": "Funktion", "key": "hr.jobTitle", "type": "text", "component": "Input" },
+            { "name": "department", "label": "Abteilung", "key": "hr.department", "type": "text", "component": "Input" },
+            { "name": "phone", "label": "Telefon", "key": "hr.phone", "type": "tel", "component": "TypedInput:phone" },
+            { "name": "manager_id", "label": "Berichtet an", "key": "hr.manager", "type": "select", "component": "NativeSelect", "notes": "all employees, max 500; '–'" }
+          ]
+        },
+        {
+          "title": "Vertrag",
+          "anchor": "#contract",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "employment_type", "label": "Beschäftigung", "key": "hr.employmentType", "type": "select", "component": "NativeSelect", "notes": "Vollzeit, Teilzeit (default), Minijob, Werkstudent:in, Azubi / Praktikum, Freie Mitarbeit, Ehrenamt, Sonstiges" },
+            { "name": "pay_type", "label": "Vergütung", "key": "hr.payType", "type": "choice", "component": "Choice", "required": true, "notes": "Stundenlohn (default) / Monatsgehalt / keine" },
+            { "name": "starts_on", "label": "Beginn", "key": "hr.startsOn", "type": "date", "component": "TypedInput:date" },
+            { "name": "ends_on", "label": "Ende", "key": "hr.endsOn", "type": "date", "component": "TypedInput:date" },
+            { "name": "hourly_rate", "label": "Stundenlohn (€)", "key": "hr.hourlyRate", "type": "money", "component": "TypedInput:money" },
+            { "name": "monthly_salary", "label": "Monatsgehalt (€)", "key": "hr.monthlySalary", "type": "money", "component": "TypedInput:money" },
+            { "name": "weekly_hours", "label": "Wochenstunden", "key": "hr.weeklyHours", "type": "number", "component": "Input inputMode=decimal" },
+            { "name": "vacation_days", "label": "Urlaubstage pro Jahr", "key": "hr.vacationDays", "type": "number", "component": "Input inputMode=decimal" }
+          ]
+        },
+        { "title": "Notizen", "anchor": "#notes", "kind": "FormCard", "fields": [{ "name": "notes", "label": "Notizen", "key": "hr.notes", "type": "textarea", "component": "Textarea" }] }
+      ],
+      "actions": [
+        { "label": "Anlegen", "key": "hr.create", "where": "savebar", "kind": "serverAction", "target": "saveEmployee (actions.ts)", "permission": "hr.manage", "confirm": false, "result": "redirect /hr/<id>, toast 'Person angelegt.'; links the shift staff row of the same user automatically" }
+      ],
+      "links": ["/hr"],
+      "uxNotes": [
+        "Hourly rate and monthly salary are both always shown, regardless of the chosen 'Vergütung'.",
+        "Only org members can become employees; people without an account (e.g. Minijobber without login) can't be added here (hint points to Einstellungen → Team).",
+        "Manager picker is a NativeSelect of up to 500 (code comment: ponytail).",
+        "Shift-team link (staff_id) is set implicitly by user, never shown or editable."
+      ]
+    },
+    {
+      "route": "/hr/[id]",
+      "file": "src/app/(app)/hr/[id]/page.tsx",
+      "title": "<Employee name>",
+      "purpose": "One employee: role and contract, personal/bank/tax data (hr.manage), absences with holiday left, this month's hours and gross preview, documents.",
+      "permission": "hr.view (form disabled without hr.manage; private data hr.manage only)",
+      "size": "record",
+      "header": {
+        "crumbs": ["Personal", "<Name>"],
+        "badge": "employment type (e.g. Teilzeit)",
+        "meta": "job title",
+        "menu": [
+          { "label": "Abwesenheit eintragen", "key": "hr.addAbsence", "target": "/hr/absences?new=absence&employee=<id>", "permission": "hr.manage" },
+          { "label": "In den Papierkorb", "key": "hr.toTrash", "target": "trashEmployee (MenuSubmit destructive, form #trash-employee)", "permission": "hr.manage", "notes": "red ⋯ item, confirms by default" }
+        ]
+      },
+      "urlState": [{ "param": "ok / error", "meaning": "toast" }],
+      "sections": [
+        { "title": "Person & Rolle", "anchor": "#role", "kind": "FormCard", "notes": "Same EmployeeForm as /hr/new, but the member select is replaced by read-only 'Konto: <name> · <email>'. Disabled for hr.view." },
+        { "title": "Vertrag", "anchor": "#contract", "kind": "FormCard", "notes": "as /hr/new" },
+        { "title": "Notizen", "anchor": "#notes", "kind": "FormCard" },
+        {
+          "title": "Persönliche Daten",
+          "anchor": "#private",
+          "kind": "FormCard",
+          "notes": "description 'Nur für Personal-Verwaltende sichtbar.'; hr.manage only; separate form with own SaveBar",
+          "fields": [
+            { "name": "birthday", "label": "Geburtsdatum", "key": "hr.birthday", "type": "date", "component": "TypedInput:date" },
+            { "name": "nationality", "label": "Staatsangehörigkeit", "key": "hr.nationality", "type": "text", "component": "Input" },
+            { "name": "street", "label": "Straße", "key": "hr.street", "type": "text", "component": "Input" },
+            { "name": "postal_code", "label": "PLZ", "key": "hr.postalCode", "type": "text", "component": "TypedInput:postcode" },
+            { "name": "city", "label": "Ort", "key": "hr.city", "type": "text", "component": "Input" },
+            { "name": "country", "label": "Land", "key": "hr.country", "type": "text", "component": "Input (2 letters, placeholder DE)" },
+            { "name": "emergency_contact", "label": "Notfallkontakt", "key": "hr.emergencyContact", "type": "text", "component": "Input" }
+          ]
+        },
+        {
+          "title": "Bank, Steuer & Sozialversicherung",
+          "anchor": "#bank",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "iban", "label": "IBAN", "type": "iban", "component": "TypedInput:iban", "notes": "label hardcoded, no i18n key" },
+            { "name": "bic", "label": "BIC", "type": "bic", "component": "TypedInput:bic", "notes": "label hardcoded" },
+            { "name": "tax_id", "label": "Steuer-ID", "key": "hr.taxId", "type": "text", "component": "Input (numeric, mono)" },
+            { "name": "tax_class", "label": "Steuerklasse", "key": "hr.taxClass", "type": "select", "component": "NativeSelect" },
+            { "name": "social_security_no", "label": "Sozialversicherungsnummer", "key": "hr.socialSecurityNo", "type": "text", "component": "Input" },
+            { "name": "health_insurance", "label": "Krankenkasse", "key": "hr.healthInsurance", "type": "text", "component": "Input" }
+          ]
+        },
+        { "title": "Abwesenheiten (aside)", "anchor": "#absences", "kind": "custom", "notes": "'Urlaub {year}: noch {left} von {total} Tagen'; this year's absences (kind, dates, days), read-only list; card action '+ Abwesenheit eintragen' → /hr/absences?new=absence&employee=<id>. Empty 'Keine Abwesenheiten dieses Jahr.'" },
+        { "title": "Dieser Monat (aside)", "anchor": "#pay", "kind": "custom", "notes": "'{hours} h freigegeben · brutto ca. {amount}', unapproved hint, pay warnings (über Minijob-Grenze, unter Mindestlohn, kein Lohn hinterlegt), link 'Zu den Zeiten' → /shifts/hours/<staff_id> (shifts.view). Without shift link: 'Keine Stunden – mit dem Schicht-Team verknüpfen, um Zeiten zu übernehmen.'" },
+        { "title": "Dokumente (aside)", "anchor": "#files", "kind": "FileList", "notes": "entity employees (hr.manage-only files)" }
+      ],
+      "actions": [
+        { "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "saveEmployee", "permission": "hr.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
+        { "label": "Speichern (private data)", "where": "savebar", "kind": "serverAction", "target": "savePrivate", "permission": "hr.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
+        { "label": "In den Papierkorb", "key": "hr.toTrash", "where": "menu", "kind": "confirm", "target": "trashEmployee", "permission": "hr.manage", "confirm": true, "result": "back to /hr, toast 'In den Papierkorb gelegt.'" },
+        { "label": "Wiederherstellen", "key": "hr.restore", "where": "section", "kind": "serverAction", "target": "restoreEmployee", "permission": "hr.manage", "confirm": false, "notes": "only on a trashed person, with hint hr.inTrash" }
+      ],
+      "links": ["/hr", "/hr/absences", "/shifts/hours/[staffId]", "/files/[id]"],
+      "phone": "RecordLayout: aside below the forms.",
+      "uxNotes": [
+        "Two separate forms on one page, each with its own <SaveBar> (contract vs private data): editing both at once needs two saves.",
+        "The 'Abwesenheit eintragen' action leaves the record to /hr/absences instead of a sheet on the person page; absences in the aside are not clickable.",
+        "IBAN/BIC labels are hardcoded strings (no i18n key).",
+        "The shift-team link that drives 'Dieser Monat' can't be set from this page; the hint 'mit dem Schicht-Team verknüpfen' has no link/action (dead end).",
+        "Same action 'Abwesenheit eintragen' appears twice (⋯ menu and aside card button)."
+      ]
+    },
+    {
+      "route": "/hr/absences",
+      "file": "src/app/(app)/hr/absences/page.tsx",
+      "title": "Abwesenheiten",
+      "purpose": "Calendar of who is away when (holiday, sick, unpaid, other); add/edit/delete absences.",
+      "permission": "hr.view (edit: hr.manage)",
+      "size": "list",
+      "header": {
+        "area": "hr",
+        "primary": { "label": "Abwesenheit eintragen", "key": "hr.addAbsence", "href": "?new=absence", "permission": "hr.manage" }
+      },
+      "urlState": [
+        { "param": "view", "meaning": "month (default) | agenda" },
+        { "param": "date", "meaning": "focused day; loads ±45 days" },
+        { "param": "new", "meaning": "absence = create sheet" },
+        { "param": "edit", "meaning": "<absence id>" },
+        { "param": "start / end", "meaning": "prefill from day click / drag" },
+        { "param": "employee", "meaning": "prefill person (from the person page)" }
+      ],
+      "sections": [
+        { "title": "Kalender", "kind": "Calendar", "notes": "CalendarView month/agenda; entry '<Name> · <Art> (halber Tag)', colours per kind; click → ?edit=<id> (hr.manage only); day click/drag → ?new=absence" }
+      ],
+      "overlays": [
+        {
+          "param": "?new=absence | ?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Abwesenheit eintragen | Abwesenheit bearbeiten",
+          "fields": [
+            { "name": "employee_id", "label": "Person", "key": "hr.employee", "type": "select", "component": "NativeSelect", "required": true, "notes": "'Person wählen…', max 500" },
+            { "name": "kind", "label": "Art", "key": "hr.kind", "type": "select", "component": "NativeSelect", "notes": "Urlaub / Krank / Unbezahlt / Sonstiges (4 options)" },
+            { "name": "starts_on", "label": "Von", "key": "hr.from", "type": "date", "component": "DateInput:date", "required": true },
+            { "name": "ends_on", "label": "Bis", "key": "hr.to", "type": "date", "component": "DateInput:date" },
+            { "name": "half_day", "label": "Halber Tag (nur bei einem Tag)", "key": "hr.halfDayLabel", "type": "checkbox", "component": "native checkbox" },
+            { "name": "note", "label": "Notiz", "key": "hr.note", "type": "text", "component": "Input" }
+          ],
+          "actions": [
+            { "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "saveAbsence", "permission": "hr.manage", "confirm": false, "result": "toast 'Abwesenheit gespeichert.'" },
+            { "label": "Löschen", "key": "hr.deleteAbsence", "where": "sheet", "kind": "serverAction", "target": "deleteAbsence", "permission": "hr.manage", "confirm": false, "result": "toast 'Abwesenheit gelöscht.'" }
+          ],
+          "notes": "Edit shows '{count} Tage'. Create SaveBar has no 'always'/label, so the new-sheet button only appears after a change."
+        }
+      ],
+      "links": [],
+      "uxNotes": [
+        "Absence delete is an outline button without confirm.",
+        "'Art' with 4 options uses a NativeSelect, where docs say <Choice> (≤ 5 = segments).",
+        "Create sheet uses <SaveBar /> without 'always' + label, unlike other create sheets ('… anlegen' always visible).",
+        "No filter by person or kind; hr.view users can't open entries (no read-only sheet).",
+        "No link from an absence to the person's page."
+      ]
+    },
+    {
+      "route": "/hr/chart",
+      "file": "src/app/(app)/hr/chart/page.tsx",
+      "title": "Organigramm",
+      "purpose": "Read-only org chart built from 'Berichtet an'; each card links to the person.",
+      "permission": "hr.view",
+      "size": "list",
+      "header": { "area": "hr", "description": "Aus „Berichtet an“ bei jeder Person. Ausgeschiedene sind nicht dabei. (hr.chartHint)" },
+      "sections": [{ "title": "Organigramm", "kind": "custom", "notes": "Nested lists with indented border; cards 'Name / Funktion · Abteilung' → /hr/<id>" }],
+      "links": ["/hr/[id]"],
+      "empty": "EmptyState 'Noch keine Mitarbeitenden.' (no action)",
+      "uxNotes": [
+        "Area page with a description, while docs/design/app.md says area pages show no description.",
+        "Empty state has no action to create a person."
+      ]
+    },
+    {
+      "route": "/hr/payroll",
+      "file": "src/app/(app)/hr/payroll/page.tsx",
+      "title": "Lohnvorbereitung",
+      "purpose": "Monthly payroll preparation per employee: approved hours, rate, gross estimate, absences, warnings; export for the tax advisor.",
+      "permission": "hr.view",
+      "size": "list",
+      "header": {
+        "area": "hr",
+        "description": "hr.payrollHint + '{count} Zeiteinträge sind noch nicht freigegeben…'",
+        "actions": [{ "label": "MonthNav ‹ Monat ›" }],
+        "menu": [{ "label": "Exportieren", "target": "/export/payroll?month=YYYY-MM" }]
+      },
+      "urlState": [{ "param": "month", "meaning": "YYYY-MM" }],
+      "sections": [
+        { "title": "Lohnvorbereitung", "kind": "DataTable", "columns": ["Name (+ Beschäftigung; → /hr/<id>#pay)", "Stunden", "Satz", "Brutto (ca.)", "Abwesenheiten", "Hinweise (warnings + '{count} offen')"] }
+      ],
+      "links": ["/hr/[id]", "/export/payroll"],
+      "empty": "'Noch keine Mitarbeitenden.'",
+      "uxNotes": [
+        "Area page with a description (against docs).",
+        "Month nav in the top bar (header actions), as on /shifts/hours.",
+        "'{count} offen' unapproved badge gives no link to /shifts/hours where approval happens."
+      ]
+    }
+  ]
+}

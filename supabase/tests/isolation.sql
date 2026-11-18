@@ -1458,5 +1458,9 @@ begin
     assert not has_column_privilege('anon', 'public.events', 'event_type_id', 'select'), 'anon must not read events.event_type_id';
   end;
 
+  -- contact search over custom values: text and numbers only, nothing for a non-object
+  assert public.custom_text('{"nr":"TA-90","n":7,"ok":true}') = '7 TA-90', 'custom_text keeps text + numbers, drops booleans';
+  assert public.custom_text('[]') is null and public.custom_text('{"ok":true}') is null, 'custom_text: nothing to search';
+
   raise exception 'isolation: all checks passed';
 end $$;

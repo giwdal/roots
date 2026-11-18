@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { contactSearch } from "@/contacts/search"
 import { deliverSoon } from "@/events/worker"
 import { messages } from "@/i18n/config"
 import { createT } from "@/i18n/translate"
@@ -299,7 +300,7 @@ export const endpoints: Endpoint[] = [
     summary: "List memberships",
     query: page.extend({
       status: z.enum(["active", "ended", "all"]).default("all"),
-      q: z.string().max(100).optional().describe("Search in the member's name, company, email"),
+      q: z.string().max(100).optional().describe("Search in the member's name, company, email, phone, city and custom field values"),
       contact_id: uuid.optional(),
       type_id: uuid.optional(),
       updated_since: z.iso.datetime({ offset: true }).optional(),
@@ -320,7 +321,7 @@ export const endpoints: Endpoint[] = [
       if (query.contact_id) q = q.eq("contact_id", query.contact_id)
       if (query.type_id) q = q.eq("type_id", query.type_id)
       if (query.updated_since) q = q.gte("updated_at", query.updated_since)
-      if (s) q = q.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${s}%`).join(","), { referencedTable: "contacts" })
+      if (s) q = q.or(contactSearch(s), { referencedTable: "contacts" })
       const { data } = await q
       return paged(((data ?? []) as unknown as MembershipRow[]).map(membershipOut), query)
     },

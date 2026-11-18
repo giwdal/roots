@@ -13,7 +13,8 @@ compact status header, KPI tiles, activity/timeline, the edit form tucked away, 
 
 **Simple first.** Before redesigning a tool, look up how the best products in that space do it today (web search is
 fine: e.g. Luma/Eventbrite for events and check-in, Shopify for shop/orders, Stripe/lexoffice/sevDesk for invoices,
-Planday/Deputy for shifts, Personio for HR, Linear for projects, Mailchimp/Brevo for campaigns, Notion for wiki) and
+Planday/Deputy for shifts, Personio for HR, Linear for projects, Mailchimp/Brevo for campaigns, Notion for wiki,
+Zapier/Make.com/n8n for automations — builder, run history, run detail, overview) and
 take the simplest working pattern. Goal: an easy overview, simple for people who are not power users, never a screen
 with dozens of decisions at once. Per screen: one main thing to look at, one main action, a few secondary actions,
 the rest in ⋯ or one level deeper. Progressive disclosure over showing every option.

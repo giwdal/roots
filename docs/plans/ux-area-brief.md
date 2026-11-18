@@ -76,7 +76,9 @@ node_modules/next/dist/docs/ when unsure.
 - Anything new you find that you shouldn't fix in your area: add it to docs/plans/ux-backlog.md (§Z for questions).
 
 ## Process
-1. Research briefly how the best tools in the space do it (WebSearch/WebFetch ok) and take the simplest pattern.
+1. Research per feature (every list, record, editor, run history, settings screen) how the best tools in that space
+   do it — e.g. automations: Zapier, Make.com, n8n (builder canvas, step inspector, run history, run detail, overview);
+   look at their overviews, empty states, detail views and phone apps, then decide. Research briefly how the best tools in the space do it (WebSearch/WebFetch ok) and take the simplest pattern.
    Per screen: one thing to look at, one main action, ≤ 2 visible secondary, the rest in ⋯ or one level deeper.
 2. Spec first: a `redesign` object { job, phone, desktop, moves[] } on every page in your map file; `moves` lists
    EVERY field / button / input / menu item / overlay / link from the map and where it lives now (or "removed: reason").

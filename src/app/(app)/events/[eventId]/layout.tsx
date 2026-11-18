@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { TypeBadge } from "../type-badge"
 import { CalendarClockIcon, ExternalLinkIcon, EyeOffIcon, ScanLineIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { NavLink } from "@/components/nav-link"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
@@ -19,7 +20,7 @@ export default async function EventLayout({ children, params }: { children: Reac
   const ctx = await requirePerm("events.view")
   if (!ctx.modules.has("events")) notFound()
   const t = await getT()
-  const { data: ev } = await ctx.supabase.from("events").select("id, title, slug, status, starts_at, deleted_at").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle()
+  const { data: ev } = await ctx.supabase.from("events").select("id, title, slug, status, starts_at, deleted_at, event_types(name, color)").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle()
   if (!ev) notFound()
   const on = (m: string, p: string) => ctx.modules.has(m) && ctx.can(p)
   const canManage = ctx.can("events.manage")
@@ -28,7 +29,12 @@ export default async function EventLayout({ children, params }: { children: Reac
       <PageHeader
         crumbs={[{ href: "/events", label: t("eventsPage.nav") }, { label: ev.title }]}
         title={ev.title}
-        badge={<StatusBadge t={t} status={ev.status} />}
+        badge={
+          <>
+            <StatusBadge t={t} status={ev.status} />
+            <TypeBadge type={ev.event_types} />
+          </>
+        }
         meta={t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" })}
         actions={
           ev.status !== "draft" &&

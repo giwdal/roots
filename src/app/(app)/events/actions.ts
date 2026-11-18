@@ -47,6 +47,8 @@ function readEvent(fd: FormData) {
     description: text(fd, "description")?.slice(0, 20000) ?? null,
     capacity: capRaw ? Number(capRaw) : null,
     links: readEventLinks([0, 1, 2].map((i) => ({ label: fd.get(`link_label_${i}`), url: fd.get(`link_url_${i}`) }))) as never,
+    // Only in the form when the org has event types; otherwise left as it is.
+    ...(fd.has("event_type") && { event_type_id: /^[0-9a-f-]{36}$/.test(String(fd.get("event_type"))) ? String(fd.get("event_type")) : null }),
     // Only in the form when the members module is on; otherwise left as it is.
     ...(fd.has("counts_visit_field") && { counts_visit: fd.get("counts_visit") === "on" }),
     // Only in the form for people who see the email templates; otherwise left as it is.

@@ -1326,6 +1326,7 @@
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
+    "type": "Type",
     "countsVisit": "Counts towards visit limits",
     "countsVisitHint": "Off = member check-ins don't count towards visit limits (e.g. club night). They still count as attendees.",
     "capacityHelp": "Maximum number of people.",

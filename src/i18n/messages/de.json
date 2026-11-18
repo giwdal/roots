@@ -1326,6 +1326,7 @@
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
+    "type": "Typ",
     "countsVisit": "Zählt für Besuchslimits",
     "countsVisitHint": "Aus = Check-ins von Mitgliedern zählen nicht für Besuchslimits (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen.",
     "capacityHelp": "Maximale Anzahl Personen.",

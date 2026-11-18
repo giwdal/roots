@@ -31,7 +31,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const since = new Date(now - 12 * 3600_000).toISOString()
   const { data: events } = await ctx.supabase
     .from("events")
-    .select("id, title, starts_at")
+    .select("id, title, starts_at, event_types(name)")
     .eq("org_id", ctx.org.id)
     .eq("status", "published")
     .gte("starts_at", new Date(now - 7 * 86_400_000).toISOString())
@@ -74,7 +74,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
         <p className="text-sm text-muted-foreground">{t("tickets.noEventsToScan")}</p>
       ) : (
         <nav aria-label={t("tickets.pickEvent")} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1 pb-1">
-          {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}`, e.id === current?.id, `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
+          {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}`, e.id === current?.id, `${e.title}${e.event_types ? ` (${e.event_types.name})` : ""} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
         </nav>
       )}
       {current && (

@@ -2162,7 +2162,15 @@
       "lastVisit": "Zuletzt da: {date}",
       "admit": "Einlassen",
       "admitting": "Einlassen …",
-      "noneFound": "Kein Mitglied gefunden."
+      "noneFound": "Kein Mitglied gefunden.",
+      "limit": "Besuchslimit erreicht",
+      "limitHint": "Alle Besuche dieser Mitgliedsart sind aufgebraucht.",
+      "override": "Trotzdem einlassen",
+      "visitsOf": {
+        "one": "{count} von {limit} Besuch genutzt",
+        "other": "{count} von {limit} Besuchen genutzt"
+      },
+      "notCounting": "Zählt nicht als Besuch"
     },
     "sale": {
       "cashEntry": "Abendkasse: {event}",

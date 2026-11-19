@@ -31,6 +31,8 @@ export async function inviteMember(db: Db, org: { id: string; name: string }, in
 }
 
 export type FieldInput = { label: string; options?: string[]; required?: boolean; colors?: Record<string, string> }
+// Option colours: only for options that exist, only known colour names.
+const optionColors = (f: FieldInput, options: string[]) => Object.fromEntries(Object.entries(f.colors ?? {}).filter(([o, c]) => options.includes(o) && /^[a-z]{3,10}$/.test(c)))
 const clean = (f: FieldInput) => ({
   label: f.label.trim().slice(0, 100),
   options: [...new Set((f.options ?? []).map((o) => o.trim().slice(0, 100)).filter(Boolean))].slice(0, 100),
@@ -45,7 +47,7 @@ export async function createField(db: Db, orgId: string, input: FieldInput & { e
   const { count } = await db.from("custom_fields").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("entity", input.entity)
   const { data, error } = await db
     .from("custom_fields")
-    .insert({ org_id: orgId, entity: input.entity as CustomEntity, type: input.type, key: fieldKey(f.label), label: f.label, options: input.type === "select" ? f.options : [], required: f.required, position: count ?? 0 })
+    .insert({ org_id: orgId, entity: input.entity as CustomEntity, type: input.type, key: fieldKey(f.label), label: f.label, options: input.type === "select" ? f.options : [], option_colors: input.type === "select" ? optionColors(input, f.options) : {}, required: f.required, position: count ?? 0 })
     .select("id")
     .single()
   if (error) return error.code === "23505" ? { error: "errors.field_exists" } : { error: "db", db: error }
@@ -59,8 +61,7 @@ export async function updateField(db: Db, orgId: string, id: string, input: Fiel
   const { data: old } = await db.from("custom_fields").select("type").eq("id", id).eq("org_id", orgId).maybeSingle()
   if (!old) return { error: "errors.not_allowed" }
   if (old.type === "select" && !f.options.length) return { error: "errors.options_required" }
-  // Option colours: only for options that still exist, only known colour names.
-  const colors = Object.fromEntries(Object.entries(input.colors ?? {}).filter(([o, c]) => f.options.includes(o) && /^[a-z]{3,10}$/.test(c)))
+  const colors = optionColors(input, f.options)
   const { error } = await db.from("custom_fields").update({ label: f.label, required: f.required, ...(old.type === "select" ? { options: f.options, option_colors: colors } : {}) }).eq("id", id).eq("org_id", orgId)
   return error ? { error: "db", db: error } : { id }
 }

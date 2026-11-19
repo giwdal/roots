@@ -8,9 +8,7 @@ import { AddLink, RowGroup } from "@/components/section"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { UrlSheet } from "@/components/url-sheet"
-import { DOT, PICKABLE_COLORS } from "@/projects/fields"
 import { getT } from "@/i18n/server"
 import type { T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
@@ -18,6 +16,7 @@ import { CUSTOM_ENTITIES, FIELD_TYPES, type CustomEntity } from "@/lib/custom-fi
 import type { Tables } from "@/lib/supabase/types"
 import { param, withParams } from "@/lib/url"
 import { createField, deleteField, updateField } from "./actions"
+import { OptionRows } from "./option-rows"
 
 type Field = Tables<"custom_fields">
 
@@ -90,7 +89,6 @@ export default async function FieldsPage({ searchParams }: PageProps<"/settings/
 
 // One form for new and existing fields. The options only show while the type is "Auswahl" (CSS :has on the type).
 function FieldForm({ t, action, entity, field }: { t: T; action: (fd: FormData) => Promise<void>; entity?: string; field?: Field }) {
-  const colors = (field?.option_colors ?? {}) as Record<string, string>
   return (
     <form action={action} className="group/field grid gap-4">
       {field && <input type="hidden" name="id" value={field.id} />}
@@ -107,29 +105,9 @@ function FieldForm({ t, action, entity, field }: { t: T; action: (fd: FormData) 
         </div>
       )}
       {(!field || field.type === "select") && (
-        <div className={field ? "grid gap-2" : "hidden gap-2 group-has-[option[value=select]:checked]/field:grid"}>
-          <Label htmlFor="f-options">{t("fields.options")}</Label>
-          <Textarea id="f-options" name="options" rows={4} defaultValue={field?.options.join("\n")} aria-describedby="f-options-help" />
-          <p id="f-options-help" className="text-xs text-muted-foreground">
-            {t("fields.optionsHint")}
-          </p>
+        <div className={field ? "grid gap-4" : "hidden gap-4 group-has-[option[value=select]:checked]/field:grid"}>
+          <OptionRows defaultOptions={field?.options ?? []} colors={(field?.option_colors ?? {}) as Record<string, string>} />
         </div>
-      )}
-      {field?.type === "select" && field.options.length > 0 && (
-        // A colour per option (calendar, badges); new options get one after saving them.
-        <fieldset className="grid gap-2">
-          <legend className="mb-1 text-sm font-medium">{t("fields.colors")}</legend>
-          {field.options.map((o, i) => (
-            <div key={o} className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-2 text-sm">
-              <input type="hidden" name={`color_name_${i}`} value={o} />
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="size-3 shrink-0 rounded-full" style={{ background: DOT[colors[o] ?? ""] ?? "transparent" }} aria-hidden />
-                <span className="truncate">{o}</span>
-              </span>
-              <Choice name={`color_${i}`} label={t("fields.colorFor", { option: o })} defaultValue={colors[o] ?? ""} emptyLabel={t("fields.noColor")} options={PICKABLE_COLORS.map((c) => ({ value: c, label: t.dynamic(`projects.colors.${c}`) }))} />
-            </div>
-          ))}
-        </fieldset>
       )}
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="required" value="1" defaultChecked={field?.required} className="size-4 accent-primary" />

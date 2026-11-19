@@ -5542,7 +5542,15 @@
       "remove": "Remove icon"
     },
     "iconInvalid": "Please pick an emoji.",
-    "creating": "Creating page …"
+    "moveTo": "Move to …",
+    "move": "Move",
+    "moved": "Page moved.",
+    "topLevel": "Top level",
+    "emptyTitle": "No pages yet",
+    "emptyText": "Collect your team's knowledge, processes and how-tos in one place.",
+    "trashHint": "Pages in the trash are deleted for good after {days} days.",
+    "below": "Below “{title}”",
+    "create": "Create page"
   },
   "emoji": {
     "search": "Search emoji …",

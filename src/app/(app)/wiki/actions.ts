@@ -18,13 +18,23 @@ async function editor() {
   return { ctx, t }
 }
 
-/** New page (optionally below another), straight into the editor. */
+/** New page (optionally below another) from /wiki/new: created on submit, then straight into the editor. */
 export async function newPageAction(fd: FormData) {
   const { ctx, t } = await editor()
   const parent = id(fd, "parent_id")
-  const r = await createPage(ctx.supabase, ctx.org.id, { title: t("wiki.untitled"), parentId: parent })
-  if ("error" in r) back(parent ? `/wiki/${parent}` : "/wiki", { error: message(t, r) })
+  const title = String(fd.get("title") ?? "").trim().slice(0, 200) || t("wiki.untitled")
+  const r = await createPage(ctx.supabase, ctx.org.id, { title, parentId: parent })
+  if ("error" in r) back(parent ? `/wiki/new?parent=${parent}` : "/wiki/new", { error: message(t, r) })
   redirect(`/wiki/${r.id}`)
+}
+
+/** "Verschieben nach…": under another page or to the top level ('' = top), at the end of its new siblings. */
+export async function moveToAction(fd: FormData) {
+  const { ctx, t } = await editor()
+  const page = id(fd, "id") ?? ""
+  const parent = id(fd, "parent_id")
+  const r = await movePage(ctx.supabase, ctx.org.id, page, parent, null)
+  back(`/wiki/${page}${"error" in r ? "?edit=move" : ""}`, "error" in r ? { error: message(t, r) } : { ok: t("wiki.moved") })
 }
 
 export async function restoreVersionAction(fd: FormData) {
@@ -47,7 +57,7 @@ export async function restorePageAction(fd: FormData) {
   const { ctx, t } = await editor()
   const page = id(fd, "id") ?? ""
   const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.wiki_pages", p_id: page })
-  back(error ? "/wiki?status=trash" : `/wiki/${page}`, error ? { error: dbError(t, error) } : { ok: t("wiki.restored") })
+  back(error ? "/wiki?trash=1" : `/wiki/${page}`, error ? { error: dbError(t, error) } : { ok: t("wiki.restored") })
 }
 
 /** The editor saves while you type (and on ⌘S). */

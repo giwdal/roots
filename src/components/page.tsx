@@ -38,6 +38,7 @@ export function PageHeader({
   menu,
   primary,
   settings,
+  titleHidden,
 }: {
   title: React.ReactNode
   area?: string
@@ -50,6 +51,7 @@ export function PageHeader({
   menu?: React.ReactNode
   primary?: { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } | React.ReactNode
   settings?: { href: string; label: string } | false
+  titleHidden?: boolean // the page shows the title itself (an editor's title field): only for screen readers here
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
@@ -57,7 +59,7 @@ export function PageHeader({
   const overview = !!(area || icon) && !crumbs
   // Record pages always show who/what they are in the page (title + badges + meta together, like Linear/Stripe), even
   // though the crumbs in the top bar end with the same name; only area overviews leave their title to the top bar.
-  const inTopBar = overview
+  const inTopBar = overview || !!titleHidden
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.

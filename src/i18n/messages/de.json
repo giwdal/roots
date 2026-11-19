@@ -5542,7 +5542,15 @@
       "remove": "Icon entfernen"
     },
     "iconInvalid": "Bitte ein Emoji wählen.",
-    "creating": "Seite wird angelegt …"
+    "moveTo": "Verschieben nach …",
+    "move": "Verschieben",
+    "moved": "Seite verschoben.",
+    "topLevel": "Oberste Ebene",
+    "emptyTitle": "Noch keine Seiten",
+    "emptyText": "Sammelt Wissen, Abläufe und Anleitungen eures Teams an einem Ort.",
+    "trashHint": "Seiten im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "below": "Unter „{title}“",
+    "create": "Seite anlegen"
   },
   "emoji": {
     "search": "Emoji suchen …",

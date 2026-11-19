@@ -3236,6 +3236,27 @@
     "csv": "CSV"
   },
   "email": {
+    "after": {
+      "minutes": {
+        "one": "nach {count} Minute",
+        "other": "nach {count} Minuten"
+      },
+      "hours": {
+        "one": "nach {count} Stunde",
+        "other": "nach {count} Stunden"
+      },
+      "days": {
+        "one": "nach {count} Tag",
+        "other": "nach {count} Tagen"
+      }
+    },
+    "problemComplained": "{count} Spam",
+    "problemBounced": "{count} unzustellbar",
+    "problemFailed": "{count} fehlgeschlagen",
+    "recipientCount": {
+      "one": "{count} Person",
+      "other": "{count} Personen"
+    },
     "nav": "E-Mail",
     "title": "E-Mail",
     "tabs": {
@@ -3301,7 +3322,7 @@
       "hours": "Stunden",
       "days": "Tage"
     },
-    "active": "aktiv",
+    "active": "Aktiv",
     "delete": "Löschen",
     "deleted": "Gelöscht.",
     "automationInvalid": "Name, Auslöser, Betreff und Text sind nötig.",
@@ -3345,7 +3366,7 @@
     "sending": "Versand",
     "content": "Inhalt",
     "immediately": "sofort",
-    "paused": "pausiert",
+    "paused": "Pausiert",
     "noAutomations": "Noch keine Automationen.",
     "emptyCampaignsText": "Eine Kampagne ist ein Newsletter an viele: an Tags, aktive Mitglieder oder die Käufer:innen eines Events – sofort oder geplant.",
     "templates": {
@@ -3475,7 +3496,6 @@
     "statsSkipped": "{count} übersprungen",
     "statsDelivered": "Zugestellt",
     "statsProblems": "Probleme",
-    "statsProblemsHint": "{failed} fehlgeschlagen · {bounced} unzustellbar · {complained} Spam",
     "buyersName": "Käufer:innen: {event}",
     "buyersOf": "Käufer:innen: {event}",
     "trash": "Papierkorb",

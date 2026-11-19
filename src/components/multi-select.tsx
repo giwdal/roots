@@ -54,10 +54,12 @@ export function MultiSelect({
 
   // Chips change no real input: send an "input" event so forms that react to it (autosave) notice.
   const box = useRef<HTMLDivElement>(null)
-  const first = useRef(true)
+  // Compared with the last value (effects also run twice on mount in dev), so loading the page changes nothing.
+  const last = useRef(selected)
   useEffect(() => {
-    if (first.current) first.current = false
-    else box.current?.dispatchEvent(new Event("input", { bubbles: true }))
+    if (last.current === selected) return
+    last.current = selected
+    box.current?.dispatchEvent(new Event("input", { bubbles: true }))
   }, [selected])
 
   return (

@@ -2,11 +2,14 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CalendarXIcon, ListIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
+import { DetailList } from "@/components/detail-list"
 import { Notice } from "@/components/notice"
-import { PageHeader } from "@/components/page"
+import { PageHeader, RecordLayout } from "@/components/page"
+import { Section } from "@/components/section"
 import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
+import { BASE_PLACEHOLDERS, renderMail } from "@/email/render"
 import { resolveAudience, type Audience } from "@/email/server"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
@@ -112,21 +115,60 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
           <Stat
             label={t("email.statsProblems")}
             value={problems}
-            hint={problems ? t("email.statsProblemsHint", { failed: count("failed"), bounced: delivered("bounced"), complained: delivered("complained") }) : undefined}
+            hint={
+              problems
+                ? [
+                    count("failed") && t("email.problemFailed", { count: count("failed") }),
+                    delivered("bounced") && t("email.problemBounced", { count: delivered("bounced") }),
+                    delivered("complained") && t("email.problemComplained", { count: delivered("complained") }),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : undefined
+            }
             href={log}
             tone={problems ? "warn" : undefined}
           />
         </Stats>
       )}
-      <CampaignForm
-        t={t}
-        c={{ ...c, audience }}
-        editable={editable}
-        tags={(tagRows ?? []) as unknown as string[]}
-        members={ctx.modules.has("members")}
-        event={{ on: tickets || !!ev, initial: ev ? { id: ev.id, label: ev.title, detail: t.date(ev.starts_at, { dateStyle: "medium" }) } : null }}
-        reach={reach}
-      />
+      {editable ? (
+        <CampaignForm
+          t={t}
+          c={{ ...c, audience }}
+          editable
+          tags={(tagRows ?? []) as unknown as string[]}
+          members={ctx.modules.has("members")}
+          event={{ on: tickets || !!ev, initial: ev ? { id: ev.id, label: ev.title, detail: t.date(ev.starts_at, { dateStyle: "medium" }) } : null }}
+          reach={reach}
+        />
+      ) : (
+        // Sent (or view-only): what went out to whom, as facts + the mail itself; placeholders stay visible.
+        <RecordLayout
+          aside={
+            <Section title={t("email.audience")}>
+              <DetailList
+                items={[
+                  !!audience.tags?.length && { label: t("email.audienceTags"), value: audience.tags.join(", ") },
+                  audience.members === "active" && { label: t("modules.members.name"), value: t("email.audienceMembers") },
+                  ev && { label: t("email.audienceEvent"), value: <Link href={`/events/${ev.id}`} className="link">{ev.title}</Link> },
+                  c.send_at && { label: c.status === "sent" ? t("email.statsSent") : t("email.sendAt"), value: t.date(c.send_at, { dateStyle: "medium", timeStyle: "short" }) },
+                ]}
+              />
+            </Section>
+          }
+        >
+          <Section title={t("email.content")}>
+            <DetailList items={[{ label: t("email.subject"), value: c.subject || "–" }]} />
+            {/* sandbox without permissions: the mail's HTML can't run scripts or reach the app */}
+            <iframe
+              title={t("email.preview")}
+              sandbox=""
+              srcDoc={`<body style="margin:16px">${renderMail(c, Object.fromEntries(BASE_PLACEHOLDERS.map((k) => [k, `{${k}}`])), { org: ctx.org.name }).html}</body>`}
+              className="h-80 w-full rounded-lg border bg-white sm:h-[28rem]"
+            />
+          </Section>
+        </RecordLayout>
+      )}
     </>
   )
 }

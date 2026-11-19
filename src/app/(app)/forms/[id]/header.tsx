@@ -37,8 +37,10 @@ export async function formHeader(ctx: Awaited<ReturnType<typeof requirePerm>>, i
             <span>{t.dynamic(`forms.purposes.${form.purpose}`)}</span>
             {live && (
               <>
-                <span aria-hidden>·</span>
-                <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate underline-offset-4 hover:underline">
+                <span aria-hidden className="max-sm:hidden">
+                  ·
+                </span>
+                <a href={url} target="_blank" rel="noreferrer" className="link min-w-0 truncate">
                   {url.replace(/^https?:\/\//, "")}
                 </a>
                 <CopyButton value={url} label={t("forms.copyLink")} />

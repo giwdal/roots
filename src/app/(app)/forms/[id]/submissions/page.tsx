@@ -98,8 +98,9 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
         empty={status === "new" ? t("forms.noNewSubmissions") : t("forms.noSubmissions")}
         columns={[
           { header: t("forms.person"), cell: (r) => <span className="font-medium">{name(r.data)}</span> },
-          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span> },
-          { header: t("forms.received"), cell: (r) => t.date(r.created_at, { dateStyle: "medium", timeStyle: "short" }), className: "whitespace-nowrap" },
+          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span>, phone: false },
+          { header: t("forms.received"), cell: (r) => t.date(r.created_at, { dateStyle: "medium", timeStyle: "short" }), className: "whitespace-nowrap", phone: false },
+          { header: t("forms.received"), cell: (r) => t.date(r.created_at, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }), table: false },
           { header: t("forms.status"), cell: (r) => <SubmissionBadge t={t} status={r.status} /> },
         ]}
       />
@@ -120,9 +121,17 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
           {linked.length > 0 && <LinkRows rows={linked} />}
           <DetailList
             items={[
+              // In the form's field order (stored data has no order); email and phone can be tapped.
               ...Object.entries(sub.data.contact ?? {})
                 .filter(([, v]) => v)
-                .map(([k, v]) => row(CONTACT_INPUTS[k] ? t.dynamic(CONTACT_INPUTS[k].label) : k, String(v))),
+                .sort(([a], [b]) => order(a) - order(b))
+                .map(([k, v]) => {
+                  const label = CONTACT_INPUTS[k] ? t.dynamic(CONTACT_INPUTS[k].label) : k
+                  const value = String(v)
+                  if (k === "email") return { label, value: <a href={`mailto:${value}`} className="link break-all">{value}</a> }
+                  if (k === "phone") return { label, value: <a href={`tel:${value.replace(/[^+\d]/g, "")}`} className="link">{value}</a> }
+                  return row(label, value)
+                }),
               ...Object.entries(sub.data.custom ?? {}).map(([k, v]) => row(defs.find((d) => d.key === k)?.label ?? k, String(v))),
               ...(sub.data.membership
                 ? [
@@ -132,7 +141,7 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
                     sub.data.membership.account_holder && row(t("forms.accountHolder"), sub.data.membership.account_holder),
                   ]
                 : []),
-              ...(sub.data.consents ?? []).map((c) => row(c.accepted ? "✓" : "✗", c.label)),
+              ...(sub.data.consents ?? []).map((c) => row(t("forms.kinds.consent"), `${c.accepted ? "✓" : "✗"} ${c.label}`)),
             ]}
           />
           {decide}
@@ -141,6 +150,9 @@ export default async function SubmissionsPage({ params, searchParams }: PageProp
     </>
   )
 }
+
+const KEYS = Object.keys(CONTACT_INPUTS)
+const order = (k: string) => (KEYS.includes(k) ? KEYS.indexOf(k) : KEYS.length)
 
 function row(label: string, value: string) {
   return { label, value: <span className="whitespace-pre-line">{value}</span> }

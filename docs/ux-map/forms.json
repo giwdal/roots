@@ -119,6 +119,7 @@
         "Default purpose is 'Mitgliedsantrag' whenever the members module is on."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: ListToolbar (search + Status), cards with purpose + status badge + 'n neu' (warning). No change needed."},
         "job": "Find a form, see which have new submissions, create one.",
         "phone": "Top bar: Kommunikation › Formulare, ⋯ (Papierkorb). Round + = Neues Formular. Toolbar: search + Status filter. Cards: title + status badge, purpose · 'n neu'.",
         "desktop": "ListToolbar search · Status. Table: Titel (+ Zweck), Status badge, Neue Einsendungen (warning badge).",
@@ -359,6 +360,7 @@
         "Text elements and consent are plain textareas, not the RichTextEditor used in email."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Element rows ran off the right edge on phone and desktop (a long consent label as nowrap text set the grid's min-content width, so ↓ and ✕ were cut off): ol/li are minmax(0,1fr) grids now. Status segments wrapped onto two lines in the rail: equal thirds. Header meta left a dangling '·' when the link wrapped on phones; the public link uses the `link` style."},
         "job": "Build the form (fields, texts, consents) and its settings, then publish it.",
         "phone": "Top bar: ‹ Formulare · title, ⋯ (Öffentliche Seite, Einsendungen exportieren, Papierkorb). Header: status badge, meta purpose · public link + copy. Segments Aufbau · Einsendungen (n). Element rows full width (kind, name, ↑ ↓ ✕, inputs), '+ Element hinzufügen' (action sheet), then the settings card, SaveBar at the bottom.",
         "desktop": "Header with 'Veröffentlichen' as primary for drafts (saves + publishes). Segments under the header. RecordLayout: elements left, Einstellungen right; one form, one SaveBar.",
@@ -492,6 +494,7 @@
         "Status filter is a hand-built chip nav; export uses <ExportMenu> in the toolbar while other lists put export in the header ⋯."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards squeezed email + full date + badge into one cut-off line: now 'TT.MM., HH:MM · badge' (email in the sheet/table). Sheet: answers were in database key order (E-Mail, Telefon, Nachname, Vorname): now in field order, email as mailto and phone as tel links; consents show 'Einwilligung: ✓ text' instead of a lone ✓ as the label."},
         "job": "Work through new submissions: read one, accept or reject it.",
         "phone": "Same header + Segments. Toolbar: Segments Neu · Angenommen · Abgelehnt · Alle. Cards: person + status badge, email, date. Sheet: badge, Verknüpft rows (Kontakt, Mitgliedschaft), DetailList of answers by label, buttons stacked full width at the bottom (Annehmen at the thumb).",
         "desktop": "Toolbar Segments; table Person, E-Mail, Eingegangen, Status; sheet with actions in the title row.",

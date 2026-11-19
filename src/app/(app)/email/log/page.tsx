@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { FilterMenu } from "@/components/filter-menu"
 import { PageHeader } from "@/components/page"
@@ -94,11 +95,12 @@ export default async function EmailLogPage({ searchParams }: PageProps<"/email/l
           },
           {
             header: t("email.kind"),
+            phone: false,
             cell: (r) => {
               const label = r.source ? `${kindLabel(t, r.kind!)}: ${r.source}` : kindLabel(t, r.kind!)
               const href = r.entity && r.entity_id ? HREF[r.entity]?.(r.entity_id) : undefined
               return href ? (
-                <Link href={href} className="underline-offset-4 hover:underline">
+                <Link href={href} className="link">
                   {label}
                 </Link>
               ) : (
@@ -119,8 +121,21 @@ export default async function EmailLogPage({ searchParams }: PageProps<"/email/l
                 {r.error && <span className="text-xs text-destructive">{r.error}</span>}
               </span>
             ),
+            phone: false,
           },
-          { header: t("email.when"), cell: (r) => t.date(r.at!, { dateStyle: "short", timeStyle: "short" }), className: "whitespace-nowrap" },
+          { header: t("email.when"), cell: (r) => t.date(r.at!, { dateStyle: "short", timeStyle: "short" }), className: "whitespace-nowrap", phone: false },
+          // Phones: one short line, the most telling state (a delivery problem beats "Versendet") and the time.
+          {
+            header: t("email.status"),
+            cell: (r) =>
+              r.delivery ? (
+                <Badge variant={r.delivery === "bounced" || r.delivery === "complained" ? "destructive" : r.delivery === "delivered" ? "success" : "warning"}>{t.dynamic(`email.delivery.${r.delivery}`)}</Badge>
+              ) : (
+                <SendBadge t={t} status={r.status!} />
+              ),
+            table: false,
+          },
+          { header: t("email.when"), cell: (r) => t.date(r.at!, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }), table: false },
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />

@@ -36,7 +36,14 @@ export default async function AutomationsPage({ searchParams }: PageProps<"/emai
   const editId = param(sp, "edit")
   const editing = (data ?? []).find((a) => a.id === editId)
   const creating = canManage && param(sp, "new") === "1"
-  const delayText = (m: number) => (m === 0 ? t("email.immediately") : m % 1440 === 0 ? `${m / 1440} ${t("email.units.days")}` : m % 60 === 0 ? `${m / 60} ${t("email.units.hours")}` : `${m} ${t("email.units.minutes")}`)
+  const delayText = (m: number) =>
+    m === 0
+      ? t("email.immediately")
+      : m % 1440 === 0
+        ? t("email.after.days", { count: m / 1440 })
+        : m % 60 === 0
+          ? t("email.after.hours", { count: m / 60 })
+          : t("email.after.minutes", { count: m })
   return (
     <>
       <PageHeader
@@ -126,13 +133,13 @@ function AutomationForm({ t, a, events, disabled }: { t: T; a?: Tables<"email_au
               <Label htmlFor={`a-ev-${key}`}>{t("email.trigger")}</Label>
               <Choice id={`a-ev-${key}`} name="event_type" label={t("email.trigger")} required defaultValue={a?.event_type ?? events[0]?.type} options={events.map((e) => ({ value: e.type, label: t.dynamic(`events.types.${e.type}`) }))} />
             </div>
-            <div className="grid gap-2">
+            {/* One sentence-like row: Wartezeit [1] [Minuten | Stunden | Tage] */}
+            <div className="grid gap-2 sm:col-span-2">
               <Label htmlFor={`a-delay-${key}`}>{t("email.delay")}</Label>
-              <TypedInput kind="number" id={`a-delay-${key}`} name="delay" min={0} step={1} defaultValue={delay} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor={`a-unit-${key}`}>{t("email.unit")}</Label>
-              <Choice id={`a-unit-${key}`} name="unit" label={t("email.unit")} required defaultValue={unit} options={(["minutes", "hours", "days"] as const).map((u) => ({ value: u, label: t(`email.units.${u}`) }))} />
+              <div className="flex flex-wrap items-center gap-2">
+                <TypedInput kind="number" id={`a-delay-${key}`} name="delay" min={0} step={1} defaultValue={delay} className="w-20" />
+                <Choice id={`a-unit-${key}`} name="unit" label={t("email.unit")} required defaultValue={unit} options={(["minutes", "hours", "days"] as const).map((u) => ({ value: u, label: t(`email.units.${u}`) }))} />
+              </div>
             </div>
           </div>
           <Field id={`a-subject-${key}`} name="subject" label={t("email.subject")} required maxLength={300} defaultValue={a?.subject ?? ""} />

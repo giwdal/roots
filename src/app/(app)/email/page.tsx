@@ -111,7 +111,12 @@ export default async function CampaignsPage({ searchParams }: PageProps<"/email"
             ),
           },
           { header: t("email.status"), cell: (r) => <CampaignBadge t={t} status={r.status} sendAt={r.send_at} /> },
-          { header: t("email.recipients"), cell: (r) => (r.status === "draft" || r.status === "scheduled" ? "–" : r.recipients), className: "tabular-nums" },
+          { header: t("email.recipients"), cell: (r) => (r.status === "draft" || r.status === "scheduled" ? "–" : r.recipients), className: "tabular-nums", phone: false },
+          {
+            header: t("email.recipients"),
+            cell: (r) => (r.status === "sent" || r.status === "sending" ? t("email.recipientCount", { count: r.recipients }) : t.date(r.updated_at, { dateStyle: "medium" })),
+            table: false,
+          },
           trash
             ? {
                 header: "",
@@ -124,7 +129,7 @@ export default async function CampaignsPage({ searchParams }: PageProps<"/email"
                   </form>
                 ),
               }
-            : { header: t("email.changed"), cell: (r) => t.date(r.updated_at, { dateStyle: "medium" }), className: "whitespace-nowrap" },
+            : { header: t("email.changed"), cell: (r) => t.date(r.updated_at, { dateStyle: "medium" }), className: "whitespace-nowrap", phone: false },
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />

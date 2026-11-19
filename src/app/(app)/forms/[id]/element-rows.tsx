@@ -40,11 +40,11 @@ export function ElementRows({ initial, fields, membership, disabled }: { initial
   const json = JSON.stringify(rows.map(({ key, ...e }) => (key.startsWith("new:") ? { ...e, id: undefined } : e)))
 
   return (
-    <div ref={box} className="grid gap-2">
+    <div ref={box} className="grid grid-cols-[minmax(0,1fr)] gap-2">
       <input type="hidden" name="elements" value={json} />
-      <ol className="grid gap-2">
+      <ol className="grid grid-cols-[minmax(0,1fr)] gap-2">
         {rows.map((e, i) => (
-          <li key={e.key} className="grid gap-3 rounded-lg border p-3">
+          <li key={e.key} className="grid grid-cols-[minmax(0,1fr)] gap-3 rounded-lg border p-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t.dynamic(`forms.kinds.${e.kind}`)}</span>
               <span className="min-w-0 flex-1 truncate text-sm font-medium">

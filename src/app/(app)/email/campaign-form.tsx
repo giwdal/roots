@@ -74,7 +74,7 @@ export function CampaignForm({
                   <Label htmlFor={`c-at-${key}`}>{t("email.sendAt")}</Label>
                   <div className="flex flex-wrap gap-2">
                     <DateInput id={`c-at-${key}`} name="send_at" type="datetime-local" defaultValue={c.send_at ? toLocalInput(c.send_at) : ""} className="w-auto flex-1" />
-                    <SubmitButton name="intent" value="schedule" variant="outline" size="sm" data-confirm="email.confirmSchedule" data-confirm-count={reach ?? 0}>
+                    <SubmitButton name="intent" value="schedule" variant="outline" data-confirm="email.confirmSchedule" data-confirm-count={reach ?? 0}>
                       {t("email.schedule")}
                     </SubmitButton>
                   </div>

@@ -3236,6 +3236,27 @@
     "csv": "CSV"
   },
   "email": {
+    "after": {
+      "minutes": {
+        "one": "after {count} minute",
+        "other": "after {count} minutes"
+      },
+      "hours": {
+        "one": "after {count} hour",
+        "other": "after {count} hours"
+      },
+      "days": {
+        "one": "after {count} day",
+        "other": "after {count} days"
+      }
+    },
+    "problemComplained": "{count} spam",
+    "problemBounced": "{count} undeliverable",
+    "problemFailed": "{count} failed",
+    "recipientCount": {
+      "one": "{count} person",
+      "other": "{count} people"
+    },
     "nav": "Email",
     "title": "Email",
     "tabs": {
@@ -3301,7 +3322,7 @@
       "hours": "hours",
       "days": "days"
     },
-    "active": "active",
+    "active": "Active",
     "delete": "Delete",
     "deleted": "Deleted.",
     "automationInvalid": "Name, trigger, subject and text are required.",
@@ -3345,7 +3366,7 @@
     "sending": "Sending",
     "content": "Content",
     "immediately": "immediately",
-    "paused": "paused",
+    "paused": "Paused",
     "noAutomations": "No automations yet.",
     "emptyCampaignsText": "A campaign is a newsletter to many: to tags, active members or an event's buyers – now or scheduled.",
     "templates": {
@@ -3475,7 +3496,6 @@
     "statsSkipped": "{count} skipped",
     "statsDelivered": "Delivered",
     "statsProblems": "Problems",
-    "statsProblemsHint": "{failed} failed · {bounced} bounced · {complained} spam",
     "buyersName": "Buyers: {event}",
     "buyersOf": "Buyers: {event}",
     "trash": "Trash",

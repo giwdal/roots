@@ -96,6 +96,7 @@
         "A one-field sheet only to name the campaign before the real editor page – an extra step."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards said 'Versendet · 3 · 19.11.2026' (a bare number): now status badge + '3 Personen' for sent campaigns, the change date for drafts (phone-only column; table unchanged). /email/new checked: the SaveBar showed 'Ungespeicherte Änderungen' + Abbrechen on load because MultiSelect (tags) fired an input event on mount in dev Strict Mode; fixed in components/multi-select.tsx (compares with the last value), which fixes every form with chips."},
         "job": "See every campaign and its state, open one, start a new one; switch to automations or the send log.",
         "phone": "Top bar: Kommunikation › E-Mails, ⋯ (gear E-Mail-Einstellungen, Papierkorb). Round + = Neue Kampagne. Toolbar: search, then a scroll row: Status filter, Segments Kampagnen · Automationen · Versand. Cards: name + status badge, subject, recipients/date.",
         "desktop": "<ListToolbar> search · Status FilterMenu · (event chip) · Segments on the right. Table: Name (+ Betreff), Status badge (colour per state, date when scheduled), Empfänger:innen, Datum.",
@@ -277,6 +278,7 @@
         "Audience = tags or active members only; no link to preview who exactly is included."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Drafts: no false 'unsaved' bar on load any more (MultiSelect fix), 'Planen' has the control height of the date/time fields beside it (was sm). Sent / view-only campaigns showed the disabled editor (toolbar, Editor/HTML switch, placeholder help, empty tag field): now a read-only page: Stats, Inhalt = Betreff + the rendered mail in a sandboxed iframe (placeholders visible), Empfänger:innen as DetailList (tags, members, event link, Versendet am). Probleme stat hint lists only the non-zero parts ('1 unzustellbar', was '0 fehlgeschlagen · 1 unz…' cut off)."},
         "job": "Write the campaign, pick who gets it, test it, then send or schedule it; afterwards see how it went.",
         "phone": "Top bar: ‹ E-Mails · name, ⋯ (Test an mich, Planung aufheben, Papierkorb). Header: status badge, meta (scheduled for … / sent on … to n). Sent: Stats 2 per row (Empfänger:innen, Versendet, Zugestellt, Unzustellbar/Spam) + 'Versand ansehen'. Draft: Inhalt card, Empfänger:innen card (reach), Versand card (Test an mich, Senden am + Planen); 'Jetzt senden' in the ⋯ sheet / as the header button from md; SaveBar at the bottom.",
         "desktop": "Header: badge, meta, ⋯, primary 'Jetzt senden' (asks first: 'An {count} Personen senden?'). Stats for sending/sent. RecordLayout: Inhalt left; Empfänger:innen + Versand right; one form, one SaveBar.",
@@ -435,6 +437,7 @@
         "Area page shows a description sentence (guide: no intro sentences on overviews)."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Wartezeit said '1 Stunden' (no plural): now 'nach 1 Stunde' / 'nach 7 Tagen' via plural keys email.after.*; status badges 'Aktiv' / 'Pausiert' capitalised. Sheet: Wartezeit and Einheit were two fields with two labels: now one sentence-like row 'Wartezeit [1] [Minuten | Stunden | Tage]' (patterns §4)."},
         "job": "See which mails go out automatically on which event, switch one on/off, edit or add one.",
         "phone": "Same top bar/⋯ as Kampagnen; round + = Neue Automation. Toolbar: Segments Kampagnen · Automationen · Versand. Cards: name + Aktiv/Pausiert badge, trigger · delay. Sheet full width: name, Auslöser, Wartezeit + Einheit, Betreff, body, aktiv; ⋯ Löschen (red, confirm).",
         "desktop": "Toolbar with the Segments on the right; table Name (+ Betreff), Auslöser, Wartezeit, Status. Edit sheet (wide).",
@@ -594,6 +597,7 @@
         "Templates do not apply to campaigns or automations, only event and shop mails."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "E-Mail-Einstellungen (/email/settings) checked phone + desktop: Vorlagen rows › + AddLink, Shop-Mails and Versand as link rows. No change needed."},
         "job": "Set how event mails (tickets, guest list, waiting list) look; find where the shop buyer mails are set.",
         "phone": "Route /email/settings (E-Mail-Einstellungen, from the gear): RowGroup E-Mail-Vorlagen (rows: roots-Standard + own templates with Standard badge ›, + Neue E-Mail-Vorlage), RowGroup Shop-Mails (link row to Shop-Einstellungen), RowGroup Versand (link to Integrationen). Sheets as before.",
         "desktop": "Same, settings width.",
@@ -692,6 +696,7 @@
         "No resend/retry for failed mails."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone rows had three squeezed parts on line 3 (kind truncated, Versendet + Zugestellt stacked and cut, time cut): now one line, the most telling state as a badge (Unzustellbar red, Zugestellt green, else the send status) · '19.11., 01:30'; the kind stays in the table. Kind link uses the `link` style."},
         "job": "Check whether a mail went out (to a person, of a campaign) and why not.",
         "phone": "Toolbar: search, scroll row: Art FilterMenu (Alle · System-Mails · Kampagnen & Automationen), contact/campaign chip, Segments. Cards: address + status badge, subject, kind link, time.",
         "desktop": "ListToolbar: search · Art · chips · Segments right. Table unchanged.",

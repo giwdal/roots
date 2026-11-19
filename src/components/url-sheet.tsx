@@ -55,14 +55,24 @@ export function UrlSheet({
     router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false })
   }
 
+  // A sheet whose content shows the title itself and has nothing else for the bar: no title bar at all.
+  const floating = !!titleHidden && !meta && !description && !actions
   return (
     <ContentSheet
       onClose={confirmClose}
       onClosed={closed}
       wide={wide}
       compact={compact}
+      floating={floating}
       label={title}
       header={
+        floating ? (
+          // Only the buttons float top right; the title stays for screen readers.
+          <>
+            <ContentSheetTitle className="sr-only">{title}</ContentSheetTitle>
+            {menu}
+          </>
+        ) : (
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <ContentSheetTitle className={titleHidden ? "sr-only" : "min-w-0 font-heading text-lg font-semibold break-words text-foreground"}>{title}</ContentSheetTitle>
@@ -80,6 +90,7 @@ export function UrlSheet({
             <span data-slot="sheet-status" className="contents" />
           </div>
         </div>
+        )
       }
     >
       {/* With a SaveBar the bar is the end of the dialog (no empty space under its buttons). */}

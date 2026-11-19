@@ -29,7 +29,7 @@ function place(el: HTMLElement, kind: keyof typeof WIDTH) {
  * `<UrlSheet>` uses it for every record/new/edit overlay (wide = imports, previews; compact = short questions).
  * Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */
-export function ContentSheet({ onClose, onClosed, wide, compact, header, children, label, closeButton = true }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; compact?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string; closeButton?: boolean }) {
+export function ContentSheet({ onClose, onClosed, wide, compact, header, children, label, closeButton = true, floating }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; compact?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string; closeButton?: boolean; floating?: boolean }) {
   const t = useT()
   // Closing: ask (`onClose` may say no), slide down, then `onClosed` (e.g. drop the URL param) once the animation ended.
   const [open, setOpen] = useState(true)
@@ -63,13 +63,15 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
             className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] md:rounded-2xl md:border-b md:pb-0 md:fade-in-0 md:zoom-in-[0.98] md:slide-in-from-bottom-4 md:data-ending-style:opacity-0 text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none motion-reduce:animate-none motion-reduce:transition-none"
           >
             {/* Title bar: grab handle (phones), title (+ actions, ⋯) left, close right; stays on top while the content scrolls. */}
-            <div className={cn("sticky top-0 z-30 bg-popover/95 backdrop-blur", (header || closeButton) && "border-b")}>
-              <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
+            {/* `floating`: no title bar — the record's own title opens the content and the header's buttons (⋯, ✕)
+                float in the top-right corner (Linear's issue dialog). */}
+            <div className={cn("sticky top-0 z-30", floating ? "h-0" : "bg-popover/95 backdrop-blur", !floating && (header || closeButton) && "border-b")}>
+              <div aria-hidden className={cn("mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden", floating && "relative")} />
               {(header || closeButton) && (
-                <div className="flex items-start gap-3 px-6 py-4">
-                  <div className="min-w-0 flex-1">{header}</div>
+                <div className={floating ? "absolute top-3 right-4 flex items-center gap-1 rounded-lg bg-popover/90 backdrop-blur md:top-4 [&_[data-slot=button]]:border-transparent [&_[data-slot=button]]:bg-transparent [&_[data-slot=button]]:shadow-none" : "flex items-start gap-3 px-6 py-4"}>
+                  <div className={floating ? "flex items-center" : "min-w-0 flex-1"}>{header}</div>
                   {closeButton && (
-                    <Drawer.Close render={<Button variant="ghost" size="icon-sm" className="-mr-2 shrink-0" />}>
+                    <Drawer.Close render={<Button variant="ghost" size="icon-sm" className={cn("shrink-0", !floating && "-mr-2")} />}>
                       <XIcon />
                       <span className="sr-only">{t("common.close")}</span>
                     </Drawer.Close>

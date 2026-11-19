@@ -61,7 +61,7 @@ export function TaskEditor({
               maxLength={300}
               required
               aria-label={t("projects.taskTitle")}
-              className="-mx-2 rounded-md bg-transparent px-2 py-1 font-heading text-lg font-semibold outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring disabled:hover:bg-transparent"
+              className="-mx-2 mr-20 rounded-md bg-transparent px-2 py-1 font-heading text-lg font-semibold outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring disabled:hover:bg-transparent"
             />
             {canManage ? (
               <Textarea

@@ -181,7 +181,7 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] Y11 L (comments) not started in this pass: L2 needs the migration question in §Z answered first.
 
 ## S. Found in the sweep (Events · Einlass · Gästelisten · Shop; not fixed there)
-- [ ] S1 Event page: Eigenschaften show all 8+ values on phones; patterns §8 wants the first 4 + "Alle anzeigen" (a shared
+- [x] S1 (DetailList phoneLimit + PhoneMore; events, guest lists, contacts) Event page: Eigenschaften show all 8+ values on phones; patterns §8 wants the first 4 + "Alle anzeigen" (a shared
       collapsible `<DetailList limit>` would serve every record page).
 - [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
 

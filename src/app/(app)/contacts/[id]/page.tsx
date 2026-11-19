@@ -332,6 +332,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 stay in "Alle Angaben bearbeiten" (⋯). */}
             {canManage && !c.deleted_at ? (
               <DetailList
+                phoneLimit={5}
                 items={[
                   { label: t("contacts.firstName"), value: <InlineField action={patchContact} id={c.id} field="first_name" value={c.first_name} label={t("contacts.firstName")} /> },
                   { label: t("contacts.lastName"), value: <InlineField action={patchContact} id={c.id} field="last_name" value={c.last_name} label={t("contacts.lastName")} /> },

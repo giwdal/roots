@@ -115,7 +115,7 @@ export default async function GuestListPage({ params, searchParams }: PageProps<
       <RecordLayout
         top={
           <Section id="details" title={t("common.properties")}>
-            <DetailList items={properties} />
+            <DetailList items={properties} phoneLimit={4} />
           </Section>
         }
         aside={

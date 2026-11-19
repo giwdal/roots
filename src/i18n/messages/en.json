@@ -3,6 +3,7 @@
     "description": "Run your club, business or events in one place."
   },
   "common": {
+    "showMore": "Show {count} more",
     "moreDetails": "More details (optional)",
     "properties": "Properties",
     "editAll": "Edit all details",

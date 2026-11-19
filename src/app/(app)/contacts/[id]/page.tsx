@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { TitleTip } from "@/components/info-tip"
 import { notFound } from "next/navigation"
 import {
   BriefcaseBusinessIcon,
@@ -295,7 +296,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
           aside={
             <>
               {(linked || canManage) && (
-                <Section id="team" title={t("contacts.team.title")} description={t("contacts.team.hint")}>
+                <Section id="team" title={<TitleTip tip={t("contacts.team.hint")}>{t("contacts.team.title")}</TitleTip>}>
                   {linked ? (
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-3">

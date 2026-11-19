@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { TitleTip } from "@/components/info-tip"
 import { notFound, redirect } from "next/navigation"
 import { BanIcon, CheckIcon, CreditCardIcon, FileTextIcon, FolderKanbanIcon, KeyRoundIcon, RotateCcwIcon, Trash2Icon, XIcon } from "lucide-react"
 import { ActionsMenu, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
@@ -273,7 +274,7 @@ export default async function RentalPage({ params, searchParams }: PageProps<"/r
             />
           </Section>
 
-          <Section id="people" title={t("rentals.people")} description={t("rentals.peopleHint")}>
+          <Section id="people" title={<TitleTip tip={t("rentals.peopleHint")}>{t("rentals.people")}</TitleTip>}>
             {people.length ? (
               <ul className="grid divide-y rounded-lg border">
                 {people.map((p) => (

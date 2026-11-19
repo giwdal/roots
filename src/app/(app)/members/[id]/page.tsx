@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { TitleTip } from "@/components/info-tip"
 import { notFound } from "next/navigation"
 import { BanIcon, BellIcon, CheckIcon, ContactIcon, IdCardIcon, LandmarkIcon, PauseIcon, PencilIcon, PlayIcon, RotateCcwIcon, Trash2Icon, Undo2Icon, UserRoundIcon, LogOutIcon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
@@ -282,7 +283,7 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
               </Section>
             )}
             {m.contacts?.member_code && !m.deleted_at && (
-              <Section id="card" title={t("membership.card")} description={t("membership.cardHint")}>
+              <Section id="card" title={<TitleTip tip={t("membership.cardHint")}>{t("membership.card")}</TitleTip>}>
                 <IdCard t={t} org={ctx.org.name} name={name} number={m.member_no} type={type?.name ?? null} code={m.contacts.member_code} />
               </Section>
             )}

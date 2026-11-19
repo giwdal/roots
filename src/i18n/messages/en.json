@@ -5666,6 +5666,7 @@
     "emails": "Emails"
   },
   "projects": {
+    "descriptionPlaceholder": "Add a description …",
     "tasks": "Tasks",
     "task": "Task",
     "newTask": "New task",

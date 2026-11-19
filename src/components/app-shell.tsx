@@ -8,7 +8,6 @@ import { KeyboardInset } from "@/components/keyboard-inset"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { MobileBar } from "@/components/mobile-bar"
 import { MobileMenu } from "@/components/mobile-menu"
-import { MenuButton } from "@/components/menu-button"
 import { SproutButton, SproutProvider } from "@/components/sprout/context"
 import { TopbarTitle } from "@/components/topbar-crumbs"
 import { SproutPanel } from "@/components/sprout/panel"
@@ -48,8 +47,10 @@ export async function AppShell({
         <header className="sticky top-0 z-10 box-content flex h-12 shrink-0 pt-[env(safe-area-inset-top)] items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           {/* Phones: the sidebar is a drawer, so the trigger stays; from md the sidebar's edge toggles it. */}
           {/* The App's phones have the Menü tab in the bottom bar (opens a bottom sheet); the menu button shows only while that bar is hidden. */}
-          {search ? <MenuButton /> : <SidebarTrigger className="-ml-1 md:hidden" />}
-          <Separator orientation="vertical" className={`mr-1 data-vertical:h-4 md:hidden${search ? " bar-fallback" : ""}`} />
+          {/* The App's phones navigate with the tab bar + Menü and the back chevron only (no second menu button);
+              /admin has no tab bar and keeps the sidebar drawer. */}
+          {!search && <SidebarTrigger className="-ml-1 md:hidden" />}
+          {!search && <Separator orientation="vertical" className="mr-1 data-vertical:h-4 md:hidden" />}
           {/* Where am I: the shown record page's crumbs (<TopbarCrumbs>) or the area › page title. */}
           <TopbarTitle groups={groups}>{bar ?? <PageTitle groups={groups} fallback={title} />}</TopbarTitle>
           {/* The page header's gear / actions / ⋯ / primary land here (<HeaderActions>). */}

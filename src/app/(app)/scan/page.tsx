@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Page, PageHeader } from "@/components/page"
+import { TopbarCrumbs } from "@/components/topbar-crumbs"
 import { BodyFlag } from "@/lib/body-flag"
 import { Segments } from "@/components/segments"
 import { cn } from "@/lib/utils"
@@ -74,6 +75,8 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const settingsHref = current && ctx.modules.has("tickets") && ctx.can("tickets.manage") ? `/events/${current.id}/tickets?edit=settings#door` : undefined
   return (
     <Page size="list">
+      {/* Einlass hides the tab bar (it has its own): the top bar's back chevron is the way out. */}
+      <TopbarCrumbs items={[{ href: "/events", label: t("eventsPage.title") }, { label: t("tickets.scanNav") }]} />
       <PageHeader
         area="events"
         title={t("tickets.scanNav")}

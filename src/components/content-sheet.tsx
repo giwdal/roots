@@ -8,8 +8,7 @@ import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 // Where it sits. Phones: a sheet from the bottom, full width, 2.5 rem below the top. From md: a dialog centred over the
-// content area (not the sidebar, not the Sprout panel), as wide as its kind allows, below the top bar. Measured from
-// the App shell, set straight on the element (no state), again on resize.
+// whole window, as wide as its kind allows, 10 % from the top. Set straight on the element (no state), again on resize.
 const WIDTH = { compact: 520, normal: 720, wide: 1100 }
 function place(el: HTMLElement, kind: keyof typeof WIDTH) {
   const inset = document.querySelector<HTMLElement>("[data-slot=sidebar-inset]")
@@ -17,18 +16,16 @@ function place(el: HTMLElement, kind: keyof typeof WIDTH) {
     const top = "2.5rem"
     return Object.assign(el.style, kind === "compact" ? { left: "0px", right: "0px", top: "auto", bottom: "0px", maxHeight: `calc(100dvh - ${top})` } : { left: "0px", right: "0px", top, bottom: "0px", maxHeight: "" })
   }
-  const r = inset.getBoundingClientRect()
-  const head = inset.querySelector("header")?.getBoundingClientRect().bottom ?? r.top
-  const width = Math.min(WIDTH[kind], r.width - 48)
-  const left = r.left + (r.width - width) / 2
-  const room = window.innerHeight - head - 64
-  // Short dialogs sit at about a third of the screen, long ones start 32 px below the top bar and scroll inside.
-  Object.assign(el.style, { left: `${left}px`, right: `${window.innerWidth - left - width}px`, top: `${head + 32}px`, bottom: "auto", maxHeight: `${room}px` })
+  // Centred over the whole window (like every dialog), not over the content column.
+  const width = Math.min(WIDTH[kind], window.innerWidth - 48)
+  const left = (window.innerWidth - width) / 2
+  const top = Math.max(48, Math.round(window.innerHeight * 0.1))
+  Object.assign(el.style, { left: `${left}px`, right: `${window.innerWidth - left - width}px`, top: `${top}px`, bottom: "auto", maxHeight: `${window.innerHeight - top - 48}px` })
 }
 
 /**
  * The App's overlay for forms, quick creates, imports and confirmations: on phones a sheet rising from the bottom
- * (grab handle, swipe down), from md a centred dialog over the content area. Title bar with close (X) on the right.
+ * (grab handle, swipe down), from md a dialog centred over the whole window. Title bar with close (X) on the right.
  * `<UrlSheet>` uses it for every record/new/edit overlay (wide = imports, previews; compact = short questions).
  * Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */

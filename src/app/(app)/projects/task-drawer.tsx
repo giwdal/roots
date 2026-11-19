@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { FolderKanbanIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { ActivityFeed } from "@/components/activity-feed"
@@ -33,9 +34,22 @@ export async function TaskDrawer({ ctx, t, id, back, basics, error, ok }: { ctx:
   return (
     <UrlSheet
       params={["task"]}
-      title={project?.name ?? t("projects.taskTitle")}
+      title={task.title || t("projects.taskTitle")}
+      titleHidden
       wide
-      meta={taskMeta(t, task)}
+      meta={
+        project ? (
+          <>
+            <Link href={`/projects/${project.id}`} className="link">
+              {project.name}
+            </Link>
+            {" · "}
+            {taskMeta(t, task)}
+          </>
+        ) : (
+          taskMeta(t, task)
+        )
+      }
       menu={
         (canManage || project) && (
           <ActionsMenu>

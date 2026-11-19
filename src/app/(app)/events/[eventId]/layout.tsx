@@ -9,6 +9,7 @@ import { requirePerm } from "@/lib/context"
 import { siteUrl } from "@/lib/url"
 import { InlineTitle } from "@/components/inline-title"
 import { patchEvent, restoreEvent, setEventStatus, trashEvent } from "../actions"
+import { HereInput } from "@/components/here-input"
 import { StatusBadge } from "../event-form"
 import { EventViews } from "./event-views"
 
@@ -41,6 +42,7 @@ export default async function EventLayout({ children, params }: { children: Reac
     <form id={`ev-status-${status}`} action={setEventStatus} hidden>
       <input type="hidden" name="id" value={ev.id} />
       <input type="hidden" name="status" value={status} />
+      <HereInput />
     </form>
   )
   const views = [
@@ -133,6 +135,7 @@ export default async function EventLayout({ children, params }: { children: Reac
               <form action={setEventStatus}>
                 <input type="hidden" name="id" value={ev.id} />
                 <input type="hidden" name="status" value="published" />
+                <HereInput />
                 <SubmitButton size="sm">
                   <SendIcon /> {t("eventsPage.publish")}
                 </SubmitButton>

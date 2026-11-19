@@ -140,7 +140,9 @@ export async function setEventStatus(fd: FormData) {
   const { ctx, t } = await manager()
   const id = idOf(fd)
   const status = fd.get("status") as (typeof EVENT_STATUSES)[number]
-  const here = `${PATH}/${id}`
+  // Stay on the event's tab the button was pressed on (Tickets, Gästeliste …).
+  const from = String(fd.get("back") ?? "")
+  const here = from === `${PATH}/${id}` || from.startsWith(`${PATH}/${id}/`) ? from : `${PATH}/${id}`
   if (!EVENT_STATUSES.includes(status)) back(here, { error: t("errors.invalid_input") })
   const { error, count } = await ctx.supabase.from("events").update({ status }, { count: "exact" }).eq("id", id).eq("org_id", ctx.org.id)
   if (error || !count) back(here, { error: error ? dbError(t, error) : t("errors.not_allowed") })

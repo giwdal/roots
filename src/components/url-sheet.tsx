@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { confirmDiscard } from "@/components/save-bar"
 import { ContentSheet, ContentSheetDescription, ContentSheetTitle } from "@/components/content-sheet"
 import { useT } from "@/i18n/client"
+import { cn } from "@/lib/utils"
 
 // A drawer (bottom sheet over the content area, <ContentSheet>) that exists because a search param is set (?edit=<id>, ?new=…). Closing removes the param(s).
 // Same anatomy everywhere: title, `meta` underneath (small, muted: "Angelegt am …"; live save status of an autosave
@@ -20,6 +21,7 @@ export function UrlSheet({
   children,
   wide,
   compact,
+  titleHidden,
 }: {
   params: string[]
   wide?: boolean // e.g. an import with a preview table
@@ -30,6 +32,7 @@ export function UrlSheet({
   actions?: React.ReactNode
   menu?: React.ReactNode
   children: React.ReactNode
+  titleHidden?: boolean // the content shows the title itself (an editable title field): only for screen readers here, meta takes its place
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -62,9 +65,10 @@ export function UrlSheet({
       header={
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <ContentSheetTitle className="min-w-0 font-heading text-lg font-semibold break-words text-foreground">{title}</ContentSheetTitle>
+            <ContentSheetTitle className={titleHidden ? "sr-only" : "min-w-0 font-heading text-lg font-semibold break-words text-foreground"}>{title}</ContentSheetTitle>
+            {titleHidden && <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">{meta}</div>}
             {(actions || menu) && (
-              <div className="flex shrink-0 items-center gap-2 max-md:w-full md:ml-auto">
+              <div className={cn("flex shrink-0 items-center gap-2", titleHidden ? "ml-auto" : "max-md:w-full md:ml-auto")}>
                 {actions}
                 {menu}
               </div>
@@ -72,7 +76,7 @@ export function UrlSheet({
           </div>
           {description && <ContentSheetDescription className="text-sm text-muted-foreground">{description}</ContentSheetDescription>}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground empty:hidden">
-            {meta}
+            {!titleHidden && meta}
             <span data-slot="sheet-status" className="contents" />
           </div>
         </div>

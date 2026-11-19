@@ -66,8 +66,8 @@ One shared way, so pages don't build two UIs (`usePhone()` in `src/lib/use-phone
 ## 3. Screens
 
 - **Lists**: `<DataTable>` cards — whole card tappable (≥ 56 px high), title + status badge on line 1, one muted line
-  (date/amount) on line 2, chevron right. Toolbar: search field full width, then one row of `<Segments>` / filter chips
-  that scrolls horizontally (never wraps into three lines). Pagination as "Mehr laden" at the end.
+  (date/amount) on line 2, chevron right. Toolbar: search field full width, then the `<Segments>` view switch full width (every
+  view visible, equal parts), filter buttons wrapping below — nothing scrolls sideways or gets cut off (user, 19 Nov). Pagination as "Mehr laden" at the end.
 - **Record pages**: header facts (badge, meta), `<Stats>` 2 per row, the next step as the round button, then sections.
   The edit form is in the "Bearbeiten" sheet, not between the facts and the lists. Sub-views (Event › Tickets) as a
   horizontally scrolling `<Segments>` row, sticky under the top bar.

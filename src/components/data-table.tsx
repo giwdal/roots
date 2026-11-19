@@ -171,15 +171,15 @@ export const pageRange = (page: number) => [(page - 1) * PAGE_SIZE, page * PAGE_
 export { SearchBox } from "./search-box"
 
 /**
- * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: the search field takes the
- * full width and everything else is one row that scrolls sideways (never wraps into several lines). From md: one
- * wrapping row; give a view switch `className="ml-auto"` to put it on the right.
+ * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: search full width, the
+ * view switch (<Segments>) full width below it with every view visible, the filter buttons wrap underneath — nothing
+ * scrolls or gets cut off. From md: one wrapping row; give a view switch `className="ml-auto"` to put it on the right.
  */
 export function ListToolbar({ search, children }: { search?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="grid min-w-0 gap-2 md:flex md:flex-wrap md:items-center md:gap-3">
       {search}
-      {children && <div className="no-scrollbar relative -mx-4 flex items-center gap-2 overflow-x-auto px-4 *:shrink-0 md:contents">{children}</div>}
+      {children && <div className="relative flex flex-wrap items-center gap-2 md:contents max-md:[&>:has([data-slot=segments])]:order-first max-md:[&>:has([data-slot=segments])]:w-full max-md:[&>[data-slot=segments]]:order-first">{children}</div>}
     </div>
   )
 }

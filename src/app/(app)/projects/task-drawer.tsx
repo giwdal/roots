@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { FolderKanbanIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { ActivityFeed } from "@/components/activity-feed"
@@ -10,7 +9,7 @@ import { loadFields } from "@/lib/custom-fields"
 import { projectBasics } from "@/projects/load"
 import { TASK_COLS } from "@/projects/server"
 import { addCommentAction, deleteCommentAction, editCommentAction } from "./actions"
-import { TaskEditor, taskMeta } from "./task-editor"
+import { TaskEditor } from "./task-editor"
 
 type Ctx = Awaited<ReturnType<typeof getContext>>
 
@@ -37,19 +36,6 @@ export async function TaskDrawer({ ctx, t, id, back, basics, error, ok }: { ctx:
       title={task.title || t("projects.taskTitle")}
       titleHidden
       wide
-      meta={
-        project ? (
-          <>
-            <Link href={`/projects/${project.id}`} className="link">
-              {project.name}
-            </Link>
-            {" · "}
-            {taskMeta(t, task)}
-          </>
-        ) : (
-          taskMeta(t, task)
-        )
-      }
       menu={
         (canManage || project) && (
           <ActionsMenu>

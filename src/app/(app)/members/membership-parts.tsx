@@ -69,21 +69,7 @@ export function MembershipFields({ t, types, m, defs, optional }: { t: T; types:
         </div>
       </FormCard>
       <FormCard id="mandate" title={t("membership.mandate")} description={t("membership.mandateHint")}>
-        <Field id="m-holder" name="account_holder" label={t("membership.accountHolder")} maxLength={70} defaultValue={m?.account_holder ?? ""} autoComplete="off" />
-        <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-          <div className="grid content-start gap-2">
-            <Label htmlFor="m-iban">IBAN</Label>
-            <TypedInput kind="iban" id="m-iban" name="iban" defaultValue={m?.iban ?? ""} />
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="m-bic">{t("membership.bicOptional")}</Label>
-            <TypedInput kind="bic" id="m-bic" name="bic" defaultValue={m?.bic ?? ""} />
-          </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="m-ref" name="mandate_ref" label={t("membership.mandateRef")} maxLength={35} defaultValue={m?.mandate_ref ?? ""} placeholder={t("membership.mandateRefAuto")} />
-          <DateField id="m-signed" name="mandate_signed_on" label={t("membership.mandateSigned")} defaultValue={m?.mandate_signed_on ?? ""} />
-        </div>
+        <MandateFields t={t} m={m} />
       </FormCard>
       <FormCard id="more" title={defs.length ? t("membership.moreFields") : t("membership.note")}>
         <CustomFieldInputs defs={defs} values={m?.custom as CustomValues | undefined} idPrefix="m-custom" />
@@ -127,6 +113,29 @@ export function MembershipFields({ t, types, m, defs, optional }: { t: T; types:
       ) : (
         extra
       )}
+    </>
+  )
+}
+
+/** Bank details + SEPA mandate (holder, IBAN, BIC, reference, signed on): in the full form and the `?edit=bank` dialog. */
+export function MandateFields({ t, m }: { t: T; m?: Pick<Tables<"memberships">, "account_holder" | "iban" | "bic" | "mandate_ref" | "mandate_signed_on"> }) {
+  return (
+    <>
+      <Field id="m-holder" name="account_holder" label={t("membership.accountHolder")} maxLength={70} defaultValue={m?.account_holder ?? ""} autoComplete="off" />
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <div className="grid content-start gap-2">
+          <Label htmlFor="m-iban">IBAN</Label>
+          <TypedInput kind="iban" id="m-iban" name="iban" defaultValue={m?.iban ?? ""} />
+        </div>
+        <div className="grid content-start gap-2">
+          <Label htmlFor="m-bic">{t("membership.bicOptional")}</Label>
+          <TypedInput kind="bic" id="m-bic" name="bic" defaultValue={m?.bic ?? ""} />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id="m-ref" name="mandate_ref" label={t("membership.mandateRef")} maxLength={35} defaultValue={m?.mandate_ref ?? ""} placeholder={t("membership.mandateRefAuto")} />
+        <DateField id="m-signed" name="mandate_signed_on" label={t("membership.mandateSigned")} defaultValue={m?.mandate_signed_on ?? ""} />
+      </div>
     </>
   )
 }

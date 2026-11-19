@@ -70,7 +70,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     { key: "submissions", area: "communication", count: submissions.count ?? 0, label: t("home.waiting.submissions", { count: submissions.count ?? 0 }), href: "/forms" },
     { key: "orders", area: "shop", count: orders.count ?? 0, label: t("home.waiting.orders", { count: orders.count ?? 0 }), href: "/shop/orders" },
     { key: "invoices", area: "finance", count: invoices.count ?? 0, label: t("home.waiting.invoices", { count: invoices.count ?? 0 }), href: "/invoices?status=overdue", warn: true },
-    { key: "dues", area: "members", count: dues.count ?? 0, label: t("home.waiting.dues", { count: dues.count ?? 0 }), href: "/members/dues", warn: true },
+    { key: "dues", area: "members", count: dues.count ?? 0, label: t("home.waiting.dues", { count: dues.count ?? 0 }), href: "/members/dues?status=overdue", warn: true },
   ].filter((w) => w.count > 0)
   const quick = quickActions((m) => ctx.modules.has(m), ctx.can, t)
   const day = (v: string) => (v.slice(0, 10) === today ? t("home.todayAt", { time: t.date(v, { hour: "2-digit", minute: "2-digit" }) }) : t.date(v, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))

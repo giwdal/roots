@@ -88,6 +88,30 @@ export async function patchMembership(fd: FormData): Promise<{ error?: string }>
   return {}
 }
 
+/** The `?edit=bank` dialog: bank details + mandate only; the stored record with them goes through updateMembership. */
+export async function saveMembershipBank(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = str(fd, "id", 36) ?? ""
+  const here = `${PATH}/${id}?edit=bank`
+  if (!UUID.test(id)) back(PATH, { error: t("errors.invalid_input") })
+  const { data: m } = await ctx.supabase.from("memberships").select("*").eq("id", id).eq("org_id", ctx.org.id).is("deleted_at", null).maybeSingle()
+  if (!m) back(PATH, { error: t("errors.not_allowed") })
+  const r = await members.updateMembership(ctx.supabase, ctx.org.id, id, {
+    type_id: m.type_id,
+    starts_on: m.starts_on,
+    ends_on: m.ends_on,
+    note: m.note,
+    account_holder: str(fd, "account_holder", 70),
+    iban: str(fd, "iban", 40),
+    bic: str(fd, "bic", 11),
+    mandate_signed_on: date(fd, "mandate_signed_on"),
+    mandate_ref: str(fd, "mandate_ref", 35),
+  })
+  if ("error" in r) back(here, { error: message(t, r) })
+  deliverSoon()
+  back(`${PATH}/${id}`, { ok: t("membership.saved") })
+}
+
 export async function saveMembership(fd: FormData) {
   const { ctx, t } = await manager()
   const id = str(fd, "id", 36)

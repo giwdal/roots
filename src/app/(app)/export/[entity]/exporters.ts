@@ -239,7 +239,9 @@ export const EXPORTERS: Record<string, Exporter> = {
           .order("due_on", { ascending: false })
           .range(from, to)
         if (picked(sp).length) return query.in("id", picked(sp))
-        if (status !== "all") query = query.eq("status", status)
+        if (status === "overdue") query = query.eq("status", "open").lt("due_on", new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }))
+        else if (status === "failed") query = query.eq("status", "open").not("failed_at", "is", null)
+        else if (status !== "all") query = query.eq("status", status)
         return query
       })
       return {

@@ -28,8 +28,8 @@ import { earliestEnd, INTERVALS, paidUntil, type Interval } from "@/members/dues
 import { PAYMENT_METHODS } from "@/members/server"
 import { IdCard } from "@/members/id-card"
 import { DueBadge, isOverdueDue, MemberStateBadge, memberState } from "../badges"
-import { DateField, Field, MembershipFields, TYPE_COLS, type Type } from "../membership-parts"
-import { bulkDues, endMembership, patchMembership, pauseMembership, resetMemberCode, restoreMembership, resumeMembership, saveMembership, sendReminders, setDueStatus, trashMembership } from "../actions"
+import { DateField, Field, MandateFields, MembershipFields, TYPE_COLS, type Type } from "../membership-parts"
+import { bulkDues, endMembership, patchMembership, pauseMembership, resetMemberCode, restoreMembership, resumeMembership, saveMembership, saveMembershipBank, sendReminders, setDueStatus, trashMembership } from "../actions"
 
 type Ctx = Awaited<ReturnType<typeof requirePerm>>
 type Contact = { id: string; first_name: string | null; last_name: string | null; company: string | null; email: string | null; phone: string | null; member_code: string | null }
@@ -68,8 +68,9 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
   const bySepa = !!m.iban && (m.payment_method === "sepa" || !m.payment_method)
   const pausedNow = !!m.paused_from && (!m.paused_until || m.paused_until >= now)
   const fee = m.fee_cents ?? type?.fee_cents ?? 0
-  const sheet = param(sp, "edit") === "details" ? "edit" : (["pause", "cancel"] as const).find((x) => x === param(sp, "new"))
+  const sheet = param(sp, "edit") === "details" ? "edit" : param(sp, "edit") === "bank" ? "bank" : (["pause", "cancel"] as const).find((x) => x === param(sp, "new"))
   const editHref = withParams(sp, { edit: "details", new: undefined })
+  const bankHref = withParams(sp, { edit: "bank", new: undefined })
   const amountOf = (d: Due) => t.money(d.amount_cents)
 
   const primary = !active ? undefined : next && bySepa ? (
@@ -84,7 +85,7 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
       </SubmitButton>
     </form>
   ) : undefined
-  // Single values edit in place (InlineField + patchMembership); the bank details are one compound value → the form.
+  // Single values edit in place (InlineField + patchMembership); the bank details are one compound value → ?edit=bank.
   const prop = (field: string, label: string, value: string | null, opts: Omit<React.ComponentProps<typeof InlineField>, "action" | "id" | "field" | "value" | "label"> = {}) => ({
     label,
     value: <InlineField action={patchMembership} id={m.id} field={field} value={value} label={label} disabled={!active} {...opts} />,
@@ -118,7 +119,7 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
     {
       label: "IBAN",
       value: active ? (
-        <Link href={editHref} scroll={false} className="-mx-2 block rounded-md px-2 py-1 hover:bg-muted/60" aria-label={t("common.editField", { field: "IBAN" })}>
+        <Link href={bankHref} scroll={false} className="-mx-2 block rounded-md px-2 py-1 hover:bg-muted/60" aria-label={t("common.editField", { field: "IBAN" })}>
           {m.iban ? <span className="font-mono text-xs">{m.iban.replace(/(.{4})/g, "$1 ").trim()}</span> : <span className="text-muted-foreground">{t("common.emptyValue")}</span>}
         </Link>
       ) : (
@@ -322,6 +323,16 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
           <form action={saveMembership} className="grid gap-6">
             <input type="hidden" name="id" value={m.id} />
             <MembershipFields t={t} types={types} m={m} defs={defs} />
+            <SaveBar />
+          </form>
+        </UrlSheet>
+      )}
+      {active && sheet === "bank" && (
+        <UrlSheet params={["edit"]} title={t("membership.mandate")} compact>
+          <form action={saveMembershipBank} className="grid gap-4">
+            <input type="hidden" name="id" value={m.id} />
+            <p className="text-sm text-muted-foreground">{t("membership.mandateHint")}</p>
+            <MandateFields t={t} m={m} />
             <SaveBar />
           </form>
         </UrlSheet>

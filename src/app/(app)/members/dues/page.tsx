@@ -26,7 +26,7 @@ import { reminderScope } from "@/members/dues"
 import { addLevy, bulkDues, createSepaRun, generateDues, sendReminders, setRunStatus } from "../actions"
 import { DueBadge } from "../badges"
 
-const STATUSES = ["open", "failed", "paid", "cancelled", "all"] as const
+const STATUSES = ["open", "overdue", "failed", "paid", "cancelled", "all"] as const
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 const addDays = (d: string, n: number) => new Date(Date.parse(d) + n * 86_400_000).toISOString().slice(0, 10)
 
@@ -51,6 +51,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
     .order("due_on", { ascending: false })
     .range(...pageRange(page))
   if (status === "failed") query = query.eq("status", "open").not("failed_at", "is", null)
+  else if (status === "overdue") query = query.eq("status", "open").lt("due_on", now)
   else if (status !== "all") query = query.eq("status", status)
   if (q) query = query.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${q}%`).join(","), { referencedTable: "memberships.contacts" })
   const [{ data }, { data: runs }, { data: open }, { count: anyDues }, { data: tagRows }, { data: creditor }] = await Promise.all([
@@ -119,7 +120,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
       {!!anyDues && (
         <Stats>
           <Stat label={t("membership.statOpen")} value={t.money(openTotal)} hint={t("membership.statOpenCount", { count: open?.length ?? 0 })} href={status === "open" ? undefined : "/members/dues"} />
-          <Stat label={t("membership.overdue")} value={t.money(overdue.reduce((s, d) => s + d.amount_cents, 0))} hint={t("membership.statOpenCount", { count: overdue.length })} tone={overdue.length ? "warn" : undefined} />
+          <Stat label={t("membership.overdue")} value={t.money(overdue.reduce((s, d) => s + d.amount_cents, 0))} hint={t("membership.statOpenCount", { count: overdue.length })} tone={overdue.length ? "warn" : undefined} href={status === "overdue" ? undefined : "/members/dues?status=overdue"} />
           <Stat label={t("membership.filters.returned")} value={returned} href="/members/dues?status=failed" tone={returned ? "warn" : undefined} />
         </Stats>
       )}
@@ -198,7 +199,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
             items={STATUSES.map((s) => ({
               href: `/members/dues${withParams(sp, { status: s === "open" ? undefined : s, page: undefined, run: undefined })}`,
               current: s === status,
-              label: s === "all" ? t("membership.filters.all") : s === "failed" ? t("membership.filters.returned") : t(`membership.dueStatus.${s}`),
+              label: s === "all" ? t("membership.filters.all") : s === "overdue" ? t("membership.overdue") : s === "failed" ? t("membership.filters.returned") : t(`membership.dueStatus.${s}`),
             }))}
           />
         </ListToolbar>

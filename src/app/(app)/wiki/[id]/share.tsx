@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { CheckIcon, GlobeIcon, IdCardIcon, LinkIcon, LockIcon, Share2Icon, UsersIcon } from "lucide-react"
-import { Segment, SegmentGroup } from "@/components/choice"
+import { useRef, useState } from "react"
+import { CheckIcon, ChevronDownIcon, GlobeIcon, IdCardIcon, LinkIcon, LockIcon, Share2Icon, UsersIcon } from "lucide-react"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useT } from "@/i18n/client"
 import { setVisibilityAction } from "../actions"
@@ -48,49 +48,78 @@ export function ShareButton({
     { value: "public", label: t("wiki.share.public"), hint: t("wiki.share.publicHint") },
   ]
 
+  const form = useRef<HTMLFormElement>(null)
+  const pick = (v: string) => {
+    setChoice(v)
+    // A choice takes effect at once; "Nur bestimmte Rollen" waits for the roles to be ticked.
+    if (v !== "roles") setTimeout(() => form.current?.requestSubmit())
+  }
+  const ChoiceIcon = { roles: LockIcon, members: IdCardIcon, public: GlobeIcon, team: UsersIcon }[choice || inherited.visibility] ?? UsersIcon
+  const current = options.find((o) => o.value === choice)
+
   return (
     <Popover>
       <PopoverTrigger render={<Button type="button" size="sm" variant="outline" />}>
         {effective === "team" ? <Share2Icon /> : <Icon />} {t("wiki.share.button")}
       </PopoverTrigger>
-      <PopoverContent sheet align="end" className="grid w-80 gap-4 max-md:pb-4">
-        <form action={setVisibilityAction} className="grid gap-3">
+      <PopoverContent sheet title={t("wiki.share.button")} align="end" className="grid w-96 gap-4 p-0 max-md:pb-4">
+        {/* Like Google Docs / Claude: one "general access" row (icon + who), a hint, the link at the bottom. */}
+        <form ref={form} action={setVisibilityAction} className="grid gap-3 px-4 pt-4">
           <input type="hidden" name="id" value={pageId} />
-          <p className="text-sm font-medium">{t("wiki.share.who")}</p>
-          <SegmentGroup label={t("wiki.share.who")} className="w-full">
-            {options.map((o) => (
-              <Segment key={o.value || "inherit"} name="visibility" value={o.value} label={o.label} checked={choice === o.value} onPick={setChoice} disabled={!canManage} />
-            ))}
-          </SegmentGroup>
-          <p className="text-xs text-muted-foreground">{options.find((o) => o.value === choice)?.hint}</p>
+          <input type="hidden" name="visibility" value={choice} />
+          <p className="text-xs font-medium text-muted-foreground">{t("wiki.share.who")}</p>
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground" aria-hidden>
+              <ChoiceIcon className="size-4" />
+            </span>
+            <div className="grid min-w-0 flex-1 gap-0.5">
+              {canManage ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="sm" className="-ml-2 w-fit max-w-full justify-start font-medium" />}>
+                    <span className="truncate">{current?.label}</span> <ChevronDownIcon className="opacity-60" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" title={t("wiki.share.who")} className="min-w-64">
+                    {options.map((o) => (
+                      <DropdownMenuItem key={o.value || "inherit"} onClick={() => pick(o.value)} className="items-start">
+                        <span className="grid flex-1">
+                          <span>{o.label}</span>
+                          <span className="text-xs text-muted-foreground">{o.hint}</span>
+                        </span>
+                        <CheckIcon className={o.value === choice ? "mt-0.5" : "invisible"} />
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className="py-1 text-sm font-medium">{current?.label}</span>
+              )}
+              <span className="text-xs text-muted-foreground">{current?.hint}</span>
+            </div>
+          </div>
           {choice === "roles" && (
-            <fieldset className="grid gap-1.5" disabled={!canManage}>
+            <fieldset className="grid gap-2 rounded-lg border p-3" disabled={!canManage}>
               <legend className="sr-only">{t("wiki.share.roles")}</legend>
               {roles.map((r) => (
                 <label key={r.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="role_ids" value={r.id} defaultChecked={roleIds.includes(r.id)} className="size-4" />
+                  <input type="checkbox" name="role_ids" value={r.id} defaultChecked={roleIds.includes(r.id)} className="size-4 accent-primary" />
                   {r.label}
                 </label>
               ))}
+              {canManage && (
+                <SubmitButton size="sm" className="justify-self-end">
+                  {t("common.save")}
+                </SubmitButton>
+              )}
             </fieldset>
           )}
-          {canManage && (
-            <SubmitButton size="sm" className="justify-self-start">
-              {t("common.save")}
-            </SubmitButton>
-          )}
         </form>
-        <div className="grid gap-1 border-t pt-3">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Icon className="size-3.5" />
-            {t.dynamic(`wiki.share.short.${effective}`)}
-          </span>
-          {(effective === "public" || effective === "members") && <p className="text-xs text-muted-foreground">{t.dynamic(`wiki.share.oneLink.${effective}`)}</p>}
-          <div className="flex flex-wrap gap-1">
-            <Button type="button" size="sm" variant="ghost" onClick={() => copy("app", `${window.location.origin}${window.location.pathname}`)}>
-              {copied === "app" ? <CheckIcon /> : <LinkIcon />} {copied === "app" ? t("wiki.share.copied") : t("wiki.share.copy")}
-            </Button>
-          </div>
+        <div className="flex items-center gap-3 border-t px-4 py-3">
+          <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+            {effective === "public" || effective === "members" ? t.dynamic(`wiki.share.oneLink.${effective}`) : t.dynamic(`wiki.share.short.${effective}`)}
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => copy("app", `${window.location.origin}${window.location.pathname}`)}>
+            {copied === "app" ? <CheckIcon /> : <LinkIcon />} {copied === "app" ? t("wiki.share.copied") : t("wiki.share.copy")}
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

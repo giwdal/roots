@@ -21,7 +21,7 @@ export function Choice({ name, options, defaultValue, required, disabled, id, la
     )
   if (options.length <= 15)
     return (
-      <NativeSelect id={id} name={name} defaultValue={defaultValue ?? ""} required={required} disabled={disabled} aria-label={label} className={cn("w-full", className)}>
+      <NativeSelect id={id} name={name} defaultValue={defaultValue ?? ""} required={required} disabled={disabled} aria-label={label} className={cn("w-full max-w-xs", className)}>
         {!required && <NativeSelectOption value="">{emptyLabel ?? "–"}</NativeSelectOption>}
         {options.map((o) => (
           <NativeSelectOption key={o.value} value={o.value}>

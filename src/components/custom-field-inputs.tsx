@@ -28,7 +28,7 @@ export function CustomFieldInputs({ defs, values, idPrefix, single }: { defs: Fi
               {d.required && <span aria-hidden> *</span>}
             </Label>
             {d.type === "select" ? (
-              <NativeSelect id={id} name={name} defaultValue={value} required={d.required} className="w-full">
+              <NativeSelect id={id} name={name} defaultValue={value} required={d.required} className="w-full max-w-xs">
                 <NativeSelectOption value="">–</NativeSelectOption>
                 {d.options.map((o) => (
                   <NativeSelectOption key={o} value={o}>

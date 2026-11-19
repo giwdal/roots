@@ -32,6 +32,9 @@ How it is built (done, shell pass):
   `<ActionsMenu>` items render as rows through a context (`MenuLink` / `MenuSubmit` / `MenuDownload` / `MenuGroup` /
   `MenuExport` / `MenuSeparator` only – no raw `DropdownMenuItem` in an `ActionsMenu`). Controls that are not actions
   (a month switcher) belong in the page toolbar, not in `actions`.
+- Primary on phones: a link primary is the round button; a form-button primary (Jetzt senden, Veröffentlichen,
+  Ausstellen) is the round button too when it has an icon (label for screen readers only) and also stays in the ⋯
+  sheet, because a SaveBar hides the round button. Give such buttons an icon.
 - Search: `<CommandSearch>` renders a `<ContentSheet>` on phones (field + Abbrechen on top, recents from this browser,
   results with the area's `<AreaIcon>`); the Suche tab focuses a stand-in field during the tap so iOS opens the
   keyboard. `body { overflow-x: clip }` on phones stops the sideways shift.

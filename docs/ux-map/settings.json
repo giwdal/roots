@@ -57,11 +57,28 @@
     }
   ],
   "navNotes": "Settings is not an entry in src/modules/nav.ts; the App layout adds \"Einstellungen\" as a plain sidebar link (group \"Organisation\", → /settings/profile), and the user menu \"Konto\" also opens /settings/profile. The sections are a <SectionNav> beside the page (src/app/(app)/settings/tabs.ts, layout.tsx), not sidebar sub-pages. The layout renders no <Page>/<PageHeader>: the top bar shows \"Einstellungen › <Section>\" via <SettingsTitle> (TopbarCrumbs) and an sr-only h1. Content column max-w-3xl inside max-w-5xl. ⌘K lists the settings sections from its own copy of the tab list (src/search/actions.ts), which lacks \"Bereiche\".",
-  "redesign": {"research": "Linear (Account: Profile · Preferences · Notifications · Security & access · Connected accounts / Workspace: General · Members · …), Vercel (personal Account vs Team settings, one left nav with two groups), Stripe (Personal details vs Business settings), GitHub (personal settings vs organization settings). All: one left nav grouped by 'you' and 'the workspace', each page a stack of grouped rows, switches save at once, text values inline or in a small dialog, destructive things ask. On phones (Linear / GitHub mobile): the settings index is a list of rows with ›, a row opens the page, back returns to the list.", "decision": "Section nav grouped 'Du' (Profil · Benachrichtigungen · Sicherheit · KI-Assistent) / 'Organisation' (Allgemein · Team · Rollen · Module · Bereiche · Felder · Orte · Integrationen · API), each org item only with the permission that changes it (Allgemein/Module/Felder/Orte org.settings.manage, Team/Rollen org.members.manage, Integrationen/API org.integrations.manage; Bereiche when at least one area settings page is open to the person). Phones: /settings is the index (grouped rows with ›), sub-pages have a back chevron to it; desktop: /settings opens Profil. Sidebar 'Einstellungen' → /settings; user menu 'Konto' → Profil. Area settings stay behind each area's gear (listed in Bereiche); platform admin stays /admin.", "built": true},
+  "redesign": {
+    "research": "Linear (Account: Profile · Preferences · Notifications · Security & access · Connected accounts / Workspace: General · Members · …), Vercel (personal Account vs Team settings, one left nav with two groups), Stripe (Personal details vs Business settings), GitHub (personal settings vs organization settings). All: one left nav grouped by 'you' and 'the workspace', each page a stack of grouped rows, switches save at once, text values inline or in a small dialog, destructive things ask. On phones (Linear / GitHub mobile): the settings index is a list of rows with ›, a row opens the page, back returns to the list.",
+    "decision": "Section nav grouped 'Du' (Profil · Benachrichtigungen · Sicherheit · KI-Assistent) / 'Organisation' (Allgemein · Team · Rollen · Module · Bereiche · Felder · Orte · Integrationen · API), each org item only with the permission that changes it (Allgemein/Module/Felder/Orte org.settings.manage, Team/Rollen org.members.manage, Integrationen/API org.integrations.manage; Bereiche when at least one area settings page is open to the person). Phones: /settings is the index (grouped rows with ›), sub-pages have a back chevron to it; desktop: /settings opens Profil. Sidebar 'Einstellungen' → /settings; user menu 'Konto' → Profil. Area settings stay behind each area's gear (listed in Bereiche); platform admin stays /admin.",
+    "built": true
+  },
   "pages": [
     {
       "route": "/settings",
-      "redesign": {"job": "Find the setting you're after: your own things or the org's.", "phone": "Top bar 'Einstellungen'. Two RowGroups 'Du' and 'Organisation', one row per section (icon · label · ›), only sections the person may change.", "desktop": "Redirects to /settings/profile (the section nav beside every settings page is the index).", "moves": ["redirect → kept on desktop (client replace to /settings/profile from md); phones show the grouped index instead"], "built": true},
+      "redesign": {
+        "job": "Find the setting you're after: your own things or the org's.",
+        "phone": "Top bar 'Einstellungen'. Two RowGroups 'Du' and 'Organisation', one row per section (icon · label · ›), only sections the person may change.",
+        "desktop": "Redirects to /settings/profile (the section nav beside every settings page is the index).",
+        "moves": [
+          "redirect → kept on desktop (client replace to /settings/profile from md); phones show the grouped index instead"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Was unreachable: a stale next.config redirect sent /settings to Allgemein, so phones never saw the index (Du · Organisation rows). Redirect removed; desktop still opens Profil via DesktopOpens."
+        }
+      },
       "file": "src/app/(app)/settings/page.tsx",
       "title": "(redirect)",
       "purpose": "Redirects to /settings/profile (the top bar gear / account menu 'Einstellungen' target).",
@@ -72,7 +89,20 @@
     },
     {
       "route": "/settings/domain",
-      "redesign": {"job": "Old URL.", "phone": "–", "desktop": "–", "moves": ["redirect → /website/domain kept"], "built": true},
+      "redesign": {
+        "job": "Old URL.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /website/domain kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect only (→ /website/domain)."
+        }
+      },
       "file": "src/app/(app)/settings/domain/page.tsx",
       "title": "(redirect)",
       "purpose": "Legacy URL, redirects to /website/domain.",
@@ -82,7 +112,20 @@
     },
     {
       "route": "/settings/website",
-      "redesign": {"job": "Old URL.", "phone": "–", "desktop": "–", "moves": ["redirect → /website/pages/start kept"], "built": true},
+      "redesign": {
+        "job": "Old URL.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /website/pages/start kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect only (→ /website/pages/start)."
+        }
+      },
       "file": "src/app/(app)/settings/website/page.tsx",
       "title": "(redirect)",
       "purpose": "Legacy URL, redirects to /website/pages/start.",
@@ -92,8 +135,39 @@
     },
     {
       "route": "/settings/profile",
-      "redesign": {"job": "Who I am in roots: picture, name, language, look, and the orgs I belong to.", "phone": "Top bar ‹ Einstellungen · Profil. RowGroup Profil: identity row (picture = tap to upload, name edited in place, email muted), Sprache (select), Darstellung (Hell · Dunkel · System). RowGroup 'Deine Organisationen': one row per org (logo, name, role, 'Aktiv' badge); tapping another org switches to it; the current org's row has ⋯ 'Organisation verlassen' (asks); AddLink 'Neue Organisation'.", "desktop": "Same rows in the settings column (max-w-3xl) beside the grouped section nav.", "moves": ["Profilbild hochladen / entfernen → identity row: the picture is the button (ImageForm labelHidden), Entfernen asks", "Name + Speichern → identity row: InlineField (patchProfile, saves on Enter/blur), no button", "E-Mail (muted) → identity row under the name", "Sprache (LocaleSwitcher) → row 'Sprache', saves on change", "Darstellung (ThemeSwitch) → row 'Darstellung', saves on change", "Benachrichtigungen matrix + Speichern → own page /settings/notifications (switches per channel, save on flip)", "Passwort (two fields + Passwort ändern) → /settings/security row 'Passwort' → 'Ändern' compact sheet ?edit=password with SaveBar", "Deine Organisationen card → RowGroup with clickable rows (switch org), ⋯ Verlassen with confirm on the current org, AddLink 'Neue Organisation' (/onboarding?new=1) for everyone (also single-org people)", "Passkeys card (add / remove) → /settings/security, remove asks (passkeys.confirmRemove)", "KI-Assistent (keys, Prüfen & speichern, Schlüssel entfernen) → /settings/ai", "Mit KI verbinden (copy, Claude / Cursor / VS Code, CLI) → /settings/ai", "Meine Verbindungen + Trennen → /settings/ai, Trennen asks (settings.confirmDisconnect)"], "built": true},
-      "uxNotesDone": [0, 1, 2, 3, 4, 5],
+      "redesign": {
+        "job": "Who I am in roots: picture, name, language, look, and the orgs I belong to.",
+        "phone": "Top bar ‹ Einstellungen · Profil. RowGroup Profil: identity row (picture = tap to upload, name edited in place, email muted), Sprache (select), Darstellung (Hell · Dunkel · System). RowGroup 'Deine Organisationen': one row per org (logo, name, role, 'Aktiv' badge); tapping another org switches to it; the current org's row has ⋯ 'Organisation verlassen' (asks); AddLink 'Neue Organisation'.",
+        "desktop": "Same rows in the settings column (max-w-3xl) beside the grouped section nav.",
+        "moves": [
+          "Profilbild hochladen / entfernen → identity row: the picture is the button (ImageForm labelHidden), Entfernen asks",
+          "Name + Speichern → identity row: InlineField (patchProfile, saves on Enter/blur), no button",
+          "E-Mail (muted) → identity row under the name",
+          "Sprache (LocaleSwitcher) → row 'Sprache', saves on change",
+          "Darstellung (ThemeSwitch) → row 'Darstellung', saves on change",
+          "Benachrichtigungen matrix + Speichern → own page /settings/notifications (switches per channel, save on flip)",
+          "Passwort (two fields + Passwort ändern) → /settings/security row 'Passwort' → 'Ändern' compact sheet ?edit=password with SaveBar",
+          "Deine Organisationen card → RowGroup with clickable rows (switch org), ⋯ Verlassen with confirm on the current org, AddLink 'Neue Organisation' (/onboarding?new=1) for everyone (also single-org people)",
+          "Passkeys card (add / remove) → /settings/security, remove asks (passkeys.confirmRemove)",
+          "KI-Assistent (keys, Prüfen & speichern, Schlüssel entfernen) → /settings/ai",
+          "Mit KI verbinden (copy, Claude / Cursor / VS Code, CLI) → /settings/ai",
+          "Meine Verbindungen + Trennen → /settings/ai, Trennen asks (settings.confirmDisconnect)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Group heading 'Profil' repeated the page title: dropped here (kept on /account). Picture tap, name inline, language + theme switch at once, orgs with switch / leave in ⋯ checked."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "file": "src/app/(app)/settings/profile/page.tsx",
       "title": "Einstellungen › Profil",
       "purpose": "Personal settings: picture, name, language, theme, personal notification channels, password, own orgs, passkeys, Sprout AI keys, connecting AI apps (MCP) and own AI connections.",
@@ -373,8 +447,27 @@
     },
     {
       "route": "/settings/general",
-      "redesign": {"job": "The org's identity: logo, name, public address.", "phone": "RowGroup Organisation: logo row (tap the logo to upload, Entfernen asks), Name row (InlineField), Öffentliche Adresse row (slug.domain as text, link 'Domain ändern' → /website/domain when the person has org.site.manage).", "desktop": "Same.", "moves": ["Name + SaveBar → InlineField with patchOrgName (requirePerm org.settings.manage); no SaveBar", "Slug (Webseite) → row 'Öffentliche Adresse' with the full address + link to Website › Domain", "Logo hochladen / entfernen → logo row (ImageForm labelHidden)", "read-only view for people without org.settings.manage → removed: the page is only listed for (and only opens with) org.settings.manage"], "built": true},
-      "uxNotesDone": [0, 1],
+      "redesign": {
+        "job": "The org's identity: logo, name, public address.",
+        "phone": "RowGroup Organisation: logo row (tap the logo to upload, Entfernen asks), Name row (InlineField), Öffentliche Adresse row (slug.domain as text, link 'Domain ändern' → /website/domain when the person has org.site.manage).",
+        "desktop": "Same.",
+        "moves": [
+          "Name + SaveBar → InlineField with patchOrgName (requirePerm org.settings.manage); no SaveBar",
+          "Slug (Webseite) → row 'Öffentliche Adresse' with the full address + link to Website › Domain",
+          "Logo hochladen / entfernen → logo row (ImageForm labelHidden)",
+          "read-only view for people without org.settings.manage → removed: the page is only listed for (and only opens with) org.settings.manage"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: logo tap, name inline, address with 'Eigene Domain einrichten'. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
       "file": "src/app/(app)/settings/general/page.tsx",
       "title": "Einstellungen › Allgemein",
       "purpose": "Rename the organisation and set its logo.",
@@ -461,8 +554,34 @@
     },
     {
       "route": "/settings/team",
-      "redesign": {"job": "Who works in this org with which role; invite someone; open invites.", "phone": "Top bar Team, round + = Einladen. List of people (picture, name, email, role as one muted line); tap → sheet: role as Choice + SaveBar, ⋯ Entfernen (asks). Section 'Offene Einladungen': rows email · role · expires, row ⋯ Link kopieren/erneuern + Zurückziehen (asks).", "desktop": "PageHeader primary 'Einladen' (key N). Table Person · Rolle · Seit. Open invites table below with the link button and a row ⋯.", "moves": ["Einladen (section button) → PageHeader primary → ?new=invite", "Team DataTable → kept; ?role=<id> filter chip (from Rollen) ", "member sheet Rolle NativeSelect → <Choice> (≤5 segments, else select) + SaveBar", "member sheet Entfernen / Verlassen (red button in the body) → sheet ⋯ MenuSubmit destructive with confirm (members.confirmRemove / confirmLeave)", "Offene Einladungen card → Section with DataTable; Link erneuern → kept (InviteLink); Zurückziehen → ghost button with confirm (members.confirmRevoke)", "invite sheet (E-Mail, Rolle, 'Einladungslink erstellen') → kept; button label → 'Einladung senden'", "people without org.members.manage → the page isn't listed; leaving moves to Profil › Deine Organisationen"], "built": true},
-      "uxNotesDone": [0, 1, 2, 3, 4, 5],
+      "redesign": {
+        "job": "Who works in this org with which role; invite someone; open invites.",
+        "phone": "Top bar Team, round + = Einladen. List of people (picture, name, email, role as one muted line); tap → sheet: role as Choice + SaveBar, ⋯ Entfernen (asks). Section 'Offene Einladungen': rows email · role · expires, row ⋯ Link kopieren/erneuern + Zurückziehen (asks).",
+        "desktop": "PageHeader primary 'Einladen' (key N). Table Person · Rolle · Seit. Open invites table below with the link button and a row ⋯.",
+        "moves": [
+          "Einladen (section button) → PageHeader primary → ?new=invite",
+          "Team DataTable → kept; ?role=<id> filter chip (from Rollen) ",
+          "member sheet Rolle NativeSelect → <Choice> (≤5 segments, else select) + SaveBar",
+          "member sheet Entfernen / Verlassen (red button in the body) → sheet ⋯ MenuSubmit destructive with confirm (members.confirmRemove / confirmLeave)",
+          "Offene Einladungen card → Section with DataTable; Link erneuern → kept (InviteLink); Zurückziehen → ghost button with confirm (members.confirmRevoke)",
+          "invite sheet (E-Mail, Rolle, 'Einladungslink erstellen') → kept; button label → 'Einladung senden'",
+          "people without org.members.manage → the page isn't listed; leaving moves to Profil › Deine Organisationen"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: member cards one line (role · since), invite as round +. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "file": "src/app/(app)/settings/team/page.tsx",
       "title": "Einstellungen › Team",
       "purpose": "See who is in the org, invite people with a role, change roles, remove/leave, manage open invites.",
@@ -626,8 +745,26 @@
     },
     {
       "route": "/settings/roles",
-      "redesign": {"job": "Understand what each role may do and who has it (roles are defined by the platform).", "phone": "Rows: role name, summary, member count; tap → sheet ?edit=<id> listing permissions per module; 'Personen mit dieser Rolle' link → /settings/team?role=<id>.", "desktop": "Same table.", "moves": ["?view= → ?edit= (old ?view redirects)", "member count → link to Team filtered by role", "intro sentence → kept as the RowGroup description"], "built": true},
-      "uxNotesDone": [0, 1],
+      "redesign": {
+        "job": "Understand what each role may do and who has it (roles are defined by the platform).",
+        "phone": "Rows: role name, summary, member count; tap → sheet ?edit=<id> listing permissions per module; 'Personen mit dieser Rolle' link → /settings/team?role=<id>.",
+        "desktop": "Same table.",
+        "moves": [
+          "?view= → ?edit= (old ?view redirects)",
+          "member count → link to Team filtered by role",
+          "intro sentence → kept as the RowGroup description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Member count column was a bare '0'/'1' on phone cards: now '1 Person' / '3 Personen'."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
       "file": "src/app/(app)/settings/roles/page.tsx",
       "title": "Einstellungen › Rollen",
       "purpose": "Read-only list of the platform-defined roles and what each may do.",
@@ -672,8 +809,25 @@
     },
     {
       "route": "/settings/modules",
-      "redesign": {"job": "See which modules the org has and open them.", "phone": "RowGroup: one row per module (name, description, badge 'Aktiv' success / 'Aus' secondary), active rows link to the area (›). Hint 'Module schaltet die Plattform frei' as description.", "desktop": "Same rows.", "moves": ["cards → rows", "badge default → success / secondary", "dead end → active rows open the area"], "built": true},
-      "uxNotesDone": [0],
+      "redesign": {
+        "job": "See which modules the org has and open them.",
+        "phone": "RowGroup: one row per module (name, description, badge 'Aktiv' success / 'Aus' secondary), active rows link to the area (›). Hint 'Module schaltet die Plattform frei' as description.",
+        "desktop": "Same rows.",
+        "moves": [
+          "cards → rows",
+          "badge default → success / secondary",
+          "dead end → active rows open the area"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Area tiles came from the first nav area listing the module (Kalender for several): areaOfModule() skips Kalender."
+        }
+      },
+      "uxNotesDone": [
+        0
+      ],
       "file": "src/app/(app)/settings/modules/page.tsx",
       "title": "Einstellungen › Module",
       "purpose": "Read-only overview of all modules and which are on for this org.",
@@ -698,7 +852,21 @@
     },
     {
       "route": "/settings/areas",
-      "redesign": {"job": "All area settings in one place.", "phone": "RowGroup of rows AreaIcon · area (· page) · ›.", "desktop": "Same.", "moves": ["tiles → RowGroup rows with AreaIcon", "intro → RowGroup description"], "built": true},
+      "redesign": {
+        "job": "All area settings in one place.",
+        "phone": "RowGroup of rows AreaIcon · area (· page) · ›.",
+        "desktop": "Same.",
+        "moves": [
+          "tiles → RowGroup rows with AreaIcon",
+          "intro → RowGroup description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Rows had the area tile inside the title, so the second line ('Team') sat under the tile; LinkRows got a `lead` slot. Schichten appears twice, so both rows name their page (Einstellungen · Team)."
+        }
+      },
       "file": "src/app/(app)/settings/areas/page.tsx",
       "title": "Einstellungen › Bereiche",
       "purpose": "Collects links to each area's own Einstellungen page.",
@@ -730,8 +898,30 @@
     },
     {
       "route": "/settings/fields",
-      "redesign": {"job": "Org-defined extra fields per kind of record.", "phone": "One RowGroup per entity (Kontakte, Events …): rows label · type · 'Pflicht' badge, AddLink 'Neues Feld' at the end of each group. Tap → sheet ?edit=<id>: Bezeichnung, Optionen (select only), colours per option, Pflichtfeld, SaveBar; ⋯ 'Feld löschen' (asks).", "desktop": "Same.", "moves": ["DataTable per entity → RowGroup rows", "Neues Feld (section button) → AddLink per group → ?new=<entity>", "Typ NativeSelect → <Choice> (8 options → select); Auswahlmöglichkeiten only visible while Typ = Auswahl (CSS :has)", "Farben NativeSelect per option → kept as Choice per option (6 colours + none)", "Gefahrenzone + Feld löschen → sheet ⋯ MenuSubmit destructive with confirm (fields.confirmDelete + hint)", "Pflichtfeld checkbox → kept (accent-primary)"], "built": true},
-      "uxNotesDone": [0, 1, 3],
+      "redesign": {
+        "job": "Org-defined extra fields per kind of record.",
+        "phone": "One RowGroup per entity (Kontakte, Events …): rows label · type · 'Pflicht' badge, AddLink 'Neues Feld' at the end of each group. Tap → sheet ?edit=<id>: Bezeichnung, Optionen (select only), colours per option, Pflichtfeld, SaveBar; ⋯ 'Feld löschen' (asks).",
+        "desktop": "Same.",
+        "moves": [
+          "DataTable per entity → RowGroup rows",
+          "Neues Feld (section button) → AddLink per group → ?new=<entity>",
+          "Typ NativeSelect → <Choice> (8 options → select); Auswahlmöglichkeiten only visible while Typ = Auswahl (CSS :has)",
+          "Farben NativeSelect per option → kept as Choice per option (6 colours + none)",
+          "Gefahrenzone + Feld löschen → sheet ⋯ MenuSubmit destructive with confirm (fields.confirmDelete + hint)",
+          "Pflichtfeld checkbox → kept (accent-primary)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Group 'Veranstaltungen' → 'Events' (glossary). Otherwise checked: one RowGroup per entity with 'Neues Feld'."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
+      ],
       "file": "src/app/(app)/settings/fields/page.tsx",
       "title": "Einstellungen › Felder",
       "purpose": "Define custom fields per entity (contacts, events, memberships, rental objects, rentals, projects, tasks).",
@@ -891,8 +1081,26 @@
     },
     {
       "route": "/settings/locations",
-      "redesign": {"job": "Places used by events and shifts.", "phone": "Inline rows (Name, Adresse, Speichern) — the inline-list exception; ✕ with tooltip and confirm; last row adds.", "desktop": "Same.", "moves": ["delete icon → confirm (locations.confirmDelete) + tooltip", "rows → kept", "actions in shifts/actions.ts → kept (noted in backlog)"], "built": true},
-      "uxNotesDone": [0, 2],
+      "redesign": {
+        "job": "Places used by events and shifts.",
+        "phone": "Inline rows (Name, Adresse, Speichern) — the inline-list exception; ✕ with tooltip and confirm; last row adds.",
+        "desktop": "Same.",
+        "moves": [
+          "delete icon → confirm (locations.confirmDelete) + tooltip",
+          "rows → kept",
+          "actions in shifts/actions.ts → kept (noted in backlog)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked, no change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        2
+      ],
       "file": "src/app/(app)/settings/locations/page.tsx",
       "title": "Einstellungen › Orte",
       "purpose": "Manage the org's places (used by events and shifts).",
@@ -956,8 +1164,35 @@
     },
     {
       "route": "/settings/integrations",
-      "redesign": {"job": "Connect payment, email and chat providers; send org events to own tools.", "phone": "Cards stay (one per provider, status badge success/warning/destructive). Trennen asks. Section 'Webhooks & Telegram' (renamed, not a second 'Benachrichtigungen'): rows, '+ Webhook' / '+ Telegram-Chat'; sheet: form + SaveBar, ⋯ Testereignis senden / Neues Secret (asks) / Löschen (asks).", "desktop": "Same, two card columns.", "moves": ["visible h2 Integrationen → removed (top bar says it)", "status badge default → success / warning / destructive", "Trennen → confirm (integrations.confirmDisconnect, hint per provider kind)", "Kosten weitergeben, Kartenterminals → kept (<details>), terminal remove keeps its confirm", "connect sheet fields → kept; explicit Speichern → SaveBar always", "Benachrichtigungen FormCard → Section 'Webhooks & Telegram' (notifications.targets)", "sub sheet Löschen (red button) → UrlSheet menu MenuSubmit destructive with confirm", "Neues Secret erzeugen → confirm (notifications.confirmRotate)", "Testereignis senden → UrlSheet menu item", "chat NativeSelect → <Choice>"], "built": true},
-      "uxNotesDone": [0, 1, 2, 6],
+      "redesign": {
+        "job": "Connect payment, email and chat providers; send org events to own tools.",
+        "phone": "Cards stay (one per provider, status badge success/warning/destructive). Trennen asks. Section 'Webhooks & Telegram' (renamed, not a second 'Benachrichtigungen'): rows, '+ Webhook' / '+ Telegram-Chat'; sheet: form + SaveBar, ⋯ Testereignis senden / Neues Secret (asks) / Löschen (asks).",
+        "desktop": "Same, two card columns.",
+        "moves": [
+          "visible h2 Integrationen → removed (top bar says it)",
+          "status badge default → success / warning / destructive",
+          "Trennen → confirm (integrations.confirmDisconnect, hint per provider kind)",
+          "Kosten weitergeben, Kartenterminals → kept (<details>), terminal remove keeps its confirm",
+          "connect sheet fields → kept; explicit Speichern → SaveBar always",
+          "Benachrichtigungen FormCard → Section 'Webhooks & Telegram' (notifications.targets)",
+          "sub sheet Löschen (red button) → UrlSheet menu MenuSubmit destructive with confirm",
+          "Neues Secret erzeugen → confirm (notifications.confirmRotate)",
+          "Testereignis senden → UrlSheet menu item",
+          "chat NativeSelect → <Choice>"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone: provider cards stack their buttons; several filled buttons per page remain (one per card) — see Y3."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        6
+      ],
       "file": "src/app/(app)/settings/integrations/page.tsx",
       "title": "Einstellungen › Integrationen",
       "purpose": "Connect payment (Stripe, SumUp), messaging (Telegram) and email providers (Resend, Brevo); pass payment costs on; pair SumUp terminals; manage webhook/Telegram notification targets.",
@@ -1357,8 +1592,34 @@
     },
     {
       "route": "/settings/api",
-      "redesign": {"job": "API keys for own tools and whether AI apps may connect.", "phone": "Header: 'API-Dokumentation' action, primary 'Neuer Schlüssel' (?new=key sheet: Name, Läuft ab as segments, Rechte grouped, SaveBar; afterwards the key once with Kopieren). Keys list: name, prefix, 'n Rechte', last used, expires; Widerrufen asks; Segments Aktiv · Alle. RowGroup 'KI-Apps erlauben' switch (turning off asks). Connected apps rows, Trennen asks.", "desktop": "Same.", "moves": ["inline Neuer Schlüssel form → ?new=key sheet", "Läuft ab raw select → Choice (4 segments)", "Rechte column raw keys → 'n Rechte' with the translated list in title", "Widerrufen → confirm (api.confirmRevoke)", "revoked/expired forever → Segments Aktiv (default) · Alle", "KI-Apps checkbox + Speichern → switch that saves on flip, asks when turning off", "Verbundene Apps Trennen → confirm", "API-Dokumentation link → header action"], "built": true},
-      "uxNotesDone": [0, 1, 2, 3, 4],
+      "redesign": {
+        "job": "API keys for own tools and whether AI apps may connect.",
+        "phone": "Header: 'API-Dokumentation' action, primary 'Neuer Schlüssel' (?new=key sheet: Name, Läuft ab as segments, Rechte grouped, SaveBar; afterwards the key once with Kopieren). Keys list: name, prefix, 'n Rechte', last used, expires; Widerrufen asks; Segments Aktiv · Alle. RowGroup 'KI-Apps erlauben' switch (turning off asks). Connected apps rows, Trennen asks.",
+        "desktop": "Same.",
+        "moves": [
+          "inline Neuer Schlüssel form → ?new=key sheet",
+          "Läuft ab raw select → Choice (4 segments)",
+          "Rechte column raw keys → 'n Rechte' with the translated list in title",
+          "Widerrufen → confirm (api.confirmRevoke)",
+          "revoked/expired forever → Segments Aktiv (default) · Alle",
+          "KI-Apps checkbox + Speichern → switch that saves on flip, asks when turning off",
+          "Verbundene Apps Trennen → confirm",
+          "API-Dokumentation link → header action"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Badges 'widerrufen'/'abgelaufen' capitalised. Checked: keys table, KI-Apps switch with confirm, connections."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
       "file": "src/app/(app)/settings/api/page.tsx",
       "title": "Einstellungen › API",
       "purpose": "Create and revoke API keys, decide whether AI apps may connect, and see/cut the org's AI app connections.",
@@ -1495,8 +1756,67 @@
         "Revoked/expired keys stay in the list forever, no filter."
       ]
     },
-    {"route": "/settings/notifications", "title": "/settings/notifications", "purpose": "Decide per kind of event how roots tells me (in the app, by email, push).", "redesign": {"job": "Decide per kind of event how roots tells me (in the app, by email, push).", "phone": "Top bar ‹ Einstellungen · Benachrichtigungen. One RowGroup per area (module name), a row per event: label left, under it (wrapping) one small labelled switch per channel; each switch saves on flip. Link 'Zum Posteingang' at the top. Hint when email isn't configured.", "desktop": "Same, channel switches on the right of each row (columns aligned).", "moves": ["new page (was the matrix on Profil) → switches per event × channel, setPreference saves one cell, toast + flip back on error", "prefs.emailOff hint → kept under the groups", "link to /notifications → 'Posteingang öffnen' AddLink-style link in the description"], "built": true}},
-    {"route": "/settings/security", "title": "/settings/security", "purpose": "Keep my account safe: password and passkeys.", "redesign": {"job": "Keep my account safe: password and passkeys.", "phone": "RowGroup Anmeldung: Passwort row (hint 'Mit E-Mail und Passwort anmelden', 'Ändern' → compact sheet), Passkeys section (existing component; remove asks).", "desktop": "Same in the settings column.", "moves": ["Passwort form → ?edit=password compact sheet (new password + repeat, SaveBar 'Passwort ändern')", "Passkeys → kept here (remove confirm added)"], "built": true}},
-    {"route": "/settings/ai", "title": "/settings/ai", "purpose": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.", "redesign": {"job": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.", "phone": "RowGroup 'KI-Assistent (Sprout)': one row per key (logo, provider, hint, model count, ✕ asks) + AddLink 'Schlüssel hinzufügen' → compact sheet ?new=key. 'Mit KI verbinden' card as before. RowGroup 'Meine Verbindungen': rows with 'Trennen' (asks).", "desktop": "Same.", "moves": ["AiKeys → rows + ?new=key sheet (Prüfen & speichern = the sheet's SaveBar)", "ConnectAi → kept", "Connections (mine) → rows, Trennen asks"], "built": true}}
+    {
+      "route": "/settings/notifications",
+      "title": "/settings/notifications",
+      "purpose": "Decide per kind of event how roots tells me (in the app, by email, push).",
+      "redesign": {
+        "job": "Decide per kind of event how roots tells me (in the app, by email, push).",
+        "phone": "Top bar ‹ Einstellungen · Benachrichtigungen. One RowGroup per area (module name), a row per event: label left, under it (wrapping) one small labelled switch per channel; each switch saves on flip. Link 'Zum Posteingang' at the top. Hint when email isn't configured.",
+        "desktop": "Same, channel switches on the right of each row (columns aligned).",
+        "moves": [
+          "new page (was the matrix on Profil) → switches per event × channel, setPreference saves one cell, toast + flip back on error",
+          "prefs.emailOff hint → kept under the groups",
+          "link to /notifications → 'Posteingang öffnen' AddLink-style link in the description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Was unreachable: a stale next.config redirect sent it to Integrationen. Removed; switches save on flip, grouped by module."
+        }
+      }
+    },
+    {
+      "route": "/settings/security",
+      "title": "/settings/security",
+      "purpose": "Keep my account safe: password and passkeys.",
+      "redesign": {
+        "job": "Keep my account safe: password and passkeys.",
+        "phone": "RowGroup Anmeldung: Passwort row (hint 'Mit E-Mail und Passwort anmelden', 'Ändern' → compact sheet), Passkeys section (existing component; remove asks).",
+        "desktop": "Same in the settings column.",
+        "moves": [
+          "Passwort form → ?edit=password compact sheet (new password + repeat, SaveBar 'Passwort ändern')",
+          "Passkeys → kept here (remove confirm added)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Duplicate 'Passwort' heading + row label: heading dropped. Passkeys: the auth server answers 404 for /auth/v1/passkeys (switched off in Supabase), so the list now says 'noch nicht freigeschaltet' and disables the button (§Z). Password sheet: SaveBar full width on phones."
+        }
+      }
+    },
+    {
+      "route": "/settings/ai",
+      "title": "/settings/ai",
+      "purpose": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.",
+      "redesign": {
+        "job": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.",
+        "phone": "RowGroup 'KI-Assistent (Sprout)': one row per key (logo, provider, hint, model count, ✕ asks) + AddLink 'Schlüssel hinzufügen' → compact sheet ?new=key. 'Mit KI verbinden' card as before. RowGroup 'Meine Verbindungen': rows with 'Trennen' (asks).",
+        "desktop": "Same.",
+        "moves": [
+          "AiKeys → rows + ?new=key sheet (Prüfen & speichern = the sheet's SaveBar)",
+          "ConnectAi → kept",
+          "Connections (mine) → rows, Trennen asks"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Ran off the right edge on phones (the long 'claude mcp add' row stretched the grid; the keys' delete buttons and 'Trennen' were off screen): RowGroup and the settings column are minmax(0,1fr) grids now."
+        }
+      }
+    }
   ]
 }

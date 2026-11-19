@@ -171,9 +171,9 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] Y6 Wiki: Teilen popover uses native radios (→ `<Choice>`); "Zuletzt geändert" fixed 15 rows; every page view loads
       the tree (≤ 2000 rows).
 - [ ] Y7 Dateien: folders are free text (a typo makes a new folder), folder chips from the first 2000 files.
-- [ ] Y8 Admin: the org drawer (details, modules, members) could be its own page /admin/orgs/<id>; billing and activity
-      untouched (hand-made stats + paging → `<DetailList>` / `<Pager>`); onboarding doesn't suggest the address from the
-      name and has no way back with ?new=1.
+- [ ] Y8 Admin: the org drawer (details, modules, members) could be its own page /admin/orgs/<id>; activity paging is
+      still hand-made (→ `<Pager>`); onboarding doesn't suggest the address from the name. (Done in the sweep: billing
+      uses `<Stats>`, activity chips scroll, onboarding has a way back with ?new=1 and says Adresse.)
 - [ ] Y9 Start: "Meine Schichten" rows open Schichten › Meine (a shift has no page of its own); "Beiträge überfällig"
       opens Beiträge without an overdue filter (the list has none yet).
 - [ ] Y10 Settings › Bereiche only lists gear pages of nav.ts (Vorlagen, E-Mail-Vorlagen, Website › Marke aren't gear
@@ -190,12 +190,25 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] S6 (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
 - [ ] S7 (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
 - [ ] S8 (Schichten) Team's "Beschäftigung" is the free-text `staff.role_label`, while Personal has `employees.employment_type` for the same person: show the HR type when the person is linked (or drop the free text).
-- [ ] S9 (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
+- [x] S9 (page.tsx: a node primary with an icon is the round button on phones, also kept in ⋯ because a SaveBar hides the round button; one without an icon stays in ⋯) (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
 - [ ] S10 (Projekte) Aufgaben (desktop, grouped by due date): every group is its own table, so the columns don't line up from group to group (one table with group header rows would).
 - [ ] S11 (Projekte) The activity feed's entry for the record's own creation reads just "angelegt" (no subject); "Projekt angelegt" / the record's name would read better.
 - [ ] S12 (Projekte) Timeline: a bar that ends just after the visible start shows only the end of its label (the label sticks inside the bar's visible part, which is short).
 - [ ] S13 (Vermietung) Belegung month view draws open-ended / long contracts as year-long bars (needed in the per-object view); the shared Kalender shows them as key dates only. Same for the month grid here?
 - [ ] S14 (Kurse) Participant rows keep one "Abmelden" button each (now a quiet ghost button); patterns §5 would put it into a row ⋯ on phones.
+- [ ] S15 (Settings) Integrationen: every provider card has its own filled button(s), so the page shows 5+ primaries
+      and SumUp's two buttons share one row on phones; one "Verbinden" per card (outline) + the alternatives in the
+      connect sheet would match patterns §5 (with Y3).
+- [ ] S16 (Settings) Benachrichtigungen groups use the module names from Settings › Module ("Schichtplanung",
+      "Onlineshop", "Ticketing", "Angebote & Rechnungen"), not the sidebar's area words (Schichten, Shop, Events,
+      Finanzen); grouping by nav area (`areaOfModule`) would read like the rest of the App.
+- [ ] S17 (Wiki) Phone page view: the "Seiten" button and the save status take a row each above the title; one row
+      (Seiten left, status right) would bring the content up.
+- [ ] S18 (Automationen) The canvas inspector and test run are still a long single column under the canvas on phones;
+      a step tap could open the inspector as a sheet (like the wiki tree).
+- [ ] S19 (shell) Search placeholder "Kontakte, Events, Rechnungen …" is cut at 390 px; the admin area on phones has no
+      tab bar (sidebar trigger only). Notification titles carry emojis from the message texts (🔑 📋) next to the area
+      tile — two icons per row.
 
 ## Z. To discuss tomorrow
 - **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
@@ -230,3 +243,15 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - Kalender: projects longer than two weeks now show only "Name · Start" / "Name · Ende" (like long-term rentals) instead of a bar across every week; the phone calendar dots entries longer than a week only on their first and last day. OK as the rule (and for Belegung, S13)?
 - `<Timeline>` (projects, tasks) now opens a week before today instead of at the earliest item; month/group names and bar labels stick to the left edge. OK?
 - `<InlineField>`: an empty amount shows "Leer" as text until clicked (was a right-aligned "Leer €" field); ghost inputs no longer show the dark input background. OK for every record page?
+- **Passkeys don't work on the hosted Supabase project:** `GET /auth/v1/passkeys` answers 404 (passkeys switched off
+  in Auth settings), so Settings › Sicherheit could never list or add one. The page now says "noch nicht
+  freigeschaltet" and disables the button. Switch passkeys on in the Supabase dashboard (and add the App's domains as
+  relying parties), or drop the section?
+- Settings redirects: `next.config.ts` still sent `/settings` → Allgemein and `/settings/notifications` →
+  Integrationen (from before the Du / Organisation split), so the phone settings index and the personal notification
+  settings were unreachable. Removed both; `/settings/activity` and `/settings/members` redirects stay. OK?
+- S9 rule: a header primary given as a node (form button) becomes the round button on phones when it has an icon and
+  also stays in the ⋯ sheet (a SaveBar hides the round button, and e.g. invoice drafts show their SaveBar). OK, or
+  only the round button?
+- Tooltips are hidden on touch screens everywhere (`[@media(hover:none)]` in ui/tooltip.tsx), per mobile.md §2. OK?
+- The Menü sheet no longer has a Start tile (Start is the tab bar's first tab and the inbox the row above the tiles).

@@ -386,7 +386,13 @@
     }
   ],
   "shell": {
-    "lastPass": {"moves": ["Neue Organisation for single-org people → Profil › Deine Organisationen AddLink + single-org switcher shows a small menu too", "shortcuts N, /, ⌘K → '?' key opens a 'Tastenkürzel' sheet; user menu item 'Tastenkürzel'", "Einstellungen sidebar → /settings (grouped index on phones); Konto → Profil"]},
+    "lastPass": {
+      "moves": [
+        "Neue Organisation for single-org people → Profil › Deine Organisationen AddLink + single-org switcher shows a small menu too",
+        "shortcuts N, /, ⌘K → '?' key opens a 'Tastenkürzel' sheet; user menu item 'Tastenkürzel'",
+        "Einstellungen sidebar → /settings (grouped index on phones); Konto → Profil"
+      ]
+    },
     "files": [
       "src/components/app-shell.tsx",
       "src/app/(app)/layout.tsx",
@@ -713,7 +719,12 @@
         "Menü tile Benachrichtigungen → first row of the Menü sheet with count; dot on the Menü tab",
         "⌘K CommandDialog (phones) → search ContentSheet",
         "Active tints text-primary/bg-primary in tab bar + Menü sheet → neutral muted"
-      ]
+      ],
+      "sweep": {
+        "done": true,
+        "date": "2026-11-19",
+        "note": "Checked with a one-off Playwright script (Menü sheet + drill-down, search sheet empty + with a query, ⌘K, ⋯ action sheet, a sheet/dialog, ? help, collapsed sidebar, Sprout phone + desktop, offline). Fixed: S9 — a form-button header primary with an icon is the round button on phones (and stays in ⋯ since a SaveBar hides the round button); Menü sheet without the Start tile; search lists records first, pages last with their area tile, member hits 'Nr. 6'; SaveBar inside sheets stacks full width on phones; tooltips hidden on touch screens (Sprout's X kept one open after opening); ⌘B in the help; collapsed sidebar shows an unread dot; offline page has a Neu laden link (works without JS). Left: search placeholder truncates on 390 px ('Kontakte, Events, Rechnungen …'); the admin shell on phones keeps the sidebar trigger instead of the tab bar."
+      }
     }
   }
 }

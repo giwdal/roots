@@ -12,8 +12,31 @@
   "pages": [
     {
       "route": "/automations",
-      "redesign": {"research": "Zapier (Zaps list: on/off toggle per row, last edited, status; Zap history with filter by status; run details show each step's data in/out), Make.com (scenarios with on/off switch, last run, error counts; execution log), n8n (workflows list with active toggle; executions list with status and duration; execution detail = the canvas with each node's input/output). All: the list's toggle switches a flow on (asking only when it starts acting), errors stand out per row, run history per flow, run detail step by step.", "job": "See all automations at a glance: which are on, did they run, did something fail.", "phone": "Rows: name, one muted line trigger · last run; switch on the right (manage only; switching on asks). Failed count as a red badge. Round + Neue Automation. ⋯ Papierkorb.", "desktop": "Table Name (trigger under it) · Letzter Lauf · Fehler · An (switch).", "moves": ["name link inside the row → rowHref (whole row opens the editor)", "Status badge → switch (setActive; turning on asks automations.confirmActivate)", "Durchläufe column → 'Letzter Lauf' (date + status) linking to runs; waiting/failed badges kept", "automations.intro → EmptyState text", "new sheet (templates, blank, import) → kept; import file input stays (file picker is the control)", "new: trash ?trash=1 with Wiederherstellen"], "built": true},
-      "uxNotesDone": [0, 1, 2],
+      "redesign": {
+        "research": "Zapier (Zaps list: on/off toggle per row, last edited, status; Zap history with filter by status; run details show each step's data in/out), Make.com (scenarios with on/off switch, last run, error counts; execution log), n8n (workflows list with active toggle; executions list with status and duration; execution detail = the canvas with each node's input/output). All: the list's toggle switches a flow on (asking only when it starts acting), errors stand out per row, run history per flow, run detail step by step.",
+        "job": "See all automations at a glance: which are on, did they run, did something fail.",
+        "phone": "Rows: name, one muted line trigger · last run; switch on the right (manage only; switching on asks). Failed count as a red badge. Round + Neue Automation. ⋯ Papierkorb.",
+        "desktop": "Table Name (trigger under it) · Letzter Lauf · Fehler · An (switch).",
+        "moves": [
+          "name link inside the row → rowHref (whole row opens the editor)",
+          "Status badge → switch (setActive; turning on asks automations.confirmActivate)",
+          "Durchläufe column → 'Letzter Lauf' (date + status) linking to runs; waiting/failed badges kept",
+          "automations.intro → EmptyState text",
+          "new sheet (templates, blank, import) → kept; import file input stays (file picker is the control)",
+          "new: trash ?trash=1 with Wiederherstellen"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards showed date, 'fertig', '1 Fehler', '1 wartend' scattered over two lines: one short line now (a problem badge first, else the last run's date). Run states and Aktiv · Pausiert capitalised."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ],
       "file": "src/app/(app)/automations/page.tsx",
       "title": "Automationen",
       "purpose": "List workflows with trigger, on/off and run counts; create one blank, from a template or by importing JSON.",
@@ -109,8 +132,29 @@
     },
     {
       "route": "/automations/[id]",
-      "redesign": {"job": "Build the flow on the canvas, test it, switch it on.", "phone": "View + switch only (canvas read-only on phones); header switch/primary.", "desktop": "Header: name + badge, actions Durchläufe; ⋯ In den Papierkorb. Editor toolbar: Aufräumen, Testlauf, Exportieren, Speichern and an 'Aktiv' switch (asks before switching on and saves what is on screen first); leaving with unsaved changes asks.", "moves": ["Speichern → kept in the toolbar (canvas = one form), plus a beforeunload / link-leave guard while dirty", "Aktivieren / Deaktivieren (header form button) → 'Aktiv' switch in the editor toolbar: asks (automations.confirmActivate), saves unsaved changes first", "NativeSelects with 200 records → kept for now (backlog Y4: RecordPicker inside the canvas inspector needs client search actions per ref)", "In den Papierkorb → kept in ⋯"], "built": true},
-      "uxNotesDone": [0, 1, 2, 5],
+      "redesign": {
+        "job": "Build the flow on the canvas, test it, switch it on.",
+        "phone": "View + switch only (canvas read-only on phones); header switch/primary.",
+        "desktop": "Header: name + badge, actions Durchläufe; ⋯ In den Papierkorb. Editor toolbar: Aufräumen, Testlauf, Exportieren, Speichern and an 'Aktiv' switch (asks before switching on and saves what is on screen first); leaving with unsaved changes asks.",
+        "moves": [
+          "Speichern → kept in the toolbar (canvas = one form), plus a beforeunload / link-leave guard while dirty",
+          "Aktivieren / Deaktivieren (header form button) → 'Aktiv' switch in the editor toolbar: asks (automations.confirmActivate), saves unsaved changes first",
+          "NativeSelects with 200 records → kept for now (backlog Y4: RecordPicker inside the canvas inspector needs client search actions per ref)",
+          "In den Papierkorb → kept in ⋯"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Name showed twice (page title + name field): titleHidden. Canvas controls and mini map were white in dark mode: flow.css maps xyflow's variables to our tokens. Below lg the palette is one 'Schritt hinzufügen' menu (action sheet on phones) instead of a long list above the canvas; on phones Aufräumen + Exportieren live in a ⋯, Aktiv shows as the switch only. Wait steps say '1 Stunde' (plurals)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        5
+      ],
       "file": "src/app/(app)/automations/[id]/page.tsx",
       "title": "<Workflow name>",
       "purpose": "Build the workflow on a canvas (trigger → steps), configure each step, test run against real data, save, export, activate/deactivate, trash.",
@@ -278,8 +322,26 @@
     },
     {
       "route": "/automations/[id]/runs",
-      "redesign": {"job": "History of one automation: who, when, how it went.", "phone": "Segments Alle · Wartet · Fehler · Erledigt · Abgebrochen; rows: time, person, status badge; tap → run page.", "desktop": "Table; row opens the run page.", "moves": ["steps <details> → run page /automations/[id]/runs/[run] with each step", "Abbrechen → confirm (automations.confirmCancel), also on the run page", "status badges → success/warning/destructive/info"], "built": true},
-      "uxNotesDone": [0, 1],
+      "redesign": {
+        "job": "History of one automation: who, when, how it went.",
+        "phone": "Segments Alle · Wartet · Fehler · Erledigt · Abgebrochen; rows: time, person, status badge; tap → run page.",
+        "desktop": "Table; row opens the run page.",
+        "moves": [
+          "steps <details> → run page /automations/[id]/runs/[run] with each step",
+          "Abbrechen → confirm (automations.confirmCancel), also on the run page",
+          "status badges → success/warning/destructive/info"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked with demo runs: status badges (now capitalised), filter. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
       "file": "src/app/(app)/automations/[id]/runs/page.tsx",
       "title": "Durchläufe",
       "purpose": "See every run of a workflow, its person, status and step log; cancel waiting runs.",
@@ -341,6 +403,24 @@
         "Cancel has no confirm; no bulk cancel."
       ]
     },
-    {"route": "/automations/[id]/runs/[run]", "title": "/automations/[id]/runs/[run]", "purpose": "What exactly happened in one run, step by step.", "redesign": {"job": "What exactly happened in one run, step by step.", "phone": "Header: time + status badge, meta person · trigger; primary Abbrechen while waiting (asks). DetailList (Gestartet, Person, Status, Wartet bis, Fehler). Steps as a vertical list: ✓/✕ icon · step name (node label from the graph) · time · note.", "desktop": "Same, max-w-3xl.", "moves": ["new page"], "built": true}}
+    {
+      "route": "/automations/[id]/runs/[run]",
+      "title": "/automations/[id]/runs/[run]",
+      "purpose": "What exactly happened in one run, step by step.",
+      "redesign": {
+        "job": "What exactly happened in one run, step by step.",
+        "phone": "Header: time + status badge, meta person · trigger; primary Abbrechen while waiting (asks). DetailList (Gestartet, Person, Status, Wartet bis, Fehler). Steps as a vertical list: ✓/✕ icon · step name (node label from the graph) · time · note.",
+        "desktop": "Same, max-w-3xl.",
+        "moves": [
+          "new page"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked failed run: step list with the error. Its 'Abbrechen' primary (waiting runs) becomes the round button via S9."
+        }
+      }
+    }
   ]
 }

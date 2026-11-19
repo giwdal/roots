@@ -140,7 +140,8 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
             cell: (o) => (
               <span className="grid">
                 <span className="font-medium">{o.name}</span>
-                <span className="text-xs text-muted-foreground">
+                {/* Phones: the name only — status, who and price carry the row there. */}
+                <span className="text-xs text-muted-foreground max-md:hidden">
                   {kindLabel(t, o.kind)}
                   {o.parent_id && nameOf(o.parent_id) && ` · ${nameOf(o.parent_id)}`}
                 </span>
@@ -203,12 +204,22 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
               if (b?.price_cents != null)
                 return (
                   <span className="grid justify-items-end">
-                    <span>{`${t.money(b.price_cents)}${b.unit ? ` ${t.dynamic(`rentals.units.${b.unit}`)}` : ""}`}</span>
-                    {b.deposit_cents ? <span className="text-xs text-muted-foreground">{t("rentals.depositShort", { amount: t.money(b.deposit_cents) })}</span> : null}
+                    <span>
+                      {t.money(b.price_cents)}
+                      {b.unit && <span className="max-md:block max-md:text-xs max-md:text-muted-foreground"> {t.dynamic(`rentals.units.${b.unit}`)}</span>}
+                    </span>
+                    {b.deposit_cents ? <span className="text-xs text-muted-foreground max-md:hidden">{t("rentals.depositShort", { amount: t.money(b.deposit_cents) })}</span> : null}
                   </span>
                 )
               const r = (rates ?? []).find((x) => x.object_id === o.id)
-              return r ? <span className="text-muted-foreground">{`${t.money(r.price_cents)} ${t.dynamic(`rentals.units.${r.unit}`)}`}</span> : ""
+              return r ? (
+                <span className="text-muted-foreground">
+                  {t.money(r.price_cents)}
+                  <span className="max-md:block max-md:text-xs"> {t.dynamic(`rentals.units.${r.unit}`)}</span>
+                </span>
+              ) : (
+                ""
+              )
             },
             className: "whitespace-nowrap text-right tabular-nums",
           },

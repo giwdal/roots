@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react"
 import { CheckIcon, ChevronDownIcon, GlobeIcon, IdCardIcon, LinkIcon, LockIcon, Share2Icon, UsersIcon } from "lucide-react"
-import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -51,8 +50,12 @@ export function ShareButton({
   const form = useRef<HTMLFormElement>(null)
   const pick = (v: string) => {
     setChoice(v)
-    // A choice takes effect at once; "Nur bestimmte Rollen" waits for the roles to be ticked.
+    // A choice takes effect at once; "Nur bestimmte Rollen" waits for the first role to be ticked.
     if (v !== "roles") setTimeout(() => form.current?.requestSubmit())
+  }
+  // Ticking a role saves too (once at least one role is ticked), like every other choice here.
+  const roleChanged = () => {
+    if (form.current?.querySelector("input[name=role_ids]:checked")) form.current.requestSubmit()
   }
   const ChoiceIcon = { roles: LockIcon, members: IdCardIcon, public: GlobeIcon, team: UsersIcon }[choice || inherited.visibility] ?? UsersIcon
   const current = options.find((o) => o.value === choice)
@@ -101,15 +104,10 @@ export function ShareButton({
               <legend className="sr-only">{t("wiki.share.roles")}</legend>
               {roles.map((r) => (
                 <label key={r.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="role_ids" value={r.id} defaultChecked={roleIds.includes(r.id)} className="size-4 accent-primary" />
+                  <input type="checkbox" name="role_ids" value={r.id} defaultChecked={roleIds.includes(r.id)} onChange={roleChanged} className="size-4 accent-primary" />
                   {r.label}
                 </label>
               ))}
-              {canManage && (
-                <SubmitButton size="sm" className="justify-self-end">
-                  {t("common.save")}
-                </SubmitButton>
-              )}
             </fieldset>
           )}
         </form>

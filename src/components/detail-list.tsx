@@ -18,7 +18,7 @@ export function DetailList({ items, className, phoneLimit }: { items: (DetailIte
       </div>
     )
   return (
-    <dl className={cn("grid gap-y-3 text-sm sm:grid-cols-[minmax(7rem,max-content)_minmax(0,1fr)] sm:gap-x-6 sm:gap-y-2", className)}>
+    <dl className={cn("grid gap-y-3 text-sm sm:grid-cols-[minmax(7rem,max-content)_minmax(0,1fr)] sm:items-baseline sm:gap-x-6 sm:gap-y-2", className)}>
       {items.map((item, i) =>
         item ? (
           <div key={i} className="contents">

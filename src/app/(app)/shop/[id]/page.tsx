@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArchiveIcon, CheckCircle2Icon, CircleIcon, ExternalLinkIcon, EyeOffIcon, ReceiptIcon, RefreshCwIcon, RotateCcwIcon, SendIcon, StarIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckCircle2Icon, CircleIcon, ExternalLinkIcon, EyeOffIcon, ReceiptIcon, RefreshCwIcon, RotateCcwIcon, SendIcon, SlidersHorizontalIcon, StarIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { FileList } from "@/components/file-list"
 import { MultiSelect } from "@/components/multi-select"
@@ -271,8 +271,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 title={variants?.length ? <TitleTip tip={t("store.variantsHint")}>{t("store.variants")}</TitleTip> : t("store.stockTitle")}
                 action={
                   canManage && (
-                    <Button render={<Link href={`${here}?edit=options`} scroll={false} />} nativeButton={false} size="sm" variant="ghost">
-                      {t("store.options")}
+                    <Button render={<Link href={`${here}?edit=options`} scroll={false} />} nativeButton={false} size="sm" variant="outline">
+                      <SlidersHorizontalIcon /> {t("store.options")}
                     </Button>
                   )
                 }
@@ -318,9 +318,9 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 </Section>
               )}
               <MoreDetails label={t("common.moreDetails")} open={moreSet(p)}>
-                <Section id="more" title={t("store.moreTitle")}>
+                <div id="more">
                   <MoreFields t={t} p={p} disabled={!canManage} />
-                </Section>
+                </div>
               </MoreDetails>
               {canManage && <SaveBar />}
             </form>

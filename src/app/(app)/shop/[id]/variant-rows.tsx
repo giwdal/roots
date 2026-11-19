@@ -24,7 +24,7 @@ export function VariantRows({ initial, placeholderPrice, images, canAdd, disable
   // The SaveBar listens for change events inside the form: adding or removing a row is a change too.
   const changed = () => requestAnimationFrame(() => box.current?.dispatchEvent(new Event("change", { bubbles: true })))
   const check = (name: string, on: boolean, label: string) => (
-    <label className="flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground @xl:justify-center">
+    <label className="flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground @xl:h-(--control) @xl:justify-center">
       <input type="checkbox" name={name} value="1" defaultChecked={on} disabled={disabled} className="size-4 accent-primary" />
       <span className="@xl:sr-only">{label}</span>
     </label>
@@ -35,14 +35,14 @@ export function VariantRows({ initial, placeholderPrice, images, canAdd, disable
     <div ref={box} className="@container grid gap-2">
       <input type="hidden" name="variants_present" value="1" />
       {rows.length > 0 && (
-        <div className="hidden grid-cols-[minmax(8rem,1fr)_6.5rem_5rem_2.5rem_3.5rem_3.5rem_3.5rem_2rem] items-end gap-2 px-2 text-xs text-muted-foreground @xl:grid">
+        <div className="hidden grid-cols-[minmax(6rem,1fr)_6.5rem_4.5rem_2.75rem_3.5rem_3.5rem_3.5rem_2.25rem] items-end gap-2 px-2 text-xs text-muted-foreground @xl:grid">
           <span>{t("store.variantName")}</span>
           <span>{t("store.price")}</span>
           <span>{t("store.stock")}</span>
-          <span className="sr-only">{t("store.variantImage")}</span>
-          <span className="text-center leading-tight break-words hyphens-auto">{t("store.variantActive")}</span>
-          <span className="text-center leading-tight break-words hyphens-auto">{t("store.variantDigital")}</span>
-          <span className="text-center leading-tight break-words hyphens-auto" title={t("store.nameYourPriceHint")}>
+          <span />
+          <span className="text-center leading-tight text-balance">{t("store.variantActive")}</span>
+          <span className="text-center leading-tight text-balance">{t("store.variantDigital")}</span>
+          <span className="text-center leading-tight text-balance" title={t("store.nameYourPriceHint")}>
             {t("store.variantNyp")}
           </span>
           <span />
@@ -51,7 +51,7 @@ export function VariantRows({ initial, placeholderPrice, images, canAdd, disable
       {rows.map((r) => {
         const f = (k: string) => `${k}_${r.key}`
         return (
-          <div key={r.key} className="grid grid-cols-2 items-center gap-2 rounded-lg border p-3 @xl:grid-cols-[minmax(8rem,1fr)_6.5rem_5rem_2.5rem_3.5rem_3.5rem_3.5rem_2rem] @xl:rounded-none @xl:border-0 @xl:border-t @xl:px-2 @xl:py-1.5">
+          <div key={r.key} className="grid grid-cols-2 items-center gap-2 rounded-lg border p-3 @xl:grid-cols-[minmax(6rem,1fr)_6.5rem_4.5rem_2.75rem_3.5rem_3.5rem_3.5rem_2.25rem] @xl:items-start @xl:rounded-none @xl:border-0 @xl:border-t @xl:px-2 @xl:py-1.5">
             <input type="hidden" name="variant_key" value={r.key} />
             <input type="hidden" name={f("has_active")} value="1" />
             <input type="hidden" name={f("has_nyp")} value="1" />
@@ -88,7 +88,7 @@ export function VariantRows({ initial, placeholderPrice, images, canAdd, disable
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  className="ml-auto @xl:ml-0"
+                  className="ml-auto @xl:mt-1 @xl:ml-0"
                   aria-label={t("store.deleteVariant")}
                   title={t("store.deleteVariant")}
                   data-confirm={r.id.startsWith("n") ? undefined : "store.confirmDeleteVariant"}

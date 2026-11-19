@@ -5,6 +5,7 @@ import { FormCard } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { SaveBar } from "@/components/save-bar"
 import { MoreDetails } from "@/components/section"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -73,40 +74,37 @@ export function StockField({ t, p, disabled }: { t: T; p?: P; disabled?: boolean
 
 /** The rarely needed rest, behind "Mehr Angaben": release date, max per order, category, address, video. */
 export function MoreFields({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+  // One two-column grid (phones: one column), the video link across both.
   return (
-    <>
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="grid content-start gap-2">
-          <TipLabel htmlFor="p-release" tip={t("store.releaseHint")}>
-            {t("store.releaseOn")}
-          </TipLabel>
-          <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
-        </div>
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
-          <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} defaultValue={p?.max_per_order ?? 10} disabled={disabled} />
-        </div>
+    <div className="grid max-w-xl gap-4 sm:grid-cols-2">
+      <div className="grid content-start gap-2">
+        <TipLabel htmlFor="p-release" tip={t("store.releaseHint")}>
+          {t("store.releaseOn")}
+        </TipLabel>
+        <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
       </div>
-      <div className="grid max-w-xl gap-4 sm:grid-cols-2">
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-category">{t("store.category")}</Label>
-          <Input id="p-category" name="category" maxLength={60} defaultValue={p?.category ?? ""} disabled={disabled} placeholder={t("store.categoryPlaceholder")} />
-        </div>
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-slug">{t("store.slug")}</Label>
-          <div className="flex items-center gap-1">
-            <span className="text-sm text-muted-foreground">/shop/</span>
-            <Input id="p-slug" name="slug" maxLength={80} defaultValue={p?.slug ?? ""} disabled={disabled} placeholder={t("store.slugPlaceholder")} />
-          </div>
-        </div>
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
+        <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} defaultValue={p?.max_per_order ?? 10} disabled={disabled} />
       </div>
-      <div className="grid gap-2">
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-category">{t("store.category")}</Label>
+        <Input id="p-category" name="category" maxLength={60} defaultValue={p?.category ?? ""} disabled={disabled} placeholder={t("store.categoryPlaceholder")} />
+      </div>
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-slug">{t("store.slug")}</Label>
+        <InputGroup>
+          <InputGroupAddon>/shop/</InputGroupAddon>
+          <InputGroupInput id="p-slug" name="slug" maxLength={80} defaultValue={p?.slug ?? ""} disabled={disabled} placeholder={t("store.slugPlaceholder")} className="pl-0.5" />
+        </InputGroup>
+      </div>
+      <div className="grid content-start gap-2 sm:col-span-2">
         <TipLabel htmlFor="p-video" tip={t("store.videoHint")}>
           {t("store.video")}
         </TipLabel>
         <TypedInput kind="url" id="p-video" name="video_url" defaultValue={p?.video_url ?? ""} disabled={disabled} placeholder="https://youtube.com/watch?v=…" />
       </div>
-    </>
+    </div>
   )
 }
 

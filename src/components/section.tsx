@@ -66,11 +66,11 @@ export function SettingRow({ label, hint, info, htmlFor, children }: { label: Re
 /** "Mehr Angaben": rarely needed fields folded away (still posted with the form). `open` when one of them has a value. */
 export function MoreDetails({ label, open, children }: { label: React.ReactNode; open?: boolean; children: React.ReactNode }) {
   return (
-    <details className="group grid gap-6" open={open}>
+    <details className="group" open={open}>
       <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
         <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {label}
       </summary>
-      <div className="mt-6 grid gap-6">{children}</div>
+      <div className="mt-4 grid gap-6">{children}</div>
     </details>
   )
 }

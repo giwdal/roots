@@ -386,8 +386,9 @@ function DueRow({ t, d, now, here, canManage }: { t: T; d: Due; now: string; her
   const isOpen = d.status === "open"
   const remind = isOpen && isOverdueDue(d, now) && !d.run_id
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 text-sm">
-      <span className="grid min-w-0 flex-1 basis-40">
+    // One row everywhere: what + when left, amount over the status right, the actions at the end (no wrapping on phones).
+    <li className="flex items-center gap-3 px-3 py-2.5 text-sm">
+      <span className="grid min-w-0 flex-1">
         <span className="truncate font-medium">{d.description}</span>
         <span className="truncate text-xs text-muted-foreground">
           {[
@@ -399,17 +400,19 @@ function DueRow({ t, d, now, here, canManage }: { t: T; d: Due; now: string; her
             .join(" · ")}
         </span>
       </span>
-      <span className="font-medium tabular-nums">{t.money(d.amount_cents)}</span>
-      <DueBadge t={t} d={d} now={now} />
+      <span className="grid shrink-0 justify-items-end gap-0.5 md:flex md:items-center md:gap-3">
+        <span className="font-medium tabular-nums">{t.money(d.amount_cents)}</span>
+        <DueBadge t={t} d={d} now={now} />
+      </span>
       {canManage && (
-        <span className="ml-auto flex items-center gap-1">
+        <span className="flex shrink-0 items-center gap-1">
           {isOpen && !d.run_id && (
             <form action={setDueStatus}>
               <input type="hidden" name="id" value={d.id} />
               <input type="hidden" name="status" value="paid" />
               <input type="hidden" name="back" value={here} />
               <SubmitButton size="sm" variant="outline" data-confirm="membership.confirmPaid" data-confirm-amount={t.money(d.amount_cents)}>
-                <CheckIcon /> {t("membership.markPaid")}
+                <CheckIcon /> <span className="max-md:sr-only">{t("membership.markPaid")}</span>
               </SubmitButton>
             </form>
           )}

@@ -13,6 +13,7 @@ import {
   PencilIcon,
   PhoneIcon,
   ReceiptTextIcon,
+  TagIcon,
   ShoppingBagIcon,
   TicketIcon,
   Trash2Icon,
@@ -208,10 +209,12 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             <>
               {c.company && name !== c.company && <span>{c.company}</span>}
               {current && <span>{t("contacts.memberSince", { date: day(current.starts_on) })}</span>}
+              {/* Tags with the tag icon, so they read as tags (not as a status next to the name). */}
               {c.tags.map((tg) => (
-                <Badge key={tg} variant="outline">
+                <span key={tg} className="inline-flex items-center gap-1">
+                  <TagIcon className="size-3.5" aria-hidden />
                   {tg}
-                </Badge>
+                </span>
               ))}
             </>
           ) : null
@@ -323,7 +326,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                           </NativeSelectOption>
                         ))}
                       </NativeSelect>
-                      <SubmitButton size="sm" variant="outline">
+                      <SubmitButton variant="outline">
                         {t("contacts.team.link")}
                       </SubmitButton>
                     </form>
@@ -690,7 +693,7 @@ async function Timeline({
         <form action={addNote} className="grid gap-2">
           <input type="hidden" name="id" value={c.id} />
           <Textarea name="body" required maxLength={10000} rows={3} placeholder={t("contacts.notePlaceholder")} aria-label={t("contacts.notePlaceholder")} />
-          <SubmitButton size="sm" variant="outline" className="justify-self-start">
+          <SubmitButton variant="outline" className="justify-self-end">
             {t("contacts.addNote")}
           </SubmitButton>
         </form>

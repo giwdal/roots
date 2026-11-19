@@ -3195,8 +3195,8 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "remove": "Remove",
-    "label": "Label (optional)",
-    "help": "Hint (optional)",
+    "label": "Label",
+    "help": "Hint",
     "consentText": "Consent text",
     "textBody": "Text",
     "required": "Required",
@@ -4571,6 +4571,8 @@
     "tooManyDates": "That would be over 200 dates – please shorten the period."
   },
   "automations": {
+    "deleteShort": "Goes to the trash; money is never deleted.",
+    "valuesShort": "Values can calculate, e.g. {x}+1 or today+6m.",
     "nav": "Automations",
     "title": "Automations",
     "intro": "When something happens, roots does the rest: check conditions, wait, send emails, set tags, tell the team.",

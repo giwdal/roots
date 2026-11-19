@@ -3195,8 +3195,8 @@
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
     "remove": "Entfernen",
-    "label": "Beschriftung (optional)",
-    "help": "Hinweis (optional)",
+    "label": "Beschriftung",
+    "help": "Hinweis",
     "consentText": "Text der Einwilligung",
     "textBody": "Text",
     "required": "Pflichtfeld",
@@ -4571,6 +4571,8 @@
     "tooManyDates": "Das wären über 200 Termine – bitte den Zeitraum verkürzen."
   },
   "automations": {
+    "deleteShort": "Kommt in den Papierkorb; Geld wird nie gelöscht.",
+    "valuesShort": "Werte können rechnen, z. B. {x}+1 oder today+6m.",
     "nav": "Automationen",
     "title": "Automationen",
     "intro": "Wenn etwas passiert, erledigt roots den Rest: Bedingungen prüfen, warten, E-Mails senden, Tags setzen, das Team informieren.",

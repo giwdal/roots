@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { InfoTip } from "@/components/info-tip"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { ContentSheet, ContentSheetTitle } from "@/components/content-sheet"
 import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
@@ -877,7 +878,11 @@ function Inspector({
       )}
       {(type === "add_tag" || type === "remove_tag") && <TagPick value={String(d.tag ?? "")} tags={options.tags} creatable={type === "add_tag"} disabled={!canEdit} onChange={(tag) => onChange({ tag })} />}
       {type === "set_field" && <SetField d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
-      {(type === "set_field" || type === "create_record") && <p className="text-xs text-muted-foreground">{t("automations.valuesHint")}</p>}
+      {(type === "set_field" || type === "create_record") && (
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          {t("automations.valuesShort")} <InfoTip label={t("automations.valuesShort")}>{t("automations.valuesHint")}</InfoTip>
+        </p>
+      )}
       {type === "delete_record" && (
         <div className="grid gap-2">
           <NativeSelect value={String(d.object ?? "")} disabled={!canEdit} aria-label={t("automations.object")} className="w-full" onChange={(e) => onChange({ object: e.target.value })}>
@@ -888,7 +893,9 @@ function Inspector({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          <p className="text-xs text-muted-foreground">{t("automations.deleteHint")}</p>
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            {t("automations.deleteShort")} <InfoTip>{t("automations.deleteHint")}</InfoTip>
+          </p>
         </div>
       )}
       {type === "create_record" && <CreateRecord d={d} options={options} trigger={trigger} canEdit={canEdit} onChange={onChange} />}

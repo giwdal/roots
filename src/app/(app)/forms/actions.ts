@@ -44,12 +44,13 @@ export async function saveForm(fd: FormData) {
   const title = str(fd, "title", 200)
   const slug = slugify(str(fd, "slug", 80) ?? "")
   if (!title || !slug) back(here, { error: t("forms.titleRequired") })
-  const { data: form } = await ctx.supabase.from("forms").select("purpose").eq("id", id).eq("org_id", ctx.org.id).is("deleted_at", null).maybeSingle()
+  const { data: form } = await ctx.supabase.from("forms").select("purpose, status").eq("id", id).eq("org_id", ctx.org.id).is("deleted_at", null).maybeSingle()
   if (!form) back(PATH, { error: t("errors.not_allowed") })
   const elements = readElements(String(fd.get("elements") ?? ""))
   const custom = (await loadFields(ctx.supabase, ctx.org.id, "contacts")).map((d) => d.key)
   if (!elements || checkElements(elements, form.purpose as Purpose, custom)) back(here, { error: t("forms.elementsInvalid") })
-  const status = fd.get("publish") ? "published" : ((["draft", "published", "closed"] as const).find((s) => s === fd.get("status")) ?? "draft")
+  // The status changes through the header's actions (Veröffentlichen, ⋯ Schließen, Wieder öffnen), not the settings.
+  const status = fd.get("publish") ? "published" : form.status
   const { error } = await ctx.supabase
     .from("forms")
     .update({
@@ -66,6 +67,17 @@ export async function saveForm(fd: FormData) {
   if (error) back(here, { error: error.code === "23505" ? t("errors.slug_taken") : dbError(t, error) })
   refreshPublic(ctx.org.id) // public pages show this
   back(here, { ok: t(fd.get("publish") ? "forms.published" : "forms.saved") })
+}
+
+/** Header actions of a live or closed form: close it (the public page says so) or open it again. */
+export async function setFormStatus(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = str(fd, "id", 36) ?? ""
+  const status = fd.get("status") === "closed" ? "closed" : "published"
+  const { error } = await ctx.supabase.from("forms").update({ status }).eq("id", id).eq("org_id", ctx.org.id).is("deleted_at", null)
+  if (error) back(`${PATH}/${id}`, { error: dbError(t, error) })
+  refreshPublic(ctx.org.id) // public pages show this
+  back(`${PATH}/${id}`, { ok: t(status === "closed" ? "forms.formClosed" : "forms.formReopened") })
 }
 
 export async function trashForm(fd: FormData) {

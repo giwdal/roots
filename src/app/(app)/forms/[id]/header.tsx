@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { SendIcon, Trash2Icon } from "lucide-react"
+import { CircleSlashIcon, RotateCcwIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuExport, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { CopyButton } from "@/components/copy-button"
 import { PageHeader } from "@/components/page"
@@ -8,13 +8,14 @@ import { SubmitButton } from "@/components/submit-button"
 import { getT } from "@/i18n/server"
 import type { requirePerm } from "@/lib/context"
 import { siteUrl } from "@/lib/url"
-import { trashForm } from "../actions"
+import { setFormStatus, trashForm } from "../actions"
 import { FormBadge } from "../badges"
 
 /**
  * Header of a form's two sub-views (Aufbau · Einsendungen as <Segments>): status, purpose and the public link with a
- * copy button; ⋯ = export submissions, trash (asks first). A draft's next step "Veröffentlichen"
- * saves the builder form and publishes it. Returns the form row for the page.
+ * copy button; ⋯ = close a live form (asks first), export submissions, trash (asks first). The status changes here:
+ * a draft's next step "Veröffentlichen" saves the builder form and publishes it, a closed form's is "Wieder öffnen".
+ * Returns the form row for the page.
  */
 export async function formHeader(ctx: Awaited<ReturnType<typeof requirePerm>>, id: string, view: "builder" | "submissions") {
   const t = await getT()
@@ -50,6 +51,11 @@ export async function formHeader(ctx: Awaited<ReturnType<typeof requirePerm>>, i
         }
         menu={
           <ActionsMenu>
+            {canManage && live && (
+              <MenuSubmit form="close-form" icon={<CircleSlashIcon />} confirm="forms.confirmClose">
+                {t("forms.closeForm")}
+              </MenuSubmit>
+            )}
             <MenuExport entity="submissions" query={{ form: id }} label={t("forms.exportSubmissions")} />
             {canManage && (
               <>
@@ -66,13 +72,23 @@ export async function formHeader(ctx: Awaited<ReturnType<typeof requirePerm>>, i
             <SubmitButton size="sm" form="form-builder" name="publish" value="1">
               <SendIcon /> {t("forms.publish")}
             </SubmitButton>
+          ) : canManage && form.status === "closed" ? (
+            <SubmitButton size="sm" form="reopen-form">
+              <RotateCcwIcon /> {t("forms.reopenForm")}
+            </SubmitButton>
           ) : undefined
         }
       />
       {canManage && (
-        <form id="trash-form" action={trashForm} hidden>
-          <input type="hidden" name="id" value={form.id} />
-        </form>
+        <>
+          <form id="trash-form" action={trashForm} hidden>
+            <input type="hidden" name="id" value={form.id} />
+          </form>
+          <form id={live ? "close-form" : "reopen-form"} action={setFormStatus} hidden>
+            <input type="hidden" name="id" value={form.id} />
+            <input type="hidden" name="status" value={live ? "closed" : "published"} />
+          </form>
+        </>
       )}
       <Segments
         label={form.title}

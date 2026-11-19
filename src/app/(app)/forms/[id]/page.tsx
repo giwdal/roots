@@ -1,4 +1,3 @@
-import { Choice } from "@/components/choice"
 import { FormCard, RecordLayout } from "@/components/page"
 import { Notice } from "@/components/notice"
 import { SaveBar } from "@/components/save-bar"
@@ -53,10 +52,6 @@ export default async function FormBuilderPage({ params, searchParams }: PageProp
                     {urlPrefix}
                     {form.slug}
                   </p>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="s-status">{t("forms.status")}</Label>
-                  <Choice id="s-status" name="status" label={t("forms.status")} className="grid w-full grid-cols-3 [&>label]:justify-center [&>label]:px-1" required disabled={!canManage} defaultValue={form.status} options={(["draft", "published", "closed"] as const).map((x) => ({ value: x, label: t(`forms.statuses.${x}`) }))} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="s-intro">{t("forms.intro")}</Label>

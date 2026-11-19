@@ -3112,6 +3112,12 @@
     "createType": "Create membership type"
   },
   "forms": {
+    "closeForm": "Close",
+    "reopenForm": "Reopen",
+    "formClosed": "Form closed.",
+    "formReopened": "Form reopened.",
+    "confirmClose": "Close the form?",
+    "confirmCloseHint": "The public page stops taking submissions. You can reopen it at any time.",
     "nav": "Forms",
     "title": "Forms",
     "new": "New form",

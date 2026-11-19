@@ -3112,6 +3112,12 @@
     "createType": "Mitgliedsart anlegen"
   },
   "forms": {
+    "closeForm": "Schließen",
+    "reopenForm": "Wieder öffnen",
+    "formClosed": "Formular geschlossen.",
+    "formReopened": "Formular wieder geöffnet.",
+    "confirmClose": "Formular schließen?",
+    "confirmCloseHint": "Die öffentliche Seite nimmt dann keine Einsendungen mehr an. Du kannst es jederzeit wieder öffnen.",
     "nav": "Formulare",
     "title": "Formulare",
     "new": "Neues Formular",

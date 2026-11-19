@@ -30,13 +30,15 @@ export function AddLink({ href, children }: { href: string; children: React.Reac
 }
 
 /** A settings group (docs/design/patterns.md §2): small heading, then a rounded box of rows. */
-export function RowGroup({ id, title, description, children }: { id?: string; title: React.ReactNode; description?: React.ReactNode; children: React.ReactNode }) {
+export function RowGroup({ id, title, description, children }: { id?: string; title?: React.ReactNode; description?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section id={id} className="grid scroll-mt-20 gap-2">
-      <div className="grid gap-0.5 px-1">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      </div>
+    <section id={id} className="grid scroll-mt-20 grid-cols-[minmax(0,1fr)] gap-2">
+      {(title || description) && (
+        <div className="grid gap-0.5 px-1">
+          {title && <h3 className="text-sm font-medium">{title}</h3>}
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+      )}
       <div className="divide-y rounded-xl border">{children}</div>
     </section>
   )

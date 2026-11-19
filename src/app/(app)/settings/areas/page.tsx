@@ -17,14 +17,10 @@ export default async function AreaSettings() {
           rows={areas.map((a) => ({
             key: a.href,
             href: a.href,
-            title: (
-              <span className="flex items-center gap-3">
-                <AreaIcon area={a.key} icon={a.icon} />
-                {t.dynamic(a.label)}
-              </span>
-            ),
-            // An area with more than one page under its gear (Schichten: Einstellungen, Team) names the page.
-            detail: a.page !== "common.settings" ? t.dynamic(a.page) : undefined,
+            lead: <AreaIcon area={a.key} icon={a.icon} />,
+            title: t.dynamic(a.label),
+            // An area with more than one page under its gear (Schichten: Einstellungen, Team) names each page.
+            detail: areas.filter((b) => b.key === a.key).length > 1 || a.page !== "common.settings" ? t.dynamic(a.page) : undefined,
           }))}
         />
       ) : (

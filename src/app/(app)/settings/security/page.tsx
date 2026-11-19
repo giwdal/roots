@@ -17,7 +17,7 @@ export default async function SecuritySettings({ searchParams }: PageProps<"/set
   return (
     <div className="grid gap-8">
       <Notice error={changing ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
-      <RowGroup id="password" title={t("account.password")}>
+      <RowGroup id="password">
         <SettingRow label={t("account.password")} hint={t("account.passwordHint")}>
           <Button render={<Link href="/settings/security?edit=password" scroll={false} />} nativeButton={false} size="sm" variant="outline">
             {t("account.changePassword")}

@@ -36,7 +36,7 @@ export default async function RolesSettings({ searchParams }: PageProps<"/settin
         columns={[
           { header: t("roles.name"), cell: (r) => <span className="font-medium">{t.pick(r.name)}</span> },
           { header: t("roles.permissions"), cell: (r) => roleSummary(t, r) },
-          { header: t("roles.members"), cell: (r) => memberCount(r.id), className: "tabular-nums text-right" },
+          { header: t("roles.members"), cell: (r) => t("roles.people", { count: memberCount(r.id) }), className: "tabular-nums text-right" },
         ]}
       />
 

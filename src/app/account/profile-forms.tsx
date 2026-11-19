@@ -19,7 +19,7 @@ export async function ProfileRows({ path }: { path: "/settings/profile" | "/acco
   const t = await getT()
   const { data: profile } = await session.supabase.from("profiles").select("full_name, avatar_path").eq("id", session.userId).maybeSingle()
   return (
-    <RowGroup id="profile" title={t("account.profile")}>
+    <RowGroup id="profile" title={path === "/account" ? t("account.profile") : undefined}>
       <div className="flex items-center gap-4 px-4 py-3">
         <PicturePicker id="avatar" action={updateAvatar} hidden={{ back: path }} label={profile?.avatar_path ? t("common.changeImage") : t("common.upload")}>
           <Picture path={profile?.avatar_path} name={profile?.full_name || session.email} size="lg" />

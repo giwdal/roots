@@ -20,7 +20,7 @@ export async function ConnectAi() {
   const logo = (name: string, extra = "") => <Image src={`/brands/${name}.svg`} alt="" width={16} height={16} className={`size-4 ${extra}`} unoptimized />
   return (
     <RowGroup id="connect-ai" title={t("settings.connectAi")} description={t("settings.connectAiHint")}>
-      <div className="grid gap-3 p-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 p-4">
       <div className={row}>
         <code className="min-w-0 flex-1 truncate text-xs">{url}</code>
         <CopyButton value={url} label={t("common.copy")} />

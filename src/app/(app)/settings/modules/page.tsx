@@ -5,7 +5,7 @@ import { RowGroup } from "@/components/section"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { NAV, visibleNav } from "@/modules/nav"
+import { areaOfModule, NAV, visibleNav } from "@/modules/nav"
 import { getModule, modules } from "@/modules/registry"
 
 // Organisation › Module: what this org has (switched on by the platform, /admin/orgs); an active module opens its area.
@@ -15,7 +15,7 @@ export default async function ModulesSettings() {
   const name = (k: string) => t.dynamic(`modules.${k}.name`)
   const nav = visibleNav((m) => ctx.modules.has(m), ctx.can)
   // The area a module's pages live in (Gästelisten → Events), when this person may open it.
-  const areaOf = (key: string) => nav.find((a) => a.children.some((c) => [c.module].flat().includes(key)))
+  const areaOf = (key: string) => areaOfModule(key, nav)
   const sorted = [...modules].sort((a, b) => Number(ctx.modules.has(b.key)) - Number(ctx.modules.has(a.key)))
 
   return (

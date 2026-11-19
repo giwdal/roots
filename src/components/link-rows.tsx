@@ -5,6 +5,8 @@ export type LinkRow = {
   key: string
   href: string
   icon?: LucideIcon
+  /** Shown in place of `icon` (an `<AreaIcon>`, a picture). */
+  lead?: React.ReactNode
   title: React.ReactNode
   detail?: React.ReactNode
   badge?: React.ReactNode
@@ -20,7 +22,7 @@ export function LinkRows({ rows }: { rows: LinkRow[] }) {
       {rows.map((r) => (
         <li key={r.key}>
           <Link href={r.href} className="flex min-h-11 items-center gap-3 px-3 py-2 text-sm hover:bg-muted active:bg-muted">
-            {r.icon && <r.icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
+            {r.lead ?? (r.icon && <r.icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />)}
             <span className="grid min-w-0 flex-1">
               <span className="truncate font-medium">{r.title}</span>
               {r.detail && <span className="truncate text-xs text-muted-foreground">{r.detail}</span>}

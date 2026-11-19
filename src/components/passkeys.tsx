@@ -17,11 +17,13 @@ export function Passkeys() {
   const [list, setList] = useState<Passkey[] | null>(null)
   const [pending, start] = useTransition()
   const [supported, setSupported] = useState(true)
+  const [offered, setOffered] = useState(true) // false: the auth server has passkeys switched off (the list fails)
   const load = () =>
     createClient()
       .auth.passkey.list()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         setList(data ?? [])
+        setOffered(!error)
         setSupported("PublicKeyCredential" in window)
       })
   useEffect(() => {
@@ -81,7 +83,7 @@ export function Passkeys() {
         variant="outline"
         size="sm"
         className="justify-self-start"
-        disabled={pending || !supported}
+        disabled={pending || !supported || !offered}
         onClick={() =>
           start(async () => {
             const { error } = await createClient().auth.registerPasskey()
@@ -94,7 +96,7 @@ export function Passkeys() {
       >
         <PlusIcon /> {pending ? t("passkeys.waiting") : t("passkeys.add")}
       </Button>
-      {!supported && <p className="text-xs text-muted-foreground">{t("passkeys.unsupported")}</p>}
+      {!offered ? <p className="text-xs text-muted-foreground">{t("passkeys.notOffered")}</p> : !supported && <p className="text-xs text-muted-foreground">{t("passkeys.unsupported")}</p>}
     </div>
   )
 }

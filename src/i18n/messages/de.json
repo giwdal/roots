@@ -95,13 +95,13 @@
     "subtitle": "Dein Verein, dein Betrieb oder deine Eventreihe. Danach kannst du andere einladen.",
     "name": "Name",
     "namePlaceholder": "Kulturverein Musterstadt",
-    "address": "Slug",
+    "address": "Adresse",
     "addressPlaceholder": "kulturverein",
     "addressHelp": "Für deine öffentlichen Seiten. Kleinbuchstaben, Zahlen und Bindestriche.",
     "submit": "Organisation anlegen",
     "nameRequired": "Gib deiner Organisation einen Namen.",
-    "addressInvalid": "Der Slug braucht 3–40 Zeichen: Kleinbuchstaben, Zahlen und Bindestriche.",
-    "addressTaken": "Dieser Slug ist schon vergeben.",
+    "addressInvalid": "Die Adresse braucht 3–40 Zeichen: Kleinbuchstaben, Zahlen und Bindestriche.",
+    "addressTaken": "Diese Adresse ist schon vergeben.",
     "invites": "Du wurdest eingeladen",
     "join": "Beitreten",
     "orCreate": "Oder gründe eine eigene Organisation:"
@@ -372,6 +372,10 @@
     "permissionCount": {
       "one": "{count} Berechtigung",
       "other": "{count} Berechtigungen"
+    },
+    "people": {
+      "one": "{count} Person",
+      "other": "{count} Personen"
     },
     "memberCount": {
       "one": "{count} Mitglied",
@@ -1626,7 +1630,7 @@
     "delete": "Feld löschen",
     "entities": {
       "contacts": "Kontakte",
-      "events": "Veranstaltungen",
+      "events": "Events",
       "memberships": "Mitgliedschaften",
       "rental_objects": "Objekte (Vermietung)",
       "rentals": "Vergaben (Vermietung)",
@@ -1938,13 +1942,13 @@
     "never": "nie",
     "revoke": "Widerrufen",
     "revoked": "Schlüssel widerrufen.",
-    "revokedBadge": "widerrufen",
+    "revokedBadge": "Widerrufen",
     "nameMissing": "Bitte gib dem Schlüssel einen Namen.",
     "permsMissing": "Bitte wähle mindestens ein Recht.",
     "noModules": "Für die API muss mindestens ein Modul aktiv sein.",
     "corePermissions": "Allgemein",
     "expires": "Läuft ab",
-    "expiredBadge": "abgelaufen",
+    "expiredBadge": "Abgelaufen",
     "expiresIn": {
       "0": "nie",
       "30": "in 30 Tagen",
@@ -4549,8 +4553,22 @@
     "untitled": "Neue Automation",
     "when": "Auslöser",
     "status": "Status",
-    "on": "aktiv",
-    "off": "aus",
+    "duration": {
+      "minutes": {
+        "one": "{count} Minute",
+        "other": "{count} Minuten"
+      },
+      "hours": {
+        "one": "{count} Stunde",
+        "other": "{count} Stunden"
+      },
+      "days": {
+        "one": "{count} Tag",
+        "other": "{count} Tage"
+      }
+    },
+    "on": "Aktiv",
+    "off": "Pausiert",
     "runs": "Durchläufe",
     "waitingCount": "{count} wartend",
     "failedCount": "{count} Fehler",
@@ -4612,12 +4630,12 @@
     "runCancelled": "Durchlauf abgebrochen.",
     "all": "Alle",
     "runStatus": {
-      "queued": "wartet auf Start",
-      "running": "läuft",
-      "waiting": "wartet",
-      "done": "fertig",
+      "queued": "Wartet auf Start",
+      "running": "Läuft",
+      "waiting": "Wartet",
+      "done": "Fertig",
       "failed": "Fehler",
-      "cancelled": "abgebrochen"
+      "cancelled": "Abgebrochen"
     },
     "units": {
       "minutes": "Minuten",
@@ -5773,7 +5791,7 @@
     "commentEmpty": "Bitte einen Kommentar schreiben oder eine Datei anhängen.",
     "linkKinds": {
       "wiki_pages": "Wiki",
-      "events": "Veranstaltung",
+      "events": "Event",
       "contacts": "Kontakt",
       "courses": "Kurs",
       "rentals": "Vergabe",
@@ -6158,6 +6176,7 @@
     "added": "hinzugefügt am {date}",
     "used": "zuletzt genutzt {date}",
     "unsupported": "Dieser Browser unterstützt keine Passkeys.",
+    "notOffered": "Passkeys sind auf dieser Plattform noch nicht freigeschaltet.",
     "confirmRemove": "Passkey entfernen?",
     "confirmRemoveHint": "Mit diesem Passkey meldest du dich danach nicht mehr an."
   },
@@ -7184,11 +7203,13 @@
   },
   "pwa": {
     "offlineTitle": "Keine Verbindung",
-    "offlineText": "roots braucht Internet. Sobald du wieder online bist, lade die Seite neu."
+    "offlineText": "roots braucht Internet. Sobald du wieder online bist, lade die Seite neu.",
+    "reload": "Neu laden"
   },
   "shortcuts": {
     "title": "Tastenkürzel",
     "search": "Suche öffnen",
+    "sidebar": "Seitenleiste ein- oder ausklappen",
     "new": "Neu anlegen (Hauptaktion der Seite)",
     "listSearch": "In der Liste suchen",
     "close": "Fenster schließen",

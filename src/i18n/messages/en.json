@@ -95,13 +95,13 @@
     "subtitle": "Your club, business or event series. You can invite others next.",
     "name": "Name",
     "namePlaceholder": "Musterstadt Arts Club",
-    "address": "Slug",
+    "address": "Address",
     "addressPlaceholder": "artsclub",
     "addressHelp": "Used for your public pages. Lowercase letters, numbers and dashes.",
     "submit": "Create organisation",
     "nameRequired": "Give your organisation a name.",
-    "addressInvalid": "The slug needs 3–40 characters: lowercase letters, numbers and dashes.",
-    "addressTaken": "That slug is already taken.",
+    "addressInvalid": "The address needs 3–40 characters: lowercase letters, numbers and dashes.",
+    "addressTaken": "That address is already taken.",
     "invites": "You've been invited",
     "join": "Join",
     "orCreate": "Or start your own organisation:"
@@ -372,6 +372,10 @@
     "permissionCount": {
       "one": "{count} permission",
       "other": "{count} permissions"
+    },
+    "people": {
+      "one": "{count} person",
+      "other": "{count} people"
     },
     "memberCount": {
       "one": "{count} member",
@@ -1938,13 +1942,13 @@
     "never": "never",
     "revoke": "Revoke",
     "revoked": "Key revoked.",
-    "revokedBadge": "revoked",
+    "revokedBadge": "Revoked",
     "nameMissing": "Please give the key a name.",
     "permsMissing": "Please pick at least one permission.",
     "noModules": "The API needs at least one enabled module.",
     "corePermissions": "General",
     "expires": "Expires",
-    "expiredBadge": "expired",
+    "expiredBadge": "Expired",
     "expiresIn": {
       "0": "never",
       "30": "in 30 days",
@@ -4549,8 +4553,22 @@
     "untitled": "New automation",
     "when": "Trigger",
     "status": "Status",
-    "on": "on",
-    "off": "off",
+    "duration": {
+      "minutes": {
+        "one": "{count} minute",
+        "other": "{count} minutes"
+      },
+      "hours": {
+        "one": "{count} hour",
+        "other": "{count} hours"
+      },
+      "days": {
+        "one": "{count} day",
+        "other": "{count} days"
+      }
+    },
+    "on": "Active",
+    "off": "Paused",
     "runs": "Runs",
     "waitingCount": "{count} waiting",
     "failedCount": "{count} failed",
@@ -4612,12 +4630,12 @@
     "runCancelled": "Run cancelled.",
     "all": "All",
     "runStatus": {
-      "queued": "waiting to start",
-      "running": "running",
-      "waiting": "waiting",
-      "done": "done",
-      "failed": "failed",
-      "cancelled": "cancelled"
+      "queued": "Waiting to start",
+      "running": "Running",
+      "waiting": "Waiting",
+      "done": "Done",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
     },
     "units": {
       "minutes": "minutes",
@@ -6158,6 +6176,7 @@
     "added": "added on {date}",
     "used": "last used {date}",
     "unsupported": "This browser doesn’t support passkeys.",
+    "notOffered": "Passkeys aren’t switched on for this platform yet.",
     "confirmRemove": "Remove the passkey?",
     "confirmRemoveHint": "You can no longer sign in with this passkey."
   },
@@ -7184,11 +7203,13 @@
   },
   "pwa": {
     "offlineTitle": "No connection",
-    "offlineText": "roots needs the internet. As soon as you are back online, reload the page."
+    "offlineText": "roots needs the internet. As soon as you are back online, reload the page.",
+    "reload": "Reload"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",
     "search": "Open search",
+    "sidebar": "Collapse or expand the sidebar",
     "new": "Create new (the page's main action)",
     "listSearch": "Search the list",
     "close": "Close a window",

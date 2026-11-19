@@ -55,3 +55,18 @@ Menü, search, Sprout).
 
 Write findings that need a decision into docs/plans/ux-backlog.md §Z; process ideas into
 docs/plans/process-simplification.md.
+
+## Visual check (required in the sweep)
+
+Look at every page you touch, phone (390 px) and desktop (1280 px), dark mode, before and after:
+
+```
+cd /private/tmp/claude-501/-Users-daniel-Development-roots/abc88f8a-a989-410d-80a5-960b20a5148b/scratchpad
+node --env-file=/Users/daniel/Development/roots/.env.local shoot.mjs ladwig.daniel@icloud.com shots /events /events/<id> …
+```
+writes `shots/phone_<path>.png` and `shots/desk_<path>.png` (open them with the Read tool) and prints `PAGEERROR` /
+`CONSOLE` lines for runtime errors — fix every one. The script signs in with a one-time admin link and **always**
+forces the org "UX Test" (`20c47c3b-be79-42fb-841d-703bceb6fe5e`). The local App runs on the **production
+database**: never open, seed or change anything in another org (Coppi, Lengua Materna are real customers). Only
+GET pages in the screenshots — no clicking through destructive actions. If a page needs data to be judged, add demo
+rows **only** in the UX Test org (SQL that checks `org_id = '20c47c3b-…'`). Only one browser run at a time.

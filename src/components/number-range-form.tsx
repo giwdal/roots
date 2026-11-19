@@ -1,6 +1,7 @@
 import { SubmitButton } from "@/components/submit-button"
 import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
+import { TipLabel } from "@/components/info-tip"
 import { Label } from "@/components/ui/label"
 import type { T } from "@/i18n/translate"
 import { previewNumber, RANGE_KINDS, type RangeKind } from "@/lib/number-ranges"
@@ -31,14 +32,16 @@ export function NumberRangeFields({ t, kind, range, label, suffix = "", children
   const next = range?.next_number ?? 1
   return (
     <div className="grid gap-3">
-      <div className="grid gap-3 sm:grid-cols-[1fr_8rem_auto_auto] sm:items-end">
-        <div className="grid gap-2">
-          <Label htmlFor={`n-${kind}`}>{label}</Label>
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        <div className="grid w-full max-w-xs gap-2">
+          <TipLabel htmlFor={`n-${kind}`} tip={t("numbers.help")}>
+            {label}
+          </TipLabel>
           <Input id={`n-${kind}`} name={`format${suffix}`} defaultValue={format} required maxLength={60} className="font-mono" aria-describedby={`n-${kind}-help`} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor={`nn-${kind}`}>{t("numbers.next")}</Label>
-          <TypedInput kind="number" id={`nn-${kind}`} name={`next_number${suffix}`} min={1} defaultValue={String(next)} className="w-full" />
+          <TypedInput kind="number" id={`nn-${kind}`} name={`next_number${suffix}`} min={1} defaultValue={String(next)} />
         </div>
         <label className="flex min-h-9 items-center gap-2 text-sm">
           <input type="checkbox" name={`yearly_reset${suffix}`} value="1" defaultChecked={range?.yearly_reset ?? RANGE_KINDS[kind].yearlyReset} className="size-4 accent-primary" />
@@ -49,8 +52,7 @@ export function NumberRangeFields({ t, kind, range, label, suffix = "", children
       <p id={`n-${kind}-help`} className="text-xs text-muted-foreground">
         {t("numbers.preview", {
           example: previewNumber(format, next, new Date().toISOString().slice(0, 10), "1990-01-01"),
-        })}{" "}
-        · {t("numbers.help")}
+        })}
       </p>
     </div>
   )

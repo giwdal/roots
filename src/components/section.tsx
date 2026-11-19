@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ChevronRightIcon, PlusCircleIcon } from "lucide-react"
+import { InfoTip } from "@/components/info-tip"
 import { cn } from "@/lib/utils"
 
 /** One section of a record page (docs/design/app.md › Look): small heading, content, a divider above the next one. */
@@ -44,14 +45,17 @@ export function RowGroup({ id, title, description, children }: { id?: string; ti
   )
 }
 
-/** One setting: label + one-line hint left, the control right (below on narrow phones). */
-export function SettingRow({ label, hint, htmlFor, children }: { label: React.ReactNode; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
+/** One setting: label + one-line hint left (background in `info`, an ⓘ next to the label), the control right (below on narrow phones). */
+export function SettingRow({ label, hint, info, htmlFor, children }: { label: React.ReactNode; hint?: React.ReactNode; info?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
       <div className="grid min-w-0 flex-1 basis-48 gap-0.5">
-        <label htmlFor={htmlFor} className="text-sm">
-          {label}
-        </label>
+        <span className="flex items-center gap-1">
+          <label htmlFor={htmlFor} className="text-sm">
+            {label}
+          </label>
+          {info && <InfoTip label={typeof label === "string" ? label : undefined}>{info}</InfoTip>}
+        </span>
         {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       </div>
       <div className="flex max-w-full shrink-0 items-center">{children}</div>

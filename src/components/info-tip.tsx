@@ -31,7 +31,8 @@ export function InfoTip({ children, label }: { children: React.ReactNode; label?
 /** A field label with its ⓘ next to it (the ⓘ sits outside the <label>, so it isn't part of the field's name). */
 export function TipLabel({ htmlFor, tip, children }: { htmlFor?: string; tip: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-5 items-center gap-1">
+    // As tall as a plain label (the ⓘ overflows it), so labels in one row stay aligned.
+    <div className="flex h-3.5 items-center gap-1">
       <Label htmlFor={htmlFor}>{children}</Label>
       <InfoTip label={typeof children === "string" ? children : undefined}>{tip}</InfoTip>
     </div>

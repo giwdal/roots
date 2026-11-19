@@ -40,7 +40,7 @@ export function settingsFor(can: (perm: string) => boolean, areas: boolean) {
   return SETTINGS_GROUPS.map((g) => ({ ...g, sections: g.sections.filter((s) => !s.permission || (s.permission === "areas" ? areas : can(s.permission))) })).filter((g) => g.sections.length)
 }
 
-/** Every area's settings page this person may open (the gear pages of src/modules/nav.ts), for Settings › Bereiche. */
+/** Every area's settings page this person may open (gear + setup pages of src/modules/nav.ts), for Settings › Bereiche. */
 export function areaSettings(on: (module: string) => boolean, can: (perm: string) => boolean) {
-  return visibleNav(on, can).flatMap((a) => a.children.filter((c) => c.gear || c.label === "common.settings").map((c) => ({ key: a.key, label: a.label, icon: a.icon, href: c.href, page: c.label })))
+  return visibleNav(on, can).flatMap((a) => a.children.filter((c) => c.gear || c.setup || c.label === "common.settings").map((c) => ({ key: a.key, label: a.label, icon: a.icon, href: c.href, page: c.label })))
 }

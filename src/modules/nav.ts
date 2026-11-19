@@ -23,7 +23,8 @@ import {
 } from "lucide-react"
 
 // `gear`: the area's Einstellungen, opened by the header gear and listed in Settings › Bereiche and ⌘K, not in the sidebar.
-type Child = { href: string; label: string; module: string | string[]; permission: string | string[]; gear?: true }
+// `setup`: a sidebar page that is setup too (templates, brand, domain), so Settings › Bereiche lists it as well.
+type Child = { href: string; label: string; module: string | string[]; permission: string | string[]; gear?: true; setup?: true }
 type Area = { key: string; label: string; icon: LucideIcon; children: Child[] }
 
 export const NAV: Area[] = [
@@ -103,6 +104,7 @@ export const NAV: Area[] = [
       { href: "/email", label: "nav.emails", module: "email", permission: "email.view" },
       { href: "/forms", label: "forms.nav", module: "forms", permission: "forms.view" },
       { href: "/email/settings", label: "email.settings.title", module: "email", permission: "email.view", gear: true },
+      { href: "/email/settings#templates", label: "email.templates.title", module: "email", permission: "email.view", gear: true },
     ],
   },
   { key: "automations", label: "automations.nav", icon: WorkflowIcon, children: [{ href: "/automations", label: "automations.nav", module: "automations", permission: "automations.view" }] },
@@ -143,7 +145,7 @@ export const NAV: Area[] = [
     icon: FolderIcon,
     children: [
       { href: "/files", label: "files.title", module: "org", permission: "org.files.view" },
-      { href: "/files/templates", label: "letters.tabs.templates", module: "org", permission: "org.files.view" },
+      { href: "/files/templates", label: "letters.tabs.templates", module: "org", permission: "org.files.view", setup: true },
     ],
   },
   { key: "reports", label: "reports.nav", icon: BarChart3Icon, children: [{ href: "/reports", label: "reports.nav", module: "reports", permission: "reports.view" }] },
@@ -153,9 +155,9 @@ export const NAV: Area[] = [
     icon: GlobeIcon,
     children: [
       { href: "/website", label: "nav.overview", module: "org", permission: "org.site.manage" },
-      { href: "/website/brand", label: "website.brand.nav", module: "org", permission: "org.site.manage" },
+      { href: "/website/brand", label: "website.brand.nav", module: "org", permission: "org.site.manage", setup: true },
       { href: "/website/pages", label: "website.pages.nav", module: "org", permission: "org.site.manage" },
-      { href: "/website/domain", label: "website.domain.nav", module: "org", permission: "org.site.manage" },
+      { href: "/website/domain", label: "website.domain.nav", module: "org", permission: "org.site.manage", setup: true },
     ],
   },
 ]

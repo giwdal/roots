@@ -115,6 +115,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<"/r
   const properties = (
     <Section id="properties" title={t("rentals.properties")}>
       <DetailList
+        phoneLimit={4}
         items={[
           prop("name", t("rentals.name"), o.name),
           prop("kind", t("rentals.kind"), o.kind, { kind: "choice", options: kindOptions, display: kindLabel(t, o.kind) }),

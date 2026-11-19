@@ -149,6 +149,7 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
           },
           {
             header: t("rentals.status"),
+            phone: trash ? undefined : (false as const),
             cell: (o) => {
               if (o.deleted_at)
                 return (
@@ -171,6 +172,24 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
                     </span>
                   )}
                   {n && <span className="text-xs text-muted-foreground">{t("rentals.nextFrom", { date: day(n.starts_at), who: peopleLine(n.rental_contacts) || "–" })}</span>}
+                </span>
+              )
+            },
+          },
+          {
+            // Phones: one badge and who has it (or when it is next taken), the period stays in the table and the object.
+            header: t("rentals.status"),
+            table: false as const,
+            phone: trash ? (false as const) : undefined,
+            cell: (o) => {
+              if (o.deleted_at || (o.included && o.status === "active")) return null
+              const b = busy(o.id)
+              const n = !b.length && o.status === "active" ? next(o.id) : undefined
+              const who = b.length ? peopleLine(b[0].rental_contacts, 1) : n ? t("rentals.nextShort", { date: t.date(n.starts_at, { day: "numeric", month: "short" }) }) : ""
+              return (
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <ObjectBadge t={t} status={o.status} busy={!!b.length} />
+                  {who && <span className="truncate">{who}</span>}
                 </span>
               )
             },

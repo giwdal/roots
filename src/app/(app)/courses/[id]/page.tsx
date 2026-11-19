@@ -74,7 +74,6 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
   const rates = enrolled.map((p) => rate(p.id)).filter((r): r is number => r != null)
   const average = rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : null
   const full = c.capacity != null && enrolled.length >= c.capacity
-  const short = (v: string) => t.date(v, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
   const when = (s: { starts_at: string; ends_at: string }) => `${t.date(s.starts_at, { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}–${t.date(s.ends_at, { hour: "2-digit", minute: "2-digit" })}`
   const sessionHref = (sid: string) => (c.track_attendance ? `/courses/${id}/sessions/${sid}` : withParams(sp, { edit: sid, new: undefined }))
   const newParam = param(sp, "new")
@@ -88,7 +87,7 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
       <input type="hidden" name="id" value={pid} />
       <input type="hidden" name="course_id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <SubmitButton size="sm" variant="outline" data-confirm={status === "cancelled" ? "courses.confirmRemove" : undefined}>
+      <SubmitButton size="sm" variant={status === "cancelled" ? "ghost" : "outline"} className={status === "cancelled" ? "text-muted-foreground" : undefined} data-confirm={status === "cancelled" ? "courses.confirmRemove" : undefined}>
         {label}
       </SubmitButton>
     </form>
@@ -135,6 +134,7 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
   const properties = (
     <Section id="properties" title={t("courses.properties")}>
       <DetailList
+        phoneLimit={4}
         items={[
           prop("title", t("courses.titleLabel"), c.title),
           prop("instructor", t("courses.instructor"), c.instructor),
@@ -211,7 +211,7 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
           <Stats>
             <Stat label={t("courses.places")} value={c.capacity ? `${enrolled.length} / ${c.capacity}` : enrolled.length} hint={c.capacity ? undefined : t("courses.unlimited")} href="#participants" tone={full ? "warn" : undefined} />
             <Stat label={t("courses.waitingList")} value={waiting.length} href={waiting.length ? "#waiting" : undefined} />
-            <Stat label={t("courses.nextDate")} value={next ? short(next.starts_at) : "–"} href={next ? sessionHref(next.id) : undefined} />
+            <Stat label={t("courses.nextDate")} value={next ? t.date(next.starts_at, { day: "2-digit", month: "2-digit" }) : "–"} hint={next ? t.date(next.starts_at, { weekday: "short", hour: "2-digit", minute: "2-digit" }) : undefined} href={next ? sessionHref(next.id) : undefined} />
             {c.track_attendance && <Stat label={t("courses.attendanceStat")} value={average != null ? `${average} %` : "–"} hint={held.length ? t("courses.heldCount", { count: held.length }) : undefined} />}
           </Stats>
 

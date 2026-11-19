@@ -191,6 +191,11 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] S7 (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
 - [ ] S8 (Schichten) Team's "Beschäftigung" is the free-text `staff.role_label`, while Personal has `employees.employment_type` for the same person: show the HR type when the person is linked (or drop the free text).
 - [ ] S9 (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
+- [ ] S10 (Projekte) Aufgaben (desktop, grouped by due date): every group is its own table, so the columns don't line up from group to group (one table with group header rows would).
+- [ ] S11 (Projekte) The activity feed's entry for the record's own creation reads just "angelegt" (no subject); "Projekt angelegt" / the record's name would read better.
+- [ ] S12 (Projekte) Timeline: a bar that ends just after the visible start shows only the end of its label (the label sticks inside the bar's visible part, which is short).
+- [ ] S13 (Vermietung) Belegung month view draws open-ended / long contracts as year-long bars (needed in the per-object view); the shared Kalender shows them as key dates only. Same for the month grid here?
+- [ ] S14 (Kurse) Participant rows keep one "Abmelden" button each (now a quiet ghost button); patterns §5 would put it into a row ⋯ on phones.
 
 ## Z. To discuss tomorrow
 - **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
@@ -222,3 +227,6 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   without an account (name + email only), as the API's `employees` table would allow?
 - Campaign drafts stay one editor form + SaveBar (name, subject, body, audience, schedule depend on each other, like invoice drafts); sent campaigns are now a read-only page (mail preview + audience). OK?
 - `<CalendarView>` time grids now scroll to an hour before the earliest entry (was a fixed 07:00) in every calendar (Schichten, Kalender, …). OK as the rule?
+- Kalender: projects longer than two weeks now show only "Name · Start" / "Name · Ende" (like long-term rentals) instead of a bar across every week; the phone calendar dots entries longer than a week only on their first and last day. OK as the rule (and for Belegung, S13)?
+- `<Timeline>` (projects, tasks) now opens a week before today instead of at the earliest item; month/group names and bar labels stick to the left edge. OK?
+- `<InlineField>`: an empty amount shows "Leer" as text until clicked (was a right-aligned "Leer €" field); ghost inputs no longer show the dark input background. OK for every record page?

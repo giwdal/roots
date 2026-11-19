@@ -24,10 +24,13 @@ export function peopleLine(people: Person[] | null | undefined, max = 2) {
   return names.length > max ? `${names.slice(0, max).join(", ")} (+${names.length - max})` : names.join(", ")
 }
 
-/** Period as text: "seit 01.03.2026", "01.03.2026 – 28.02.2027", "02.05., 10:00–12:00". */
+/** Period as text: "seit 01.03.2026", "01.03.2026 – 28.02.2027", "02.05.2026, 10:00–12:00". */
 export function period(t: T, r: { starts_at: string; ends_at: string | null; unit?: string | null }) {
   const timed = r.unit === "hour" || r.unit === "day"
   const d = (v: string) => t.date(v, timed ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" })
+  const day = (v: string) => new Date(v).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
+  // Same day: "20.11.2026, 18:00–23:00".
+  if (timed && r.ends_at && day(r.starts_at) === day(r.ends_at)) return `${d(r.starts_at)}–${t.date(r.ends_at, { timeStyle: "short" })}`
   return r.ends_at ? `${d(r.starts_at)} – ${d(r.ends_at)}` : t("rentals.since", { date: d(r.starts_at) })
 }
 

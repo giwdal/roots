@@ -93,6 +93,8 @@ export default async function RentalPage({ params, searchParams }: PageProps<"/r
   const term = termInfo({ end: r.ends_at ? berlinDay(r.ends_at) : null, renew_months: r.renew_months, notice_months: r.notice_months, noticeGiven: !!r.notice_at }, today)
   const started = berlinDay(r.starts_at) <= today
   const timed = (v: string) => t.date(v, long ? { dateStyle: "medium" } : { dateStyle: "medium", timeStyle: "short" })
+  // Stat tiles: short values ("20.11., 18:00"), the full date is in Laufzeit.
+  const timedShort = (v: string) => t.date(v, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
   const dateValue = (v: string | null) => (v ? (long ? berlinDay(v) : toLocalInput(v)) : "")
   const canNotice = editable && long && !r.notice_at && state !== "ended" && r.status === "confirmed"
 
@@ -134,6 +136,7 @@ export default async function RentalPage({ params, searchParams }: PageProps<"/r
   const properties = (
     <Section id="properties" title={t("rentals.properties")}>
       <DetailList
+        phoneLimit={4}
         items={[
           prop("price", t("rentals.price"), r.price_cents != null ? formatMoney(r.price_cents) : null, { kind: "money", display: r.price_cents != null && t.money(r.price_cents) }),
           prop("unit", t("rentals.unit"), r.unit, { kind: "choice", options: UNITS.map((u) => ({ value: u, label: t.dynamic(`rentals.units.${u}`) })), display: r.unit && t.dynamic(`rentals.units.${r.unit}`) }),
@@ -238,8 +241,8 @@ export default async function RentalPage({ params, searchParams }: PageProps<"/r
       <Notice error={!sheetOpen ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
 
       <Stats>
-        <Stat label={started ? t("rentals.sinceStat") : t("rentals.startsStat")} value={long ? dayText(berlinDay(r.starts_at)) : timed(r.starts_at)} />
-        {deadline ? <Stat label={deadline.label} value={deadline.value} hint={deadline.hint} /> : <Stat label={t("rentals.endsStat")} value={r.ends_at ? timed(r.ends_at) : "–"} />}
+        <Stat label={started ? t("rentals.sinceStat") : t("rentals.startsStat")} value={long ? dayText(berlinDay(r.starts_at)) : timedShort(r.starts_at)} />
+        {deadline ? <Stat label={deadline.label} value={deadline.value} hint={deadline.hint} /> : <Stat label={t("rentals.endsStat")} value={r.ends_at ? (long ? timed(r.ends_at) : timedShort(r.ends_at)) : "–"} />}
         <Stat label={long ? t("rentals.rentStat") : t("rentals.price")} value={r.price_cents != null ? t.money(r.price_cents) : "–"} hint={r.unit ? t.dynamic(`rentals.units.${r.unit}`) : undefined} />
         <Stat label={t("rentals.deposit")} value={r.deposit_cents != null ? t.money(r.deposit_cents) : "–"} hint={r.deposit_back_at ? t("rentals.depositBack") : undefined} />
       </Stats>

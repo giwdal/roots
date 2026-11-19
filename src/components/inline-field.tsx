@@ -17,7 +17,7 @@ type Kind = "text" | "textarea" | "date" | "datetime" | "choice" | InputKind
 
 // Looks like text until touched (Linear): no border, a soft hover, the field's ring only while editing.
 const GHOST =
-  "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 -mx-2 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:border-input focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none"
+  "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 -mx-2 text-sm outline-none transition-colors shadow-none hover:bg-muted/60 focus-visible:border-input focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none dark:bg-transparent dark:hover:bg-muted/60 dark:focus-visible:bg-background"
 
 /**
  * A property edited where it is shown, the Linear way: the value looks like text; a click (or Tab) edits it in place,
@@ -122,8 +122,9 @@ export function InlineField({
     )
   }
 
-  // Not being edited and the value has its own look (a mailto link, a badge, the emptyLabel): show that; a click beside it edits.
-  if (!editing && (display || kind === "date" || kind === "datetime" || (emptyLabel && !value)))
+  // Not being edited and the value has its own look (a mailto link, a badge, the emptyLabel, an empty amount that would
+  // otherwise sit right-aligned in its field): show that; a click beside it edits.
+  if (!editing && (display || kind === "date" || kind === "datetime" || (!value && (emptyLabel || kind === "money"))))
     return (
       <div role="button" tabIndex={0} onClick={(e) => !(e.target as Element).closest("a") && setEditing(true)} onKeyDown={(e) => e.key === "Enter" && setEditing(true)} className={cn(GHOST, "flex cursor-text items-center gap-2")} aria-label={t("common.editField", { field: label })}>
         <span className="min-w-0 flex-1 break-words">{value ? (display ?? value) : empty}</span>

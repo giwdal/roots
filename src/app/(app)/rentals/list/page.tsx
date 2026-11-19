@@ -137,11 +137,17 @@ export default async function RentalListPage({ searchParams }: PageProps<"/renta
               </span>
             ),
           },
-          { header: t("rentals.whoCol"), cell: (r) => peopleLine(r.rental_contacts) || "–" },
-          { header: t("rentals.whenCol"), cell: (r) => period(t, r) },
+          { header: t("rentals.whoCol"), cell: (r) => peopleLine(r.rental_contacts) || "–", phone: false },
+          // Phones: the state first, then the main tenant (the rest is on the rental).
+          { header: t("rentals.stateCol"), table: false, phone: trash ? false : undefined, cell: (r) => <StateBadge t={t} r={r} /> },
+          { header: t("rentals.whoCol"), table: false, cell: (r) => peopleLine(r.rental_contacts, 1) || null },
+          { header: t("rentals.whenCol"), cell: (r) => period(t, r), phone: false },
+          // Phones: a short start for what is still to come (the full period is on the rental).
+          { header: t("rentals.whenCol"), table: false, cell: (r) => (Date.parse(r.starts_at) > Date.now() ? t.date(r.starts_at, r.unit === "hour" || r.unit === "day" ? { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" } : { day: "numeric", month: "short" }) : null) },
           { header: t("rentals.priceCol"), cell: (r) => (r.price_cents != null && r.unit ? `${t.money(r.price_cents)} ${t.dynamic(`rentals.units.${r.unit}`)}` : ""), className: "whitespace-nowrap text-right tabular-nums" },
           {
             header: t("rentals.stateCol"),
+            phone: trash ? undefined : false,
             cell: (r) =>
               r.deleted_at ? (
                 <form action={restoreRentalAction}>

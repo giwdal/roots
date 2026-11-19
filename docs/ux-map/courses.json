@@ -3,15 +3,47 @@
   "label": "Kurse",
   "module": "courses",
   "research": "Eversports Manager / Mindbody Business / Bsport: a class has a roster; staff check people in on the phone by tapping names (a counter 'x of y checked in', 'check in all'); waitlist moves up automatically, cancelling asks; the class schedule is the main view of a course/series with past dates collapsed; a course page shows capacity, waitlist, next date at the top. Teachable/Kajabi course pages: overview with key numbers, then the curriculum (here: dates), students as a list. Empty states offer the first step ('Create class', 'Add schedule'). Taken: course page per patterns.md §8 with Stats (Belegt, Warteliste, Nächster Termin, Anwesenheit), dates as the main content (next first, earlier collapsed), participants below, properties edited in place on the right; attendance as a phone-first tap-to-mark list that saves each tap, with 'Alle da' and ‹ › to the neighbouring dates; the next step as primary (Anwesenheit for today's date, else Termine anlegen / Person hinzufügen).",
-  "navRedesign": {"sidebar": "Kurse stays one page.", "urls": "trash ?trash=1 (old ?status=trash redirects); course sheets ?new=series, ?new=date, ?new=person, ?edit=<session id> (date fields when attendance isn't tracked); session page ?edit=date; /courses/new?start= pre-fills a first date."},
+  "navRedesign": {
+    "sidebar": "Kurse stays one page.",
+    "urls": "trash ?trash=1 (old ?status=trash redirects); course sheets ?new=series, ?new=date, ?new=person, ?edit=<session id> (date fields when attendance isn't tracked); session page ?edit=date; /courses/new?start= pre-fills a first date."
+  },
   "nav": [
-    { "label": "Kurse", "key": "courses.nav", "href": "/courses", "permission": "courses.view" }
+    {
+      "label": "Kurse",
+      "key": "courses.nav",
+      "href": "/courses",
+      "permission": "courses.view"
+    }
   ],
   "pages": [
     {
       "route": "/courses",
-      "redesign": {"job": "Find a course and see its next date and how full it is; create one.", "phone": "Top bar 'Kurse' (⋯: Papierkorb). Search full width. Cards: course + full/waiting badges, next date · places. Round + = Neuer Kurs.", "desktop": "⋯ Papierkorb, primary Neuer Kurs; search; table Kurs (+ Leitung), Nächster Termin, Belegt.", "moves": ["⋯ Papierkorb / Zurück zur Liste → ?trash=1 (old ?status=trash redirects); back item 'Zurück zu den Kursen'", "primary Neuer Kurs → kept", "SearchBox → <ListToolbar search>", "column Kurs (link inside) → plain text, the row opens the course (rowHref)", "column Nächster Termin → kept", "column Belegt + voll/warten badges → kept, badges warning/info", "empty 'Noch keine Kurse.' → EmptyState with Neuer Kurs; search: 'Kein Kurs gefunden.'", "trash rows → Wiederherstellen inline + 30-day hint", "legacy ?new → /courses/new (kept)"], "built": true},
-      "uxNotesDone": [1, 2],
+      "redesign": {
+        "job": "Find a course and see its next date and how full it is; create one.",
+        "phone": "Top bar 'Kurse' (⋯: Papierkorb). Search full width. Cards: course + full/waiting badges, next date · places. Round + = Neuer Kurs.",
+        "desktop": "⋯ Papierkorb, primary Neuer Kurs; search; table Kurs (+ Leitung), Nächster Termin, Belegt.",
+        "moves": [
+          "⋯ Papierkorb / Zurück zur Liste → ?trash=1 (old ?status=trash redirects); back item 'Zurück zu den Kursen'",
+          "primary Neuer Kurs → kept",
+          "SearchBox → <ListToolbar search>",
+          "column Kurs (link inside) → plain text, the row opens the course (rowHref)",
+          "column Nächster Termin → kept",
+          "column Belegt + voll/warten badges → kept, badges warning/info",
+          "empty 'Noch keine Kurse.' → EmptyState with Neuer Kurs; search: 'Kein Kurs gefunden.'",
+          "trash rows → Wiederherstellen inline + 30-day hint",
+          "legacy ?new → /courses/new (kept)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Lowercase badges 'voll' and a second badge '1 warten': now 'Voll' as the one badge and the waiting count as muted text with a plural ('1 wartet', '3 warten')."
+        }
+      },
+      "uxNotesDone": [
+        1,
+        2
+      ],
       "file": "src/app/(app)/courses/page.tsx",
       "title": "Kurse (trash: \"Kurse · Papierkorb\")",
       "purpose": "List of courses with next date, places taken and waiting list; entry to each course; trash view.",
@@ -19,21 +51,69 @@
       "size": "list",
       "header": {
         "area": "courses",
-        "menu": [{ "label": "Papierkorb | Zurück zur Liste", "key": "courses.trash / courses.backToList", "target": "/courses?status=trash | /courses", "permission": "courses.manage" }],
-        "primary": { "label": "Neuer Kurs", "key": "courses.new", "href": "/courses/new", "permission": "courses.manage", "notes": "hidden in trash" }
+        "menu": [
+          {
+            "label": "Papierkorb | Zurück zur Liste",
+            "key": "courses.trash / courses.backToList",
+            "target": "/courses?status=trash | /courses",
+            "permission": "courses.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neuer Kurs",
+          "key": "courses.new",
+          "href": "/courses/new",
+          "permission": "courses.manage",
+          "notes": "hidden in trash"
+        }
       },
       "urlState": [
-        { "param": "q", "meaning": "search title + instructor" },
-        { "param": "status", "meaning": "trash = trash view (courses.manage)" },
-        { "param": "page", "meaning": "Pager (Neuer / Älter)" },
-        { "param": "new", "meaning": "legacy: redirects to /courses/new" }
+        {
+          "param": "q",
+          "meaning": "search title + instructor"
+        },
+        {
+          "param": "status",
+          "meaning": "trash = trash view (courses.manage)"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager (Neuer / Älter)"
+        },
+        {
+          "param": "new",
+          "meaning": "legacy: redirects to /courses/new"
+        }
       ],
       "sections": [
-        { "title": "Toolbar", "kind": "custom", "fields": [{ "name": "q", "label": "Kurs oder Leitung suchen…", "key": "courses.search", "type": "search", "component": "SearchBox" }] },
-        { "title": "Kurse", "kind": "DataTable", "columns": ["Kurs (+ Leitung; link → /courses/<id>)", "Nächster Termin", "Belegt ('{enrolled} / {capacity}' + badges 'voll', '{count} warten')"] }
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Kurs oder Leitung suchen…",
+              "key": "courses.search",
+              "type": "search",
+              "component": "SearchBox"
+            }
+          ]
+        },
+        {
+          "title": "Kurse",
+          "kind": "DataTable",
+          "columns": [
+            "Kurs (+ Leitung; link → /courses/<id>)",
+            "Nächster Termin",
+            "Belegt ('{enrolled} / {capacity}' + badges 'voll', '{count} warten')"
+          ]
+        }
       ],
       "actions": [],
-      "links": ["/courses/new", "/courses/[id]"],
+      "links": [
+        "/courses/new",
+        "/courses/[id]"
+      ],
       "empty": "DataTable empty text 'Noch keine Kurse.' / 'Kein Kurs gefunden.' (no EmptyState with action)",
       "phone": "DataTable cards; primary round +.",
       "uxNotes": [
@@ -45,55 +125,183 @@
     },
     {
       "route": "/courses/new",
-      "redesign": {"job": "Create a course; optionally its first date right away (the calendar's 'Neu am …' sends ?start=).", "phone": "NewPage: Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen; 'Erster Termin (optional)' Beginn/Ende (open + pre-filled with ?start=); SaveBar Kurs anlegen.", "desktop": "Same, form width.", "moves": ["Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen → kept (checkbox accent-primary)", "new: Erster Termin (Beginn, Ende) – optional, ?start= pre-fills (end +90 min)", "SaveBar Kurs anlegen → kept; → course page"], "built": true},
-      "uxNotesDone": [0],
+      "redesign": {
+        "job": "Create a course; optionally its first date right away (the calendar's 'Neu am …' sends ?start=).",
+        "phone": "NewPage: Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen; 'Erster Termin (optional)' Beginn/Ende (open + pre-filled with ?start=); SaveBar Kurs anlegen.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "Kurs, Leitung, Plätze, Ort, Beschreibung, Anwesenheit erfassen → kept (checkbox accent-primary)",
+          "new: Erster Termin (Beginn, Ende) – optional, ?start= pre-fills (end +90 min)",
+          "SaveBar Kurs anlegen → kept; → course page"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: Kursdaten, optional first date, SaveBar 'Kurs anlegen'. No change."
+        }
+      },
+      "uxNotesDone": [
+        0
+      ],
       "file": "src/app/(app)/courses/new/page.tsx",
       "title": "Neuer Kurs",
       "purpose": "Create a course (title, instructor, places, location, description, attendance tracking).",
       "permission": "courses.manage",
       "size": "form (NewPage)",
-      "header": { "crumbs": ["Kurse", "Neuer Kurs"] },
+      "header": {
+        "crumbs": [
+          "Kurse",
+          "Neuer Kurs"
+        ]
+      },
       "sections": [
         {
           "title": "Kursdaten",
           "anchor": "#details",
           "kind": "FormCard",
           "fields": [
-            { "name": "title", "label": "Kurs", "key": "courses.titleLabel", "type": "text", "component": "Input", "required": true, "notes": "placeholder 'z. B. Yoga für Einsteiger'" },
-            { "name": "instructor", "label": "Leitung", "key": "courses.instructor", "type": "text", "component": "Input", "notes": "free text, not a person/contact" },
-            { "name": "capacity", "label": "Plätze", "key": "courses.capacity", "type": "number", "component": "TypedInput:number", "notes": "placeholder 'unbegrenzt'" },
-            { "name": "location_id", "label": "Ort", "key": "courses.location", "type": "choice", "component": "Choice", "notes": "only with locations" },
-            { "name": "description", "label": "Beschreibung", "key": "courses.description", "type": "textarea", "component": "Textarea" },
-            { "name": "track_attendance", "label": "Anwesenheit erfassen", "key": "courses.trackAttendance", "type": "checkbox", "component": "native checkbox", "notes": "default on" }
+            {
+              "name": "title",
+              "label": "Kurs",
+              "key": "courses.titleLabel",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Yoga für Einsteiger'"
+            },
+            {
+              "name": "instructor",
+              "label": "Leitung",
+              "key": "courses.instructor",
+              "type": "text",
+              "component": "Input",
+              "notes": "free text, not a person/contact"
+            },
+            {
+              "name": "capacity",
+              "label": "Plätze",
+              "key": "courses.capacity",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "placeholder 'unbegrenzt'"
+            },
+            {
+              "name": "location_id",
+              "label": "Ort",
+              "key": "courses.location",
+              "type": "choice",
+              "component": "Choice",
+              "notes": "only with locations"
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "courses.description",
+              "type": "textarea",
+              "component": "Textarea"
+            },
+            {
+              "name": "track_attendance",
+              "label": "Anwesenheit erfassen",
+              "key": "courses.trackAttendance",
+              "type": "checkbox",
+              "component": "native checkbox",
+              "notes": "default on"
+            }
           ]
         }
       ],
       "actions": [
-        { "label": "Kurs anlegen", "key": "courses.create", "where": "savebar", "kind": "serverAction", "target": "saveCourse", "permission": "courses.manage", "confirm": false, "result": "→ /courses/<id>#dates, toast 'Kurs angelegt – jetzt Termine eintragen.'" }
+        {
+          "label": "Kurs anlegen",
+          "key": "courses.create",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveCourse",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "→ /courses/<id>#dates, toast 'Kurs angelegt – jetzt Termine eintragen.'"
+        }
       ],
-      "links": ["/courses"],
-      "uxNotes": ["Dates can't be entered on create; a second step on the course page (toast nudges to it)."]
+      "links": [
+        "/courses"
+      ],
+      "uxNotes": [
+        "Dates can't be entered on create; a second step on the course page (toast nudges to it)."
+      ]
     },
     {
       "route": "/courses/[id]",
-      "redesign": {"job": "Run a course: the dates (take attendance), who is in / waiting, how full it is; change details in place.", "phone": "Top bar ‹ Kurse · title (⋯: Teilnehmende exportieren, Papierkorb). Title + badge (Voll / n warten), meta Leitung · Ort. Stats 2×2: Belegt, Warteliste, Nächster Termin, Anwesenheit Ø. Eigenschaften (inline). Termine (next first, Frühere collapsed, + Regelmäßige / Einzelner Termin). Teilnehmende (Abmelden asks), Warteliste, Abmeldungen. Verknüpft, Dateien. Round + = next step (Anwesenheit today → session; no dates → Termine anlegen; else Person hinzufügen).", "desktop": "Header ⋯ + primary; Stats; main: Termine, Teilnehmende; right rail: Eigenschaften, Verknüpft, Dateien.", "moves": ["meta Leitung · places → meta Leitung · Ort; places into Stats + badge", "⋯ Teilnehmende export → kept", "⋯ In den Papierkorb → kept (confirm)", "trash state + Wiederherstellen → kept", "section Teilnehmende inline add form (picker + note + Hinzufügen) → AddLink 'Person hinzufügen' → ?new=person compact sheet (picker, note, SaveBar 'Hinzufügen')", "enrolled rows (name → contact, note, rate badge, Abmelden) → kept; Abmelden asks (moves the waiting list up)", "Warteliste numbered + Abmelden → kept, asks", "Abmeldungen <details> + Wieder aufnehmen → kept", "section Termine + 'Regelmäßige Termine' / 'Einzelner Termin' → main first section; AddLinks; upcoming first, 'Frühere (n)' collapsed; rows → session page (attendance) or ?edit=<id> sheet when attendance isn't tracked", "sheet ?new=series (weekdays, Beginn/Ende time, Ab, Bis, alle n Wochen, Termine anlegen) → weekday toggles as one segmented row with a visible label, TimeInput instead of native time, SaveBar 'Termine anlegen'", "sheet ?new=date (Beginn, Ende, Hinzufügen) → SaveBar 'Termin anlegen'", "aside Kursdaten form + SaveBar → Eigenschaften inline (patchCourse): Kurs, Leitung, Plätze, Ort, Anwesenheit erfassen, Beschreibung", "new: Verknüpft (linked projects), Dateien"], "built": true},
-      "uxNotesDone": [0, 1, 2, 3, 5, 7],
+      "redesign": {
+        "job": "Run a course: the dates (take attendance), who is in / waiting, how full it is; change details in place.",
+        "phone": "Top bar ‹ Kurse · title (⋯: Teilnehmende exportieren, Papierkorb). Title + badge (Voll / n warten), meta Leitung · Ort. Stats 2×2: Belegt, Warteliste, Nächster Termin, Anwesenheit Ø. Eigenschaften (inline). Termine (next first, Frühere collapsed, + Regelmäßige / Einzelner Termin). Teilnehmende (Abmelden asks), Warteliste, Abmeldungen. Verknüpft, Dateien. Round + = next step (Anwesenheit today → session; no dates → Termine anlegen; else Person hinzufügen).",
+        "desktop": "Header ⋯ + primary; Stats; main: Termine, Teilnehmende; right rail: Eigenschaften, Verknüpft, Dateien.",
+        "moves": [
+          "meta Leitung · places → meta Leitung · Ort; places into Stats + badge",
+          "⋯ Teilnehmende export → kept",
+          "⋯ In den Papierkorb → kept (confirm)",
+          "trash state + Wiederherstellen → kept",
+          "section Teilnehmende inline add form (picker + note + Hinzufügen) → AddLink 'Person hinzufügen' → ?new=person compact sheet (picker, note, SaveBar 'Hinzufügen')",
+          "enrolled rows (name → contact, note, rate badge, Abmelden) → kept; Abmelden asks (moves the waiting list up)",
+          "Warteliste numbered + Abmelden → kept, asks",
+          "Abmeldungen <details> + Wieder aufnehmen → kept",
+          "section Termine + 'Regelmäßige Termine' / 'Einzelner Termin' → main first section; AddLinks; upcoming first, 'Frühere (n)' collapsed; rows → session page (attendance) or ?edit=<id> sheet when attendance isn't tracked",
+          "sheet ?new=series (weekdays, Beginn/Ende time, Ab, Bis, alle n Wochen, Termine anlegen) → weekday toggles as one segmented row with a visible label, TimeInput instead of native time, SaveBar 'Termine anlegen'",
+          "sheet ?new=date (Beginn, Ende, Hinzufügen) → SaveBar 'Termin anlegen'",
+          "aside Kursdaten form + SaveBar → Eigenschaften inline (patchCourse): Kurs, Leitung, Plätze, Ort, Anwesenheit erfassen, Beschreibung",
+          "new: Verknüpft (linked projects), Dateien"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Stat 'Nächster Termin' wrapped onto three lines ('Do., 19. Nov., / 08:00'): value '19.11.', hint 'Do., 08:00'. Badges capitalised (Voll, Heute; participant states Angemeldet / Warteliste / Abgemeldet on the contact page). Eight outline 'Abmelden' buttons made the participant list heavy: quiet ghost buttons (still ask first). Eigenschaften phoneLimit 4."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        7
+      ],
       "file": "src/app/(app)/courses/[id]/page.tsx",
       "title": "<Course title>",
       "purpose": "One course: participants (enrolled, waiting list, cancelled) with attendance rate, dates (single or weekly series), course details on the side.",
       "permission": "courses.view (edit: courses.manage)",
       "size": "record",
       "header": {
-        "crumbs": ["Kurse", "<Title>"],
+        "crumbs": [
+          "Kurse",
+          "<Title>"
+        ],
         "meta": "'<Leitung> · {taken} von {total} Plätzen belegt' (or '{count} Teilnehmende')",
         "menu": [
-          { "label": "Teilnehmende (export)", "key": "courses.participants", "target": "/export/course-participants?course=<id>", "notes": "MenuExport" },
-          { "label": "In den Papierkorb", "key": "courses.toTrash", "target": "trashCourse (MenuSubmit destructive)", "permission": "courses.manage" }
+          {
+            "label": "Teilnehmende (export)",
+            "key": "courses.participants",
+            "target": "/export/course-participants?course=<id>",
+            "notes": "MenuExport"
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "courses.toTrash",
+            "target": "trashCourse (MenuSubmit destructive)",
+            "permission": "courses.manage"
+          }
         ]
       },
       "urlState": [
-        { "param": "new", "meaning": "series = 'Regelmäßige Termine' sheet | date = 'Einzelner Termin' sheet" },
-        { "param": "ok / error", "meaning": "toast" }
+        {
+          "param": "new",
+          "meaning": "series = 'Regelmäßige Termine' sheet | date = 'Einzelner Termin' sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
       ],
       "sections": [
         {
@@ -101,8 +309,21 @@
           "anchor": "#participants",
           "kind": "custom",
           "fields": [
-            { "name": "contact_id", "label": "Person hinzufügen", "key": "courses.addPerson", "type": "contact", "component": "ContactPicker", "notes": "placeholder 'Kontakt suchen…'" },
-            { "name": "note", "label": "Notiz", "key": "courses.note", "type": "text", "component": "Input" }
+            {
+              "name": "contact_id",
+              "label": "Person hinzufügen",
+              "key": "courses.addPerson",
+              "type": "contact",
+              "component": "ContactPicker",
+              "notes": "placeholder 'Kontakt suchen…'"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "courses.note",
+              "type": "text",
+              "component": "Input"
+            }
           ],
           "notes": "Inline add row (courses.manage) + button 'Hinzufügen'. Enrolled rows: name → /contacts/<id>, note, badge '{rate} % da', button 'Abmelden'. 'Warteliste' numbered (dashed) with 'Abmelden'. <details> '{count} Abmeldungen' with 'Wieder aufnehmen'. Empty 'Noch niemand angemeldet.'"
         },
@@ -112,15 +333,72 @@
           "kind": "custom",
           "notes": "card actions 'Regelmäßige Termine' (?new=series) and 'Einzelner Termin' (?new=date); rows → /courses/<id>/sessions/<sid> with date, note, badge 'fällt aus' or '{present} von {total} da'. Empty 'Noch keine Termine.'"
         },
-        { "title": "Kursdaten (aside)", "anchor": "#details", "kind": "FormCard", "notes": "CourseForm (same fields as /courses/new), disabled for courses.view" }
+        {
+          "title": "Kursdaten (aside)",
+          "anchor": "#details",
+          "kind": "FormCard",
+          "notes": "CourseForm (same fields as /courses/new), disabled for courses.view"
+        }
       ],
       "actions": [
-        { "label": "Hinzufügen", "key": "courses.add", "where": "section", "kind": "serverAction", "target": "addParticipant", "permission": "courses.manage", "confirm": false, "result": "toast 'Hinzugefügt.' or 'Der Kurs ist voll – auf die Warteliste gesetzt.'; duplicate 'Diese Person ist schon im Kurs.'" },
-        { "label": "Abmelden", "key": "courses.remove", "where": "row", "kind": "serverAction", "target": "setParticipantStatus status=cancelled", "permission": "courses.manage", "confirm": false, "result": "toast 'Abgemeldet. Wer auf der Warteliste steht, rückt nach.'" },
-        { "label": "Wieder aufnehmen", "key": "courses.reEnrol", "where": "row", "kind": "serverAction", "target": "setParticipantStatus status=enrolled", "permission": "courses.manage", "confirm": false },
-        { "label": "Speichern", "where": "savebar", "kind": "serverAction", "target": "saveCourse", "permission": "courses.manage", "confirm": false, "result": "toast 'Gespeichert.'" },
-        { "label": "In den Papierkorb", "key": "courses.toTrash", "where": "menu", "kind": "confirm", "target": "trashCourse", "permission": "courses.manage", "confirm": true, "result": "→ /courses, toast 'Kurs in den Papierkorb gelegt.'" },
-        { "label": "Wiederherstellen", "key": "courses.restore", "where": "section", "kind": "serverAction", "target": "restoreCourse", "permission": "courses.manage", "confirm": false, "notes": "trashed course shows only hint courses.inTrash + this button" }
+        {
+          "label": "Hinzufügen",
+          "key": "courses.add",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addParticipant",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "toast 'Hinzugefügt.' or 'Der Kurs ist voll – auf die Warteliste gesetzt.'; duplicate 'Diese Person ist schon im Kurs.'"
+        },
+        {
+          "label": "Abmelden",
+          "key": "courses.remove",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "setParticipantStatus status=cancelled",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "toast 'Abgemeldet. Wer auf der Warteliste steht, rückt nach.'"
+        },
+        {
+          "label": "Wieder aufnehmen",
+          "key": "courses.reEnrol",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "setParticipantStatus status=enrolled",
+          "permission": "courses.manage",
+          "confirm": false
+        },
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveCourse",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "courses.toTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashCourse",
+          "permission": "courses.manage",
+          "confirm": true,
+          "result": "→ /courses, toast 'Kurs in den Papierkorb gelegt.'"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "courses.restore",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restoreCourse",
+          "permission": "courses.manage",
+          "confirm": false,
+          "notes": "trashed course shows only hint courses.inTrash + this button"
+        }
       ],
       "overlays": [
         {
@@ -128,27 +406,108 @@
           "component": "UrlSheet",
           "title": "Regelmäßige Termine",
           "fields": [
-            { "name": "weekdays", "label": "Wochentage (sr-only legend)", "key": "courses.weekdays", "type": "checkbox[]", "component": "native checkboxes Mo–So" },
-            { "name": "start_time", "label": "Beginn", "key": "courses.startTime", "type": "time", "component": "Input type=time", "required": true, "notes": "default 18:00" },
-            { "name": "end_time", "label": "Ende", "key": "courses.endTime", "type": "time", "component": "Input type=time", "required": true, "notes": "default 19:30" },
-            { "name": "from", "label": "Ab", "key": "courses.from", "type": "date", "component": "DateInput:date", "required": true },
-            { "name": "to", "label": "Bis", "key": "courses.to", "type": "date", "component": "DateInput:date", "required": true },
-            { "name": "every_weeks", "label": "Alle [n] Woche(n)", "key": "courses.every / courses.weeks", "type": "number", "component": "Input type=number (inline in sentence)" }
+            {
+              "name": "weekdays",
+              "label": "Wochentage (sr-only legend)",
+              "key": "courses.weekdays",
+              "type": "checkbox[]",
+              "component": "native checkboxes Mo–So"
+            },
+            {
+              "name": "start_time",
+              "label": "Beginn",
+              "key": "courses.startTime",
+              "type": "time",
+              "component": "Input type=time",
+              "required": true,
+              "notes": "default 18:00"
+            },
+            {
+              "name": "end_time",
+              "label": "Ende",
+              "key": "courses.endTime",
+              "type": "time",
+              "component": "Input type=time",
+              "required": true,
+              "notes": "default 19:30"
+            },
+            {
+              "name": "from",
+              "label": "Ab",
+              "key": "courses.from",
+              "type": "date",
+              "component": "DateInput:date",
+              "required": true
+            },
+            {
+              "name": "to",
+              "label": "Bis",
+              "key": "courses.to",
+              "type": "date",
+              "component": "DateInput:date",
+              "required": true
+            },
+            {
+              "name": "every_weeks",
+              "label": "Alle [n] Woche(n)",
+              "key": "courses.every / courses.weeks",
+              "type": "number",
+              "component": "Input type=number (inline in sentence)"
+            }
           ],
-          "actions": [{ "label": "Termine anlegen", "key": "courses.createDates", "where": "sheet", "kind": "serverAction", "target": "addSessions mode=series", "confirm": false, "result": "toast '{count} Termine angelegt.' (max 200)" }]
+          "actions": [
+            {
+              "label": "Termine anlegen",
+              "key": "courses.createDates",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "addSessions mode=series",
+              "confirm": false,
+              "result": "toast '{count} Termine angelegt.' (max 200)"
+            }
+          ]
         },
         {
           "param": "?new=date",
           "component": "UrlSheet",
           "title": "Einzelner Termin",
           "fields": [
-            { "name": "starts_at", "label": "Beginn", "key": "courses.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
-            { "name": "ends_at", "label": "Ende", "key": "courses.end", "type": "datetime", "component": "DateInput:datetime-local", "required": true }
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "courses.start",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            },
+            {
+              "name": "ends_at",
+              "label": "Ende",
+              "key": "courses.end",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            }
           ],
-          "actions": [{ "label": "Hinzufügen", "key": "courses.add", "where": "sheet", "kind": "serverAction", "target": "addSessions", "confirm": false, "result": "toast '1 Termin angelegt.'" }]
+          "actions": [
+            {
+              "label": "Hinzufügen",
+              "key": "courses.add",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "addSessions",
+              "confirm": false,
+              "result": "toast '1 Termin angelegt.'"
+            }
+          ]
         }
       ],
-      "links": ["/courses", "/contacts/[id]", "/courses/[id]/sessions/[sessionId]", "/export/course-participants"],
+      "links": [
+        "/courses",
+        "/contacts/[id]",
+        "/courses/[id]/sessions/[sessionId]",
+        "/export/course-participants"
+      ],
       "phone": "RecordLayout: course details (aside) below participants and dates.",
       "uxNotes": [
         "'Abmelden' (cancel a participant, moves the waiting list up) has no confirm.",
@@ -163,20 +522,57 @@
     },
     {
       "route": "/courses/[id]/sessions/[sessionId]",
-      "redesign": {"job": "Take attendance for one date on a phone: tap the names of who is there; occasionally move, cancel or delete the date.", "phone": "Top bar ‹ course · date (⋯: Termin ändern, Fällt aus / Findet statt, Termin löschen). Meta time · note; banner when cancelled. Toolbar ‹ previous · next ›. 'x von y da' + 'Alle da'. Big rows: tap = present (check), saves each tap.", "desktop": "Same in form width; ⋯ and ‹ › in the header/toolbar.", "moves": ["attendance checkboxes + 'Anwesenheit speichern' → tap-to-toggle rows that save each tap (markAttendance), counter + 'Alle da'", "Termin ändern card (Beginn, Ende, Notiz, Speichern) → ⋯ 'Termin ändern' → ?edit=date sheet with SaveBar", "checkbox 'Termin fällt aus' → ⋯ 'Fällt aus' (confirm) / 'Findet statt'", "Termin löschen (outline, no confirm) → ⋯ red 'Termin löschen' (confirm)", "new: ‹ › to the previous / next date", "course without attendance → page redirects to /courses/<id>?edit=<session> (small record as a sheet)"], "built": true},
-      "uxNotesDone": [0, 1, 2, 3, 4],
+      "redesign": {
+        "job": "Take attendance for one date on a phone: tap the names of who is there; occasionally move, cancel or delete the date.",
+        "phone": "Top bar ‹ course · date (⋯: Termin ändern, Fällt aus / Findet statt, Termin löschen). Meta time · note; banner when cancelled. Toolbar ‹ previous · next ›. 'x von y da' + 'Alle da'. Big rows: tap = present (check), saves each tap.",
+        "desktop": "Same in form width; ⋯ and ‹ › in the header/toolbar.",
+        "moves": [
+          "attendance checkboxes + 'Anwesenheit speichern' → tap-to-toggle rows that save each tap (markAttendance), counter + 'Alle da'",
+          "Termin ändern card (Beginn, Ende, Notiz, Speichern) → ⋯ 'Termin ändern' → ?edit=date sheet with SaveBar",
+          "checkbox 'Termin fällt aus' → ⋯ 'Fällt aus' (confirm) / 'Findet statt'",
+          "Termin löschen (outline, no confirm) → ⋯ red 'Termin löschen' (confirm)",
+          "new: ‹ › to the previous / next date",
+          "course without attendance → page redirects to /courses/<id>?edit=<session> (small record as a sheet)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone: ‹ › to neighbouring dates, '5 von 8 da' + 'Alle da', big tap rows. Badge 'Heute' capitalised."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
       "file": "src/app/(app)/courses/[id]/sessions/[sessionId]/page.tsx",
       "title": "<Weekday, date, time of the session>",
       "purpose": "One course date: tick who was there, change time/note, mark as cancelled, delete.",
       "permission": "courses.view (edit: courses.manage)",
       "size": "form",
-      "header": { "crumbs": ["Kurse", "<Course title> (→ /courses/<id>#dates)", "<date>"] },
+      "header": {
+        "crumbs": [
+          "Kurse",
+          "<Course title> (→ /courses/<id>#dates)",
+          "<date>"
+        ]
+      },
       "sections": [
         {
           "title": "Anwesenheit",
           "anchor": "#attendance",
           "kind": "custom",
-          "fields": [{ "name": "present", "label": "<participant name>", "type": "checkbox[]", "component": "native checkbox rows (size-5, min-h-10)" }],
+          "fields": [
+            {
+              "name": "present",
+              "label": "<participant name>",
+              "type": "checkbox[]",
+              "component": "native checkbox rows (size-5, min-h-10)"
+            }
+          ],
           "notes": "only when the course tracks attendance and the date isn't cancelled; enrolled participants; empty 'Noch niemand angemeldet.'"
         },
         {
@@ -184,20 +580,77 @@
           "anchor": "#date",
           "kind": "FormCard",
           "fields": [
-            { "name": "starts_at", "label": "Beginn", "key": "courses.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
-            { "name": "ends_at", "label": "Ende", "key": "courses.end", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
-            { "name": "note", "label": "Notiz", "key": "courses.note", "type": "text", "component": "Input", "notes": "placeholder 'z. B. Raum 2 oder Ersatz-Leitung'" },
-            { "name": "cancelled", "label": "Termin fällt aus", "key": "courses.cancelDate", "type": "checkbox", "component": "native checkbox" }
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "courses.start",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            },
+            {
+              "name": "ends_at",
+              "label": "Ende",
+              "key": "courses.end",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "courses.note",
+              "type": "text",
+              "component": "Input",
+              "notes": "placeholder 'z. B. Raum 2 oder Ersatz-Leitung'"
+            },
+            {
+              "name": "cancelled",
+              "label": "Termin fällt aus",
+              "key": "courses.cancelDate",
+              "type": "checkbox",
+              "component": "native checkbox"
+            }
           ],
           "notes": "courses.manage only. Cancelled date shows banner 'Dieser Termin fällt aus.'"
         }
       ],
       "actions": [
-        { "label": "Anwesenheit speichern", "key": "courses.saveAttendance", "where": "section", "kind": "serverAction", "target": "saveAttendance", "permission": "courses.manage", "confirm": false, "result": "toast 'Anwesenheit gespeichert.'" },
-        { "label": "Speichern", "key": "common.save", "where": "section", "kind": "serverAction", "target": "updateSession", "permission": "courses.manage", "confirm": false, "result": "toast 'Gespeichert.'; clash → 'Zu dieser Zeit gibt es schon einen Termin.'" },
-        { "label": "Termin löschen", "key": "courses.deleteDate", "where": "section", "kind": "serverAction", "target": "deleteSession", "permission": "courses.manage", "confirm": false, "result": "→ /courses/<id>#dates, toast 'Termin gelöscht.'" }
+        {
+          "label": "Anwesenheit speichern",
+          "key": "courses.saveAttendance",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveAttendance",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "toast 'Anwesenheit gespeichert.'"
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updateSession",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'; clash → 'Zu dieser Zeit gibt es schon einen Termin.'"
+        },
+        {
+          "label": "Termin löschen",
+          "key": "courses.deleteDate",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "deleteSession",
+          "permission": "courses.manage",
+          "confirm": false,
+          "result": "→ /courses/<id>#dates, toast 'Termin gelöscht.'"
+        }
       ],
-      "links": ["/courses", "/courses/[id]"],
+      "links": [
+        "/courses",
+        "/courses/[id]"
+      ],
       "phone": "Attendance rows are large tap targets (min-h-10, size-5 checkboxes).",
       "uxNotes": [
         "A small record (date + note) is a full page instead of a sheet on the course (docs: small records → ?edit=<id> drawer).",

@@ -116,7 +116,7 @@ export default async function CoursesPage({ searchParams }: PageProps<"/courses"
               <span className="flex flex-wrap items-center gap-2 tabular-nums">
                 {c.capacity ? `${c.enrolled} / ${c.capacity}` : c.enrolled}
                 {c.capacity != null && c.enrolled >= c.capacity && <Badge variant="warning">{t("courses.full")}</Badge>}
-                {c.waiting > 0 && <Badge variant="info">{t("courses.waitingCount", { count: c.waiting })}</Badge>}
+                {c.waiting > 0 && <span className="text-xs text-muted-foreground">{t("courses.waitingCount", { count: c.waiting })}</span>}
               </span>
             ),
           },

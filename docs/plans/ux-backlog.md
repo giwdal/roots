@@ -67,7 +67,7 @@ file too; shared items are done once in shared components.
       and dates change in the task panel / record instead.
 
 ## F. Settings structure
-- [ ] F1 Separate personal settings (Profil, Benachrichtigungen, Sicherheit/Passkeys, KI-Assistent, Sprache, Darstellung)
+- [x] F1 (Settings pass: src/settings/sections.ts, section nav grouped Du / Organisation, phones get the index at /settings) Separate personal settings (Profil, Benachrichtigungen, Sicherheit/Passkeys, KI-Assistent, Sprache, Darstellung)
       from org settings (Allgemein, Team, Rollen, Module, Bereiche, Felder, Orte, Integrationen, API) and area settings
       (gear) and platform admin (/admin); section nav grouped "Du" / "Organisation"; people only see what they may change.
 
@@ -89,7 +89,7 @@ Today there is no manifest, no app icons, no service worker.
       back not blocked, links to other origins open in the browser.
 
 ## J. Search + Sprout on phones (quick access)
-- [~] J1 (quick actions + Gehe zu + recents done; direct row actions like call/mail still open) Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
+- [~] J1 (quick actions + Gehe zu + recents done, Start shows the same quick actions via src/lib/quick-actions.ts; direct row actions like call/mail still open) Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
       Neue Bestellung, Zeit erfassen … — only modules that are on and permitted) shown before typing; results grouped by
       area with AreaIcon, records first, then pages, then actions; a result row can act directly where safe
       (call/mail a contact, open the scanner).
@@ -100,10 +100,10 @@ Today there is no manifest, no app icons, no service worker.
 - [x] J4 (courses, automations, shift team, payments added; members by name; every group has its area colour) ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
 
 ## K. Start page & notifications
-- [ ] K1 Start (home) per person: "Für dich" first — my next shift (with Einchecken), my tasks due, things waiting for me
+- [x] K1 (Start pass: Jetzt card = shifts/now-card.tsx, "Wartet auf dich" counts, my tasks, events, my shifts, quick actions; push/app badge stay I4) Start (home) per person: "Für dich" first — my next shift (with Einchecken), my tasks due, things waiting for me
       (approvals, new submissions, overdue dues/invoices I handle), today's events; then quick actions; tiles only for
       modules that are on. Research: Linear inbox/My issues, Notion home, Shopify home.
-- [ ] K2 Notifications: one inbox (grouped by day, unread first, mark all read, filter by area with AreaIcon), every
+- [~] K2 (done: day groups, unread first, Alle · Ungelesen, area filter, mark all read with toast, opening another org's notification switches and says so, preferences under Settings › Benachrichtigungen; open: push + app badge = I4, delete / mark unread one) Notifications: one inbox (grouped by day, unread first, mark all read, filter by area with AreaIcon), every
       row opens the record (switching org visibly when it belongs to another org), settings per channel in the person's
       settings (F1); push + app badge on phones (I4).
 
@@ -158,6 +158,27 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       same overlap checks).
 - [ ] V5 Objekte: all objects load at once (≤ 1000, filtered in JS); paginate on the server when orgs grow.
 - [ ] V6 Comments (L3) on rentals and courses once `<Comments>` exists.
+
+## Y. Found in the Settings · Start · Dateien · Wiki · Automationen · Admin pass (not fixed there)
+- [ ] Y1 Settings › Felder: a new option gets its colour only after the field was saved once (second round trip).
+- [ ] Y2 Settings › Orte: the actions live in shifts/actions.ts although locations are core; move to settings/locations.
+- [ ] Y3 Integrationen: payment cost panel doesn't say it only applies to ticket orders (§ 270a for the shop); connect
+      sheet secrets are plain text fields (password managers); card states (links / sheets / buttons) differ per provider.
+- [ ] Y4 Automationen canvas: condition values for events, forms, courses, guest lists are NativeSelects of the newest 200
+      → `<RecordPicker>` with a search action per ref list (the inspector is client-side); deleting a step on touch only
+      via the inspector.
+- [ ] Y5 Benachrichtigungen: no delete / mark unread for one row; the unread count refreshes only on navigation.
+- [ ] Y6 Wiki: Teilen popover uses native radios (→ `<Choice>`); "Zuletzt geändert" fixed 15 rows; every page view loads
+      the tree (≤ 2000 rows).
+- [ ] Y7 Dateien: folders are free text (a typo makes a new folder), folder chips from the first 2000 files.
+- [ ] Y8 Admin: the org drawer (details, modules, members) could be its own page /admin/orgs/<id>; billing and activity
+      untouched (hand-made stats + paging → `<DetailList>` / `<Pager>`); onboarding doesn't suggest the address from the
+      name and has no way back with ?new=1.
+- [ ] Y9 Start: "Meine Schichten" rows open Schichten › Meine (a shift has no page of its own); "Beiträge überfällig"
+      opens Beiträge without an overdue filter (the list has none yet).
+- [ ] Y10 Settings › Bereiche only lists gear pages of nav.ts (Vorlagen, E-Mail-Vorlagen, Website › Marke aren't gear
+      pages); Team still uses `members.*` keys next to the Mitglieder module.
+- [ ] Y11 L (comments) not started in this pass: L2 needs the migration question in §Z answered first.
 
 ## Z. To discuss tomorrow
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key

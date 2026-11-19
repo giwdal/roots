@@ -85,6 +85,16 @@ node_modules/next/dist/docs/ when unsure.
   `/rentals/list` + `/rentals/list/calendar`, old route redirects), rentals/badges.tsx (rental state + object Frei /
   Vergeben / Verloren → colour), `?object=` + `?contact=` filter chips on Vergaben, `searchObjects` (rental objects
   picker), an optional "first child" card on a create page (`<details>` open when the calendar sent a day).
+- From Settings · Start · Dateien · Wiki · Automationen · Admin: components/action-switch.tsx (`<ActionSwitch action
+  confirmOn confirmOff>`: a switch that saves through a bound server action on flip, asks first when needed, flips back
+  with a toast), `useLeaveGuard(dirty)` from save-bar.tsx (unsaved-changes guard for client editors without a form),
+  `<SectionNav groups>` (labelled groups beside a settings-like area, desktop only) + src/settings/sections.ts
+  (`settingsFor`, `areaSettings`), a phone index page made of `<LinkRows>` that opens on desktop to the first section
+  (settings/desktop-opens.tsx), shifts/now-card.tsx (`<NowCard returnTo>`: clock in/out anywhere), src/lib/quick-actions.ts,
+  `<FileUpload big>` (pick/drop target for an upload sheet) + `<FileDrop>` (drop onto a list), wiki/tree-sheet.tsx (a
+  side tree as a sheet on phones), automations/run-badge.tsx, `<PageHeader titleHidden>` (pages whose editor shows the
+  title), a run/history detail page as a vertical step list (automations/[id]/runs/[run]), "counts that open the filtered
+  list" rows on Start, day-grouped inbox rows with an unread dot.
 - Confirm = `data-confirm="<key>"` (+ `<key>Hint`) on any button/link. `<PageHeader crumbs>` with hrefs (phone back
   chevron). Header settings/actions/menu go into the phone ⋯ automatically; non-action controls (month navigation,
   filters) belong in the page toolbar.

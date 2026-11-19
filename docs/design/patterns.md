@@ -135,11 +135,13 @@ in Settings › Bereiche); the sidebar shows only what this person may open.
 | Kurse ✓ | – | |
 | Finanzen ✓ | Rechnungen · Zahlungen · Kassenbuch | Einstellungen → gear |
 | Kommunikation ✓ | E-Mails · Formulare | Automationen, Versand → segments on E-Mails (Kampagnen · Automationen · Versand); E-Mail-Vorlagen → E-Mail-Einstellungen (gear) |
-| Automationen | – | |
+| Automationen ✓ | – | trash ?trash=1, runs + run page under each automation |
 | Projekte ✓ | Projekte · Aufgaben | "Alle/Meine Aufgaben" → segments on Aufgaben; Einstellungen → gear |
 | Vermietung ✓ | Objekte · Vergaben | Belegung → segment (Liste · Kalender) on Vergaben (`/rentals/list/calendar`); no area settings, no gear |
 | Shop ✓ | Bestellungen · Produkte | Lager → segment "Bestand" on Produkte (movements in the product); Einstellungen → gear |
-| Wissen, Auswertungen | – | |
+| Wissen ✓, Auswertungen | – | |
+| Dateien ✓ | Dateien · Vorlagen | Ordner = a filter, Kacheln = a view |
+| Einstellungen ✓ | – (section nav beside the page: Du · Organisation) | area settings → each area's gear, listed under Bereiche |
 | Website | Seiten | Marke, Domain → gear (Website-Einstellungen) |
 
 Old URLs keep working (redirect to the new place). An area's Einstellungen stays in `src/modules/nav.ts` with

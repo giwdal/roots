@@ -19,6 +19,7 @@ import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
 import { TYPE_COLS } from "./membership-parts"
+import { matchWords } from "@/lib/search-words"
 
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
@@ -50,7 +51,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
   if (status === "ended") query = query.lt("ends_on", now)
   if (typeFilter) query = query.eq("type_id", typeFilter)
-  if (q) query = query.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${q}%`).join(","), { referencedTable: "contacts" })
+  if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email"], { referencedTable: "contacts" })
   const [{ data }, { data: types }, { count: activeCount }, { count: anyCount }] = await Promise.all([
     query,
     ctx.supabase.from("membership_types").select(TYPE_COLS).eq("org_id", ctx.org.id).order("name"),

@@ -8,6 +8,7 @@ import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { useT } from "@/i18n/client"
+import { cn } from "@/lib/utils"
 import { usePhone } from "@/lib/use-phone"
 import { NAV } from "@/modules/nav"
 import { searchApp, type SearchGroup, type SearchItem } from "@/search/actions"
@@ -129,13 +130,14 @@ export function CommandSearch({ areas = [], quick = [] }: { areas?: { href: stri
     router.push(hit.href)
   }
   const shown = q.trim() ? groups : []
-  const row = phone ? "min-h-12 text-base" : undefined
+  // No room for cmdk's (never shown) check mark: titles like "Rechnung RE-2026-0006" need the width on phones.
+  const row = cn("[&>svg.lucide-check]:hidden", phone && "min-h-12 text-base")
   // One result row: area tile, the title with the typed part in bold, a muted detail on the right.
   const hit = (it: SearchItem, group: string) => (
     <>
       <GroupIcon group={group} area={it.area} />
       <span className="min-w-0 truncate">{mark(it.title, q.trim())}</span>
-      {it.detail && <span className="ml-auto max-w-[45%] shrink-0 truncate text-xs text-muted-foreground">{it.detail}</span>}
+      {it.detail && <span className="ml-auto max-w-[45%] min-w-0 shrink-[4] truncate text-xs text-muted-foreground">{it.detail}</span>}
     </>
   )
 

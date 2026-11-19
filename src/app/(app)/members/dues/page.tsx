@@ -25,6 +25,7 @@ import { pageParam, param, withParams } from "@/lib/url"
 import { reminderScope } from "@/members/dues"
 import { addLevy, bulkDues, createSepaRun, generateDues, sendReminders, setRunStatus } from "../actions"
 import { DueBadge } from "../badges"
+import { matchWords } from "@/lib/search-words"
 
 const STATUSES = ["open", "overdue", "failed", "paid", "cancelled", "all"] as const
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
@@ -53,7 +54,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
   if (status === "failed") query = query.eq("status", "open").not("failed_at", "is", null)
   else if (status === "overdue") query = query.eq("status", "open").lt("due_on", now)
   else if (status !== "all") query = query.eq("status", status)
-  if (q) query = query.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${q}%`).join(","), { referencedTable: "memberships.contacts" })
+  if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email"], { referencedTable: "memberships.contacts" })
   const [{ data }, { data: runs }, { data: open }, { count: anyDues }, { data: tagRows }, { data: creditor }] = await Promise.all([
     query,
     ctx.supabase.from("sepa_runs").select("id, collection_on, count, total_cents, status, created_at").eq("org_id", ctx.org.id).order("created_at", { ascending: false }).limit(10),

@@ -18,6 +18,7 @@ import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
 import { contactName } from "./fields"
+import { matchWords } from "@/lib/search-words"
 
 export default async function ContactsPage({ searchParams }: PageProps<"/contacts">) {
   const ctx = await requirePerm("crm.view")
@@ -45,7 +46,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
   query = trash
     ? query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
     : query.is("deleted_at", null).order("last_name", { nullsFirst: false }).order("first_name").order("company")
-  if (q) query = query.or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.%${q}%`).join(","))
+  if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email", "phone", "city"])
   if (tag) query = query.contains("tags", [tag])
   const [{ data }, { data: tagRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id })])
   const rows = data?.slice(0, PAGE_SIZE) ?? []

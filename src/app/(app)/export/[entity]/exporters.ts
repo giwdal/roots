@@ -8,6 +8,7 @@ import { MEMBER_FIELDS } from "@/members/fields"
 import { monthOf } from "@/lib/time"
 import { minutes } from "@/shifts/time"
 import { payrollMonth } from "@/hr/server"
+import { matchWords } from "@/lib/search-words"
 
 type Ctx = Awaited<ReturnType<typeof getContext>>
 type T = Awaited<ReturnType<typeof getT>>
@@ -169,7 +170,7 @@ export const EXPORTERS: Record<string, Exporter> = {
       const rows = await all((from, to) => {
         let query = ctx.supabase.from("contacts").select("*").eq("org_id", ctx.org.id).is("deleted_at", null).order("last_name").order("first_name").range(from, to)
         if (picked(sp).length) return query.in("id", picked(sp))
-        if (q) query = query.or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.%${q}%`).join(","))
+        if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email", "phone", "city"])
         if (tag) query = query.contains("tags", [tag])
         return query
       })
@@ -200,7 +201,7 @@ export const EXPORTERS: Record<string, Exporter> = {
         if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
         if (status === "ended") query = query.lt("ends_on", now)
         if (type) query = query.eq("type_id", type)
-        if (q) query = query.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${q}%`).join(","), { referencedTable: "contacts" })
+        if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email"], { referencedTable: "contacts" })
         return query
       })
       const memberCols = MEMBER_FIELDS.map((f) => f.key)

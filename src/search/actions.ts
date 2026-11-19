@@ -5,6 +5,7 @@ import { getContext } from "@/lib/context"
 import { APP_HOME } from "@/lib/url"
 import { visibleNav } from "@/modules/nav"
 import { areaSettings, settingsFor } from "@/settings/sections"
+import { matchWords } from "@/lib/search-words"
 
 export type SearchItem = { id: string; title: string; detail?: string; href: string; area?: string /* pages: the nav area whose tile they show */ }
 export type SearchGroup = { key: string; label: string; items: SearchItem[] }
@@ -51,22 +52,10 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
   const day = (v: string | null) => (v ? t.date(v, { dateStyle: "medium" }) : undefined)
   const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists, employees, courses, workflows, staff, payments] = await Promise.all([
     on("crm", "crm.view")
-      ? db
-          .from("contacts")
-          .select("id, first_name, last_name, company, email")
-          .eq("org_id", org)
-          .is("deleted_at", null)
-          .or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.${like}`).join(","))
-          .limit(PER_GROUP)
+      ? matchWords(db.from("contacts").select("id, first_name, last_name, company, email").eq("org_id", org).is("deleted_at", null), q, ["first_name", "last_name", "company", "email", "phone", "city"]).limit(PER_GROUP)
       : none,
     on("members", "members.view")
-      ? db
-          .from("memberships")
-          .select("id, member_no, contacts!inner(first_name, last_name, company)")
-          .eq("org_id", org)
-          .is("deleted_at", null)
-          .or(["first_name", "last_name", "company"].map((c) => `${c}.ilike.${like}`).join(","), { referencedTable: "contacts" })
-          .limit(PER_GROUP)
+      ? matchWords(db.from("memberships").select("id, member_no, contacts!inner(first_name, last_name, company)").eq("org_id", org).is("deleted_at", null), q, ["first_name", "last_name", "company"], { referencedTable: "contacts" }).limit(PER_GROUP)
       : none,
     on("events", "events.view") ? db.from("events").select("id, title, starts_at").eq("org_id", org).is("deleted_at", null).ilike("title", like).order("starts_at", { ascending: false }).limit(PER_GROUP) : none,
     on("invoices", "invoices.view")

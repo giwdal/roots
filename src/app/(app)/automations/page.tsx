@@ -98,7 +98,23 @@ export default async function AutomationsPage({ searchParams }: PageProps<"/auto
             ),
           },
           {
+            // Phones: one short line, a problem first, else the last run.
             header: t("automations.lastRun"),
+            table: false,
+            cell: (w) =>
+              w.failed > 0 ? (
+                <Badge variant="destructive">{t("automations.failedCount", { count: w.failed })}</Badge>
+              ) : w.waiting > 0 ? (
+                <Badge variant="warning">{t("automations.waitingCount", { count: w.waiting })}</Badge>
+              ) : w.lastRun ? (
+                t.date(w.lastRun.created_at, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+              ) : (
+                t("automations.neverRan")
+              ),
+          },
+          {
+            header: t("automations.lastRun"),
+            phone: false,
             cell: (w) =>
               w.lastRun ? (
                 <span className="flex flex-wrap items-center gap-2">
@@ -111,6 +127,7 @@ export default async function AutomationsPage({ searchParams }: PageProps<"/auto
           },
           {
             header: t("automations.problems"),
+            phone: false,
             cell: (w) =>
               w.failed || w.waiting ? (
                 <span className="flex flex-wrap gap-1.5">

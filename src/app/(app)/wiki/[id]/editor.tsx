@@ -402,13 +402,14 @@ export function WikiEditor({ page, orgId }: { page: { id: string; title: string;
           maxLength={200}
           placeholder={t("wiki.untitled")}
           aria-label={t("wiki.pageTitle")}
+          data-keep-size
           onChange={(e) => (setTitle(e.target.value), later(editor))}
           onKeyDown={(e) => {
             if (e.key !== "Enter") return
             e.preventDefault()
             editor?.commands.focus("start")
           }}
-          className="field-sizing-content min-w-0 flex-1 resize-none bg-transparent font-heading text-4xl font-semibold outline-none placeholder:text-muted-foreground/50"
+          className="field-sizing-content min-w-0 flex-1 resize-none bg-transparent font-heading text-3xl font-semibold tracking-tight outline-none md:text-4xl placeholder:text-muted-foreground/50"
         />
       </div>
       {editor && (
@@ -476,7 +477,7 @@ export function WikiEditor({ page, orgId }: { page: { id: string; title: string;
           ))}
         </div>
       )}
-      <p className="text-xs text-muted-foreground">{t("wiki.editorHint")}</p>
+      <p className="text-xs text-muted-foreground max-md:hidden">{t("wiki.editorHint")}</p>
     </div>
   )
 }

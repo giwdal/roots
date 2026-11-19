@@ -114,6 +114,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       <PageHeader
         crumbs={[{ href: "/automations", label: t("automations.title") }, { label: wf.name }]}
         title={wf.name}
+        titleHidden={canEdit}
         badge={<Badge variant={wf.active ? "success" : "secondary"}>{t(wf.active ? "automations.on" : "automations.off")}</Badge>}
         actions={
           <Button render={<Link href={`/automations/${id}/runs`} />} nativeButton={false} size="sm" variant="outline">

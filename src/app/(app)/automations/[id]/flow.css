@@ -1,0 +1,18 @@
+/* The automations canvas (@xyflow/react) in the App's theme: controls, mini map and attribution follow the tokens in
+   light and dark instead of xyflow's white defaults. */
+.react-flow {
+  --xy-background-color: transparent;
+  --xy-controls-button-background-color: var(--card);
+  --xy-controls-button-background-color-hover: var(--muted);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-color-hover: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-controls-box-shadow: 0 0 0 1px var(--border);
+  --xy-minimap-background-color: var(--card);
+  --xy-minimap-mask-background-color: color-mix(in oklch, var(--background) 60%, transparent);
+  --xy-minimap-node-background-color: var(--muted);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow__attribution a {
+  color: var(--muted-foreground);
+}

@@ -1,6 +1,7 @@
 "use client"
 
 import "@xyflow/react/dist/style.css"
+import "./flow.css"
 import { useCallback, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { DateInput } from "@/components/date-input"
@@ -20,7 +21,7 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react"
-import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
+import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, EllipsisIcon, PlusIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -38,6 +39,7 @@ import { creatableFor, deletableFor, def, OBJECTS, searchFields, objectsFor, OPS
 import { saveWorkflow, setActiveAction, testPickers, testRun, testSamples, type TestPicker } from "../actions"
 import { useLeaveGuard } from "@/components/save-bar"
 import { Switch } from "@/components/ui/switch"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 type Data = Record<string, unknown>
 type FlowNode = Node<Data, NodeType>
@@ -133,7 +135,7 @@ function StepNode({ type, data, selected }: NodeProps<FlowNode>) {
   const summary = (() => {
     const d = data as Record<string, string | number | { field: string }[]>
     if (type === "trigger") return (d.event as string) ? triggerLabel(String(d.event), t) : t("automations.pickEvent")
-    if (type === "wait") return `${d.amount} ${t.dynamic(`automations.units.${d.unit}`)}`
+    if (type === "wait") return t.dynamic(`automations.duration.${d.unit}`, { count: Number(d.amount) || 0 })
     if (type === "condition") return ((d.rules as { field: string }[]) ?? []).map((r) => r.field).filter(Boolean).join(", ") || "–"
     if (type === "for_each") return d.object ? `${t.dynamic(`automations.objects.${d.object}`)} · max. ${d.limit ?? 50}` : "–"
     return String(d.subject ?? d.tag ?? d.field ?? d.url ?? d.text ?? d.to ?? "") || "–"
@@ -187,7 +189,7 @@ function StepNode({ type, data, selected }: NodeProps<FlowNode>) {
   )
 }
 const duration = (ms: number, t: ReturnType<typeof useT>) =>
-  ms % 86_400_000 === 0 ? `${ms / 86_400_000} ${t("automations.units.days")}` : ms % 3_600_000 === 0 ? `${ms / 3_600_000} ${t("automations.units.hours")}` : `${ms / 60_000} ${t("automations.units.minutes")}`
+  ms % 86_400_000 === 0 ? t("automations.duration.days", { count: ms / 86_400_000 }) : ms % 3_600_000 === 0 ? t("automations.duration.hours", { count: ms / 3_600_000 }) : t("automations.duration.minutes", { count: ms / 60_000 })
 
 // The one line a card shows in a test run: the filled text / subject / tag / "field = value".
 const previewLine = (p?: Record<string, string>) =>
@@ -357,18 +359,18 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="grid min-w-0 flex-1 gap-1">
+        <div className="grid min-w-0 flex-1 gap-1 max-md:basis-full">
           <Label htmlFor="wf-name">{t("automations.name")}</Label>
           <Input id="wf-name" value={name} disabled={!canEdit} maxLength={200} onChange={(e) => (setName(e.target.value), setDirty(true))} />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={layout} disabled={!canEdit}>
+          <Button type="button" variant="outline" size="sm" onClick={layout} disabled={!canEdit} className="max-md:hidden">
             <LayoutListIcon /> {t("automations.tidy")}
           </Button>
           <Button type="button" variant={test ? "secondary" : "outline"} size="sm" onClick={() => (test ? setTest(null) : openTest())} disabled={(testing && !test) || !triggerEvent}>
             <FlaskConicalIcon /> {testing && !test ? t("automations.testLoading") : test ? t("automations.testStop") : t("automations.testRun")}
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={exportJson}>
+          <Button type="button" variant="outline" size="sm" onClick={exportJson} className="max-md:hidden">
             <DownloadIcon /> {t("automations.export")}
           </Button>
           {canEdit && (
@@ -377,11 +379,27 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
             </Button>
           )}
           {canEdit && (
-            <span className="flex h-(--control-sm) items-center gap-2 rounded-lg border px-3 text-sm">
-              {t("automations.on")}
+            <span className="flex h-(--control-sm) items-center gap-2 rounded-lg border px-3 text-sm max-md:border-0 max-md:px-1">
+              <span className="max-md:sr-only">{t("automations.on")}</span>
               <Switch checked={active} disabled={pending} aria-label={t("automations.activeSwitch")} data-confirm={active ? undefined : "automations.confirmActivate"} onCheckedChange={toggleActive} />
             </span>
           )}
+          {/* Phones: the rarely used tools in a ⋯ (an action sheet), one row of buttons stays. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button type="button" variant="outline" size="icon-sm" aria-label={t("common.moreActions")} className="md:hidden" />}>
+              <EllipsisIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canEdit && (
+                <DropdownMenuItem onClick={layout}>
+                  <LayoutListIcon /> {t("automations.tidy")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={exportJson}>
+                <DownloadIcon /> {t("automations.export")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <Textarea value={description} disabled={!canEdit} maxLength={2000} rows={1} placeholder={t("automations.descriptionPlaceholder")} onChange={(e) => (setDescription(e.target.value), setDirty(true))} />
@@ -456,9 +474,32 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
           ))}
         </ul>
       )}
-      <div className="grid gap-3 lg:grid-cols-[10rem_minmax(0,1fr)_20rem]">
+      <div className="grid gap-3 lg:grid-cols-[12rem_minmax(0,1fr)_20rem]">
         {canEdit && (
-          <aside className="grid content-start gap-3" aria-label={t("automations.addStep")}>
+          // Below lg the palette is one "Schritt hinzufügen" menu above the canvas (an action sheet on phones).
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button type="button" variant="outline" className="justify-self-start lg:hidden" />}>
+              <PlusIcon /> {t("automations.addStep")}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent title={t("automations.addStep")}>
+              {PALETTE.map((sec) => (
+                <DropdownMenuGroup key={sec.section}>
+                  <DropdownMenuLabel>{t.dynamic(`automations.sections.${sec.section}`)}</DropdownMenuLabel>
+                  {sec.types.map((type) => {
+                    const Icon = ICONS[type]
+                    return (
+                      <DropdownMenuItem key={type} disabled={type === "telegram" && !options.telegram.connected} onClick={() => add(type)}>
+                        <Icon /> {t.dynamic(`automations.nodes.${type}`)}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </DropdownMenuGroup>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {canEdit && (
+          <aside className="grid content-start gap-3 max-lg:hidden" aria-label={t("automations.addStep")}>
             {PALETTE.map((sec) => (
               <div key={sec.section} className="grid gap-0.5">
                 <p className="px-2 text-xs font-medium text-muted-foreground">{t.dynamic(`automations.sections.${sec.section}`)}</p>

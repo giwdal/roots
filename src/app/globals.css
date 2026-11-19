@@ -151,12 +151,13 @@
 }
 
 /* iOS zooms into any field under 16px on focus and stays zoomed (the page then looks broken). On phones every form
-   field gets 16px, whatever its classes say; from md the components' own sizes apply again. */
+   field gets 16px, whatever its classes say; from md the components' own sizes apply again. Fields that are already
+   bigger (a page title typed in place) opt out with `data-keep-size`. */
 @layer base {
   @media (max-width: 767.98px) {
-    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [data-keep-size]),
     select,
-    textarea,
+    textarea:not([data-keep-size]),
     [contenteditable="true"] {
       font-size: 16px !important;
     }

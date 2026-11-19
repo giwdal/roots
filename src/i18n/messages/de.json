@@ -3,6 +3,9 @@
     "description": "Verein, Betrieb oder Events an einem Ort organisieren."
   },
   "common": {
+    "moreDetails": "Mehr Angaben (optional)",
+    "properties": "Eigenschaften",
+    "editAll": "Alle Angaben bearbeiten",
     "emptyValue": "Leer",
     "changeImage": "Bild ändern",
     "confirmRemoveImage": "Bild entfernen?",
@@ -1391,6 +1394,8 @@
     "openInbox": "Zu den Benachrichtigungen"
   },
   "eventsPage": {
+    "venueNameShort": "Ort",
+    "venueAddressShort": "Adresse",
     "nav": "Events",
     "title": "Events",
     "new": "Neues Event",
@@ -1467,9 +1472,9 @@
         "other": "noch {count} Plätze frei"
       },
       "revenue": "Umsatz",
-      "revenueHint": "Ticketpreise, ohne Gästeliste",
+      "revenueHint": "Ohne Gästeliste",
       "checkedIn": "Eingecheckt",
-      "checkedInHint": "von allen Tickets inkl. Gästeliste",
+      "checkedInHint": "Inkl. Gästeliste",
       "waitlist": "Warteliste"
     },
     "steps": {
@@ -1489,7 +1494,6 @@
     "programme": "Programm",
     "editTitle": "Event bearbeiten",
     "guestlistsEmptyText": "Gästelisten für dieses Event, z. B. für Artists, Crew oder Freunde – mit eigenem Link zum Eintragen.",
-    "guestlistsHint": "Listen dieses Events und dauerhafte Listen (gelten bei jedem Event).",
     "linked": {
       "title": "Verknüpft",
       "orders": "Bestellungen",
@@ -2217,6 +2221,9 @@
     "notesTitle": "Interne Notiz"
   },
   "guestlists": {
+    "artist": "Artist",
+    "closesAtShort": "Link schließt",
+    "notesShort": "Notiz",
     "nav": "Gästelisten",
     "title": "Gästelisten",
     "new": "Neue Gästeliste",

@@ -6,7 +6,7 @@ import { getT } from "@/i18n/server"
 import { dbError, type T } from "@/i18n/translate"
 import { pickedIds, trashMany } from "@/lib/bulk"
 import { getContext, requirePerm } from "@/lib/context"
-import { loadFields, readCustom, type FieldDef } from "@/lib/custom-fields"
+import { customAsForm, loadFields, readCustom } from "@/lib/custom-fields"
 import { formatMoney } from "@/lib/inputs"
 import type { TablesUpdate } from "@/lib/supabase/types"
 import { fromLocalInput } from "@/lib/time"
@@ -218,11 +218,6 @@ export async function searchObjects(q: string) {
   return (data ?? []).map((o) => ({ id: o.id, label: o.name, detail: t.has(`rentals.kinds.${o.kind}`) ? t.dynamic(`rentals.kinds.${o.kind}`) : o.kind }))
 }
 
-// Stored custom values in form format ("12,50", "true"), so readCustom checks the record with one changed value.
-const customAsForm = (defs: FieldDef[], stored: unknown) => {
-  const v = (stored ?? {}) as Record<string, unknown>
-  return Object.fromEntries(defs.map((d) => [d.key, v[d.key] == null ? "" : d.type === "money" && typeof v[d.key] === "number" ? (v[d.key] as number).toFixed(2).replace(".", ",") : String(v[d.key])]))
-}
 const OBJECT_FIELDS: Record<string, keyof TablesUpdate<"rental_objects">> = { name: "name", kind: "kind", location_id: "location_id", status: "status", description: "description", rentable: "rentable", lendable: "lendable", included: "included", capacity: "capacity", deposit: "deposit_cents" }
 
 /** One property of an object (InlineField): the stored object in form format with the new value, checked by readObject. */

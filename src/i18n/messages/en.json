@@ -3,6 +3,9 @@
     "description": "Run your club, business or events in one place."
   },
   "common": {
+    "moreDetails": "More details (optional)",
+    "properties": "Properties",
+    "editAll": "Edit all details",
     "emptyValue": "Empty",
     "changeImage": "Change picture",
     "confirmRemoveImage": "Remove the picture?",
@@ -1391,6 +1394,8 @@
     "openInbox": "Go to notifications"
   },
   "eventsPage": {
+    "venueNameShort": "Venue",
+    "venueAddressShort": "Address",
     "nav": "Events",
     "title": "Events",
     "new": "New event",
@@ -1467,9 +1472,9 @@
         "other": "{count} places left"
       },
       "revenue": "Revenue",
-      "revenueHint": "Ticket prices, without guest lists",
+      "revenueHint": "Without guest lists",
       "checkedIn": "Checked in",
-      "checkedInHint": "of all tickets incl. guest lists",
+      "checkedInHint": "Incl. guest lists",
       "waitlist": "Waiting list"
     },
     "steps": {
@@ -1489,7 +1494,6 @@
     "programme": "Programme",
     "editTitle": "Edit event",
     "guestlistsEmptyText": "Guest lists for this event, e.g. for artists, crew or friends – each with its own sign-up link.",
-    "guestlistsHint": "This event's lists and permanent lists (valid at every event).",
     "linked": {
       "title": "Linked",
       "orders": "Orders",
@@ -2217,6 +2221,9 @@
     "notesTitle": "Internal note"
   },
   "guestlists": {
+    "artist": "Artist",
+    "closesAtShort": "Link closes",
+    "notesShort": "Note",
     "nav": "Guest lists",
     "title": "Guest lists",
     "new": "New guest list",

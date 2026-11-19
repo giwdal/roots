@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { ExternalLinkIcon, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { CopyButton } from "@/components/copy-button"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { DateInput } from "@/components/date-input"
 import { Choice } from "@/components/choice"
 import { EmptyState } from "@/components/page"
@@ -107,16 +107,11 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
             {t("tickets.shop")} <ExternalLinkIcon />
           </Button>
         )}
-        {canManage && shopTypes.length > 0 && (
-          <Button render={<Link href={withParams(sp, { new: "type", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
-            <PlusIcon /> {t("tickets.newType")}
-          </Button>
-        )}
       </div>
       <Notice error={sheet ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
       {ev.status !== "published" && <p className="rounded-lg bg-muted px-3 py-2 text-sm">{t("tickets.notPublished")}</p>}
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <Section id="types" title={t("tickets.types")}>
           {shopTypes.length ? (
             <DataTable
@@ -174,6 +169,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
               }
             />
           )}
+          {canManage && shopTypes.length > 0 && <AddLink href={withParams(sp, { new: "type", edit: undefined })}>{t("tickets.newType")}</AddLink>}
         </Section>
 
         <Section id="codes" title={t("tickets.codes")} description={codes?.length ? undefined : t("tickets.noCodes")}>
@@ -207,16 +203,13 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
         </Section>
 
         <Section id="sold" title={t("tickets.soldTickets")}>
-          <div className="flex flex-wrap items-center gap-2">
-            <SearchBox q={q} label={t("tickets.search")} />
-            <div className="max-w-full overflow-x-auto md:ml-auto">
-              <Segments
-                label={t("tickets.status")}
-                className="flex-nowrap [&>a]:shrink-0 [&>a]:whitespace-nowrap"
-                items={[undefined, ...STATUSES].map((s) => ({ href: withParams(sp, { status: s, page: undefined }), label: s ? t.dynamic(`tickets.statuses.${s}`) : t("tickets.allSold"), current: s === status }))}
-              />
-            </div>
-          </div>
+          <ListToolbar search={<SearchBox q={q} label={t("tickets.search")} />}>
+            <Segments
+              label={t("tickets.status")}
+              className="md:ml-auto"
+              items={[undefined, ...STATUSES].map((s) => ({ href: withParams(sp, { status: s, page: undefined }), label: s ? t.dynamic(`tickets.statuses.${s}`) : t("tickets.allSold"), current: s === status }))}
+            />
+          </ListToolbar>
           <DataTable
             rows={rows}
             rowKey={(k) => k.id}
@@ -236,7 +229,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
               { header: t("tickets.code"), cell: (k) => <span className="font-mono text-xs">{k.code}</span> },
               {
                 header: t("tickets.status"),
-                cell: (k) => <Badge variant={k.status === "valid" ? "success" : k.status === "used" ? "secondary" : "outline"}>{t.dynamic(`tickets.statuses.${k.status}`)}</Badge>,
+                cell: (k) => <Badge variant={k.status === "valid" ? "success" : k.status === "used" ? "secondary" : k.status === "reserved" ? "warning" : "destructive"}>{t.dynamic(`tickets.statuses.${k.status}`)}</Badge>,
               },
             ]}
           />
@@ -488,7 +481,7 @@ async function Waitlist({ t, ctx, eventId, canManage }: { t: T; ctx: Awaited<Ret
             header: t("tickets.status"),
             cell: (r) => (
               <span className="grid gap-0.5">
-                <Badge variant={r.status === "offered" ? "info" : "outline"}>{t.dynamic(`waitlist.statuses.${r.status}`)}</Badge>
+                <Badge variant={r.status === "offered" ? "info" : r.status === "waiting" ? "warning" : r.status === "claimed" ? "success" : "outline"}>{t.dynamic(`waitlist.statuses.${r.status}`)}</Badge>
                 {r.status === "offered" && r.offered_until && (
                   <span className="text-xs text-muted-foreground">{t("waitlist.offeredUntil", { date: t.date(r.offered_until, { dateStyle: "short", timeStyle: "short" }) })}</span>
                 )}

@@ -190,7 +190,7 @@ async function Guests({ eventId, q, list }: { eventId: string; q?: string; list?
               <input type="hidden" name="list" value={list ?? ""} />
               {r.at ? (
                 <>
-                  <Badge>{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</Badge>
+                  <Badge variant="success">{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</Badge>
                   <input type="hidden" name="undo" value="1" />
                   <SubmitButton size="lg" variant="ghost" className="h-11">
                     {t("door.undo")}
@@ -279,7 +279,7 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
             {k.status === "void" ? (
               <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
             ) : k.status === "used" ? (
-              <Badge>{t("door.inSince", { time: k.checked_in_at ? t.date(k.checked_in_at, { timeStyle: "short" }) : "" })}</Badge>
+              <Badge variant="success">{t("door.inSince", { time: k.checked_in_at ? t.date(k.checked_in_at, { timeStyle: "short" }) : "" })}</Badge>
             ) : (
               <form action={ticketDoorCheckIn}>
                 <input type="hidden" name="event" value={eventId} />

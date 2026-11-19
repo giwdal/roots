@@ -15,13 +15,18 @@ import { UrlSheet } from "@/components/url-sheet"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { loadFields, type CustomValues } from "@/lib/custom-fields"
+import { loadFields } from "@/lib/custom-fields"
 import { param, siteUrl, type SearchParams } from "@/lib/url"
-import { updateEvent, updateEventImage } from "../actions"
+import { InlineField } from "@/components/inline-field"
+import { customInlineItems } from "@/components/custom-field-inline"
+import { customDetails } from "@/components/custom-field-details"
+import { toLocalInput } from "@/lib/time"
+import { patchEvent, updateEvent, updateEventImage } from "../actions"
 import { EventForm } from "../event-form"
 
 // Event overview: what's the state (tickets, money, check-ins, waiting list), what's still missing before it goes
-// live, the facts, the next slots of the programme. Editing the event's own fields is a sheet (?edit=<id>).
+// live, the description and the next slots of the programme; the right rail holds the properties (edited in place),
+// the connections, the picture and files. The whole form stays reachable from ⋯ "Alle Angaben bearbeiten" (?edit=<id>).
 export default async function EventPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<SearchParams> }) {
   const { eventId } = await params
   const ctx = await requirePerm("events.view")
@@ -31,7 +36,8 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   const tickets = ctx.modules.has("tickets") && ctx.can("tickets.view")
   const none = Promise.resolve({ data: null, count: null })
   const on = (m: string, p: string) => ctx.modules.has(m) && ctx.can(p)
-  const [{ data: ev }, { data: sold }, { data: types }, { count: waiting }, { data: slots }, defs, { count: orders }, { count: shifts }, { count: lists }, { data: projects }, { count: campaigns }] = await Promise.all([
+  const mails = on("email", "email.view")
+  const [{ data: ev }, { data: sold }, { data: types }, { count: waiting }, { data: slots }, defs, { count: orders }, { count: shifts }, { count: lists }, { data: projects }, { count: campaigns }, { data: locations }, { data: templates }] = await Promise.all([
     ctx.supabase.from("events").select("*, locations(name, address), email_templates(name)").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
     tickets ? ctx.supabase.from("tickets").select("type_id, status, price").eq("event_id", eventId).in("status", ["valid", "used"]) : none,
     tickets ? ctx.supabase.from("ticket_types").select("id, guest_list_id, for_members").eq("event_id", eventId) : none,
@@ -55,6 +61,9 @@ export default async function EventPage({ params, searchParams }: { params: Prom
     tickets && on("email", "email.view")
       ? ctx.supabase.from("email_campaigns").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).is("deleted_at", null).eq("audience->>event", eventId)
       : none,
+    // Choices for the inline properties (saved place, mail template).
+    canManage ? ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name") : none,
+    canManage && mails ? ctx.supabase.from("email_templates").select("id, name").eq("org_id", ctx.org.id).order("name") : none,
   ])
   if (!ev) notFound()
 
@@ -75,7 +84,6 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   const checkedIn = (sold ?? []).filter((k) => k.status === "used").length
   const publicUrl = siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)
   const links = (ev.links as { label: string; url: string }[] | null) ?? []
-  const custom = (ev.custom as CustomValues | null) ?? {}
   const editing = canManage && param(sp, "edit") === ev.id
   const door = ev.door as { cash_account_id?: string | null } | null
   const linkedProjects = (projects ?? []).flatMap((l) => (l.projects ? [l.projects] : []))
@@ -119,12 +127,56 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   const steps =
     ev.status === "draft"
       ? [
-          { done: !!(ev.venue_name || ev.location_id), label: t("eventsPage.steps.place"), href: `${base}?edit=${ev.id}` },
-          { done: !!ev.description, label: t("eventsPage.steps.description"), href: `${base}?edit=${ev.id}` },
+          { done: !!(ev.venue_name || ev.location_id), label: t("eventsPage.steps.place"), href: `${base}#details` },
+          { done: !!ev.description, label: t("eventsPage.steps.description"), href: `${base}#about` },
           { done: !!ev.image_path, label: t("eventsPage.steps.image"), href: `${base}#image` },
           ...(tickets ? [{ done: shop.size > 0, label: t("eventsPage.steps.tickets"), href: `${base}/tickets?new=type` }] : []),
         ]
       : []
+
+  // Eigenschaften: each value edited where it is shown (patchEvent checks it like the form); links + address stay in "Alle Angaben".
+  const prop = (field: string, label: string, value: string | null, opts: Omit<React.ComponentProps<typeof InlineField>, "action" | "id" | "field" | "value" | "label"> = {}) => ({
+    label,
+    value: <InlineField action={patchEvent} id={ev.id} field={field} value={value} label={label} disabled={!canManage} {...opts} />,
+  })
+  const at = (iso: string) => t.date(iso, { dateStyle: "medium", timeStyle: "short" })
+  const properties = [
+    prop("starts_at", t("eventsPage.startsAtShort"), toLocalInput(ev.starts_at), { kind: "datetime", display: at(ev.starts_at) }),
+    prop("ends_at", t("eventsPage.endsAtShort"), ev.ends_at ? toLocalInput(ev.ends_at) : null, { kind: "datetime", display: ev.ends_at ? at(ev.ends_at) : undefined }),
+    ...((locations?.length ?? 0) > 0 || ev.locations
+      ? [prop("location_id", t("eventsPage.savedPlace"), ev.location_id, { kind: "choice", options: (locations ?? []).map((l) => ({ value: l.id, label: l.name })), display: ev.locations?.name })]
+      : []),
+    prop("venue_name", t("eventsPage.venueNameShort"), ev.venue_name),
+    prop("venue_address", t("eventsPage.venueAddressShort"), ev.venue_address),
+    prop("capacity", t("eventsPage.capacityShort"), ev.capacity == null ? null : String(ev.capacity), { kind: "number", display: ev.capacity == null ? undefined : String(ev.capacity) }),
+    ...(mails && (canManage || ev.email_templates)
+      ? [prop("email_template_id", t("eventsPage.emailTemplate"), ev.email_template_id, { kind: "choice", options: (templates ?? []).map((x) => ({ value: x.id, label: x.name })), display: ev.email_templates?.name })]
+      : []),
+    {
+      label: t("eventsPage.publicPage"),
+      value:
+        ev.status === "draft" ? (
+          <span className="text-muted-foreground">{t("eventsPage.notLiveYet", { path: `/e/${ev.slug}` })}</span>
+        ) : (
+          <a href={publicUrl} target="_blank" rel="noreferrer" className="link inline-flex items-center gap-1 break-all">
+            /e/{ev.slug} <ExternalLinkIcon className="size-3.5" />
+          </a>
+        ),
+    },
+    links.length > 0 && {
+      label: t("eventsPage.links"),
+      value: (
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          {links.map((l) => (
+            <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="link">
+              {l.label}
+            </a>
+          ))}
+        </span>
+      ),
+    },
+    ...(canManage ? customInlineItems(t, defs, ev.custom, patchEvent, ev.id) : customDetails(t, defs, ev.custom)),
+  ]
 
   return (
     <>
@@ -143,6 +195,11 @@ export default async function EventPage({ params, searchParams }: { params: Prom
         </Stats>
       )}
       <RecordLayout
+        top={
+          <Section id="details" title={t("common.properties")}>
+            <DetailList items={properties} />
+          </Section>
+        }
         aside={
           <>
             {connections.length > 0 && (
@@ -197,57 +254,13 @@ export default async function EventPage({ params, searchParams }: { params: Prom
             </ul>
           </Section>
         )}
-        <Section
-          id="details"
-          title={t("eventsPage.details")}
-          action={
-            canManage && (
-              <Button render={<Link href={`${base}?edit=${ev.id}`} scroll={false} />} nativeButton={false} size="sm" variant="ghost">
-                {t("common.edit")}
-              </Button>
-            )
-          }
-        >
-          <DetailList
-            items={[
-              { label: t("eventsPage.startsAtShort"), value: t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" }) },
-              ev.ends_at && { label: t("eventsPage.endsAtShort"), value: t.date(ev.ends_at, { dateStyle: "full", timeStyle: "short" }) },
-              {
-                label: t("eventsPage.where"),
-                value: [ev.venue_name ?? ev.locations?.name, ev.venue_address ?? ev.locations?.address].filter(Boolean).join(", "),
-              },
-              { label: t("eventsPage.capacityShort"), value: ev.capacity ?? t("eventsPage.unlimited") },
-              {
-                label: t("eventsPage.publicPage"),
-                value:
-                  ev.status === "draft" ? (
-                    <span className="text-muted-foreground">{t("eventsPage.notLiveYet", { path: `/e/${ev.slug}` })}</span>
-                  ) : (
-                    <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 break-all underline underline-offset-4">
-                      /e/{ev.slug} <ExternalLinkIcon className="size-3.5" />
-                    </a>
-                  ),
-              },
-              links.length > 0 && {
-                label: t("eventsPage.links"),
-                value: (
-                  <span className="flex flex-wrap gap-x-3 gap-y-1">
-                    {links.map((l) => (
-                      <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                        {l.label}
-                      </a>
-                    ))}
-                  </span>
-                ),
-              },
-              ev.email_templates && { label: t("eventsPage.emailTemplate"), value: ev.email_templates.name },
-              ...defs.map((d) => ({ label: d.label, value: custom[d.key] == null ? null : String(custom[d.key]) })),
-            ]}
-          />
-        </Section>
-        {ev.description && (
+        {(ev.description || canManage) && (
           <Section id="about" title={t("eventsPage.description")}>
-            <p className="text-sm whitespace-pre-line">{ev.description}</p>
+            {canManage ? (
+              <InlineField action={patchEvent} id={ev.id} field="description" value={ev.description} label={t("eventsPage.description")} kind="textarea" />
+            ) : (
+              <p className="text-sm whitespace-pre-line">{ev.description}</p>
+            )}
           </Section>
         )}
         <Section

@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { siteUrl } from "@/lib/url"
-import { restoreEvent, setEventStatus, trashEvent } from "../actions"
+import { InlineTitle } from "@/components/inline-title"
+import { patchEvent, restoreEvent, setEventStatus, trashEvent } from "../actions"
 import { StatusBadge } from "../event-form"
 import { EventViews } from "./event-views"
-import Link from "next/link"
 
 // One event: a compact status header (status, date, place; the next step as the primary button), the sub-views as
 // one segmented row, then the page. Shifts and the door are their own areas, linked filtered to this event.
@@ -33,7 +33,9 @@ export default async function EventLayout({ children, params }: { children: Reac
   const live = !ev.deleted_at
   const base = `/events/${ev.id}`
   const sameDay = ev.ends_at && t.date(ev.ends_at, { dateStyle: "short" }) === t.date(ev.starts_at, { dateStyle: "short" })
-  const when = `${t.date(ev.starts_at, { dateStyle: "full", timeStyle: "short" })}${ev.ends_at ? ` – ${t.date(ev.ends_at, sameDay ? { timeStyle: "short" } : { dateStyle: "medium", timeStyle: "short" })}` : ""}`
+  // One date format for start and end (weekday, day, month), the end's date only when it's another day.
+  const full = { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" } as const
+  const when = `${t.date(ev.starts_at, full)}${ev.ends_at ? ` – ${t.date(ev.ends_at, sameDay ? { hour: "2-digit", minute: "2-digit" } : full)}` : ""}`
   const place = ev.venue_name ?? ev.locations?.name
   const statusForm = (status: string) => (
     <form id={`ev-status-${status}`} action={setEventStatus} hidden>
@@ -52,7 +54,7 @@ export default async function EventLayout({ children, params }: { children: Reac
     <Page size="record">
       <PageHeader
         crumbs={[{ href: "/events", label: t("eventsPage.nav") }, { label: ev.title }]}
-        title={ev.title}
+        title={live && canManage ? <InlineTitle action={patchEvent} id={ev.id} field="title" name={ev.title} label={t("eventsPage.titleLabel")} /> : ev.title}
         badge={live ? <StatusBadge t={t} status={ev.status} /> : <StatusBadge t={t} status="trashed" />}
         meta={
           <>
@@ -63,11 +65,6 @@ export default async function EventLayout({ children, params }: { children: Reac
         actions={
           live && (
             <>
-              {canManage && (
-                <Button render={<Link href={`${base}?edit=${ev.id}`} scroll={false} />} nativeButton={false} size="sm" variant="outline">
-                  <PencilIcon /> {t("common.edit")}
-                </Button>
-              )}
               {ev.status !== "draft" && (
                 <Button render={<a href={siteUrl(ctx.org.slug, `/e/${ev.slug}`, ctx.org.site_domain)} target="_blank" rel="noreferrer" />} nativeButton={false} size="sm" variant="outline">
                   <ExternalLinkIcon /> {t("eventsPage.publicLink")}
@@ -88,6 +85,11 @@ export default async function EventLayout({ children, params }: { children: Reac
               {on("shifts", "shifts.view") && (
                 <MenuLink href={`/shifts?event=${ev.id}`} icon={<CalendarClockIcon />}>
                   {t("shifts.title")}
+                </MenuLink>
+              )}
+              {canManage && (
+                <MenuLink href={`${base}?edit=${ev.id}`} icon={<PencilIcon />}>
+                  {t("common.editAll")}
                 </MenuLink>
               )}
               {canManage && ev.status === "published" && (

@@ -1,6 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
 import { dbError } from "@/i18n/translate"
@@ -68,6 +69,44 @@ export async function saveList(fd: FormData) {
     .single()
   if (error) back(retry, { error: dbError(t, error) })
   redirect(`${PATH}/${data.id}`)
+}
+
+/** One property of a list (InlineField / InlineTitle on the list page): checked like the form, only that column saved. */
+export async function patchGuestList(fd: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("guestlists.manage")
+  const t = await getT()
+  const id = String(fd.get("id") ?? "")
+  const field = String(fd.get("field") ?? "")
+  const value = String(fd.get("value") ?? "").trim()
+  if (!UUID.test(id) || !ctx.modules.has("guestlists")) return { error: t("errors.invalid_input") }
+  let update: { name?: string; door_price?: number; quota?: number | null; per_submission?: number; link_closes_at?: string | null; notes?: string | null }
+  if (field === "name") {
+    if (!value) return { error: t("guestlists.nameRequired") }
+    update = { name: value.slice(0, 100) }
+  } else if (field === "door_price") {
+    const price = parsePrice(value || "0")
+    if (price === null) return { error: t("guestlists.priceInvalid") }
+    update = { door_price: price }
+  } else if (field === "quota") {
+    const quota = value ? Number(value.replace(/\./g, "")) : null
+    if (quota !== null && !(Number.isInteger(quota) && quota > 0)) return { error: t("guestlists.quotaInvalid") }
+    update = { quota }
+  } else if (field === "per_submission") {
+    const per = Number(value)
+    if (!(Number.isInteger(per) && per >= 1 && per <= 50)) return { error: t("guestlists.perInvalid") }
+    update = { per_submission: per }
+  } else if (field === "link_closes_at") {
+    const at = value ? fromLocalInput(value) : null
+    if (value && !at) return { error: t("errors.invalid_date") }
+    update = { link_closes_at: at?.toISOString() ?? null }
+  } else if (field === "notes") update = { notes: value.slice(0, 2000) || null }
+  else return { error: t("errors.invalid_input") }
+  const { error, count } = await ctx.supabase.from("guest_lists").update(update, { count: "exact" }).eq("id", id).eq("org_id", ctx.org.id)
+  if (error || !count) return { error: error ? dbError(t, error) : t("errors.not_allowed") }
+  // The entries' free tickets follow the list (price, quota), like saving the whole form.
+  if (field === "door_price" || field === "quota") await syncTickets(id)
+  revalidatePath(`${PATH}/${id}`)
+  return {}
 }
 
 export async function setLink(fd: FormData) {

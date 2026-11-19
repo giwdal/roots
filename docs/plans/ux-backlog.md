@@ -180,7 +180,17 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       pages); Team still uses `members.*` keys next to the Mitglieder module.
 - [ ] Y11 L (comments) not started in this pass: L2 needs the migration question in §Z answered first.
 
+## S. Found in the sweep (Events · Einlass · Gästelisten · Shop; not fixed there)
+- [ ] S1 Event page: Eigenschaften show all 8+ values on phones; patterns §8 wants the first 4 + "Alle anzeigen" (a shared
+      collapsible `<DetailList limit>` would serve every record page).
+- [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
+
 ## Z. To discuss tomorrow
+- **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
+  type *without* a quota: `greatest(t.quota - count, 0)` is `greatest(null, 0)` = 0 in Postgres, so the
+  `coalesce(…, ∞)` never applies. The App shows "noch 0 frei" per type and Einlass shows "online noch frei 0" in red;
+  the public shop is not affected (`ticket_offer()`). Fix = one migration: `case when t.quota is null then 2147483647
+  else greatest(t.quota - …, 0) end`. OK to run it on production?
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
   org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed
   from at most 1 000 rows in JS — **#3 is also a correctness bug** (event revenue, check-ins, overdue dues, project

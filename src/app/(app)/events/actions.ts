@@ -8,7 +8,8 @@ import { dbError } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { removeImage, replaceImage } from "@/lib/images"
 import { fromLocalInput } from "@/lib/time"
-import { loadFields, readCustom } from "@/lib/custom-fields"
+import { loadFields, patchCustom, readCustom } from "@/lib/custom-fields"
+import type { TablesUpdate } from "@/lib/supabase/types"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 import { checkEvent, EVENT_STATUSES, insertEvent } from "./fields"
@@ -89,6 +90,50 @@ export async function updateEvent(fd: FormData) {
   deliverSoon()
   refreshPublic(ctx.org.id) // public pages show this
   back(here, { ok: t("eventsPage.saved") })
+}
+
+const UUID = /^[0-9a-f-]{36}$/
+// Fields the event page edits in place; each is checked together with the stored event (checkEvent).
+const PATCH_FIELDS = ["title", "starts_at", "ends_at", "venue_name", "venue_address", "location_id", "capacity", "description", "email_template_id"] as const
+
+/** One property of an event (InlineField / InlineTitle on the event page): validated like the form, only that column saved. */
+export async function patchEvent(fd: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("events.manage")
+  const t = await getT()
+  const id = idOf(fd)
+  const field = String(fd.get("field") ?? "")
+  const value = String(fd.get("value") ?? "").trim()
+  if (!UUID.test(id) || !ctx.modules.has("events")) return { error: t("errors.invalid_input") }
+  const { data: ev } = await ctx.supabase.from("events").select("title, starts_at, ends_at, capacity, custom").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
+  if (!ev) return { error: t("errors.not_allowed") }
+  let update: TablesUpdate<"events">
+  if (/^custom\.[a-z0-9_]+$/.test(field)) {
+    const c = patchCustom(await loadFields(ctx.supabase, ctx.org.id, "events"), ev.custom, field.slice(7), value)
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    update = { custom: c.custom as TablesUpdate<"events">["custom"] }
+  } else if ((PATCH_FIELDS as readonly string[]).includes(field)) {
+    const f = field as (typeof PATCH_FIELDS)[number]
+    if (f === "starts_at" || f === "ends_at") {
+      const at = value ? fromLocalInput(value) : null
+      if ((value || f === "starts_at") && !at) return { error: t("errors.invalid_time") }
+      update = { [f]: at?.toISOString() ?? null }
+    } else if (f === "capacity") update = { capacity: value ? Number(value.replace(/\./g, "")) : null }
+    else if (f === "location_id" || f === "email_template_id") {
+      // Only one of this org's places / templates.
+      const { data: own } = value && UUID.test(value) ? await ctx.supabase.from(f === "location_id" ? "locations" : "email_templates").select("id").eq("id", value).eq("org_id", ctx.org.id).maybeSingle() : { data: null }
+      if (value && !own) return { error: t("errors.invalid_input") }
+      update = { [f]: value || null }
+    } else if (f === "title") update = { title: value }
+    else update = { [f]: value.slice(0, f === "description" ? 20000 : f === "venue_address" ? 500 : 200) || null }
+    const error = checkEvent({ title: ev.title, starts_at: ev.starts_at, ends_at: ev.ends_at, capacity: ev.capacity, ...(update as object) } as Parameters<typeof checkEvent>[0])
+    if (error) return { error: t.dynamic(error) }
+  } else return { error: t("errors.invalid_input") }
+  const { error } = await ctx.supabase.from("events").update(update).eq("id", id).eq("org_id", ctx.org.id)
+  if (error) return { error: dbError(t, error) }
+  deliverSoon()
+  refreshPublic(ctx.org.id) // public pages show this
+  revalidatePath(`${PATH}/${id}`, "layout")
+  return {}
 }
 
 export async function setEventStatus(fd: FormData) {

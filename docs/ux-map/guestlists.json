@@ -85,7 +85,12 @@
           "new: ⋯ Papierkorb → ?trash=1 with Wiederherstellen per row (tickets re-issued)",
           "legacy ?new → /guestlists/new (unchanged)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: ListToolbar + Segments, cards with event · count · price, 'dauerhaft' badge. No change needed."
+        }
       },
       "uxNotesDone": [
         0,
@@ -225,7 +230,12 @@
           "SaveBar label 'Neue Gästeliste' → 'Gästeliste anlegen'",
           "generic invalid_input error → errors naming the field (price, quota, names per entry)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: grouped FormCards, SaveBar 'anlegen'. No change needed."
+        }
       },
       "uxNotesDone": [
         0,
@@ -411,7 +421,12 @@
           "columns Eingetragen, Ticket, Drin → unchanged; Drin badge success",
           "crumbs (event lists → Events › event; permanent → Gästelisten) → event lists: Events › event › Gästelisten link to the event's tab (unchanged); after trashing an event list → back to the event's Gästelisten"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Record layout: name edited in place (InlineTitle), Eigenschaften in the rail (Preis an der Tür, Max. Einträge, Namen pro Link-Eintrag, Link schließt, Notiz) as InlineFields + patchGuestList (same checks as saveList, ticket sync on price/quota); guests in the main column, Öffentlicher Link in the rail; header 'Bearbeiten' → ⋯ 'Alle Angaben bearbeiten' (event, artist pickers); link uses the link class."
+        }
       },
       "uxNotesDone": [
         0,

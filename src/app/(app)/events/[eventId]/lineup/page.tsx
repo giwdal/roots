@@ -6,6 +6,7 @@ import { DataTable } from "@/components/data-table"
 import { DateInput } from "@/components/date-input"
 import { Notice } from "@/components/notice"
 import { EmptyState } from "@/components/page"
+import { AddLink } from "@/components/section"
 import { SaveBar } from "@/components/save-bar"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
@@ -55,15 +56,8 @@ export default async function LineupPage({ params, searchParams }: PageProps<"/e
     <>
       <Notice error={sheet ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
       {slots?.length ? (
-        <section className="grid gap-3" aria-label={t("lineup.title")}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">{t("lineup.count", { count: slots.length })}</p>
-            {canManage && (
-              <Button render={<Link href={newSlot} scroll={false} />} nativeButton={false} size="sm">
-                <PlusIcon /> {t("lineup.newSlot")}
-              </Button>
-            )}
-          </div>
+        <section className="grid grid-cols-1 gap-3" aria-label={t("lineup.title")}>
+          <p className="text-sm text-muted-foreground">{t("lineup.count", { count: slots.length })}</p>
           <DataTable
             rows={slots}
             rowKey={(s) => s.id}
@@ -94,6 +88,7 @@ export default async function LineupPage({ params, searchParams }: PageProps<"/e
               { header: t("lineup.stage"), cell: (s) => s.stage },
             ]}
           />
+          {canManage && <AddLink href={newSlot}>{t("lineup.newSlot")}</AddLink>}
         </section>
       ) : (
         <EmptyState

@@ -157,7 +157,12 @@
           "new: bulk 'Wiederherstellen' in the trash view (bulkRestoreEvents)",
           "filtered empty text → eventsPage.noMatch; never-used empty → EmptyState (unchanged)",
           "legacy ?edit=/?new= redirects → kept"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: ListToolbar, Segments, status badges (success/secondary/destructive), cards with title + date · badge, EmptyState, trash. No change needed."
+        }
       },
       "uxNotesDone": [
         0,
@@ -368,7 +373,12 @@
           "location Choice label 'Ort' → 'Gespeicherter Ort'; venue_name label → 'Name des Orts'",
           "link URLs → TypedInput kind=url",
           "error keeps input: SaveBar restores sent values (existing mechanism)"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Links, Öffentliche Seite (slug) and E-Mail-Vorlage moved behind 'Mehr Angaben (optional)' on create; title, time, place, description, capacity stay visible."
+        }
       },
       "uxNotesDone": [
         0,
@@ -582,7 +592,12 @@
           "new: Details DetailList (Beginn, Ende, Wo, Kapazität, öffentliche Adresse, Links, E-Mail-Vorlage, custom fields)",
           "new: Programm (next 5 slots → Lineup)",
           "new: Verknüpft: Einlass, Bestellungen (/payments?event=), Gästelisten (+ new list), Schichtplan, Kassenbuch (door cash account), linked projects"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Record page per patterns §8: title edited in place (InlineTitle, now shared in components/inline-title.tsx), Eigenschaften at the top of the rail (before the main column on phones: RecordLayout top) with InlineFields + patchEvent (Beginn/Ende as the new InlineField kind 'datetime', Ort, Adresse, saved place, Kapazität, Vorlage, custom fields via customInlineItems); description edits in place in the main column; header 'Bearbeiten' removed, the whole form stays in ⋯ 'Alle Angaben bearbeiten' (links, slug); draft steps link to #details/#about; stat hints shortened (no truncation on phones); one date format in the header meta."
+        }
       },
       "uxNotesDone": [
         0,
@@ -827,7 +842,12 @@
           "Gästeliste für Artist → sheet ⋯ MenuSubmit (hidden form)",
           "Slot löschen ghost button → sheet ⋯ destructive with confirm lineup.confirmDeleteSlot",
           "artist sheet textareas → shared Textarea; links hint added (invalid lines dropped)"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Count + '+ Neuer Slot' AddLink under the list instead of a button row; EmptyState unchanged."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1331,7 +1351,12 @@
           "'Freigeschaltet durch' codes → kept below the form in the type sheet",
           "code sheet: ?code=<id> → ?edit=<id> (redirects); kind NativeSelect → segments; value money/number input; link + copy in the sheet meta; delete → ⋯ with confirm",
           "toasts: tickets.codeDeleted / typeDeleted / typeCreated / codeCreated / settingsSaved instead of 'Ticketart gelöscht.' everywhere"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone page no longer overflows sideways (grid-cols-1 + ListToolbar for the sold-tickets search/Segments); 'Neue Ticketart' is a '+' AddLink under the types (like codes) instead of a third button in the summary row; ticket status badges coloured (Gültig success, Reserviert warning, Storniert destructive), waiting list (Wartet warning, Angeboten info, Eingelöst success). Found: 'noch 0 frei' for types without quota = DB bug in ticket_availability (backlog §Z)."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1401,7 +1426,12 @@
           "Neue Gästeliste → kept (/guestlists/new?event=)",
           "rows → /guestlists/<id> (unchanged; the list's own page belongs to the Gästelisten area)",
           "empty text → EmptyState with text + action"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Intro sentence + button row replaced by the list and '+ Neue Gästeliste' AddLink; 'dauerhaft' now a muted line under the name instead of a badge in an unlabeled column; counts/door price right-aligned."
+        }
       },
       "uxNotesDone": [
         1

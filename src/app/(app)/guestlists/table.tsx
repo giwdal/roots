@@ -18,17 +18,20 @@ export function GuestListTable({ t, rows, withEvent = true, empty, action }: { t
         {
           header: t("guestlists.name"),
           cell: (l) => (
-            <span className="grid">
+            <span className="grid min-w-0">
               <span className="font-medium">{l.name}</span>
-              {l.artists?.name && <span className="text-xs text-muted-foreground">{l.artists.name}</span>}
+              {/* Muted line: the artist, and (in an event's tab) that the list is a permanent one. */}
+              {(l.artists?.name || (!withEvent && !l.event_id)) && (
+                <span className="truncate text-xs text-muted-foreground">{[l.artists?.name, !withEvent && !l.event_id && t("guestlists.permanent")].filter(Boolean).join(" · ")}</span>
+              )}
             </span>
           ),
         },
         ...(withEvent
           ? [{ header: t("guestlists.event"), cell: (l: Row) => (l.events ? `${l.events.title} · ${t.date(l.events.starts_at, { dateStyle: "short" })}` : <Badge variant="secondary">{t("guestlists.permanent")}</Badge>) }]
-          : [{ header: "", cell: (l: Row) => (l.event_id ? null : <Badge variant="secondary">{t("guestlists.permanent")}</Badge>) }]),
-        { header: t("guestlists.entries"), cell: (l) => `${count(l)}${l.quota ? ` / ${l.quota}` : ""}`, className: "tabular-nums" },
-        { header: t("guestlists.doorPrice"), cell: (l) => (l.door_price ? t.money(l.door_price) : t("guestlists.free")), className: "tabular-nums" },
+          : []),
+        { header: t("guestlists.entries"), cell: (l) => `${count(l)}${l.quota ? ` / ${l.quota}` : ""}`, className: "text-right tabular-nums" },
+        { header: t("guestlists.doorPrice"), cell: (l) => (l.door_price ? t.money(l.door_price) : t("guestlists.free")), className: "text-right tabular-nums" },
         action
           ? { header: "", cell: action }
           : { header: t("guestlists.link"), cell: (l: Row) => (l.link_enabled ? <Badge variant="success">{t("guestlists.linkOn")}</Badge> : null) },

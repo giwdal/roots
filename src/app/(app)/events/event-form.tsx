@@ -13,6 +13,7 @@ import { loadFields, type CustomValues } from "@/lib/custom-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { DateInput } from "@/components/date-input"
+import { ChevronRightIcon } from "lucide-react"
 
 type Ev = Tables<"events">
 
@@ -31,6 +32,39 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
     mails ? ctx.supabase.from("email_templates").select("id, name, is_default").eq("org_id", ctx.org.id).order("name") : Promise.resolve({ data: null }),
   ])
   const fallback = templates?.find((x) => x.is_default)
+  const more = (
+    <>
+          <FormCard id="links" title={t("eventsPage.links")} description={t("eventsPage.linksHint")}>
+            {[0, 1, 2].map((i) => {
+              const l = (ev?.links as { label: string; url: string }[] | undefined)?.[i]
+              return (
+                <div key={i} className="grid gap-2 sm:grid-cols-[12rem_1fr]">
+                  <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
+                  <TypedInput kind="url" name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
+                </div>
+              )
+            })}
+          </FormCard>
+
+          <FormCard id="page" title={t("eventsPage.publicPage")}>
+            <div className="grid gap-2">
+              <Label htmlFor="ev-slug">{t("eventsPage.slug")}</Label>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span className="shrink-0">/e/</span>
+                <Input id="ev-slug" name="slug" defaultValue={ev?.slug} placeholder="sommerfest-2026" pattern="[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]" />
+              </div>
+            </div>
+          </FormCard>
+          {mails && !!templates?.length && (
+            <FormCard id="emails" title={t("eventsPage.emails")} description={t("eventsPage.emailsHint", { fallback: fallback?.name ?? t("eventsPage.builtInMail") })}>
+              <div className="grid gap-2">
+                <Label htmlFor="ev-template">{t("eventsPage.emailTemplate")}</Label>
+                <Choice id="ev-template" name="email_template" label={t("eventsPage.emailTemplate")} defaultValue={ev?.email_template_id} options={templates.map((x) => ({ value: x.id, label: x.name }))} />
+              </div>
+            </FormCard>
+          )}
+    </>
+  )
   return (
     <form action={action} className="grid gap-6">
       {ev && <input type="hidden" name="id" value={ev.id} />}
@@ -80,34 +114,16 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 
-        <FormCard id="links" title={t("eventsPage.links")} description={t("eventsPage.linksHint")}>
-          {[0, 1, 2].map((i) => {
-            const l = (ev?.links as { label: string; url: string }[] | undefined)?.[i]
-            return (
-              <div key={i} className="grid gap-2 sm:grid-cols-[12rem_1fr]">
-                <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
-                <TypedInput kind="url" name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
-              </div>
-            )
-          })}
-        </FormCard>
-
-        <FormCard id="page" title={t("eventsPage.publicPage")}>
-          <div className="grid gap-2">
-            <Label htmlFor="ev-slug">{t("eventsPage.slug")}</Label>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <span className="shrink-0">/e/</span>
-              <Input id="ev-slug" name="slug" defaultValue={ev?.slug} placeholder="sommerfest-2026" pattern="[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]" />
-            </div>
-          </div>
-        </FormCard>
-        {mails && !!templates?.length && (
-          <FormCard id="emails" title={t("eventsPage.emails")} description={t("eventsPage.emailsHint", { fallback: fallback?.name ?? t("eventsPage.builtInMail") })}>
-            <div className="grid gap-2">
-              <Label htmlFor="ev-template">{t("eventsPage.emailTemplate")}</Label>
-              <Choice id="ev-template" name="email_template" label={t("eventsPage.emailTemplate")} defaultValue={ev?.email_template_id} options={templates.map((x) => ({ value: x.id, label: x.name }))} />
-            </div>
-          </FormCard>
+        {ev ? (
+          more
+        ) : (
+          // Creating: links, address and mail template are rarely needed at first (progressive disclosure).
+          <details className="group grid gap-6">
+            <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
+              <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
+            </summary>
+            <div className="mt-6 grid gap-6">{more}</div>
+          </details>
         )}
         {!disabled && <SaveBar label={ev ? undefined : t("eventsPage.create")} always={!ev} />}
       </fieldset>

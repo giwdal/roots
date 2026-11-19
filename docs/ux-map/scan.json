@@ -308,7 +308,12 @@
           "labels Einlass/Einlassen → Einchecken; 'Eingelassen' → 'Eingecheckt'; toast '{name} ist eingecheckt.'",
           "Rückgängig on guest check-in → kept without confirm (one tap undo, low risk)",
           "camera auto-start → only when the scanner is visible"
-        ]
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone (own tab bar, event chips, stats, camera, code field) + desktop (two columns): fine. 'drin seit …' badges now success instead of default black. Found: 'online noch frei 0' in red for types without quota = the ticket_availability DB bug (backlog §Z)."
+        }
       },
       "uxNotesDone": [
         0,

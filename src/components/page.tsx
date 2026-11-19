@@ -135,7 +135,15 @@ export function PageHeader({
 }
 
 /** A record page: content on the left, a details/related column on the right. */
-export function RecordLayout({ aside, children }: { aside: React.ReactNode; children: React.ReactNode }) {
+export function RecordLayout({ aside, top, children }: { aside: React.ReactNode; top?: React.ReactNode /* Eigenschaften: top of the rail, before the main column on phones/tablets */; children: React.ReactNode }) {
+  if (top)
+    return (
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+        <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-1">{top}</aside>
+        <div className="grid min-w-0 content-start gap-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">{children}</div>
+        <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-2">{aside}</aside>
+      </div>
+    )
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
       <div className="grid min-w-0 gap-6">{children}</div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { CheckIcon, Loader2Icon } from "lucide-react"
 import { toast } from "sonner"
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 /** Server action for one field: gets `id`, `field` and `value`, validates like the full form, returns an error text. */
 export type PatchAction = (form: FormData) => Promise<{ error?: string } | void>
 
-type Kind = "text" | "textarea" | "date" | "choice" | InputKind
+type Kind = "text" | "textarea" | "date" | "datetime" | "choice" | InputKind
 
 // Looks like text until touched (Linear): no border, a soft hover, the field's ring only while editing.
 const GHOST =
@@ -52,6 +52,20 @@ export function InlineField({
   const [editing, setEditing] = useState(false)
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState("")
+  const box = useRef<HTMLDivElement>(null)
+
+  // Date + time: each part saves when it is set; the editor closes on a tap outside it (and its calendar) or Esc.
+  useEffect(() => {
+    if (kind !== "datetime" || !editing) return
+    const outside = (e: PointerEvent) => {
+      const el = e.target as Element
+      if (!box.current?.contains(el) && !el.closest?.('[data-slot="popover-content"]')) setEditing(false)
+    }
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setEditing(false)
+    document.addEventListener("pointerdown", outside)
+    document.addEventListener("keydown", esc)
+    return () => (document.removeEventListener("pointerdown", outside), document.removeEventListener("keydown", esc))
+  }, [kind, editing])
 
   const save = (next: string, revert?: () => void) => {
     if (next === (value ?? "")) return
@@ -107,10 +121,18 @@ export function InlineField({
   }
 
   // Not being edited and the value has its own look (a mailto link, a badge): show that; a click beside it edits.
-  if (!editing && (display || kind === "date"))
+  if (!editing && (display || kind === "date" || kind === "datetime"))
     return (
       <div role="button" tabIndex={0} onClick={(e) => !(e.target as Element).closest("a") && setEditing(true)} onKeyDown={(e) => e.key === "Enter" && setEditing(true)} className={cn(GHOST, "flex cursor-text items-center gap-2")} aria-label={t("common.editField", { field: label })}>
         <span className="min-w-0 flex-1 break-words">{value ? (display ?? value) : empty}</span>
+        {spinner}
+      </div>
+    )
+
+  if (kind === "datetime")
+    return (
+      <div ref={box} className="flex items-center gap-2">
+        <DateInput type="datetime-local" name={`${field}-inline`} defaultValue={value ?? ""} aria-label={label} onValueChange={(v: string) => save(v)} />
         {spinner}
       </div>
     )

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { CheckIcon, GlobeIcon, IdCardIcon, LinkIcon, LockIcon, Share2Icon, UsersIcon } from "lucide-react"
+import { Segment, SegmentGroup } from "@/components/choice"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -38,15 +39,14 @@ export function ShareButton({
     setTimeout(() => setCopied(""), 1500)
   }
   const Icon = { roles: LockIcon, members: IdCardIcon, public: GlobeIcon }[effective] ?? UsersIcon
-  const option = (value: string, label: string, hint?: string) => (
-    <label className="flex items-start gap-2 text-sm">
-      <input type="radio" name="visibility" value={value} checked={choice === value} onChange={() => setChoice(value)} className="mt-0.5 size-4" disabled={!canManage} />
-      <span className="grid">
-        <span>{label}</span>
-        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-      </span>
-    </label>
-  )
+  // Who may read, as one segmented choice (team · roles · members · public, or like the parent); the picked one's hint below.
+  const options = [
+    ...(hasParent ? [{ value: "", label: t("wiki.share.inherit"), hint: t("wiki.share.inheritHint", { what: t.dynamic(`wiki.share.short.${inherited.visibility}`), page: inherited.fromTitle ?? t("wiki.share.default") }) }] : []),
+    { value: "team", label: t("wiki.share.team"), hint: t("wiki.share.teamHint") },
+    { value: "roles", label: t("wiki.share.roles"), hint: t("wiki.share.rolesHint") },
+    { value: "members", label: t("wiki.share.members"), hint: t("wiki.share.membersHint") },
+    { value: "public", label: t("wiki.share.public"), hint: t("wiki.share.publicHint") },
+  ]
 
   return (
     <Popover>
@@ -57,16 +57,14 @@ export function ShareButton({
         <form action={setVisibilityAction} className="grid gap-3">
           <input type="hidden" name="id" value={pageId} />
           <p className="text-sm font-medium">{t("wiki.share.who")}</p>
-          {hasParent &&
-            option(
-              "",
-              t("wiki.share.inherit"),
-              t("wiki.share.inheritHint", { what: t.dynamic(`wiki.share.short.${inherited.visibility}`), page: inherited.fromTitle ?? t("wiki.share.default") }),
-            )}
-          {option("team", t("wiki.share.team"), t("wiki.share.teamHint"))}
-          {option("roles", t("wiki.share.roles"), t("wiki.share.rolesHint"))}
+          <SegmentGroup label={t("wiki.share.who")} className="w-full">
+            {options.map((o) => (
+              <Segment key={o.value || "inherit"} name="visibility" value={o.value} label={o.label} checked={choice === o.value} onPick={setChoice} disabled={!canManage} />
+            ))}
+          </SegmentGroup>
+          <p className="text-xs text-muted-foreground">{options.find((o) => o.value === choice)?.hint}</p>
           {choice === "roles" && (
-            <fieldset className="ml-6 grid gap-1.5" disabled={!canManage}>
+            <fieldset className="grid gap-1.5" disabled={!canManage}>
               <legend className="sr-only">{t("wiki.share.roles")}</legend>
               {roles.map((r) => (
                 <label key={r.id} className="flex items-center gap-2 text-sm">
@@ -76,9 +74,6 @@ export function ShareButton({
               ))}
             </fieldset>
           )}
-          <p className="mt-1 text-sm font-medium">{t("wiki.share.outside")}</p>
-          {option("members", t("wiki.share.members"), t("wiki.share.membersHint"))}
-          {option("public", t("wiki.share.public"), t("wiki.share.publicHint"))}
           {canManage && (
             <SubmitButton size="sm" className="justify-self-start">
               {t("common.save")}

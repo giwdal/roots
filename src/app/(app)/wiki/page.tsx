@@ -2,7 +2,7 @@ import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { ArchiveRestoreIcon, BookOpenIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
-import { ListToolbar, SearchBox } from "@/components/data-table"
+import { ListToolbar, Pager, SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
 import { Section } from "@/components/section"
@@ -10,7 +10,7 @@ import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { param, type SearchParams } from "@/lib/url"
+import { pageParam, param, type SearchParams } from "@/lib/url"
 import { restorePageAction } from "./actions"
 import { TreeNav } from "./tree-nav"
 import { TreeSheet } from "./tree-sheet"
@@ -26,7 +26,9 @@ export default async function WikiPage({ searchParams }: { searchParams: Promise
   const canManage = ctx.can("wiki.manage")
   const trash = canManage && param(sp, "trash") === "1"
   const q = param(sp, "q")?.replace(/[%,()*\\]/g, " ").trim()
-  let list = ctx.supabase.from("wiki_pages").select("id, icon, title, body, updated_at, deleted_at").eq("org_id", ctx.org.id).order(trash ? "deleted_at" : "updated_at", { ascending: false }).limit(q || trash ? 50 : 15)
+  const page = pageParam(sp)
+  const size = q || trash ? 50 : 15
+  let list = ctx.supabase.from("wiki_pages").select("id, icon, title, body, updated_at, deleted_at").eq("org_id", ctx.org.id).order(trash ? "deleted_at" : "updated_at", { ascending: false }).range((page - 1) * size, page * size) // one extra row = there's a next page
   list = trash ? list.not("deleted_at", "is", null) : list.is("deleted_at", null)
   if (q) list = list.or(`title.ilike.%${q}%,body.ilike.%${q}%`)
   const [{ data: rows }, { data: pages }] = await Promise.all([
@@ -87,7 +89,7 @@ export default async function WikiPage({ searchParams }: { searchParams: Promise
             <Section title={trash ? t("wiki.trash") : q ? t("wiki.results") : t("wiki.recent")}>
               {pages?.length ? (
                 <ul className="divide-y rounded-xl border">
-                  {pages.map((p) => (
+                  {pages.slice(0, size).map((p) => (
                     <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                       <Link href={`/wiki/${p.id}`} className="grid min-w-0 flex-1 gap-0.5">
                         <span className="truncate text-sm font-medium">
@@ -112,6 +114,7 @@ export default async function WikiPage({ searchParams }: { searchParams: Promise
                 <p className="text-sm text-muted-foreground">{q ? t("wiki.noMatch") : trash ? t("wiki.trashEmpty") : t("wiki.empty")}</p>
               )}
             </Section>
+            <Pager sp={sp} page={page} hasNext={(pages?.length ?? 0) > size} newer={t("common.newer")} older={t("common.older")} />
           </div>
         </div>
       )}

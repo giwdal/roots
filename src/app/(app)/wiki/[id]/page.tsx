@@ -115,9 +115,11 @@ export default async function WikiPageView({ params, searchParams }: { params: P
           <TreeNav rows={all} current={page.id} label={t("wiki.tree")} movable={canManage} />
         </aside>
         <article className="grid min-w-0 gap-6">
-          <div className="lg:hidden">
-            <TreeSheet rows={all} current={page.id} />
-          </div>
+          {!(editing && !page.deleted_at) && (
+            <div className="lg:hidden">
+              <TreeSheet rows={all} current={page.id} />
+            </div>
+          )}
           {page.deleted_at ? (
             <div className="grid gap-3">
               <p className="rounded-lg border bg-muted px-3 py-2 text-sm">{t("wiki.inTrash")}</p>
@@ -131,7 +133,7 @@ export default async function WikiPageView({ params, searchParams }: { params: P
           ) : (
             <>
               {editing ? (
-                <WikiEditor key={`${page.id}:${param(sp, "r") ?? ""}`} page={page} orgId={ctx.org.id} />
+                <WikiEditor key={`${page.id}:${param(sp, "r") ?? ""}`} page={page} orgId={ctx.org.id} lead={<TreeSheet rows={all} current={page.id} />} />
               ) : page.body.trim() ? (
                 <Markdown>{page.body}</Markdown>
               ) : (

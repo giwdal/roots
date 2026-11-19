@@ -96,7 +96,8 @@ function sizeImage(editor: Editor, width: number | null) {
   }
 }
 
-export function WikiEditor({ page, orgId }: { page: { id: string; title: string; body: string; icon: string | null }; orgId: string }) {
+// `lead`: shown left of the save status in its row (the phone "Seiten" button), so both take one row above the title.
+export function WikiEditor({ page, orgId, lead }: { page: { id: string; title: string; body: string; icon: string | null }; orgId: string; lead?: React.ReactNode }) {
   const t = useT()
   const [title, setTitle] = useState(page.title === t("wiki.untitled") ? "" : page.title)
   const [state, setState] = useState<"saved" | "dirty" | "saving" | "error">("saved")
@@ -386,13 +387,16 @@ export function WikiEditor({ page, orgId }: { page: { id: string; title: string;
 
   return (
     <div className="grid max-w-3xl gap-4">
-      <div className="flex min-h-5 items-center justify-end gap-2 text-xs text-muted-foreground" aria-live="polite">
+      <div className="flex min-h-5 items-center gap-2 text-xs text-muted-foreground">
+        {lead}
+        <span className="ml-auto flex items-center gap-2" aria-live="polite">
         {uploading > 0 && (
           <span className="flex items-center gap-1.5">
             <Loader2Icon className="size-3.5 animate-spin" /> {t("wiki.uploading", { count: uploading })}
           </span>
         )}
         <span className={state === "error" ? "text-destructive" : ""}>{t.dynamic(`wiki.state.${state}`)}</span>
+        </span>
       </div>
       <div className="flex items-start gap-3">
         <IconPicker pageId={page.id} icon={page.icon} />

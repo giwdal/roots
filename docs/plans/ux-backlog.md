@@ -184,6 +184,10 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [x] S1 (DetailList phoneLimit + PhoneMore; events, guest lists, contacts) Event page: Eigenschaften show all 8+ values on phones; patterns §8 wants the first 4 + "Alle anzeigen" (a shared
       collapsible `<DetailList limit>` would serve every record page).
 - [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
+- [ ] S3 (Finanzen) Issued invoices: the internal note (`notes`, never printed) can't be changed after issuing (the document is frozen as a whole); a note edited in place would need the freeze trigger to allow `notes`.
+- [ ] S4 (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
+- [ ] S5 (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
+- [ ] S6 (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
 
 ## Z. To discuss tomorrow
 - **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
@@ -194,7 +198,9 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - Shop product page: kept as one form + SaveBar (like Shopify's product editor: price, VAT, variants, description and
   stock depend on each other) instead of inline fields like the other record pages. OK, or inline the single values
   (name, price, VAT, category) and keep the form only for variants + description?
-- Inline editing (`patchEvent`, `patchGuestList`) is App-only for now; the key API keeps its full `PATCH` endpoints.
+- Inline editing (`patchEvent`, `patchGuestList`, now also `patchMembership`) is App-only for now; the key API keeps its full `PATCH` endpoints.
+- Shared layout fixes from the Finanzen sweep: `FormCard` content, `Section` and `RecordPicker` are now `minmax(0,1fr)` grids (long values truncate instead of pushing the card wider than the phone), and `UrlSheet` puts its actions on their own row below the title on phones (they floated beside a wrapped title). OK as the rule for every sheet?
+- Invoice drafts stay one form + SaveBar (like the shop product page): positions, totals and tax mode depend on each other, and issuing freezes everything. OK?
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
   org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed
   from at most 1 000 rows in JS — **#3 is also a correctness bug** (event revenue, check-ins, overdue dues, project

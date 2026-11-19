@@ -2924,6 +2924,8 @@
     },
     "runs": "Direct debit files",
     "runLine": "Collect on {date} · {count} items · {total}",
+    "runTitle": "Collect on {date}",
+    "runDetail": "{count} items · {total}",
     "runStatus": {
       "exported": "Created",
       "collected": "Collected",

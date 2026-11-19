@@ -126,9 +126,9 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
               </span>
             ),
           },
-          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span> },
-          { header: t("contacts.phone"), cell: (r) => r.phone, className: "whitespace-nowrap" },
-          { header: t("contacts.city"), cell: (r) => r.city },
+          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span>, phone: false },
+          { header: t("contacts.phone"), cell: (r) => r.phone, className: "whitespace-nowrap", phone: false },
+          { header: t("contacts.city"), cell: (r) => r.city, phone: false },
           {
             header: t("contacts.tags"),
             cell: (r) => (
@@ -140,6 +140,20 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
                 ))}
               </span>
             ),
+            phone: false,
+          },
+          // Phones: one line that fits – email (else phone) and the first tag with "+n".
+          { header: t("contacts.email"), cell: (r) => r.email || r.phone, table: false },
+          {
+            header: t("contacts.tags"),
+            cell: (r) =>
+              r.tags.length > 0 && (
+                <Badge variant="secondary">
+                  {r.tags[0]}
+                  {r.tags.length > 1 && ` +${r.tags.length - 1}`}
+                </Badge>
+              ),
+            table: false,
           },
         ]}
       />

@@ -6,7 +6,7 @@ import { dbError, type T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
 import { back } from "@/lib/url"
 import type { ImportOutcome } from "@/components/csv-import"
-import { loadFields, readCustom } from "@/lib/custom-fields"
+import { loadFields, patchCustom, readCustom } from "@/lib/custom-fields"
 import { validRangeFormat } from "@/lib/number-ranges"
 import { INTERVALS } from "@/members/dues"
 import * as members from "@/members/server"
@@ -32,6 +32,61 @@ const cents = (fd: FormData, key: string) => moneyCents(String(fd.get(key) ?? "0
 const message = (t: T, f: Fail) => (f.db ? dbError(t, f.db) : t.dynamic(f.error, f.vars))
 
 // ---------- memberships ----------
+
+// One membership value edited in place (InlineField: `id`, `field`, `value`): the stored record with that value
+// changed goes through the same checks as the full form (updateMembership), so a patch can't skip a rule.
+const PATCHABLE = new Set(["type_id", "starts_on", "fee", "fee_interval", "payment_method", "fee_free_until", "note"])
+export async function patchMembership(fd: FormData): Promise<{ error?: string }> {
+  const ctx = await requirePerm("members.manage")
+  const t = await getT()
+  const id = String(fd.get("id") ?? "")
+  const field = String(fd.get("field") ?? "")
+  const value = String(fd.get("value") ?? "").trim()
+  const customKey = /^custom\.([a-z0-9_]+)$/.exec(field)?.[1]
+  if (!ctx.modules.has("members") || !UUID.test(id) || (!PATCHABLE.has(field) && !customKey)) return { error: t("errors.invalid_input") }
+  const [{ data: m }, defs] = await Promise.all([
+    ctx.supabase.from("memberships").select("*").eq("id", id).eq("org_id", ctx.org.id).is("deleted_at", null).maybeSingle(),
+    customKey ? loadFields(ctx.supabase, ctx.org.id, "memberships") : Promise.resolve([]),
+  ])
+  if (!m) return { error: t("errors.not_allowed") }
+  const input: members.MembershipInput = {
+    type_id: m.type_id,
+    starts_on: m.starts_on,
+    ends_on: m.ends_on,
+    account_holder: m.account_holder,
+    iban: m.iban,
+    bic: m.bic,
+    mandate_signed_on: m.mandate_signed_on,
+    mandate_ref: m.mandate_ref,
+    note: m.note,
+  }
+  const isDate = (v: string) => (DATE.test(v) ? v : undefined)
+  if (field === "type_id") {
+    if (!UUID.test(value)) return { error: t("membership.typeAndStartRequired") }
+    input.type_id = value
+  } else if (field === "starts_on") {
+    if (!isDate(value)) return { error: t("membership.typeAndStartRequired") }
+    input.starts_on = value
+  } else if (field === "fee") {
+    const c = value ? moneyCents(value) : null
+    if (value && c == null) return { error: t("errors.invalid_input") }
+    input.fee_cents = c
+  } else if (field === "fee_interval") input.fee_interval = INTERVALS.find((i) => i === value) ?? null
+  else if (field === "payment_method") input.payment_method = PAYMENT_METHODS.find((x) => x === value) ?? null
+  else if (field === "fee_free_until") {
+    if (value && !isDate(value)) return { error: t("errors.invalid_input") }
+    input.fee_free_until = value || null
+  } else if (field === "note") input.note = value.slice(0, 5000) || null
+  else if (customKey) {
+    const c = patchCustom(defs, m.custom, customKey, value)
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    input.custom = c.custom
+  }
+  const r = await members.updateMembership(ctx.supabase, ctx.org.id, id, input)
+  if ("error" in r) return { error: message(t, r) }
+  deliverSoon()
+  return {}
+}
 
 export async function saveMembership(fd: FormData) {
   const { ctx, t } = await manager()

@@ -233,7 +233,12 @@
           "filtered empty 'Keine Kontakte gefunden.' / trash empty → unchanged"
         ],
         "kept": "Trash rows open the contact page, which shows the deleted notice with Wiederherstellen (one place to restore). No sort options: name order is what people expect in an address book. Bulk export stays xlsx (the header offers CSV).",
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards crammed email · phone · city · all tags into one cut-off line: now email (else phone) + the first tag with '+n' via phone-only columns; the table keeps all columns. ListToolbar, tag filter, trash, bulk bar (desktop) already in place."
+        }
       },
       "uxNotesDone": [
         0,
@@ -418,7 +423,12 @@
           "?error → NewPage notice (unchanged)"
         ],
         "kept": "uxNote 0 kept: nothing is required on its own (name OR company OR email); the card hint says so. uxNote 1 is handled by the SaveBar's snapshot restore (values come back after an error).",
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: Person / Erreichbarkeit / Adresse cards, Tags & eigene Felder behind the optional section, SaveBar 'Kontakt anlegen'. No change needed."
+        }
       },
       "uxNotesDone": [
         1
@@ -440,7 +450,12 @@
         "moves": [
           "redirect → /contacts?import=1 (unchanged)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Wide import sheet from sweep 1 of Kontakte, unchanged."
+        }
       }
     },
     {
@@ -693,7 +708,12 @@
           "?ok / ?error → toast (unchanged); new ?edit=details opens the edit sheet"
         ],
         "kept": "uxNote 5 kept: the team picker lists only the org's team accounts (a handful), a select is enough. Creating a ticket or course place from the contact is not added (those flows start at the event / course); Neue Rechnung and Als Mitglied aufnehmen are in ⋯. Sections hide when their module is off, not permitted or empty.",
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Kontaktdaten started with Vorname / Nachname / Firma (already the title), so on phones the 5 visible values were mostly the name: now E-Mail, Telefon, Adresse first, then names, company, birthday, custom fields (rest behind 'n weitere anzeigen'). Inline editing, module sections (Mitgliedschaft, Rechnungen …) unchanged."
+        }
       },
       "uxNotesDone": [
         0,

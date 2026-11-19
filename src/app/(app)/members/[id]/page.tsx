@@ -3,7 +3,9 @@ import { notFound } from "next/navigation"
 import { BanIcon, BellIcon, CheckIcon, ContactIcon, IdCardIcon, LandmarkIcon, PauseIcon, PencilIcon, PlayIcon, RotateCcwIcon, Trash2Icon, Undo2Icon, UserRoundIcon, LogOutIcon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { customDetails } from "@/components/custom-field-details"
+import { customInlineItems } from "@/components/custom-field-inline"
 import { DetailList } from "@/components/detail-list"
+import { InlineField } from "@/components/inline-field"
 import { FileList } from "@/components/file-list"
 import { LinkRows } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
@@ -22,11 +24,12 @@ import { requirePerm } from "@/lib/context"
 import { loadFields, type FieldDef } from "@/lib/custom-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { param, withParams, type SearchParams } from "@/lib/url"
-import { earliestEnd, paidUntil, type Interval } from "@/members/dues"
+import { earliestEnd, INTERVALS, paidUntil, type Interval } from "@/members/dues"
+import { PAYMENT_METHODS } from "@/members/server"
 import { IdCard } from "@/members/id-card"
 import { DueBadge, isOverdueDue, MemberStateBadge, memberState } from "../badges"
 import { DateField, Field, MembershipFields, TYPE_COLS, type Type } from "../membership-parts"
-import { bulkDues, endMembership, pauseMembership, resetMemberCode, restoreMembership, resumeMembership, saveMembership, sendReminders, setDueStatus, trashMembership } from "../actions"
+import { bulkDues, endMembership, patchMembership, pauseMembership, resetMemberCode, restoreMembership, resumeMembership, saveMembership, sendReminders, setDueStatus, trashMembership } from "../actions"
 
 type Ctx = Awaited<ReturnType<typeof requirePerm>>
 type Contact = { id: string; first_name: string | null; last_name: string | null; company: string | null; email: string | null; phone: string | null; member_code: string | null }
@@ -80,10 +83,54 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
         <CheckIcon /> {t("membership.markDuePaid", { amount: amountOf(next) })}
       </SubmitButton>
     </form>
-  ) : (
-    { href: editHref, label: t("common.edit"), icon: PencilIcon }
-  )
-  const primaryIsEdit = !!primary && typeof primary === "object" && "href" in primary && primary.href === editHref
+  ) : undefined
+  // Single values edit in place (InlineField + patchMembership); the bank details are one compound value → the form.
+  const prop = (field: string, label: string, value: string | null, opts: Omit<React.ComponentProps<typeof InlineField>, "action" | "id" | "field" | "value" | "label"> = {}) => ({
+    label,
+    value: <InlineField action={patchMembership} id={m.id} field={field} value={value} label={label} disabled={!active} {...opts} />,
+  })
+  const typeInterval = (type?.interval ?? "none") as Interval
+  const properties = [
+    prop("type_id", t("membership.type"), m.type_id, { kind: "choice", options: types.map((x) => ({ value: x.id, label: x.name })) }),
+    prop("starts_on", t("membership.since"), m.starts_on, { kind: "date", display: t.date(m.starts_on) }),
+    m.ends_on && { label: t("membership.until"), value: t.date(m.ends_on) },
+    m.paused_from &&
+      (!m.paused_until || m.paused_until >= now) && {
+        label: t("membership.pause"),
+        value: [m.paused_until ? t("membership.pausedRange", { from: t.date(m.paused_from), until: t.date(m.paused_until) }) : t("membership.pausedOpen", { from: t.date(m.paused_from) }), m.pause_reason].filter(Boolean).join(" · "),
+      },
+    prop("fee", t("membership.feeOwn"), m.fee_cents != null ? (m.fee_cents / 100).toFixed(2).replace(".", ",") : null, {
+      kind: "money",
+      display: m.fee_cents != null ? t.money(m.fee_cents) : undefined,
+      emptyLabel: t("membership.typeDefault", { value: t.money(type?.fee_cents ?? 0) }),
+    }),
+    prop("fee_interval", t("membership.interval"), m.fee_interval, {
+      kind: "choice",
+      options: INTERVALS.map((i) => ({ value: i, label: t(`membership.intervals.${i}`) })),
+      emptyLabel: t("membership.typeDefault", { value: t(`membership.intervals.${typeInterval}`) }),
+    }),
+    prop("payment_method", t("membership.paymentMethod"), m.payment_method, {
+      kind: "choice",
+      options: PAYMENT_METHODS.map((x) => ({ value: x, label: t.dynamic(`membership.paymentMethods.${x}`) })),
+      emptyLabel: m.iban ? t("membership.paymentAutoSepa") : t("membership.paymentAutoTransfer"),
+    }),
+    prop("fee_free_until", t("membership.feeFreeUntil"), m.fee_free_until, { kind: "date", display: m.fee_free_until ? t.date(m.fee_free_until) : undefined }),
+    {
+      label: "IBAN",
+      value: active ? (
+        <Link href={editHref} scroll={false} className="-mx-2 block rounded-md px-2 py-1 hover:bg-muted/60" aria-label={t("common.editField", { field: "IBAN" })}>
+          {m.iban ? <span className="font-mono text-xs">{m.iban.replace(/(.{4})/g, "$1 ").trim()}</span> : <span className="text-muted-foreground">{t("common.emptyValue")}</span>}
+        </Link>
+      ) : (
+        m.iban && <span className="font-mono text-xs">{m.iban.replace(/(.{4})/g, "$1 ").trim()}</span>
+      ),
+    },
+    m.iban && m.account_holder && { label: t("membership.accountHolder"), value: m.account_holder },
+    m.iban && { label: t("membership.mandateRef"), value: m.mandate_ref },
+    m.iban && { label: t("membership.mandateSigned"), value: m.mandate_signed_on && t.date(m.mandate_signed_on) },
+    ...(active ? customInlineItems(t, defs, m.custom, patchMembership, m.id) : customDetails(t, defs, m.custom)),
+    prop("note", t("membership.note"), m.note, { kind: "textarea", display: m.note ? <span className="whitespace-pre-line">{m.note}</span> : undefined }),
+  ]
 
   return (
     <Page size="record">
@@ -99,16 +146,14 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
                 <ContactIcon /> {t("membership.openContact")}
               </Button>
             )}
-            {active && !primaryIsEdit && (
-              <Button render={<Link href={editHref} scroll={false} />} nativeButton={false} size="sm" variant="outline">
-                <PencilIcon /> {t("common.edit")}
-              </Button>
-            )}
           </>
         }
         menu={
           active && (
             <ActionsMenu>
+              <MenuLink href={editHref} icon={<PencilIcon />}>
+                {t("common.editAll")}
+              </MenuLink>
               {state !== "ended" &&
                 (pausedNow ? (
                   <MenuSubmit form="resume-membership" icon={<PlayIcon />}>
@@ -199,6 +244,11 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
       </Stats>
 
       <RecordLayout
+        top={
+          <Section id="details" title={t("common.properties")}>
+            <DetailList items={properties} phoneLimit={5} />
+          </Section>
+        }
         aside={
           <>
             {m.contacts && (
@@ -265,40 +315,6 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
           )}
         </Section>
 
-        <Section
-          id="details"
-          title={t("membership.details")}
-          action={
-            active && (
-              <Link href={editHref} scroll={false} className="inline-flex min-h-8 items-center gap-1.5 text-sm text-[var(--link)] hover:underline">
-                <PencilIcon className="size-3.5" /> {t("common.edit")}
-              </Link>
-            )
-          }
-        >
-          <DetailList
-            items={[
-              { label: t("membership.type"), value: type?.name },
-              { label: t("membership.since"), value: t.date(m.starts_on) },
-              m.ends_on && { label: t("membership.until"), value: t.date(m.ends_on) },
-              m.paused_from &&
-                (!m.paused_until || m.paused_until >= now) && {
-                  label: t("membership.pause"),
-                  value: [m.paused_until ? t("membership.pausedRange", { from: t.date(m.paused_from), until: t.date(m.paused_until) }) : t("membership.pausedOpen", { from: t.date(m.paused_from) }), m.pause_reason].filter(Boolean).join(" · "),
-                },
-              { label: t("membership.fee"), value: m.fee_cents != null ? t.money(m.fee_cents) : t("membership.typeDefault", { value: t.money(type?.fee_cents ?? 0) }) },
-              { label: t("membership.interval"), value: m.fee_interval ? t(`membership.intervals.${m.fee_interval as Interval}`) : t("membership.typeDefault", { value: t(`membership.intervals.${interval}`) }) },
-              { label: t("membership.paymentMethod"), value: m.payment_method ? t.dynamic(`membership.paymentMethods.${m.payment_method}`) : m.iban ? t("membership.paymentAutoSepa") : t("membership.paymentAutoTransfer") },
-              m.fee_free_until && { label: t("membership.feeFreeUntil"), value: t.date(m.fee_free_until) },
-              m.iban && { label: "IBAN", value: <span className="font-mono text-xs">{m.iban.replace(/(.{4})/g, "$1 ").trim()}</span> },
-              m.iban && m.account_holder && { label: t("membership.accountHolder"), value: m.account_holder },
-              m.iban && { label: t("membership.mandateRef"), value: m.mandate_ref },
-              m.iban && { label: t("membership.mandateSigned"), value: m.mandate_signed_on && t.date(m.mandate_signed_on) },
-              ...customDetails(t, defs, m.custom),
-              m.note && { label: t("membership.note"), value: <span className="whitespace-pre-line">{m.note}</span> },
-            ]}
-          />
-        </Section>
       </RecordLayout>
 
       {active && sheet === "edit" && (

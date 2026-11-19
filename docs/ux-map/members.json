@@ -218,7 +218,12 @@
           "empty 'Noch keine Mitgliedschaften.' → <EmptyState> with Neue Mitgliedschaft; filtered empty → short text"
         ],
         "kept": "uxNote 4 kept: marking paid / reminding stays on Beiträge and on the member page.",
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards: third line 'Regulär · date · Aktiv · –' with a red dash: now 'Mitgliedsart · status badge' and 'Bezahlt bis …' only when it is behind (red); 'Mitglied seit' and the paid-until column stay in the table."
+        }
       },
       "uxNotesDone": [
         0,
@@ -455,7 +460,12 @@
           "Weitere Angaben (custom fields, note) → same collapsed section; required custom fields open it by default",
           "SaveBar 'Aufnehmen' (saveMembership) → unchanged; ?contact= preselects; ?error notice unchanged"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: Person picker with 'Neue Person anlegen', type + start, optional details section, SaveBar 'Aufnehmen'. No change needed."
+        }
       },
       "uxNotesDone": [
         0,
@@ -700,7 +710,12 @@
           "?ok / ?error → toast; ?edit=details, ?new=pause|cancel sheets"
         ],
         "kept": "uxNote 1 kept: trash stays possible only without dues (money is never deleted); a membership with dues is ended (Kündigen) instead.",
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Angaben was a read-only list with a 'Bearbeiten' link + header button that opened the whole form: now Eigenschaften at the top of the rail (first on phones, phoneLimit 5) with InlineFields through the new patchMembership (Mitgliedsart, Mitglied seit, Beitrag, Rhythmus, Zahlungsart, Beitragsfrei bis, Notiz, custom fields; the stored record + one value goes through updateMembership's checks, e.g. fee minimum); empty values say what applies (InlineField emptyLabel: '0,00 € (Mitgliedsart)', 'Überweisung (automatisch, kein Mandat)'); IBAN row opens the full form (bank + mandate are one compound value); 'Alle Angaben bearbeiten' in ⋯; header keeps Zum Kontakt + the next step."
+        }
       },
       "uxNotesDone": [
         0,
@@ -999,7 +1014,12 @@
           "?run=<id> highlight → unchanged",
           "empty 'Keine Beiträge.' → <EmptyState> 'Noch keine Beiträge' + Beiträge erzeugen; filtered → short text"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "SEPA run rows squeezed 'Einzug am … · 3 Posten · 90,00 €' next to badge + XML on phones: now title 'Einzug am …' with a muted line '3 Posten · 90,00 €'. Stats, numbered steps, ListToolbar and badges unchanged."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1161,7 +1181,12 @@
           "Mitgliedsart löschen (red ghost button, no confirm) → sheet ⋯ destructive item with confirm",
           "EmptyState → the rows' empty line + the add link"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirects to Einstellungen (types group)."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1310,7 +1335,12 @@
           "Mitgliedsnummern NumberRangeForm with own Speichern → <NumberRangeFields> in the same form; saveSettings saves both (saveMemberRange merged)",
           "Mitgliederbereich URL + Kopieren → unchanged"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: Mitgliedsarten as rows › + AddLink, SEPA and number fields in cards with one SaveBar. No change needed."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1332,7 +1362,12 @@
         "moves": [
           "redirect → /members/settings (unchanged)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirects to Einstellungen."
+        }
       }
     },
     {
@@ -1350,7 +1385,12 @@
         "moves": [
           "redirect → /members?import=1 (unchanged)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Unchanged (import sheet)."
+        }
       }
     }
   ],

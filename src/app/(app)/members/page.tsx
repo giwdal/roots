@@ -70,6 +70,11 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
       : [{ data: [] }, { data: [] }]
   const until = (r: (typeof rows)[number]) =>
     paidUntil((fees ?? []).filter((f) => f.membership_id === r.id), (r.fee_interval ?? types?.find((x) => x.id === r.type_id)?.interval ?? "none") as Interval)
+  // Red when fees exist and the paid time is over (or nothing paid yet) on a running membership; without fees "–".
+  const behind = (r: (typeof rows)[number]) => {
+    const u = until(r)
+    return (fees ?? []).some((f) => f.membership_id === r.id) && (!u || u < now) && (!r.ends_on || r.ends_on >= now)
+  }
   const earlier = (r: (typeof rows)[number]) => (others ?? []).filter((o) => o.contact_id === r.contact_id && o.id !== r.id)
   const typeName = (id: string) => types?.find((x) => x.id === id)?.name ?? ""
   return (
@@ -182,17 +187,19 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             ),
           },
           { header: t("membership.type"), cell: (r) => typeName(r.type_id) },
-          { header: t("membership.since"), cell: (r) => t.date(r.starts_on), className: "whitespace-nowrap" },
+          { header: t("membership.since"), cell: (r) => t.date(r.starts_on), className: "whitespace-nowrap", phone: false },
           { header: t("membership.status"), cell: (r) => <MemberStateBadge t={t} m={r} now={now} /> },
           {
             header: t("membership.paidUntilCol"),
-            cell: (r) => {
-              const u = until(r)
-              // Red when fees exist and the paid time is over (or nothing paid yet); "–" without fees (free, no fee type).
-              const behind = (fees ?? []).some((f) => f.membership_id === r.id) && (!u || u < now)
-              return <span className={behind && (!r.ends_on || r.ends_on >= now) ? "text-destructive tabular-nums" : "tabular-nums"}>{u ? t.date(u) : "–"}</span>
-            },
+            cell: (r) => <span className={behind(r) ? "text-destructive tabular-nums" : "tabular-nums"}>{until(r) ? t.date(until(r)!) : "–"}</span>,
             className: "whitespace-nowrap",
+            phone: false,
+          },
+          // Phones: the paid-until date only when it needs attention.
+          {
+            header: t("membership.paidUntilCol"),
+            cell: (r) => behind(r) && <span className="text-destructive tabular-nums">{until(r) ? `${t("membership.paidUntilCol")} ${t.date(until(r)!)}` : `${t("membership.paidUntilCol")} –`}</span>,
+            table: false,
           },
         ]}
       />

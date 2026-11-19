@@ -2924,6 +2924,8 @@
     },
     "runs": "Lastschriftdateien",
     "runLine": "Einzug am {date} · {count} Posten · {total}",
+    "runTitle": "Einzug am {date}",
+    "runDetail": "{count} Posten · {total}",
     "runStatus": {
       "exported": "Erstellt",
       "collected": "Eingezogen",

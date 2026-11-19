@@ -35,6 +35,7 @@ export function InlineField({
   options,
   display,
   disabled,
+  emptyLabel,
 }: {
   action: PatchAction
   id: string
@@ -45,6 +46,7 @@ export function InlineField({
   options?: { value: string; label: string }[] // kind "choice"
   display?: React.ReactNode // how the saved value looks when it isn't being edited (link, badge …)
   disabled?: boolean
+  emptyLabel?: string // what no value means ("0,00 € (Mitgliedsart)", "Überweisung (automatisch)"), instead of "Leer"
 }) {
   const t = useT()
   const router = useRouter()
@@ -87,7 +89,7 @@ export function InlineField({
   if (disabled) return <div className="min-w-0 py-1 text-sm break-words">{value ? (display ?? value) : <span className="text-muted-foreground">–</span>}</div>
 
   const spinner = pending && <Loader2Icon className="size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
-  const empty = <span className="text-muted-foreground">{t("common.emptyValue")}</span>
+  const empty = <span className="text-muted-foreground">{emptyLabel ?? t("common.emptyValue")}</span>
 
   if (kind === "choice") {
     const current = options?.find((o) => o.value === value)
@@ -103,7 +105,7 @@ export function InlineField({
             <input autoFocus value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("common.search")} className="mb-1 h-(--control-sm) w-full rounded-md bg-muted/60 px-2 text-sm outline-none" />
           )}
           <div className="grid max-h-72 overflow-y-auto">
-            {[{ value: "", label: "–" }, ...shown].map((o) => (
+            {[{ value: "", label: emptyLabel ?? "–" }, ...shown].map((o) => (
               <button
                 key={o.value || "-"}
                 type="button"
@@ -120,8 +122,8 @@ export function InlineField({
     )
   }
 
-  // Not being edited and the value has its own look (a mailto link, a badge): show that; a click beside it edits.
-  if (!editing && (display || kind === "date" || kind === "datetime"))
+  // Not being edited and the value has its own look (a mailto link, a badge, the emptyLabel): show that; a click beside it edits.
+  if (!editing && (display || kind === "date" || kind === "datetime" || (emptyLabel && !value)))
     return (
       <div role="button" tabIndex={0} onClick={(e) => !(e.target as Element).closest("a") && setEditing(true)} onKeyDown={(e) => e.key === "Enter" && setEditing(true)} className={cn(GHOST, "flex cursor-text items-center gap-2")} aria-label={t("common.editField", { field: label })}>
         <span className="min-w-0 flex-1 break-words">{value ? (display ?? value) : empty}</span>

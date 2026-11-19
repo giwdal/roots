@@ -72,6 +72,12 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
   const running = (runs ?? []).filter((r) => r.status === "exported")
   const done = (runs ?? []).filter((r) => r.status !== "exported")
   const creditorReady = !!(creditor?.creditor_name && creditor.creditor_id && creditor.iban)
+  const runHead = (r: { collection_on: string; count: number; total_cents: number }) => (
+    <span className="grid min-w-0 flex-1">
+      <span className="font-medium">{t("membership.runTitle", { date: t.date(r.collection_on) })}</span>
+      <span className="text-xs text-muted-foreground tabular-nums">{t("membership.runDetail", { count: r.count, total: t.money(r.total_cents) })}</span>
+    </span>
+  )
   const runLine = (r: { collection_on: string; count: number; total_cents: number }) => t("membership.runLine", { date: t.date(r.collection_on), count: r.count, total: t.money(r.total_cents) })
 
   return (
@@ -123,7 +129,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
           {running.map((r) => (
             <div key={r.id} className={`grid gap-3 rounded-lg border p-3 text-sm ${r.id === highlight ? "border-primary" : ""}`}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="min-w-0 flex-1 font-medium">{runLine(r)}</span>
+                {runHead(r)}
                 <Badge variant="warning">{t("membership.runStatus.exported")}</Badge>
                 {canManage && (
                   <>
@@ -171,7 +177,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/members/due
             <ul className="grid divide-y rounded-lg border">
               {done.map((r) => (
                 <li key={r.id} className={`flex min-h-11 flex-wrap items-center gap-2 px-3 py-2 text-sm ${r.id === highlight ? "bg-muted" : ""}`}>
-                  <span className="min-w-0 flex-1">{runLine(r)}</span>
+                  {runHead(r)}
                   <Badge variant={r.status === "collected" ? "success" : "secondary"}>{t(`membership.runStatus.${r.status as "collected" | "cancelled"}`)}</Badge>
                   {r.status !== "cancelled" && (
                     <Button render={<a href={`/members/sepa/${r.id}`} aria-label={`${t("membership.downloadXml")} · ${runLine(r)}`} />} nativeButton={false} size="sm" variant="ghost">

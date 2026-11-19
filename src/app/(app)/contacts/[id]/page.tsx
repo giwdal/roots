@@ -329,14 +329,11 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         >
           <Section id="details" title={t("contacts.hub.details")}>
             {/* Every value edits in place (Linear style); the address is one small dialog; tags + everything at once
-                stay in "Alle Angaben bearbeiten" (⋯). */}
+                stay in "Alle Angaben bearbeiten" (⋯). Ways to reach the person first: the name is already the title. */}
             {canManage && !c.deleted_at ? (
               <DetailList
                 phoneLimit={5}
                 items={[
-                  { label: t("contacts.firstName"), value: <InlineField action={patchContact} id={c.id} field="first_name" value={c.first_name} label={t("contacts.firstName")} /> },
-                  { label: t("contacts.lastName"), value: <InlineField action={patchContact} id={c.id} field="last_name" value={c.last_name} label={t("contacts.lastName")} /> },
-                  { label: t("contacts.company"), value: <InlineField action={patchContact} id={c.id} field="company" value={c.company} label={t("contacts.company")} /> },
                   {
                     label: t("contacts.email"),
                     value: <InlineField action={patchContact} id={c.id} field="email" kind="email" value={c.email} label={t("contacts.email")} display={c.email && <a href={`mailto:${c.email}`} className="break-all link">{c.email}</a>} />,
@@ -353,6 +350,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                       </Link>
                     ),
                   },
+                  { label: t("contacts.firstName"), value: <InlineField action={patchContact} id={c.id} field="first_name" value={c.first_name} label={t("contacts.firstName")} /> },
+                  { label: t("contacts.lastName"), value: <InlineField action={patchContact} id={c.id} field="last_name" value={c.last_name} label={t("contacts.lastName")} /> },
+                  { label: t("contacts.company"), value: <InlineField action={patchContact} id={c.id} field="company" value={c.company} label={t("contacts.company")} /> },
                   {
                     label: t("contacts.birthday"),
                     value: <InlineField action={patchContact} id={c.id} field="birthday" kind="date" value={c.birthday} label={t("contacts.birthday")} display={c.birthday ? t.date(`${c.birthday}T12:00:00`, { dateStyle: "long" }) : undefined} />,

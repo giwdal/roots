@@ -11,7 +11,7 @@ import { LinkRows } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
 import { Page, PageHeader, RecordLayout } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
-import { Section } from "@/components/section"
+import { AddLink, Section } from "@/components/section"
 import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
 import { UrlSheet } from "@/components/url-sheet"
@@ -312,7 +312,11 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("membership.noDues")}</p>
+            <div className="grid gap-2">
+              <p className="text-sm text-muted-foreground">{t(active && fee > 0 ? "membership.noDuesYet" : "membership.noDues")}</p>
+              {/* Dues come from a run over all members (Beiträge); without one the page would be a dead end. */}
+              {active && fee > 0 && <AddLink href="/members/dues?new=generate">{t("membership.generate")}</AddLink>}
+            </div>
           )}
         </Section>
 

@@ -19,6 +19,7 @@ import { IdCardIcon, ScanLineIcon, ShoppingCartIcon, TicketIcon, UsersIcon } fro
 import { DoorSale } from "./door-sale"
 import { doorOffer, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
+import { ChipRow } from "@/components/chip-row"
 
 const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, tickets: TicketIcon, members: IdCardIcon, guests: UsersIcon } as const
 
@@ -81,9 +82,9 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
       {!events?.length ? (
         <p className="text-sm text-muted-foreground">{t("tickets.noEventsToScan")}</p>
       ) : (
-        <nav aria-label={t("tickets.pickEvent")} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1 pb-1">
+        <ChipRow label={t("tickets.pickEvent")} className="-mx-1 gap-1 px-1 pb-1">
           {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}${look ? `&look=${look}` : ""}`, e.id === current?.id, `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
-        </nav>
+        </ChipRow>
       )}
       {current && (
         <>

@@ -2864,6 +2864,7 @@
     "cancelHint": "Earliest end when cancelling today: {date} ({months} months notice, to the end of the billing period). Or pick another date.",
     "cancelOtherDate": "Other end date (optional)",
     "noDues": "No dues.",
+    "noDuesYet": "No dues yet – they are created when you generate the dues for a period.",
     "markPaid": "Paid",
     "toTrash": "Move to trash",
     "dueStatus": {

@@ -11,6 +11,10 @@ import { useT } from "@/i18n/client"
  * button, so server actions and formAction work unchanged. Other elements with data-confirm (client buttons, links)
  * have their click held back the same way. Mounted once in <AppShell>.
  */
+// Questions before a wanted step (money in, sending, issuing, approving) get a normal button; everything else
+// (deleting, cancelling, refunding, revoking) the red one.
+const POSITIVE = /\.confirm(Paid|BulkPaid|Collected|Send|Schedule|Issue\w*|Approve\w*|Renew|Remind\w*|BulkRemind|Book|Return|Resend|Reopen|Publish|Accept\w*|TransferReceived|CashReceived|Activate|SeriesSave|Save|Grant)$/
+
 export function ConfirmHost() {
   const t = useT()
   const [ask, setAsk] = useState<{ form: HTMLFormElement | null; button: HTMLElement; key: string; vars: { count: number; amount: string }; label: string; n: number } | null>(null)
@@ -77,7 +81,7 @@ export function ConfirmHost() {
     >
       <div className="flex flex-col-reverse gap-2 px-6 py-4 sm:flex-row sm:justify-end">
         <ContentSheetClose render={<Button variant="outline" />}>{t("common.cancel")}</ContentSheetClose>
-        <Button variant="destructive" onClick={confirm} autoFocus>
+        <Button variant={POSITIVE.test(ask.key) ? "default" : "destructive"} onClick={confirm} autoFocus>
           {ask.label || t("common.confirm")}
         </Button>
       </div>

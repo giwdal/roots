@@ -28,6 +28,10 @@ export async function ImageForm(props: {
         </PicturePicker>
         <div className="grid gap-1">
           <span className="text-xs text-muted-foreground">{props.hint}</span>
+          {/* The picture itself only shows its camera on hover; a visible way to pick one for touch and first-timers. */}
+          <label htmlFor={props.id} className="w-fit cursor-pointer text-xs text-[var(--link)] hover:underline">
+            {props.path ? t("common.changeImage") : t("common.upload")}
+          </label>
           {props.path && <PictureRemove action={props.action} hidden={props.hidden} label={t("common.removeImage")} />}
         </div>
       </div>

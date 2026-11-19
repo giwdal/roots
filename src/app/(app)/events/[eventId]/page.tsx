@@ -178,6 +178,22 @@ export default async function EventPage({ params, searchParams }: { params: Prom
     ...(canManage ? customInlineItems(t, defs, ev.custom, patchEvent, ev.id) : customDetails(t, defs, ev.custom)),
   ]
 
+  // The checklist is the draft's next step: main column on desktop, before the properties on phones and tablets.
+  const stepsCard = (id: string) => (
+    <Section id={id} title={t("eventsPage.steps.title")} description={t("eventsPage.steps.text")}>
+      <ul className="grid gap-1">
+        {steps.map((s) => (
+          <li key={s.label}>
+            <Link href={s.href} scroll={false} className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm hover:bg-muted">
+              {s.done ? <CheckCircle2Icon className="size-4 text-primary" /> : <CircleIcon className="size-4 text-muted-foreground" />}
+              <span className={s.done ? "text-muted-foreground line-through" : ""}>{s.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+
   return (
     <>
       <Notice error={editing ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
@@ -196,9 +212,12 @@ export default async function EventPage({ params, searchParams }: { params: Prom
       )}
       <RecordLayout
         top={
-          <Section id="details" title={t("common.properties")}>
-            <DetailList items={properties} phoneLimit={4} />
-          </Section>
+          <>
+            {steps.length > 0 && <div className="lg:hidden">{stepsCard("steps-phone")}</div>}
+            <Section id="details" title={t("common.properties")} className={steps.length > 0 ? "lg:border-t-0 lg:pt-0" : undefined}>
+              <DetailList items={properties} phoneLimit={4} />
+            </Section>
+          </>
         }
         aside={
           <>
@@ -240,20 +259,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
           </>
         }
       >
-        {steps.length > 0 && (
-          <Section id="steps" title={t("eventsPage.steps.title")} description={t("eventsPage.steps.text")}>
-            <ul className="grid gap-1">
-              {steps.map((s) => (
-                <li key={s.label}>
-                  <Link href={s.href} scroll={false} className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm hover:bg-muted">
-                    {s.done ? <CheckCircle2Icon className="size-4 text-primary" /> : <CircleIcon className="size-4 text-muted-foreground" />}
-                    <span className={s.done ? "text-muted-foreground line-through" : ""}>{s.label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
+        {steps.length > 0 && <div className="max-lg:hidden">{stepsCard("steps")}</div>}
         {(ev.description || canManage) && (
           <Section id="about" title={t("eventsPage.description")}>
             {canManage ? (

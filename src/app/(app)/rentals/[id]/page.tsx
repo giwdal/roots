@@ -457,11 +457,11 @@ export default async function ObjectPage({ params, searchParams }: PageProps<"/r
           <form action={saveRateAction} className="grid gap-4">
             <input type="hidden" name="object_id" value={id} />
             {rate && <input type="hidden" name="id" value={rate.id} />}
-            <div className="grid gap-2">
+            <div className="grid max-w-xl gap-2">
               <Label htmlFor="r-name">{t("rentals.rateName")}</Label>
               <Input id="r-name" name="name" required maxLength={100} defaultValue={rate?.name ?? ""} placeholder={t("rentals.ratePlaceholder")} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-wrap gap-4">
               <div className="grid content-start gap-2">
                 <Label htmlFor="r-price">{t("rentals.price")}</Label>
                 <TypedInput kind="money" id="r-price" name="price" defaultValue={rate ? formatMoney(rate.price_cents) : ""} required />
@@ -470,6 +470,8 @@ export default async function ObjectPage({ params, searchParams }: PageProps<"/r
                 <Label htmlFor="r-unit">{t("rentals.unit")}</Label>
                 <Choice id="r-unit" name="unit" label={t("rentals.unit")} required defaultValue={rate?.unit ?? (family === "place" ? "month" : "day")} options={UNITS.map((u) => ({ value: u, label: t.dynamic(`rentals.units.${u}`) }))} />
               </div>
+            </div>
+            <div className="flex flex-wrap gap-4">
               <div className="grid content-start gap-2">
                 <Label htmlFor="r-dep">{t("rentals.deposit")}</Label>
                 <TypedInput kind="money" id="r-dep" name="deposit" defaultValue={rate?.deposit_cents != null ? formatMoney(rate.deposit_cents) : ""} />
@@ -481,7 +483,7 @@ export default async function ObjectPage({ params, searchParams }: PageProps<"/r
             </div>
             <fieldset className="grid gap-3 rounded-lg border p-3">
               <legend className="px-1 text-sm font-medium">{t("rentals.longTermOnly")}</legend>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex flex-wrap gap-4">
                 <div className="grid content-start gap-2">
                   <Label htmlFor="r-term">{t("rentals.termMonths")}</Label>
                   <TypedInput kind="number" id="r-term" name="term_months" min={1} max={600} defaultValue={rate?.term_months ?? ""} />

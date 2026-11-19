@@ -78,14 +78,16 @@ export default async function NewRentalPage({ searchParams }: { searchParams: Pr
       <form action={createRentalAction} className="grid gap-6">
         <input type="hidden" name="object_id" value={o.id} />
         <FormCard id="who" title={t("rentals.people")} description={t("rentals.peopleHintNew")}>
-          <ContactPicker name="contact_id" label={t("rentals.roles.main")} />
+          <div className="max-w-xl">
+            <ContactPicker name="contact_id" label={t("rentals.roles.main")} />
+          </div>
         </FormCard>
         <FormCard id="when" title={t("rentals.whenTitle")}>
           {long ? (
             // Term defaults from the first tariff (term, renewal, notice); the form posts what's shown.
             <TermFields start={start?.slice(0, 10) ?? today} end={null} termMonths={first?.term_months ?? (first?.renew_months ? first.renew_months : null)} renew={first?.renew_months ?? null} notice={first?.notice_months ?? null} />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
               <div className="grid content-start gap-2">
                 <Label htmlFor="n-start">{t("rentals.starts")}</Label>
                 <DateInput id="n-start" name="starts_at" type="datetime-local" required defaultValue={start ? toLocalInput(start) : `${today}T10:00`} />
@@ -109,7 +111,7 @@ export default async function NewRentalPage({ searchParams }: { searchParams: Pr
               <Choice id="n-rate" name="rate_id" label={t("rentals.rate")} defaultValue={first?.id} emptyLabel={t("rentals.noRate")} options={rates.map((r) => ({ value: r.id, label: `${r.name} · ${t.money(r.price_cents)} ${t.dynamic(`rentals.unitsShort.${r.unit}`)}` }))} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-wrap gap-4">
             <div className="grid content-start gap-2">
               <Label htmlFor="n-price">{t("rentals.price")}</Label>
               <TypedInput kind="money" id="n-price" name="price" placeholder={t("rentals.fromRate")} />
@@ -128,7 +130,7 @@ export default async function NewRentalPage({ searchParams }: { searchParams: Pr
           <CustomFieldInputs defs={defs} idPrefix="n-custom" />
           <div className="grid gap-2">
             {defs.length > 0 && <Label htmlFor="n-note">{t("rentals.note")}</Label>}
-            <Textarea id="n-note" name="note" rows={3} maxLength={20000} aria-label={t("rentals.note")} />
+            <Textarea id="n-note" name="note" rows={3} maxLength={20000} aria-label={t("rentals.note")} className="max-w-2xl" />
           </div>
         </FormCard>
         <SaveBar label={t.dynamic(`rentals.newWord.${word}`)} always />

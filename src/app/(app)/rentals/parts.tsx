@@ -43,11 +43,11 @@ export function ObjectForm({ t, locations, defs, parent, kind }: { t: T; locatio
   return (
     <form action={saveObjectAction} className="grid gap-6">
       <FormCard id="object" title={t("rentals.basics")}>
-        <div className="grid gap-2">
+        <div className="grid max-w-xl gap-2">
           <Label htmlFor="o-name">{t("rentals.name")}</Label>
           <Input id="o-name" name="name" required maxLength={200} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
           <div className="grid content-start gap-2">
             <Label htmlFor="o-kind">{t("rentals.kind")}</Label>
             <KindSelect t={t} id="o-kind" defaultValue={current} />
@@ -62,7 +62,7 @@ export function ObjectForm({ t, locations, defs, parent, kind }: { t: T; locatio
         )}
         <div className="grid gap-2">
           <Label htmlFor="o-desc">{t("rentals.description")}</Label>
-          <Textarea id="o-desc" name="description" rows={3} maxLength={20000} />
+          <Textarea id="o-desc" name="description" rows={3} maxLength={20000} className="max-w-2xl" />
         </div>
       </FormCard>
       {defs.length > 0 && (

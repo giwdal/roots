@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
 import { fieldValues, keepSent, restoreFields, toRestore, type Field, type Sent } from "@/lib/form-snapshot"
 import { appRoute } from "@/lib/url"
+import { useBodyFlag } from "@/lib/body-flag"
 import { cn } from "@/lib/utils"
 
 const SENT_KEY = "roots-form-sent"
@@ -95,6 +96,8 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
   useLeaveGuard(dirty && !always)
 
   const show = always || dirty
+  // The phone tab bar steps aside (and the menu button shows) only while this page's bar is really on screen.
+  useBodyFlag("save-bar", !!(target && show))
   const bar = show && (
     <div
       role="region"
@@ -107,8 +110,9 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
       }
     >
       {/* In a sheet on phones the buttons stack full width, the action at the bottom (closest to the thumb). */}
-      <div className={cn("flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8", !target && "max-md:flex-col-reverse max-md:items-stretch max-md:[&>button]:h-(--control)")}>
-        {dirty && !always && <span className={cn("mr-auto text-sm text-muted-foreground", !target && "max-md:hidden")}>{t("common.unsaved")}</span>}
+      {/* Phones: one row, Abbrechen beside a wide Speichern (page) or stacked full width (sheet); both full height. */}
+      <div className={cn("flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8 max-md:[&>button]:h-(--control)", target ? "max-md:flex-nowrap max-md:[&>button:last-child]:flex-1" : "max-md:flex-col-reverse max-md:items-stretch")}>
+        {dirty && !always && <span className="mr-auto text-sm text-muted-foreground max-md:hidden">{t("common.unsaved")}</span>}
         {dirty && (
           // ponytail: reload instead of form.reset(), chips/pickers keep React state that reset() can't reach.
           <Button type="button" variant="ghost" size="sm" onClick={() => window.location.reload()}>

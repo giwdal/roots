@@ -126,7 +126,8 @@
 /* Phone bar + round primary button get out of the way of the SaveBar, the keyboard and pages with their own tab bar. */
 @utility bar-hide {
   @media (max-width: 767.98px) {
-    body:has([data-slot="save-bar"], [data-own-tab-bar], input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=file]):focus, textarea:focus, select:focus, [contenteditable]:focus) & {
+    body:is([data-save-bar], [data-own-tab-bar]) &,
+    body:has(input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=file]):focus, textarea:focus, select:focus, [contenteditable]:focus) & {
       display: none;
     }
   }
@@ -136,7 +137,7 @@
    and never next to the back chevron (deeper pages: back is the way out, two left icons would compete). */
 @utility bar-fallback {
   @media (max-width: 767.98px) {
-    body:not(:has([data-slot="save-bar"], [data-own-tab-bar])) & {
+    body:not([data-save-bar], [data-own-tab-bar]) & {
       display: none;
     }
   }
@@ -151,7 +152,7 @@
 /* No space for the floating bar while a SaveBar replaces it. */
 @utility bar-tight {
   @media (max-width: 767.98px) {
-    body:has([data-slot="save-bar"]) & {
+    body[data-save-bar] & {
       padding-bottom: 1.5rem;
     }
   }

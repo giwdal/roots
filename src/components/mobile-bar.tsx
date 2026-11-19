@@ -53,15 +53,15 @@ export function MobileBar({ unread = 0 }: { unread?: number }) {
       aria-label={t("shell.tabs")}
       data-slot="mobile-bar"
       data-active={home ? "" : undefined}
-      className="bar-hide group/bar fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4 right-4 z-30 flex justify-center md:hidden [body:has([data-slot=page-primary])_&]:right-[calc(1rem+3.625rem+0.75rem)] [body:has([data-slot=page-primary])_&]:justify-start"
+      className="bar-hide group/bar fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-4 right-4 z-30 flex justify-center md:hidden [body[data-page-primary]_&]:right-[calc(1rem+3.625rem+0.75rem)] [body[data-page-primary]_&]:justify-start"
     >
       <div
         className={cn(
           "glass grid w-[78%] gap-1.5 rounded-full p-1.5 transition-[width,grid-template-columns] duration-300 motion-reduce:transition-none",
-          "grid-cols-[1fr_1fr_1fr] [body:has([data-slot=page-primary])_&]:w-full",
+          "grid-cols-[1fr_1fr_1fr] [body[data-page-primary]_&]:w-full",
           // compact: with Start active only its icon stays; elsewhere all three icons without labels
           "group-data-[compact]/bar:w-44 group-data-[active]/bar:group-data-[compact]/bar:w-[3.75rem] group-data-[active]/bar:group-data-[compact]/bar:grid-cols-[1fr_0fr_0fr] group-data-[active]/bar:group-data-[compact]/bar:gap-0",
-          "group-data-[compact]/bar:[body:has([data-slot=page-primary])_&]:w-44",
+          "group-data-[compact]/bar:[body[data-page-primary]_&]:w-44",
         )}
       >
         <Link href={APP_HOME} aria-current={home ? "page" : undefined} className={cn(TAB, home ? "font-medium text-foreground" : "text-muted-foreground")}>

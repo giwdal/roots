@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Page, PageHeader } from "@/components/page"
+import { BodyFlag } from "@/lib/body-flag"
 import { Segments } from "@/components/segments"
 import { cn } from "@/lib/utils"
 import { FilterMenu } from "@/components/filter-menu"
@@ -92,9 +93,9 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
           {/* Live numbers on every view; remounts when the server's numbers change (list check-ins re-render the page). */}
           {canScan && <DoorStats key={`${current.id}-${stats?.checkedIn}-${stats?.expected}`} eventId={current.id} initial={stats} />}
           {/* Phones: one view at a time, switched by the bottom tab bar (thumb reach). Hidden from md. */}
+          <BodyFlag name="own-tab-bar" />
           <nav
             aria-label={t("door.tabs")}
-            data-own-tab-bar
             className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
           >
             {tabs.map((x) => {

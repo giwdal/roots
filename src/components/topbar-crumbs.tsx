@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeftIcon } from "lucide-react"
 import { PageCrumbs } from "@/components/page-crumbs"
 import { useT } from "@/i18n/client"
@@ -49,6 +49,8 @@ export function backTarget(crumbs: Crumbs, groups: NavGroup[], pathname: string)
 // Record pages also leave their name (last crumb) here, so the chevron can say where it really goes.
 const STACK = "roots-nav"
 const TITLES = "roots-nav-titles"
+// The last full address (with its filters, view, open tab) of each screen in the stack: going back lands there.
+const HREFS = "roots-nav-hrefs"
 const read = <T,>(key: string, empty: T): T => {
   try {
     return JSON.parse(sessionStorage.getItem(key) ?? "null") ?? empty
@@ -64,8 +66,16 @@ const write = (key: string, value: unknown) => {
 const readStack = () => read<string[]>(STACK, [])
 
 /** Keeps the stack and returns the previous screen's path (null = no App history: back goes to the parent). */
-function useNavStack(path: string, title: string | undefined) {
+function useNavStack(path: string, title: string | undefined, search: string) {
   const [prev, setPrev] = useState<string | null>(null)
+  useEffect(() => {
+    const hrefs = read<Record<string, string>>(HREFS, {})
+    // A sheet's own param (?edit=, ?new=, ?task=) isn't part of the screen to come back to.
+    const q = new URLSearchParams(search)
+    for (const k of ["edit", "new", "task", "connect", "ok", "error"]) q.delete(k)
+    const href = q.size ? `${path}?${q}` : path
+    if (hrefs[path] !== href) write(HREFS, Object.fromEntries(Object.entries({ ...hrefs, [path]: href }).slice(-50)))
+  }, [path, search])
   useEffect(() => {
     const s = readStack()
     if (s.at(-1) !== path) {
@@ -103,7 +113,8 @@ export function TopbarTitle({ groups, children }: { groups: NavGroup[]; children
   const path = usePathname()
   const back = backTarget(crumbs, groups, path)
   const router = useRouter()
-  const prev = useNavStack(path, crumbs?.at(-1)?.label)
+  const search = useSearchParams().toString()
+  const prev = useNavStack(path, crumbs?.at(-1)?.label, search)
   // With App history the chevron goes to the previous screen (its name if known, else just "Zurück"); without, to the parent.
   const prevName = prev && (back && appRoute(prev) === appRoute(back.href.split("?")[0]) ? back.label : screenName(prev, groups))
   const label = !prev ? t("shell.backTo", { label: back?.label ?? "" }) : prevName ? t("shell.backTo", { label: prevName }) : t("shell.back")
@@ -113,9 +124,12 @@ export function TopbarTitle({ groups, children }: { groups: NavGroup[]; children
         <Link
           href={back.href}
           onClick={(e) => {
-            if (readStack().length < 2) return
+            // One tap = the previous screen, however many sheets/filters were opened here (browser history has an
+            // entry for each of those, so history.back() needed many taps).
+            const before = readStack().at(-2)
+            if (!before) return
             e.preventDefault()
-            router.back()
+            router.push(read<Record<string, string>>(HREFS, {})[before] ?? before)
           }}
           aria-label={label}
           data-slot="topbar-back"

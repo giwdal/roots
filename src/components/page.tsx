@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
 import { HeaderActions } from "@/components/header-actions"
+import { BodyFlag } from "@/lib/body-flag"
 import { PhoneMenu } from "@/components/actions-menu"
 import { PrimaryAction } from "@/components/primary-action"
 import { TopbarCrumbs } from "@/components/topbar-crumbs"
@@ -123,6 +124,8 @@ export function PageHeader({
             {menu}
             </HeaderActions>
             {/* A link primary is the round button on phones (stays out of the top bar); a form button goes into the phone ⋯ sheet. */}
+            {/* The tab bar makes room for the round button only while this page is the one on screen. */}
+            {(isLink(primary) || roundForm) && <BodyFlag name="page-primary" />}
             <HeaderActions desktop={isLink(primary) || roundForm} phone={isLink(primary) || roundForm ? undefined : false}>
             {isLink(primary) && primary.more?.length ? (
               <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />

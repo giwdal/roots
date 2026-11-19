@@ -691,6 +691,8 @@
     "confirmDisconnectPayHint": "Online payments and card terminals stop working until you connect again."
   },
   "activity": {
+    "createdEntity": {"projects": "Project created", "tasks": "Task created"},
+    "trashedEntity": {"projects": "Project moved to the trash", "tasks": "Task moved to the trash"},
     "filter": "Filter by area",
     "all": "All",
     "empty": "Nothing here yet.",

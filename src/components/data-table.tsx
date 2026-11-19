@@ -13,7 +13,8 @@ export type Column<R> = { header: string; cell: (row: R) => React.ReactNode; cla
 const blank = (v: React.ReactNode) => v == null || v === false || v === "" || v === "–"
 
 // Plain table; with `rowHref` the whole row is a link (usually "?edit=<id>" to open a drawer). `select` adds a
-// checkbox per row (+ select all) that belongs to a <BulkBar form> on the page.
+// checkbox per row (+ select all) that belongs to a <BulkBar form> on the page. `fixed` = the columns keep the widths
+// from their className (`w-32`…; the rest share what's left), so several tables on one page (groups) line up.
 export function DataTable<R>({
   columns,
   rows,
@@ -21,6 +22,7 @@ export function DataTable<R>({
   rowHref,
   empty,
   select,
+  fixed,
 }: {
   columns: Column<R>[]
   rows: R[]
@@ -28,6 +30,7 @@ export function DataTable<R>({
   rowHref?: (row: R) => string | undefined
   empty: React.ReactNode // text, or an <EmptyState> (lists that have never had a row)
   select?: { form: string; label: string }
+  fixed?: boolean
 }) {
   const box = (row: R) =>
     select && <input type="checkbox" name="ids" value={rowKey(row)} form={select.form} aria-label={select.label} className="relative z-10 size-4 accent-primary" />
@@ -74,7 +77,7 @@ export function DataTable<R>({
         })}
       </ul>
       <div className="hidden overflow-x-auto rounded-lg border md:block">
-        <Table>
+        <Table className={fixed ? "min-w-3xl table-fixed" : undefined}>
           <TableHeader>
             <TableRow>
               {select && (

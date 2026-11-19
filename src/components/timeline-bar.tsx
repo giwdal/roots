@@ -87,11 +87,16 @@ export function TimelineBar({
     })
   }
 
+  const left = `${((a - first) / DAY / days) * 100}%`
+  // The label is the bar's sibling, from the bar's start to the row's end: its sticky text stays readable when the bar
+  // starts left of the visible part (only its end in view) and may run past a short bar.
   return (
+    <>
     <Link
       href={href}
       scroll={false}
       title={title}
+      aria-label={label}
       draggable={false}
       onClick={(e) => {
         if (drag.current?.moved || shift.a || shift.b) e.preventDefault()
@@ -106,12 +111,15 @@ export function TimelineBar({
         done && "opacity-50",
         pending && "animate-pulse",
       )}
-      style={{ left: `${((a - first) / DAY / days) * 100}%`, width: `calc(${((b - a) / DAY + 1) / days} * 100%)`, borderColor: color, background: `color-mix(in oklch, ${color} 22%, var(--background))` }}
+      style={{ left, width: `calc(${((b - a) / DAY + 1) / days} * 100%)`, borderColor: color, background: `color-mix(in oklch, ${color} 22%, var(--background))` }}
     >
       {onMove && <span data-edge="start" className="absolute inset-y-0 left-0 w-2 cursor-ew-resize hover:bg-foreground/10" aria-hidden />}
-      <span className="sticky left-2 truncate">{done ? `✓ ${label}` : label}</span>
       {onMove && <span data-edge="end" className="absolute inset-y-0 right-0 w-2 cursor-ew-resize hover:bg-foreground/10" aria-hidden />}
     </Link>
+    <span className={cn("pointer-events-none absolute top-1.5 right-0 flex h-7 items-center text-xs font-medium whitespace-nowrap text-foreground", done && "opacity-50")} style={{ left }} aria-hidden>
+      <span className="sticky left-0 truncate pr-2 pl-3">{done ? `✓ ${label}` : label}</span>
+    </span>
+    </>
   )
 }
 

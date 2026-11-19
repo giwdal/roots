@@ -691,6 +691,8 @@
     "confirmDisconnectPayHint": "Online-Zahlungen und Kartenterminals funktionieren danach nicht mehr, bis du wieder verbindest."
   },
   "activity": {
+    "createdEntity": {"projects": "Projekt angelegt", "tasks": "Aufgabe angelegt"},
+    "trashedEntity": {"projects": "Projekt in den Papierkorb gelegt", "tasks": "Aufgabe in den Papierkorb gelegt"},
     "filter": "Nach Bereich filtern",
     "all": "Alle",
     "empty": "Noch nichts passiert.",

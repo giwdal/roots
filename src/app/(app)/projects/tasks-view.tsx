@@ -129,16 +129,17 @@ export async function TasksView({
     },
     {
       header: t("projects.status"),
+      className: "w-36",
       cell: (r: Task) => (
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2 rounded-full" style={{ background: colorOf(r.status_id) }} aria-hidden /> {statuses.find((x) => x.id === r.status_id)?.name}
         </span>
       ),
     },
-    { header: t("projects.due"), cell: (r: Task) => (r.due_on ? <span className={!r.done && r.due_on < today ? "text-destructive" : ""}>{t.date(`${r.due_on}T12:00:00`, { weekday: "short", day: "numeric", month: "short" })}</span> : "–") },
-    { header: t("projects.assignees"), cell: (r: Task) => r.people.map((p) => p.name).join(", ") || "–" },
-    { header: t("projects.tags"), cell: (r: Task) => (r.tags.length ? <span className="flex flex-wrap gap-1">{r.tags.map((x) => <Badge key={x} variant="outline">{x}</Badge>)}</span> : "–") },
-    { header: t("projects.checklist"), cell: (r: Task) => r.progress ?? "–" },
+    { header: t("projects.due"), className: "w-32", cell: (r: Task) => (r.due_on ? <span className={!r.done && r.due_on < today ? "text-destructive" : ""}>{t.date(`${r.due_on}T12:00:00`, { weekday: "short", day: "numeric", month: "short" })}</span> : "–") },
+    { header: t("projects.assignees"), className: "w-44 truncate", cell: (r: Task) => r.people.map((p) => p.name).join(", ") || "–" },
+    { header: t("projects.tags"), className: "w-40", cell: (r: Task) => (r.tags.length ? <span className="flex flex-wrap gap-1">{r.tags.map((x) => <Badge key={x} variant="outline">{x}</Badge>)}</span> : "–") },
+    { header: t("projects.checklist"), className: "w-32", cell: (r: Task) => r.progress ?? "–" },
   ]
 
   const empty = (
@@ -215,7 +216,7 @@ export async function TasksView({
                       <span className={g.key === "overdue" ? "text-destructive" : undefined}>{g.title}</span>
                       <span className="text-xs font-normal text-muted-foreground tabular-nums">{g.rows.length}</span>
                     </h2>
-                    <DataTable rows={g.rows} rowKey={(r) => r.id} rowHref={(r) => r.href} select={canManage ? { form: "bulk-tasks", label: t("common.select") } : undefined} empty={t("projects.empty")} columns={group === "status" ? columns.filter((c) => c.header !== t("projects.status")) : columns} />
+                    <DataTable fixed rows={g.rows} rowKey={(r) => r.id} rowHref={(r) => r.href} select={canManage ? { form: "bulk-tasks", label: t("common.select") } : undefined} empty={t("projects.empty")} columns={group === "status" ? columns.filter((c) => c.header !== t("projects.status")) : columns} />
                   </section>
                 ))}
         </div>

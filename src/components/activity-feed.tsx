@@ -184,7 +184,7 @@ export async function ActivityFeed({
                     )}
                 </p>
               ) : e.event ? (
-                <p>{t(e.event === "created" ? "activity.created" : "activity.trashed")}</p>
+                <p>{t.dynamic(`activity.${e.event === "created" ? "createdEntity" : "trashedEntity"}.${entity}`)}</p>
               ) : (
                 <ul className="grid gap-0.5">
                   {e.diff?.map((d) => (

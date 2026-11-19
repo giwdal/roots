@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Notice } from "@/components/notice"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,12 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center gap-6 px-4 py-12">
       <div className="space-y-1">
+        {adding && (
+          // Started from the org switcher / Profil: the way back without creating anything.
+          <Link href="/settings/profile" className="text-sm link">
+            {t("account.back")}
+          </Link>
+        )}
         <h1 className="font-heading text-2xl font-semibold">{t("onboarding.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
       </div>

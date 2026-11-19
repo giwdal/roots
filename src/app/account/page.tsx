@@ -19,7 +19,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
   return (
     <main className="mx-auto grid w-full max-w-md gap-6 px-4 py-10">
       <div className="grid gap-1">
-        <Link href={APP_HOME} className="text-sm text-muted-foreground underline underline-offset-4">
+        <Link href={APP_HOME} className="text-sm link">
           {t("account.back")}
         </Link>
         <h1 className="font-heading text-2xl font-semibold">{t("account.title")}</h1>

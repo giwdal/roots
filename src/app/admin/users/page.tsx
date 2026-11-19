@@ -51,9 +51,9 @@ export default async function AdminUsers({ searchParams }: PageProps<"/admin/use
             ),
           },
           { header: t("admin.users.name"), cell: (r) => r.full_name ?? "–" },
-          { header: t("admin.users.orgs"), cell: (r) => r.org_count, className: "tabular-nums" },
+          { header: t("admin.users.orgs"), phone: false, cell: (r) => r.org_count, className: "tabular-nums" },
           { header: t("admin.users.lastSignIn"), cell: (r) => (r.last_sign_in_at ? t.date(r.last_sign_in_at) : t("admin.users.never")) },
-          { header: t("common.created"), cell: (r) => t.date(r.created_at) },
+          { header: t("common.created"), phone: false, cell: (r) => t.date(r.created_at) },
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />

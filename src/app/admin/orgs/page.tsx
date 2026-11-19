@@ -64,7 +64,7 @@ export default async function AdminOrgs({ searchParams }: PageProps<"/admin/orgs
         columns={[
           { header: t("admin.orgs.name"), cell: (r) => <span className="font-medium">{r.name}</span> },
           { header: t("admin.orgs.address"), cell: (r) => <span className="text-muted-foreground">{r.slug}</span> },
-          { header: t("admin.orgs.members"), cell: (r) => r.org_members[0]?.count ?? 0, className: "tabular-nums" },
+          { header: t("admin.orgs.members"), cell: (r) => t("roles.people", { count: r.org_members[0]?.count ?? 0 }), className: "tabular-nums" },
           trash
             ? { header: t("admin.trash.deletedAt"), cell: (r) => t.date(r.deleted_at!) }
             : { header: t("common.created"), cell: (r) => t.date(r.created_at) },

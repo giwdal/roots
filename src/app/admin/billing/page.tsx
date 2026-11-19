@@ -6,6 +6,7 @@ import { DataTable } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { FormCard } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
+import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
 import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
@@ -66,12 +67,12 @@ export default async function AdminBilling({ searchParams }: PageProps<"/admin/b
       <p className="text-sm text-muted-foreground">{t("admin.billing.intro")}</p>
       <Notice error={!editing ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
 
-      <dl className="grid gap-3 sm:grid-cols-4">
-        <Stat label={t("admin.billing.totalDue")} value={t.money(sum((r) => r.bill.total))} strong />
+      <Stats>
+        <Stat label={t("admin.billing.totalDue")} value={t.money(sum((r) => r.bill.total))} />
         <Stat label={t("admin.billing.feesOpen")} value={t.money(sum((r) => r.bill.feesOpen))} />
         <Stat label={t("admin.billing.feesCollected")} value={t.money(sum((r) => Number(r.usage.fees_collected_cents)))} />
         <Stat label={t("admin.billing.sales")} value={t.money(sum((r) => Number(r.usage.sales_cents)))} />
-      </dl>
+      </Stats>
 
       <DataTable
         rows={rows}
@@ -91,12 +92,12 @@ export default async function AdminBilling({ searchParams }: PageProps<"/admin/b
               </span>
             ),
           },
-          { header: t("admin.billing.subscription"), cell: (r) => money(t, r.bill.subscription), className: "tabular-nums text-right" },
-          { header: t("admin.billing.usersMembers"), cell: (r) => `${r.usage.users} / ${r.usage.members}`, className: "tabular-nums text-right" },
-          { header: t("admin.billing.salesCol"), cell: (r) => (r.usage.orders ? `${r.usage.orders} · ${t.money(Number(r.usage.sales_cents))}` : "–"), className: "tabular-nums text-right" },
-          { header: t("admin.billing.feesCollectedShort"), cell: (r) => money(t, Number(r.usage.fees_collected_cents)), className: "tabular-nums text-right" },
-          { header: t("admin.billing.feesOpenShort"), cell: (r) => money(t, r.bill.feesOpen), className: "tabular-nums text-right" },
-          { header: t("admin.billing.discount"), cell: (r) => (r.bill.discount ? `−${t.money(r.bill.discount)}` : "–"), className: "tabular-nums text-right" },
+          { header: t("admin.billing.subscription"), phone: false, cell: (r) => money(t, r.bill.subscription), className: "tabular-nums text-right" },
+          { header: t("admin.billing.usersMembers"), phone: false, cell: (r) => `${r.usage.users} / ${r.usage.members}`, className: "tabular-nums text-right" },
+          { header: t("admin.billing.salesCol"), phone: false, cell: (r) => (r.usage.orders ? `${r.usage.orders} · ${t.money(Number(r.usage.sales_cents))}` : "–"), className: "tabular-nums text-right" },
+          { header: t("admin.billing.feesCollectedShort"), phone: false, cell: (r) => money(t, Number(r.usage.fees_collected_cents)), className: "tabular-nums text-right" },
+          { header: t("admin.billing.feesOpenShort"), phone: false, cell: (r) => money(t, r.bill.feesOpen), className: "tabular-nums text-right" },
+          { header: t("admin.billing.discount"), phone: false, cell: (r) => (r.bill.discount ? `−${t.money(r.bill.discount)}` : "–"), className: "tabular-nums text-right" },
           { header: t("admin.billing.total"), cell: (r) => <span className="font-medium">{t.money(r.bill.total)}</span>, className: "tabular-nums text-right" },
         ]}
       />
@@ -119,15 +120,6 @@ export default async function AdminBilling({ searchParams }: PageProps<"/admin/b
 }
 
 const money = (t: T, cents: number) => (cents ? t.money(cents) : "–")
-
-function Stat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="grid gap-1 rounded-lg border p-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className={strong ? "text-xl font-semibold tabular-nums" : "text-lg tabular-nums"}>{value}</dd>
-    </div>
-  )
-}
 
 /** "20,00 €/Monat · Module 15,00 € · 3,00 €/Nutzer ab 4 · 1,5 % + 0,25 € je Verkauf · −50 %" */
 function summary(t: T, p: Price | PriceRow) {

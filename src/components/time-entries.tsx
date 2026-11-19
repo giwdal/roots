@@ -40,7 +40,11 @@ export async function MonthNav({ month, href }: { month: ReturnType<typeof month
   )
 }
 
-export const hoursText = (t: Awaited<ReturnType<typeof getT>>, min: number) => `${t.number(min / 60, { maximumFractionDigits: 2 })} h`
+// Worked time as h:mm (7:30 h, 0:01 h): exact to the minute without long decimals (28,52 h).
+export const hoursText = (t: Awaited<ReturnType<typeof getT>>, min: number) => {
+  const m = Math.round(min)
+  return `${t.number(Math.floor(m / 60))}:${String(m % 60).padStart(2, "0")} h`
+}
 
 /** Entries with net time, break (auto/manual), approval and law warnings (`people`: several persons, adds a column). Rows open `editHref`. */
 export async function TimeEntryList({ rows, editHref, people, hideProject }: { rows: TimeRow[]; editHref: (id: string) => string | null; people?: Map<string, string>; hideProject?: boolean }) {

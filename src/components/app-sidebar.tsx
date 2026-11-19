@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { activeChildHref, appRoute, within } from "@/lib/url"
 import { useState, useTransition } from "react"
-import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon } from "lucide-react"
+import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon, KeyboardIcon } from "lucide-react"
 import { openMyMemberArea } from "@/app/(app)/actions"
 import { signOut } from "@/app/login/actions"
 import { SearchButton } from "@/components/command-search"
@@ -174,6 +174,10 @@ function UserMenu({ me }: { me: Me }) {
                 <IdCardIcon /> {t("account.memberArea")}
               </DropdownMenuItem>
             )}
+            {/* Desktop only: the keys are for keyboards. */}
+            <DropdownMenuItem className="max-md:hidden" onClick={() => window.dispatchEvent(new Event("shortcuts:open"))}>
+              <KeyboardIcon /> {t("shortcuts.title")}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel className="flex items-center gap-2">

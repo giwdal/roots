@@ -7172,5 +7172,13 @@
   "pwa": {
     "offlineTitle": "No connection",
     "offlineText": "roots needs the internet. As soon as you are back online, reload the page."
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "search": "Open search",
+    "new": "Create new (the page's main action)",
+    "listSearch": "Search the list",
+    "close": "Close a window",
+    "help": "This overview"
   }
 }

@@ -18,23 +18,12 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui
 type Org = { id: string; name: string; logo_path?: string | null }
 
 /**
- * Top of the sidebar: the active org. A menu to switch (and to create an org) only when there is something to switch
- * to; platform admins get every org.
+ * Top of the sidebar: the active org, a menu to switch to another one and to create a new org (also for people with
+ * just one, so a second org is always one click away); platform admins get every org.
  */
 export function OrgSwitcher({ orgs, current }: { orgs: Org[]; current: Org }) {
   const t = useT()
   const [pending, start] = useTransition()
-  if (orgs.length <= 1)
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <div className="flex h-12 items-center gap-2 px-2 text-sm">
-            <Picture path={current.logo_path} name={current.name} size="sm" square />
-            <span className="flex-1 truncate font-medium">{current.name}</span>
-          </div>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    )
   return (
     <SidebarMenu>
       <SidebarMenuItem>

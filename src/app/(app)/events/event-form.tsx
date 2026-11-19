@@ -13,7 +13,7 @@ import { loadFields, type CustomValues } from "@/lib/custom-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { DateInput } from "@/components/date-input"
-import { ChevronRightIcon } from "lucide-react"
+import { MoreDetails } from "@/components/section"
 
 type Ev = Tables<"events">
 
@@ -38,7 +38,7 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
             {[0, 1, 2].map((i) => {
               const l = (ev?.links as { label: string; url: string }[] | undefined)?.[i]
               return (
-                <div key={i} className="grid gap-2 sm:grid-cols-[12rem_1fr]">
+                <div key={i} className="grid max-w-2xl gap-2 sm:grid-cols-[12rem_1fr]">
                   <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
                   <TypedInput kind="url" name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
                 </div>
@@ -47,7 +47,7 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
           </FormCard>
 
           <FormCard id="page" title={t("eventsPage.publicPage")}>
-            <div className="grid gap-2">
+            <div className="grid max-w-xl gap-2">
               <Label htmlFor="ev-slug">{t("eventsPage.slug")}</Label>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span className="shrink-0">/e/</span>
@@ -70,11 +70,11 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
       {ev && <input type="hidden" name="id" value={ev.id} />}
       <fieldset disabled={disabled} className="grid gap-6">
         <FormCard id="when" title={t("eventsPage.basics")}>
-          <div className="grid gap-2">
+          <div className="grid max-w-xl gap-2">
             <Label htmlFor="ev-title">{t("eventsPage.titleLabel")}</Label>
             <Input id="ev-title" name="title" defaultValue={ev?.title} required maxLength={200} className="text-base font-medium" />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
             <div className="grid gap-2">
               <Label htmlFor="ev-starts">{t("eventsPage.startsAt")}</Label>
               <DateInput id="ev-starts" name="starts_at" type="datetime-local" defaultValue={ev ? toLocalInput(ev.starts_at) : start} required />
@@ -93,25 +93,25 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
               <Choice id="ev-location" name="location" label={t("eventsPage.savedPlace")} defaultValue={ev?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="ev-venue">{t("eventsPage.venueName")}</Label>
+              <Label htmlFor="ev-venue">{t("eventsPage.venueNameShort")}</Label>
               <Input id="ev-venue" name="venue_name" defaultValue={ev?.venue_name ?? ""} maxLength={200} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="ev-address">{t("eventsPage.venueAddress")}</Label>
+              <Label htmlFor="ev-address">{t("eventsPage.venueAddressShort")}</Label>
               <Input id="ev-address" name="venue_address" defaultValue={ev?.venue_address ?? ""} maxLength={500} autoComplete="off" />
             </div>
           </div>
           {/* How many fit belongs to the place. */}
-          <div className="grid gap-2 sm:max-w-48">
+          <div className="grid gap-2">
             <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
-            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} className="w-full" />
+            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
           </div>
         </FormCard>
 
         <FormCard id="about" title={t("eventsPage.description")}>
-          <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} />
+          <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} className="max-w-2xl" />
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 
@@ -119,12 +119,7 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
           more
         ) : (
           // Creating: links, address and mail template are rarely needed at first (progressive disclosure).
-          <details className="group grid gap-6">
-            <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
-              <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
-            </summary>
-            <div className="mt-6 grid gap-6">{more}</div>
-          </details>
+          <MoreDetails label={t("common.moreDetails")}>{more}</MoreDetails>
         )}
         {!disabled && <SaveBar label={ev ? undefined : t("eventsPage.create")} always={!ev} />}
       </fieldset>

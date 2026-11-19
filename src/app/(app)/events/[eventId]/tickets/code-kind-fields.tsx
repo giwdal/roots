@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Segment, SegmentGroup } from "@/components/choice"
+import { TipLabel } from "@/components/info-tip"
 import { TypedInput } from "@/components/typed-input"
 import { Label } from "@/components/ui/label"
 import { useT } from "@/i18n/client"
@@ -22,8 +23,8 @@ export function CodeKindFields({ kind: initial, value, maxUses }: { kind: string
         </SegmentGroup>
       </div>
       {kind !== "none" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
+        <div className="flex flex-wrap gap-4">
+          <div className="grid content-start gap-2">
             <Label htmlFor="c-value">{kind === "amount" ? t("tickets.codeAmount") : t("tickets.codePercent")}</Label>
             {kind === "amount" ? (
               <TypedInput key="amount" kind="money" id="c-value" name="value" defaultValue={kind === initial ? value : ""} required />
@@ -31,10 +32,11 @@ export function CodeKindFields({ kind: initial, value, maxUses }: { kind: string
               <TypedInput key="percent" kind="number" id="c-value" name="value" min={1} max={100} step={1} defaultValue={kind === initial ? value : ""} placeholder="20" required />
             )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="c-max">{t("tickets.maxUses")}</Label>
+          <div className="grid content-start gap-2">
+            <TipLabel htmlFor="c-max" tip={t("tickets.maxUsesHint")}>
+              {t("tickets.maxUses")}
+            </TipLabel>
             <TypedInput kind="number" id="c-max" name="max_uses" min={1} step={1} defaultValue={maxUses ?? ""} placeholder="∞" />
-            <p className="text-xs text-muted-foreground">{t("tickets.maxUsesHint")}</p>
           </div>
         </div>
       ) : (

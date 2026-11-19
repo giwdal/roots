@@ -13,6 +13,7 @@ import { Segments } from "@/components/segments"
 import { SubmitButton } from "@/components/submit-button"
 import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
+import { InfoTip, TipLabel, TitleTip } from "@/components/info-tip"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +28,7 @@ import { pageParam, param, siteUrl, withParams } from "@/lib/url"
 import { posMethods, posReaders } from "@/payments/pos"
 import { DOOR_METHODS, readDoor } from "@/tickets/door-fields"
 import { priceInput } from "@/tickets/price"
-import { AddLink, RowGroup, Section, SettingRow } from "@/components/section"
+import { AddLink, MoreDetails, RowGroup, Section, SettingRow } from "@/components/section"
 import { deleteCode, deleteTicketType, removeFromWaitlist, saveCode, saveTicketSettings, saveTicketType } from "./actions"
 import { CodeKindFields } from "./code-kind-fields"
 import { TierRows } from "./tier-rows"
@@ -243,7 +244,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
         <UrlSheet
           params={["new", "edit"]}
           title={editing ? editing.name : t("tickets.newType")}
-          meta={editing && t("tickets.typeMeta", { sold: sold(editing.id) })}
+          meta={editing && t("tickets.typeMeta", { count: sold(editing.id) })}
           menu={
             editing && (
               <ActionsMenu>
@@ -345,12 +346,12 @@ function CodeForm({ t, eventId, c, types }: { t: T; eventId: string; c?: Code; t
     <form action={saveCode} className="grid gap-4">
       <input type="hidden" name="event" value={eventId} />
       {c && <input type="hidden" name="id" value={c.id} />}
-      <div className="grid gap-2">
+      <div className="grid max-w-xs gap-2">
         <Label htmlFor="c-code">{t("tickets.code")}</Label>
         <Input id="c-code" name="code" defaultValue={c?.code} required maxLength={40} placeholder="CREW-2026" autoCapitalize="characters" className="font-mono uppercase" />
       </div>
       <CodeKindFields kind={c?.kind ?? "percent"} value={c ? (c.kind === "amount" ? priceInput(c.value) : String(c.value)) : ""} maxUses={c?.max_uses ?? null} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-x-8 gap-y-4">
         <div className="grid gap-2">
           <Label htmlFor="c-from">{t("tickets.validFrom")}</Label>
           <DateInput id="c-from" name="valid_from" type="datetime-local" defaultValue={c?.valid_from ? toLocalInput(c.valid_from) : undefined} />
@@ -361,7 +362,9 @@ function CodeForm({ t, eventId, c, types }: { t: T; eventId: string; c?: Code; t
         </div>
       </div>
       <fieldset className="grid gap-2">
-        <legend className="mb-1 text-sm font-medium">{t("tickets.codeTypes")}</legend>
+        <legend className="mb-1 flex items-center gap-1 text-sm font-medium">
+          {t("tickets.codeTypes")} <InfoTip label={t("tickets.codeTypes")}>{t("tickets.codeTypesInfo")}</InfoTip>
+        </legend>
         {types.map((ty) => (
           <label key={ty.id} className="flex min-h-8 items-center gap-2 text-sm">
             <input type="checkbox" name="type_ids" value={ty.id} defaultChecked={c?.type_ids.includes(ty.id)} className="size-4 accent-primary" />
@@ -384,35 +387,38 @@ function TypeForm({ t, eventId, ty, tiers }: { t: T; eventId: string; ty?: Ticke
     <form action={saveTicketType} className="grid gap-4">
       <input type="hidden" name="event" value={eventId} />
       {ty && <input type="hidden" name="id" value={ty.id} />}
-      <div className="grid gap-2">
+      <div className="grid max-w-xl gap-2">
         <Label htmlFor="ty-name">{t("tickets.typeName")}</Label>
         <Input id="ty-name" name="name" defaultValue={ty?.name} required maxLength={100} placeholder={t("tickets.typeNamePlaceholder")} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="ty-price">{t("tickets.priceEur")}</Label>
+          <TipLabel htmlFor="ty-price" tip={t("tickets.priceHint")}>
+            {t("tickets.priceEur")}
+          </TipLabel>
           <TypedInput kind="money" id="ty-price" name="price" defaultValue={ty ? priceInput(ty.price) : ""} required />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="ty-quota">{t("tickets.quota")}</Label>
+          <TipLabel htmlFor="ty-quota" tip={t("tickets.quotaHint")}>
+            {t("tickets.quota")}
+          </TipLabel>
           <TypedInput kind="number" id="ty-quota" name="quota" min={1} step={1} defaultValue={ty?.quota ?? ""} placeholder="∞" />
         </div>
       </div>
       {ty && (
-        <label className="flex items-start gap-2 text-sm">
-          <input type="hidden" name="active_field" value="1" />
-          <input type="checkbox" name="active" value="1" defaultChecked={ty.active} className="mt-0.5 size-4 accent-primary" />
-          <span>
+        <div className="flex items-center gap-1">
+          <label className="flex min-h-8 items-center gap-2 text-sm">
+            <input type="hidden" name="active_field" value="1" />
+            <input type="checkbox" name="active" value="1" defaultChecked={ty.active} className="size-4 accent-primary" />
             {t("tickets.onSale")}
-            <span className="block text-xs text-muted-foreground">{t("tickets.pauseHint")}</span>
-          </span>
-        </label>
+          </label>
+          <InfoTip label={t("tickets.onSale")}>{t("tickets.pauseHint")}</InfoTip>
+        </div>
       )}
       {/* Rarely needed: sale window, description, hidden, price tiers (progressive disclosure). */}
-      <details className="group grid gap-4" open={!!(ty?.sales_start || ty?.sales_end || ty?.description || ty?.hidden || tiers.length)}>
-        <summary className="min-h-8 cursor-pointer text-sm text-[var(--link)] select-none">{t("tickets.moreOptions")}</summary>
-        <div className="mt-4 grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+      <MoreDetails label={t("common.moreDetails")} open={!!(ty?.sales_start || ty?.sales_end || ty?.description || ty?.hidden || tiers.length)}>
+        <div className="grid gap-4">
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
             <div className="grid gap-2">
               <Label htmlFor="ty-start">{t("tickets.salesStart")}</Label>
               <DateInput id="ty-start" name="sales_start" type="datetime-local" defaultValue={ty?.sales_start ? toLocalInput(ty.sales_start) : undefined} />
@@ -422,24 +428,25 @@ function TypeForm({ t, eventId, ty, tiers }: { t: T; eventId: string; ty?: Ticke
               <DateInput id="ty-end" name="sales_end" type="datetime-local" defaultValue={ty?.sales_end ? toLocalInput(ty.sales_end) : undefined} />
             </div>
           </div>
-          <div className="grid gap-2">
+          <div className="grid max-w-xl gap-2">
             <Label htmlFor="ty-desc">{t("tickets.typeDescription")}</Label>
             <Input id="ty-desc" name="description" defaultValue={ty?.description ?? ""} maxLength={1000} />
           </div>
-          <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" name="hidden" value="1" defaultChecked={ty?.hidden} className="mt-0.5 size-4 accent-primary" />
-            <span>
+          <div className="flex items-center gap-1">
+            <label className="flex min-h-8 items-center gap-2 text-sm">
+              <input type="checkbox" name="hidden" value="1" defaultChecked={ty?.hidden} className="size-4 accent-primary" />
               {t("tickets.hiddenLabel")}
-              <span className="block text-xs text-muted-foreground">{t("tickets.hiddenHint")}</span>
-            </span>
-          </label>
+            </label>
+            <InfoTip label={t("tickets.hiddenLabel")}>{t("tickets.hiddenHint")}</InfoTip>
+          </div>
           <div className="grid gap-2">
-            <h3 className="text-sm font-medium">{t("tickets.tiers")}</h3>
-            <p className="text-xs text-muted-foreground">{t("tickets.tiersHint")}</p>
+            <h3 className="text-sm font-medium">
+              <TitleTip tip={t("tickets.tiersHint")}>{t("tickets.tiers")}</TitleTip>
+            </h3>
             <TierRows initial={tiers} />
           </div>
         </div>
-      </details>
+      </MoreDetails>
       <SaveBar label={ty ? undefined : t("tickets.createType")} always={!ty} />
     </form>
   )

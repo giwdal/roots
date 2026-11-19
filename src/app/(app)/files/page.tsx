@@ -20,6 +20,7 @@ import { requirePerm } from "@/lib/context"
 import { fileSize } from "@/lib/files"
 import { pageParam, param, withParams } from "@/lib/url"
 import { bulkTrashFiles, restoreFile, trashFile, updateFile } from "./actions"
+import { FolderField } from "./folder-field"
 
 // Records a file can be attached to → where that record opens ("Zu <Record>" in the file's sheet).
 const RECORD_LINKS: Record<string, (id: string) => string> = {
@@ -270,13 +271,7 @@ export default async function FilesPage({ searchParams }: PageProps<"/files">) {
                   {!editing.entity && (
                     <div className="grid gap-2">
                       <Label htmlFor="f-folder">{t("files.folder")}</Label>
-                      <Input id="f-folder" name="folder" maxLength={200} defaultValue={editing.folder ?? ""} list="f-folders" />
-                      <datalist id="f-folders">
-                        {folders.map((f) => (
-                          <option key={f} value={f} />
-                        ))}
-                      </datalist>
-                      <p className="text-xs text-muted-foreground">{t("files.folderHint")}</p>
+                      <FolderField id="f-folder" folders={folders} defaultValue={editing.folder} />
                     </div>
                   )}
                 </fieldset>

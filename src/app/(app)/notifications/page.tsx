@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { BellIcon, CheckCheckIcon, InboxIcon } from "lucide-react"
+import { BellIcon, CheckCheckIcon, InboxIcon, MailIcon, MailOpenIcon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { AreaIcon } from "@/components/area-icon"
 import { ListToolbar, Pager, pageRange, PAGE_SIZE } from "@/components/data-table"
 import { FilterMenu } from "@/components/filter-menu"
@@ -15,7 +16,11 @@ import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { pageParam, param, withParams } from "@/lib/url"
 import { areaOfModule, NAV } from "@/modules/nav"
-import { markAllRead } from "./actions"
+import { markAllRead, setRead } from "./actions"
+
+// The area tile already says what a row is about: a leading emoji from the message text (also used in Telegram /
+// e-mail) would be a second icon.
+const plain = (title: string) => title.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, "")
 
 // The nav area an event type belongs to (its module's area), for the icon and the filter; org/platform events: none.
 const areaOf = (module: string) => areaOfModule(module)
@@ -96,14 +101,14 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
                 const a = type ? areaOf(type.module) : undefined
                 const elsewhere = n.org_id && n.org_id !== ctx.org.id
                 return (
-                  <li key={n.id}>
-                    <Link href={`/notifications/${n.id}`} prefetch={false} className="flex min-h-14 items-center gap-3 px-4 py-3 text-sm hover:bg-muted active:bg-muted">
+                  <li key={n.id} className="flex items-center">
+                    <Link href={`/notifications/${n.id}`} prefetch={false} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-3 pr-2 pl-4 text-sm hover:bg-muted active:bg-muted">
                       <span className={cn("size-2 shrink-0 rounded-full", n.read_at ? "bg-transparent" : "bg-[var(--link)]")} aria-hidden />
                       {a ? <AreaIcon area={a.key} icon={a.icon} className="size-7" /> : <span className="grid size-7 shrink-0 place-items-center rounded-[0.35rem] bg-muted text-muted-foreground" aria-hidden><BellIcon className="size-4" /></span>}
                       <span className="grid min-w-0 flex-1">
                         <span className={cn("line-clamp-2", n.read_at ? "text-muted-foreground" : "font-medium")}>
                           {!n.read_at && <span className="sr-only">{t("inbox.unread")}: </span>}
-                          {ev?.title ?? "–"}
+                          {ev ? plain(ev.title) : "–"}
                         </span>
                         <span className="truncate text-xs text-muted-foreground">
                           {[ev?.label, n.org_id ? (elsewhere ? t("inbox.inOrg", { org: n.orgs?.name ?? "" }) : null) : t("admin.title")].filter(Boolean).join(" · ")}
@@ -111,6 +116,18 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
                       </span>
                       <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{t.date(n.created_at, { hour: "2-digit", minute: "2-digit" })}</span>
                     </Link>
+                    <form id={`read-${n.id}`} action={setRead} hidden>
+                      <input type="hidden" name="id" value={n.id} />
+                      <input type="hidden" name="read" value={n.read_at ? "0" : "1"} />
+                      <input type="hidden" name="back" value={`/notifications${withParams(sp, { ok: undefined, error: undefined })}`} />
+                    </form>
+                    <span className="shrink-0 pr-3">
+                      <ActionsMenu>
+                        <MenuSubmit form={`read-${n.id}`} icon={n.read_at ? <MailIcon /> : <MailOpenIcon />}>
+                          {t(n.read_at ? "inbox.markUnread" : "inbox.markRead")}
+                        </MenuSubmit>
+                      </ActionsMenu>
+                    </span>
                   </li>
                 )
               })}

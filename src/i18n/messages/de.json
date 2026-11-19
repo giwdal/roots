@@ -1375,6 +1375,10 @@
     }
   },
   "inbox": {
+    "markRead": "Als gelesen markieren",
+    "markUnread": "Als ungelesen markieren",
+    "markedRead": "Als gelesen markiert.",
+    "markedUnread": "Als ungelesen markiert.",
     "title": "Benachrichtigungen",
     "empty": "Keine Benachrichtigungen.",
     "markAllRead": "Alle als gelesen markieren",
@@ -2735,6 +2739,9 @@
     "confirmDelete": "Ort löschen?"
   },
   "files": {
+    "noFolder": "Kein Ordner",
+    "newFolder": "Neuer Ordner …",
+    "newFolderName": "Name des neuen Ordners",
     "title": "Dateien",
     "upload": "Hochladen",
     "uploading": "Lädt hoch…",
@@ -4098,7 +4105,7 @@
     "keysMove": "auswählen",
     "keysOpen": "öffnen",
     "open": "Suchen",
-    "placeholder": "Kontakte, Events, Rechnungen, Seiten …",
+    "placeholder": "Kontakte, Events, Seiten …",
     "pages": "Seiten",
     "empty": "Nichts gefunden.",
     "hint": "Tippe, um Kontakte, Mitglieder, Events, Rechnungen, Formulare, Dateien und Seiten zu finden.",

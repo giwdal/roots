@@ -1,4 +1,5 @@
 import { APP_HOME } from "@/lib/url"
+import { RefreshOnReturn } from "@/components/refresh-on-return"
 import { HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { AreaIcon } from "@/components/area-icon"
@@ -58,6 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}
     >
+      <RefreshOnReturn />
       {children}
     </AppShell>
   )

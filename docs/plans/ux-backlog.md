@@ -160,23 +160,23 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] V6 Comments (L3) on rentals and courses once `<Comments>` exists.
 
 ## Y. Found in the Settings · Start · Dateien · Wiki · Automationen · Admin pass (not fixed there)
-- [ ] Y1 Settings › Felder: a new option gets its colour only after the field was saved once (second round trip).
-- [ ] Y2 Settings › Orte: the actions live in shifts/actions.ts although locations are core; move to settings/locations.
-- [ ] Y3 Integrationen: payment cost panel doesn't say it only applies to ticket orders (§ 270a for the shop); connect
+- [x] Y1 (00c0c96: client `<OptionRows>`, colours stored on create too) Settings › Felder: a new option gets its colour only after the field was saved once (second round trip).
+- [x] Y2 (b7406a5: settings/locations/actions.ts; a save no longer clears notes) Settings › Orte: the actions live in shifts/actions.ts although locations are core; move to settings/locations.
+- [x] Y3 (b7406a5: 'tickets only' note, secrets masked via CSS, card states unified with S15) Integrationen: payment cost panel doesn't say it only applies to ticket orders (§ 270a for the shop); connect
       sheet secrets are plain text fields (password managers); card states (links / sheets / buttons) differ per provider.
 - [ ] Y4 Automationen canvas: condition values for events, forms, courses, guest lists are NativeSelects of the newest 200
       → `<RecordPicker>` with a search action per ref list (the inspector is client-side); deleting a step on touch only
       via the inspector.
-- [ ] Y5 Benachrichtigungen: no delete / mark unread for one row; the unread count refreshes only on navigation.
-- [ ] Y6 Wiki: Teilen popover uses native radios (→ `<Choice>`); "Zuletzt geändert" fixed 15 rows; every page view loads
+- [~] Y5 (90fce8f: row ⋯ read/unread, counts refresh when the tab returns; open: remove a row needs a delete grant/policy on notifications (schema)) Benachrichtigungen: no delete / mark unread for one row; the unread count refreshes only on navigation.
+- [~] Y6 (a597d04: segmented share choice, recent list paged; open: the tree load per view (cache, see §Z #2)) Wiki: Teilen popover uses native radios (→ `<Choice>`); "Zuletzt geändert" fixed 15 rows; every page view loads
       the tree (≤ 2000 rows).
-- [ ] Y7 Dateien: folders are free text (a typo makes a new folder), folder chips from the first 2000 files.
+- [~] Y7 (90fce8f: folder picked from existing folders or 'Neuer Ordner …'; open: folder list from ≤ 2000 rows (needs a distinct RPC)) Dateien: folders are free text (a typo makes a new folder), folder chips from the first 2000 files.
 - [ ] Y8 Admin: the org drawer (details, modules, members) could be its own page /admin/orgs/<id>; activity paging is
       still hand-made (→ `<Pager>`); onboarding doesn't suggest the address from the name. (Done in the sweep: billing
       uses `<Stats>`, activity chips scroll, onboarding has a way back with ?new=1 and says Adresse.)
-- [ ] Y9 Start: "Meine Schichten" rows open Schichten › Meine (a shift has no page of its own); "Beiträge überfällig"
+- [~] Y9 (775f9da: overdue dues link to `?status=overdue`; open: shifts have no page of their own) Start: "Meine Schichten" rows open Schichten › Meine (a shift has no page of its own); "Beiträge überfällig"
       opens Beiträge without an overdue filter (the list has none yet).
-- [ ] Y10 Settings › Bereiche only lists gear pages of nav.ts (Vorlagen, E-Mail-Vorlagen, Website › Marke aren't gear
+- [~] Y10 (00b4298: `setup` nav flag + E-Mail-Vorlagen gear entry; open: Team's `members.*` keys) Settings › Bereiche only lists gear pages of nav.ts (Vorlagen, E-Mail-Vorlagen, Website › Marke aren't gear
       pages); Team still uses `members.*` keys next to the Mitglieder module.
 - [ ] Y11 L (comments) not started in this pass: L2 needs the migration question in §Z answered first.
 
@@ -186,27 +186,27 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
 - [ ] S3 (Finanzen) Issued invoices: the internal note (`notes`, never printed) can't be changed after issuing (the document is frozen as a whole); a note edited in place would need the freeze trigger to allow `notes`.
 - [x] S4 (chart-1 green again, five distinct hues) (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
-- [ ] S5 (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
-- [ ] S6 (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
-- [ ] S7 (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
+- [x] S5 (775f9da: `?edit=bank` compact dialog with `<MandateFields>` + `saveMembershipBank`) (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
+- [x] S6 (775f9da: `?status=overdue` segment, Überfällig stat links there, export handles overdue/failed) (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
+- [x] S7 (635885f: draft = Veröffentlichen, live = ⋯ Schließen, closed = Wieder öffnen (`setFormStatus`); builder save keeps the status) (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
 - [ ] S8 (Schichten) Team's "Beschäftigung" is the free-text `staff.role_label`, while Personal has `employees.employment_type` for the same person: show the HR type when the person is linked (or drop the free text).
 - [x] S9 (page.tsx: a node primary with an icon is the round button on phones, also kept in ⋯ because a SaveBar hides the round button; one without an icon stays in ⋯) (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
-- [ ] S10 (Projekte) Aufgaben (desktop, grouped by due date): every group is its own table, so the columns don't line up from group to group (one table with group header rows would).
-- [ ] S11 (Projekte) The activity feed's entry for the record's own creation reads just "angelegt" (no subject); "Projekt angelegt" / the record's name would read better.
-- [ ] S12 (Projekte) Timeline: a bar that ends just after the visible start shows only the end of its label (the label sticks inside the bar's visible part, which is short).
-- [ ] S13 (Vermietung) Belegung month view draws open-ended / long contracts as year-long bars (needed in the per-object view); the shared Kalender shows them as key dates only. Same for the month grid here?
-- [ ] S14 (Kurse) Participant rows keep one "Abmelden" button each (now a quiet ghost button); patterns §5 would put it into a row ⋯ on phones.
-- [ ] S15 (Settings) Integrationen: every provider card has its own filled button(s), so the page shows 5+ primaries
+- [x] S10 (dc3ca1d: `<DataTable fixed>` + column widths) (Projekte) Aufgaben (desktop, grouped by due date): every group is its own table, so the columns don't line up from group to group (one table with group header rows would).
+- [x] S11 (dc3ca1d: 'Projekt angelegt' / 'Aufgabe angelegt') (Projekte) The activity feed's entry for the record's own creation reads just "angelegt" (no subject); "Projekt angelegt" / the record's name would read better.
+- [x] S12 (dc3ca1d: label beside the bar from its start to the row's end, sticky) (Projekte) Timeline: a bar that ends just after the visible start shows only the end of its label (the label sticks inside the bar's visible part, which is short).
+- [x] S13 (8b02859: month/week/list show long contracts as key dates (`rentalMarks()`), per-object view keeps bars) (Vermietung) Belegung month view draws open-ended / long contracts as year-long bars (needed in the per-object view); the shared Kalender shows them as key dates only. Same for the month grid here?
+- [x] S14 (46d4d93: ghost button from md, row ⋯ on phones) (Kurse) Participant rows keep one "Abmelden" button each (now a quiet ghost button); patterns §5 would put it into a row ⋯ on phones.
+- [x] S15 (b7406a5: one outline button per card, connect ways in the connect sheet) (Settings) Integrationen: every provider card has its own filled button(s), so the page shows 5+ primaries
       and SumUp's two buttons share one row on phones; one "Verbinden" per card (outline) + the alternatives in the
       connect sheet would match patterns §5 (with Y3).
-- [ ] S16 (Settings) Benachrichtigungen groups use the module names from Settings › Module ("Schichtplanung",
+- [x] S16 (378281e: grouped by nav area in sidebar order) (Settings) Benachrichtigungen groups use the module names from Settings › Module ("Schichtplanung",
       "Onlineshop", "Ticketing", "Angebote & Rechnungen"), not the sidebar's area words (Schichten, Shop, Events,
       Finanzen); grouping by nav area (`areaOfModule`) would read like the rest of the App.
-- [ ] S17 (Wiki) Phone page view: the "Seiten" button and the save status take a row each above the title; one row
+- [x] S17 (a597d04: Seiten + save status in one row (WikiEditor `lead`)) (Wiki) Phone page view: the "Seiten" button and the save status take a row each above the title; one row
       (Seiten left, status right) would bring the content up.
-- [ ] S18 (Automationen) The canvas inspector and test run are still a long single column under the canvas on phones;
+- [x] S18 (5e31c07: inspector as a sheet on phones) (Automationen) The canvas inspector and test run are still a long single column under the canvas on phones;
       a step tap could open the inspector as a sheet (like the wiki tree).
-- [ ] S19 (shell) Search placeholder "Kontakte, Events, Rechnungen …" is cut at 390 px; the admin area on phones has no
+- [~] S19 (90fce8f: shorter placeholder, inbox titles without a leading emoji; open: admin tab bar on phones) (shell) Search placeholder "Kontakte, Events, Rechnungen …" is cut at 390 px; the admin area on phones has no
       tab bar (sidebar trigger only). Notification titles carry emojis from the message texts (🔑 📋) next to the area
       tile — two icons per row.
 
@@ -255,3 +255,7 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   only the round button?
 - Tooltips are hidden on touch screens everywhere (`[@media(hover:none)]` in ui/tooltip.tsx), per mobile.md §2. OK?
 - The Menü sheet no longer has a Start tile (Start is the tab bar's first tab and the inbox the row above the tiles).
+- Beiträge now has six status segments (Offen · Überfällig · Rücklastschrift · Bezahlt · Storniert · Alle; the rule
+  says ≤ 5). Keep, or move Storniert/Alle into a FilterMenu?
+- `<RefreshOnReturn>` in the App layout re-reads the page's server parts when the tab comes back after ≥ 1 min (unread
+  count, lists). OK, or only the count (would need a small client poll / an endpoint)?

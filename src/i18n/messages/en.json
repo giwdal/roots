@@ -934,7 +934,13 @@
       "ownerInviteNoMail": "Organisation created, but the invite couldn't be mailed. Link: {link}",
       "ownerInviteFailed": "Organisation created, but the owner invite failed. Invite them under members.",
       "invited": "Invite sent to {email}.",
-      "inviteNoMail": "Invite created but not mailed. Link: {link}"
+      "inviteNoMail": "Invite created but not mailed. Link: {link}",
+      "confirmDelete": "Delete the organisation for good?",
+      "confirmDeleteHint": "All of its data is gone. This can't be undone.",
+      "confirmTrash": "Move the organisation to the trash?",
+      "confirmTrashHint": "Nobody can get in any more; after 30 days it is deleted for good.",
+      "confirmModuleOff": "Turn the module off?",
+      "confirmModuleOffHint": "The organisation no longer sees the area; its data is kept."
     },
     "users": {
       "title": "Users",
@@ -959,7 +965,12 @@
       "delete": "Delete user",
       "deleteConfirm": "I understand that this account will be deleted for good.",
       "deleted": "User deleted.",
-      "you": "You"
+      "you": "You",
+      "confirmDelete": "Delete the user?",
+      "confirmDeleteHint": "The account and its memberships are gone. This can't be undone.",
+      "confirmGrant": "Give superadmin rights?",
+      "confirmGrantHint": "The person can then open every organisation and change everything.",
+      "confirmRevoke": "Take superadmin rights away?"
     },
     "dangerZone": "Danger zone",
     "roles": {
@@ -969,7 +980,15 @@
       "nameEn": "Name (English)",
       "intro": "Roles apply to all organisations. Organisations only assign them.",
       "inOrgs": "Assigned",
-      "ownerBadge": "Owner role"
+      "ownerBadge": "Owner role",
+      "usedIn": {
+        "one": "Given in {count} organisation",
+        "other": "Given in {count} organisations"
+      },
+      "confirmSave": "Save the role?",
+      "confirmSaveHint": "The rights change at once in every organisation that gives this role.",
+      "confirmDelete": "Delete the role?",
+      "confirmDeleteHint": "It disappears for every organisation. A role that is still given can't be deleted."
     },
     "activity": {
       "title": "Activity",

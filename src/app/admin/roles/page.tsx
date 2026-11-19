@@ -1,9 +1,11 @@
-import Link from "next/link"
+import { ShieldIcon, Trash2Icon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { Page, PageHeader } from "@/components/page"
+import { SaveBar } from "@/components/save-bar"
 import { DataTable } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +16,6 @@ import { roleSummary } from "@/lib/roles"
 import { param, withParams } from "@/lib/url"
 import { core, modules } from "@/modules/registry"
 import { deleteRole, saveRole } from "./actions"
-import { SubmitButton } from "@/components/submit-button"
 
 type Role = { id: string; name: unknown; permissions: string[]; is_owner: boolean }
 
@@ -32,13 +33,8 @@ export default async function AdminRoles({ searchParams }: PageProps<"/admin/rol
   const creating = param(sp, "new") === "role"
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="sr-only">{t("admin.roles.title")}</h1>
-        <Button render={<Link href={withParams(sp, { new: "role", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
-          {t("admin.roles.new")}
-        </Button>
-      </div>
+    <Page>
+      <PageHeader icon={ShieldIcon} title={t("admin.roles.title")} primary={{ href: withParams(sp, { new: "role", edit: undefined }), label: t("admin.roles.new") }} />
       <p className="text-sm text-muted-foreground">{t("admin.roles.intro")}</p>
       <Notice error={!editing && !creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
       <DataTable
@@ -62,11 +58,26 @@ export default async function AdminRoles({ searchParams }: PageProps<"/admin/rol
       />
 
       {(editing || creating) && (
-        <UrlSheet params={["edit", "new"]} title={editing ? t("roles.editTitle", { name: t.pick(editing.name) }) : t("admin.roles.new")}>
+        <UrlSheet
+          params={["edit", "new"]}
+          title={editing ? t("roles.editTitle", { name: t.pick(editing.name) }) : t("admin.roles.new")}
+          meta={editing ? t("admin.roles.usedIn", { count: editing.org_members[0]?.count ?? 0 }) : undefined}
+          menu={
+            editing &&
+            !editing.is_owner && (
+              <ActionsMenu>
+                <MenuSubmit form="delete-role" icon={<Trash2Icon />} destructive confirm="admin.roles.confirmDelete">
+                  {t("roles.delete")}
+                </MenuSubmit>
+              </ActionsMenu>
+            )
+          }
+        >
+          {editing && !editing.is_owner && <form id="delete-role" action={deleteRole.bind(null, editing.id)} hidden />}
           <RoleForm t={t} role={editing} error={param(sp, "error")} />
         </UrlSheet>
       )}
-    </>
+    </Page>
   )
 }
 
@@ -105,7 +116,7 @@ function RoleForm({ t, role, error }: { t: T; role?: Role; error?: string }) {
           </label>
           {groups.map((g) => (
             <fieldset key={g.key} className="grid gap-2">
-              <legend className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <legend className="mb-1 text-sm font-medium">
                 {t.dynamic(`modules.${g.key}.name`)}
               </legend>
               {g.permissions.map((p) => (
@@ -121,14 +132,8 @@ function RoleForm({ t, role, error }: { t: T; role?: Role; error?: string }) {
           ))}
         </div>
       )}
-      <div className="flex flex-wrap justify-between gap-2">
-        <SubmitButton>{t("roles.save")}</SubmitButton>
-        {role && !role.is_owner && (
-          <SubmitButton variant="destructive" formAction={deleteRole.bind(null, role.id)} formNoValidate>
-            {t("roles.delete")}
-          </SubmitButton>
-        )}
-      </div>
+      {/* Changing a role changes rights in every org that uses it: saving an existing role asks first. */}
+      <SaveBar label={role ? undefined : t("admin.roles.new")} always={!role} confirm={role ? "admin.roles.confirmSave" : undefined} />
     </form>
   )
 }

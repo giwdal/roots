@@ -110,12 +110,11 @@ export async function restoreOrg(orgId: string) {
   back(`${PATH}?edit=${orgId}`, { ok: t("admin.orgs.restored") })
 }
 
-// Permanently, from the trash only.
-export async function deleteOrg(orgId: string, formData: FormData) {
+// Permanently, from the trash only (the ⋯ item asks first through ConfirmHost).
+export async function deleteOrg(orgId: string) {
   const { supabase } = await requirePlatformAdmin()
   const t = await getT()
   const retry = `${PATH}?trash=1&edit=${orgId}`
-  if (formData.get("confirm") !== "yes") back(retry, { error: t("admin.orgs.deleteConfirm") })
   const { error, count } = await supabase.from("orgs").delete({ count: "exact" }).eq("id", orgId).not("deleted_at", "is", null)
   if (error || !count) back(retry, { error: error ? dbError(t, error) : t("errors.not_allowed") })
   back(`${PATH}?trash=1`, { ok: t("admin.orgs.deleted") })

@@ -934,7 +934,13 @@
       "ownerInviteNoMail": "Organisation angelegt, aber die Einladung konnte nicht gemailt werden. Link: {link}",
       "ownerInviteFailed": "Organisation angelegt, aber die Einladung als Inhaber ging nicht. Lade unter Mitglieder ein.",
       "invited": "Einladung an {email} geschickt.",
-      "inviteNoMail": "Einladung angelegt, aber nicht gemailt. Link: {link}"
+      "inviteNoMail": "Einladung angelegt, aber nicht gemailt. Link: {link}",
+      "confirmDelete": "Organisation endgültig löschen?",
+      "confirmDeleteHint": "Alle Daten dieser Organisation sind dann weg. Das lässt sich nicht rückgängig machen.",
+      "confirmTrash": "Organisation in den Papierkorb?",
+      "confirmTrashHint": "Niemand kommt mehr hinein; nach 30 Tagen wird sie endgültig gelöscht.",
+      "confirmModuleOff": "Modul ausschalten?",
+      "confirmModuleOffHint": "Die Organisation sieht den Bereich nicht mehr; die Daten bleiben erhalten."
     },
     "users": {
       "title": "Benutzer",
@@ -959,7 +965,12 @@
       "delete": "Benutzer löschen",
       "deleteConfirm": "Ich verstehe, dass dieses Konto endgültig gelöscht wird.",
       "deleted": "Benutzer gelöscht.",
-      "you": "Du"
+      "you": "Du",
+      "confirmDelete": "Benutzer löschen?",
+      "confirmDeleteHint": "Das Konto und seine Mitgliedschaften sind dann weg. Das lässt sich nicht rückgängig machen.",
+      "confirmGrant": "Superadmin-Rechte geben?",
+      "confirmGrantHint": "Die Person kann dann jede Organisation öffnen und alles ändern.",
+      "confirmRevoke": "Superadmin-Rechte entziehen?"
     },
     "dangerZone": "Gefahrenzone",
     "roles": {
@@ -969,7 +980,15 @@
       "nameEn": "Name (Englisch)",
       "intro": "Rollen gelten für alle Organisationen. Organisationen weisen sie nur zu.",
       "inOrgs": "Vergeben",
-      "ownerBadge": "Inhaber-Rolle"
+      "ownerBadge": "Inhaber-Rolle",
+      "usedIn": {
+        "one": "In {count} Organisation vergeben",
+        "other": "In {count} Organisationen vergeben"
+      },
+      "confirmSave": "Rolle speichern?",
+      "confirmSaveHint": "Die Rechte ändern sich sofort in jeder Organisation, die diese Rolle vergibt.",
+      "confirmDelete": "Rolle löschen?",
+      "confirmDeleteHint": "Sie verschwindet für alle Organisationen. Eine Rolle, die noch vergeben ist, lässt sich nicht löschen."
     },
     "activity": {
       "title": "Aktivität",

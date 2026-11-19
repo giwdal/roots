@@ -1670,12 +1670,9 @@
       }
     },
     "duplicates": {
-      "nav": "Duplikate",
-      "a": "Kontakt",
-      "b": "Gleicher Name",
-      "merge": "Zusammenführen",
-      "empty": "Keine möglichen Duplikate",
-      "emptyText": "Hier erscheinen Kontakte mit gleichem Vor- und Nachnamen."
+      "filter": "Anzeigen",
+      "only": "Nur mögliche Duplikate",
+      "merge": "Zusammenführen"
     }
   },
   "fields": {

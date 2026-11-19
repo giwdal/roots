@@ -31,12 +31,18 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
     ?.replace(/[%,()*]/g, "")
     .trim()
   const tag = param(sp, "tag")
+  const dup = param(sp, "dup") === "1"
   const trash = canManage && param(sp, "trash") === "1"
   const page = pageParam(sp)
   // Old drawer links (?edit=<id>) → the contact's page.
   const editId = param(sp, "edit")
   if (editId && /^[0-9a-f-]{36}$/.test(editId)) redirect(`/contacts/${editId}`)
   if (param(sp, "new")) redirect("/contacts/new") // old drawer link
+
+  // Possible duplicates (same first + last name): marked in the list, ?dup=1 shows only them.
+  // ponytail: first 200 pairs only; page through contact_duplicates() if an org ever has more.
+  const pairs = trash ? Promise.resolve({ data: [] }) : ctx.supabase.rpc("contact_duplicates", { p_org: ctx.org.id, p_limit: 200 })
+  const dupIds = dup ? new Set(((await pairs).data ?? []).flatMap((p) => [p.a_id, p.b_id])) : null
 
   // All filtering happens here in the query; the UI only writes the URL.
   let query = ctx.supabase
@@ -49,10 +55,12 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
     : query.is("deleted_at", null).order("last_name", { nullsFirst: false }).order("first_name").order("company")
   if (q) query = matchWords(query, q, CONTACT_SEARCH)
   if (tag) query = query.contains("tags", [tag])
-  const [{ data }, { data: tagRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id })])
+  if (dupIds) query = query.in("id", [...dupIds])
+  const [{ data }, { data: tagRows }, { data: pairRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }), pairs])
+  const dupes = new Set((pairRows ?? []).flatMap((p) => [p.a_id, p.b_id]))
   const rows = data?.slice(0, PAGE_SIZE) ?? []
   const tags = ((tagRows ?? []) as unknown as string[]).sort((a, b) => a.localeCompare(b, t.locale))
-  const empty = !q && !tag && !trash && page === 1 && !rows.length
+  const empty = !q && !tag && !dup && !trash && page === 1 && !rows.length
 
   return (
     <Page>
@@ -84,6 +92,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       {!empty && (
         <ListToolbar search={<SearchBox q={q} label={t("common.search")} />}>
           {!trash && tags.length > 0 && <FilterMenu param="tag" label={t("contacts.tags")} options={tags.map((tg) => ({ value: tg, label: tg }))} />}
+          {!trash && (dup || dupes.size > 0) && <FilterMenu param="dup" label={t("contacts.duplicates.filter")} options={[{ value: "1", label: t("contacts.duplicates.only") }]} />}
         </ListToolbar>
       )}
       {trash && <p className="text-sm text-muted-foreground">{t("contacts.trashHint", { days: 30 })}</p>}
@@ -96,7 +105,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
         empty={
           trash ? (
             t("contacts.emptyTrash")
-          ) : q || tag ? (
+          ) : q || tag || dup ? (
             t("contacts.noMatch")
           ) : (
             <EmptyState
@@ -123,7 +132,10 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
             header: t("contacts.name"),
             cell: (r) => (
               <span className="grid">
-                <span className="font-medium">{contactName(r)}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{contactName(r)}</span>
+                  {dupes.has(r.id) && <Badge variant="warning">{t("contacts.merge.duplicate")}</Badge>}
+                </span>
                 {r.company && contactName(r) !== r.company && <span className="text-xs text-muted-foreground">{r.company}</span>}
               </span>
             ),

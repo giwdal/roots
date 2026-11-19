@@ -1670,12 +1670,9 @@
       }
     },
     "duplicates": {
-      "nav": "Duplicates",
-      "a": "Contact",
-      "b": "Same name",
-      "merge": "Merge",
-      "empty": "No possible duplicates",
-      "emptyText": "Contacts with the same first and last name show up here."
+      "filter": "Show",
+      "only": "Possible duplicates only",
+      "merge": "Merge"
     }
   },
   "fields": {

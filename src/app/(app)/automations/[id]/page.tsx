@@ -1,10 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ListIcon, PauseIcon, PlayIcon, Trash2Icon } from "lucide-react"
+import { ListIcon, Trash2Icon } from "lucide-react"
 import { Notice } from "@/components/notice"
 import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { PageHeader } from "@/components/page"
-import { SubmitButton } from "@/components/submit-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
@@ -17,7 +16,7 @@ import { modules } from "@/modules/registry"
 import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
 import { param } from "@/lib/url"
-import { setActive, trashWorkflow } from "../actions"
+import { trashWorkflow } from "../actions"
 import { WorkflowEditor, type EditorOptions } from "./editor"
 
 // One workflow on the canvas (desktop works best; phones can view and switch it on/off).
@@ -58,7 +57,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
   const on = (m: string) => ctx.modules.has(m)
   const none = Promise.resolve({ data: null })
   const org = ctx.org.id
-  const [{ data: wf }, defs, eventDefs, membershipDefs, { data: tagRows }, { data: events }, { data: types }, { data: forms }, { data: courses }, { data: lists }] = await Promise.all([
+  const [{ data: wf }, defs, eventDefs, membershipDefs, { data: tagRows }, { data: events }, { data: types }, { data: forms }, { data: courses }, { data: lists }, { data: telegramRow }] = await Promise.all([
     ctx.supabase.from("workflows").select("id, name, description, active, graph").eq("id", id).eq("org_id", org).is("deleted_at", null).maybeSingle(),
     loadFields(ctx.supabase, org, "contacts"),
     on("events") ? loadFields(ctx.supabase, org, "events") : [],
@@ -70,10 +69,10 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
     on("forms") ? ctx.supabase.from("forms").select("id, title, elements").eq("org_id", org).is("deleted_at", null).order("title").limit(200) : none,
     on("courses") ? ctx.supabase.from("courses").select("id, title").eq("org_id", org).is("deleted_at", null).order("title").limit(200) : none,
     on("guestlists") ? ctx.supabase.from("guest_lists").select("id, name").eq("org_id", org).is("deleted_at", null).order("name").limit(200) : none,
+    // Telegram: connected + the chats the bot knows (titles only; the token stays in the vault).
+    createAdminClient().from("org_integrations").select("status, config").eq("org_id", org).eq("provider", "telegram").maybeSingle(),
   ])
   if (!wf) notFound()
-  // Telegram: connected + the chats the bot knows (titles only; the token stays in the vault).
-  const { data: telegramRow } = await createAdminClient().from("org_integrations").select("status, config").eq("org_id", org).eq("provider", "telegram").maybeSingle()
   const parsed = Graph.safeParse(wf.graph)
   const graph: Graph = parsed.success ? parsed.data : { nodes: [], edges: [] }
   const options: EditorOptions = {
@@ -115,7 +114,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       <PageHeader
         crumbs={[{ href: "/automations", label: t("automations.title") }, { label: wf.name }]}
         title={wf.name}
-        badge={<Badge variant={wf.active ? "default" : "secondary"}>{t(wf.active ? "automations.on" : "automations.off")}</Badge>}
+        badge={<Badge variant={wf.active ? "success" : "secondary"}>{t(wf.active ? "automations.on" : "automations.off")}</Badge>}
         actions={
           <Button render={<Link href={`/automations/${id}/runs`} />} nativeButton={false} size="sm" variant="outline">
             <ListIcon /> {t("automations.runs")}
@@ -130,17 +129,6 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
             </ActionsMenu>
           )
         }
-        primary={
-          canEdit && (
-            <form action={setActive}>
-              <input type="hidden" name="id" value={id} />
-              <input type="hidden" name="active" value={wf.active ? "0" : "1"} />
-              <SubmitButton size="sm" variant={wf.active ? "outline" : "default"}>
-                {wf.active ? <PauseIcon /> : <PlayIcon />} {t(wf.active ? "automations.deactivate" : "automations.activate")}
-              </SubmitButton>
-            </form>
-          )
-        }
       />
       {canEdit && (
         <form id="trash-workflow" action={trashWorkflow} hidden>
@@ -149,7 +137,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       )}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       {wf.active && canEdit && <p className="text-sm text-muted-foreground">{t("automations.activeHint")}</p>}
-      <WorkflowEditor id={id} name={wf.name} description={wf.description ?? ""} graph={graph} options={options} canEdit={canEdit} />
+      <WorkflowEditor id={id} name={wf.name} description={wf.description ?? ""} graph={graph} options={options} canEdit={canEdit} active={wf.active} />
     </div>
   )
 }

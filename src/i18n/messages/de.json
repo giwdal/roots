@@ -4649,19 +4649,7 @@
       "date_lt": "vor",
       "date_lte": "am oder vor"
     },
-    "problems": {
-      "noTrigger": "Es fehlt ein Auslöser.",
-      "oneTrigger": "Nur ein Auslöser pro Automation.",
-      "incomplete": "Ein Schritt ist noch nicht fertig eingestellt.",
-      "branches": "Eine Bedingung braucht beschriftete Ausgänge (ja/nein).",
-      "oneNext": "Ein Schritt kann nur einen nächsten Schritt haben – für Verzweigungen eine Bedingung nutzen.",
-      "intoTrigger": "In den Auslöser kann nichts hineinführen.",
-      "danglingEdge": "Eine Verbindung führt ins Leere.",
-      "unreachable": "Ein Schritt ist mit nichts verbunden.",
-      "cycle": "Die Automation darf sich nicht im Kreis drehen.",
-      "nothingAfterTrigger": "Nach dem Auslöser passiert noch nichts.",
-      "duplicateIds": "Doppelte Schritte."
-    },
+    "problems": "Offen",
     "templates": {
       "welcomeContact": {
         "name": "Willkommens-E-Mail",
@@ -5219,7 +5207,32 @@
     "eachOf": "Jeweils",
     "eachLimit": "Höchstens",
     "eachHint": "Startet für jeden Treffer einen eigenen Ablauf ab dem nächsten Schritt – der Treffer steht dort als Ergebnis bereit (z. B. für eine E-Mail an jede Person). Höchstens 200 pro Durchlauf; in einem solchen Ablauf ist kein weiteres „Für jeden“ möglich.",
-    "valuesHint": "Rechnen: Zahlen {x}+1, {x}*3, floor({x}/100) · Daten today+6m, {x}+2q (Quartale), quarterend(today), max({x}, today)+6m"
+    "valuesHint": "Rechnen: Zahlen {x}+1, {x}*3, floor({x}/100) · Daten today+6m, {x}+2q (Quartale), quarterend(today), max({x}, today)+6m",
+    "activeSwitch": "Automation ein- oder ausschalten",
+    "backToList": "Zurück zu den Automationen",
+    "error": "Fehler",
+    "lastRun": "Letzter Lauf",
+    "neverRan": "noch nie gelaufen",
+    "noSteps": "Noch keine Schritte.",
+    "restore": "Wiederherstellen",
+    "restored": "Automation wiederhergestellt.",
+    "runOf": "Durchlauf vom {when}",
+    "stepFailed": "fehlgeschlagen",
+    "stepOk": "erledigt",
+    "trash": "Papierkorb",
+    "trashEmpty": "Der Papierkorb ist leer.",
+    "trashHint": "Automationen im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "waitsUntil": "Wartet bis",
+    "confirmActivate": "Automation einschalten?",
+    "confirmActivateHint": "Ab jetzt läuft sie bei jedem passenden Ereignis und verschickt, ändert und legt an, was sie vorsieht. Ungespeicherte Änderungen werden vorher gespeichert.",
+    "confirmCancel": "Durchlauf abbrechen?",
+    "confirmCancelHint": "Die restlichen Schritte werden nicht mehr ausgeführt.",
+    "runFilter": {
+      "waiting": "Wartet",
+      "failed": "Fehler",
+      "done": "Erledigt",
+      "cancelled": "Abgebrochen"
+    }
   },
   "numbers": {
     "next": "Nächste Nummer",

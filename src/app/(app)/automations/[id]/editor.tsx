@@ -2,6 +2,7 @@
 
 import "@xyflow/react/dist/style.css"
 import { useCallback, useMemo, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { DateInput } from "@/components/date-input"
 import {
   addEdge,
@@ -34,7 +35,9 @@ import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 import { ACTIONS, DATA_STEPS, stepKey, triggerKey, validate, WAIT_UNITS, type Graph, type NodeType, type TraceStep } from "@/automations/graph"
 import { creatableFor, deletableFor, def, OBJECTS, searchFields, objectsFor, OPS_FOR, parseRecordTrigger, SCHEDULE_OBJECTS, splitPath, writableFor, type Field, type Kind, type ObjectKey, type RefList } from "@/automations/objects"
-import { saveWorkflow, testPickers, testRun, testSamples, type TestPicker } from "../actions"
+import { saveWorkflow, setActiveAction, testPickers, testRun, testSamples, type TestPicker } from "../actions"
+import { useLeaveGuard } from "@/components/save-bar"
+import { Switch } from "@/components/ui/switch"
 
 type Data = Record<string, unknown>
 type FlowNode = Node<Data, NodeType>
@@ -192,7 +195,7 @@ const previewLine = (p?: Record<string, string>) =>
 
 const nodeTypes = Object.fromEntries(["trigger", "condition", "wait", ...DATA_STEPS, ...ACTIONS].map((k) => [k, StepNode]))
 
-export function WorkflowEditor(props: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean }) {
+export function WorkflowEditor(props: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean; active: boolean }) {
   return (
     <ReactFlowProvider>
       <Editor {...props} />
@@ -200,8 +203,10 @@ export function WorkflowEditor(props: { id: string; name: string; description: s
   )
 }
 
-function Editor({ id, name: initialName, description: initialDescription, graph, options, canEdit }: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean }) {
+function Editor({ id, name: initialName, description: initialDescription, graph, options, canEdit, active: initialActive }: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean; active: boolean }) {
   const t = useT()
+  const router = useRouter()
+  const [active, setActive] = useState(initialActive)
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(graph.nodes.map((n) => ({ ...n, data: n.data as Data })) as FlowNode[])
@@ -209,6 +214,8 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
   const [selected, setSelected] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [pending, start] = useTransition()
+  // One save model: the canvas is one form; leaving with unsaved changes asks, switching on saves them first.
+  useLeaveGuard(canEdit && dirty)
   // Test run: pick a real event of the trigger type, play the (unsaved) flow through, show the path.
   // "f:" = own test data: records picked per object (works before anything has happened).
   type Test = { samples: { id: string; at: string; label: string }[]; pickers: TestPicker[]; picks: Record<string, string>; eventId: string; trace: TraceStep[] | null; data: Record<string, unknown> | null }
@@ -310,6 +317,20 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
         toast.success(r.problems?.length ? t("automations.savedDraft") : t("automations.saved"))
       }
     })
+  // The "Aktiv" switch: switching on first saves what is on screen (an active flow must be valid), then activates.
+  const toggleActive = (on: boolean) =>
+    start(async () => {
+      if (on && dirty) {
+        const r = await saveWorkflow({ id, name, description, graph: current() })
+        if (r.error) return void toast.error(r.error)
+        setDirty(false)
+      }
+      const r = await setActiveAction(id, on)
+      if (r.error) return void toast.error(r.error)
+      setActive(on)
+      toast.success(t(on ? "automations.activated" : "automations.deactivated"))
+      router.refresh()
+    })
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ roots: "workflow", version: 1, name, description, graph: current() }, null, 2)], { type: "application/json" })
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${name.replace(/[^\w-]+/g, "-").toLowerCase() || "workflow"}.json` })
@@ -354,6 +375,12 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
             <Button type="button" size="sm" onClick={save} disabled={pending || !dirty}>
               <SaveIcon /> {pending ? t("automations.saving") : t("common.save")}
             </Button>
+          )}
+          {canEdit && (
+            <span className="flex h-(--control-sm) items-center gap-2 rounded-lg border px-3 text-sm">
+              {t("automations.on")}
+              <Switch checked={active} disabled={pending} aria-label={t("automations.activeSwitch")} data-confirm={active ? undefined : "automations.confirmActivate"} onCheckedChange={toggleActive} />
+            </span>
           )}
         </div>
       </div>

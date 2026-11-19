@@ -4649,19 +4649,7 @@
       "date_lt": "before",
       "date_lte": "on or before"
     },
-    "problems": {
-      "noTrigger": "A trigger is missing.",
-      "oneTrigger": "Only one trigger per automation.",
-      "incomplete": "A step isn't fully set up yet.",
-      "branches": "A condition needs labelled outputs (yes/no).",
-      "oneNext": "A step can only have one next step – use a condition to branch.",
-      "intoTrigger": "Nothing can lead into the trigger.",
-      "danglingEdge": "A connection leads nowhere.",
-      "unreachable": "A step isn't connected.",
-      "cycle": "The automation must not go in circles.",
-      "nothingAfterTrigger": "Nothing happens after the trigger yet.",
-      "duplicateIds": "Duplicate steps."
-    },
+    "problems": "Open",
     "templates": {
       "welcomeContact": {
         "name": "Welcome email",
@@ -5219,7 +5207,32 @@
     "eachOf": "Each",
     "eachLimit": "At most",
     "eachHint": "Starts its own run for every match from the next step on – the match is available there as the result (e.g. to email each person). At most 200 per run; no further “For each” inside such a run.",
-    "valuesHint": "Calculate: numbers {x}+1, {x}*3, floor({x}/100) · dates today+6m, {x}+2q (quarters), quarterend(today), max({x}, today)+6m"
+    "valuesHint": "Calculate: numbers {x}+1, {x}*3, floor({x}/100) · dates today+6m, {x}+2q (quarters), quarterend(today), max({x}, today)+6m",
+    "activeSwitch": "Switch the automation on or off",
+    "backToList": "Back to automations",
+    "error": "Error",
+    "lastRun": "Last run",
+    "neverRan": "never ran",
+    "noSteps": "No steps yet.",
+    "restore": "Restore",
+    "restored": "Automation restored.",
+    "runOf": "Run of {when}",
+    "stepFailed": "failed",
+    "stepOk": "done",
+    "trash": "Trash",
+    "trashEmpty": "The trash is empty.",
+    "trashHint": "Automations in the trash are deleted for good after {days} days.",
+    "waitsUntil": "Waits until",
+    "confirmActivate": "Switch the automation on?",
+    "confirmActivateHint": "From now on it runs on every matching event and sends, changes and creates what it says. Unsaved changes are saved first.",
+    "confirmCancel": "Cancel the run?",
+    "confirmCancelHint": "The remaining steps won't run.",
+    "runFilter": {
+      "waiting": "Waiting",
+      "failed": "Failed",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    }
   },
   "numbers": {
     "next": "Next number",

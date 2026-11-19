@@ -91,24 +91,7 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
   }, [dirty])
 
   // Unsaved changes: ask before reload/close and before following links inside the App.
-  useEffect(() => {
-    if (!dirty || always) return
-    const unload = (e: BeforeUnloadEvent) => e.preventDefault()
-    const click = (e: MouseEvent) => {
-      const a = (e.target as Element).closest?.("a[href]") as HTMLAnchorElement | null
-      if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || a.href.startsWith("mailto:") || a.href.startsWith("tel:")) return
-      if (!window.confirm(t("common.leaveUnsaved"))) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-    window.addEventListener("beforeunload", unload)
-    document.addEventListener("click", click, true)
-    return () => {
-      window.removeEventListener("beforeunload", unload)
-      document.removeEventListener("click", click, true)
-    }
-  }, [dirty, always, t])
+  useLeaveGuard(dirty && !always)
 
   const show = always || dirty
   const bar = show && (
@@ -144,6 +127,29 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
       {target && bar ? createPortal(bar, target) : bar}
     </span>
   )
+}
+
+/** While `dirty`: ask before reload/close and before following a link inside the App (forms, the workflow canvas). */
+export function useLeaveGuard(dirty: boolean) {
+  const t = useT()
+  useEffect(() => {
+    if (!dirty) return
+    const unload = (e: BeforeUnloadEvent) => e.preventDefault()
+    const click = (e: MouseEvent) => {
+      const a = (e.target as Element).closest?.("a[href]") as HTMLAnchorElement | null
+      if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || a.href.startsWith("mailto:") || a.href.startsWith("tel:")) return
+      if (!window.confirm(t("common.leaveUnsaved"))) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    window.addEventListener("beforeunload", unload)
+    document.addEventListener("click", click, true)
+    return () => {
+      window.removeEventListener("beforeunload", unload)
+      document.removeEventListener("click", click, true)
+    }
+  }, [dirty, t])
 }
 
 /** Before a drawer/dialog closes: true when no form inside `root` has unsaved changes, or the person agrees to drop them. */

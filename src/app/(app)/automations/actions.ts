@@ -78,21 +78,18 @@ export async function saveWorkflow(input: { id: string; name: string; descriptio
   return { problems }
 }
 
-/** On/off. Switching on needs a valid graph. */
-export async function setActive(fd: FormData) {
+/** On/off (the list's switch, the editor's switch). Switching on needs a valid saved graph. */
+export async function setActiveAction(id: string, on: boolean): Promise<{ error?: string }> {
   const { ctx, t } = await manager()
-  const id = String(fd.get("id") ?? "")
-  const on = fd.get("active") === "1"
-  const here = `/automations/${id}`
+  if (!UUID.test(id)) return { error: t("errors.invalid_input") }
+  const { data } = await ctx.supabase.from("workflows").select("graph").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
+  if (!data) return { error: t("errors.not_allowed") }
   if (on) {
-    const { data } = await ctx.supabase.from("workflows").select("graph").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
-    const parsed = Graph.safeParse(data?.graph)
-    if (!parsed.success || validate(parsed.data).length) back(here, { error: t("automations.fixBeforeActivate") })
+    const parsed = Graph.safeParse(data.graph)
+    if (!parsed.success || validate(parsed.data).length) return { error: t("automations.fixBeforeActivate") }
   }
-  const { data: cur } = await ctx.supabase.from("workflows").select("graph").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
-  const { error } = await ctx.supabase.from("workflows").update({ active: on, next_run_at: on ? scheduleNext(cur?.graph) : null }).eq("id", id).eq("org_id", ctx.org.id)
-  if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t(on ? "automations.activated" : "automations.deactivated") })
+  const { error } = await ctx.supabase.from("workflows").update({ active: !!on, next_run_at: on ? scheduleNext(data.graph) : null }).eq("id", id).eq("org_id", ctx.org.id)
+  return error ? { error: dbError(t, error) } : {}
 }
 
 export async function trashWorkflow(fd: FormData) {
@@ -104,12 +101,22 @@ export async function trashWorkflow(fd: FormData) {
   back("/automations", { ok: t("automations.trashed") })
 }
 
+export async function restoreWorkflow(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = String(fd.get("id") ?? "")
+  const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.workflows", p_id: id })
+  back(error ? "/automations?trash=1" : `/automations/${id}`, error ? { error: dbError(t, error) } : { ok: t("automations.restored") })
+}
+
+// From the runs list or a run's page (`back` = that page).
 export async function cancelRun(fd: FormData) {
   const { ctx, t } = await manager()
   const wf = String(fd.get("workflow_id") ?? "")
+  const to = String(fd.get("back") ?? "")
+  const here = to.startsWith(`/automations/${wf}/runs`) ? to : `/automations/${wf}/runs`
   const { error } = await ctx.supabase.from("workflow_runs").update({ status: "cancelled" }).eq("id", String(fd.get("id") ?? "")).eq("org_id", ctx.org.id).in("status", ["queued", "waiting"])
-  if (error) back(`/automations/${wf}/runs`, { error: dbError(t, error) })
-  back(`/automations/${wf}/runs`, { ok: t("automations.runCancelled") })
+  if (error) back(here, { error: dbError(t, error) })
+  back(here, { ok: t("automations.runCancelled") })
 }
 
 // ---------- test run (nothing is sent or changed) ----------

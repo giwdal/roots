@@ -31,7 +31,7 @@ export function TimeInput({ name, id, defaultValue = "", required, disabled, cla
           setText(tm)
           setValue(tm)
         }}
-        className={cn("w-20 text-center tabular-nums", className)}
+        className={cn("w-28 text-center tabular-nums", className)}
       />
     </>
   )

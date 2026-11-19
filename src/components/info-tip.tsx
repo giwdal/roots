@@ -1,6 +1,7 @@
 "use client"
 
 import { InfoIcon } from "lucide-react"
+import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useT } from "@/i18n/client"
 
@@ -24,5 +25,25 @@ export function InfoTip({ children, label }: { children: React.ReactNode; label?
         {children}
       </PopoverContent>
     </Popover>
+  )
+}
+
+/** A field label with its ⓘ next to it (the ⓘ sits outside the <label>, so it isn't part of the field's name). */
+export function TipLabel({ htmlFor, tip, children }: { htmlFor?: string; tip: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-5 items-center gap-1">
+      <Label htmlFor={htmlFor}>{children}</Label>
+      <InfoTip label={typeof children === "string" ? children : undefined}>{tip}</InfoTip>
+    </div>
+  )
+}
+
+/** A section title with its ⓘ (Section / FormCard `title`): background that used to be a paragraph under the heading. */
+export function TitleTip({ tip, children }: { tip: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {children}
+      <InfoTip label={typeof children === "string" ? children : undefined}>{tip}</InfoTip>
+    </span>
   )
 }

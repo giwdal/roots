@@ -51,9 +51,9 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
 
   const tooEarly = !!(min && date && date < min.slice(0, 10))
   return (
-    <div className={cn("flex max-w-64 items-center gap-1.5", className)}>
+    <div className={cn("flex max-w-full items-center gap-1.5", className)}>
       {name && <input ref={hidden} type="hidden" name={name} value={posted} />}
-      <div className="relative min-w-0 flex-1">
+      <div className="relative w-44 min-w-0">
         <Input
           id={id}
           inputMode="numeric"
@@ -118,7 +118,7 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
             setTimeText(tm)
             commit(date, tm)
           }}
-          className="w-20 text-center tabular-nums"
+          className="w-28 min-w-0 shrink text-center tabular-nums"
         />
       )}
     </div>

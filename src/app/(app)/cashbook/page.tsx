@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { BanIcon, ChevronLeftIcon, ChevronRightIcon, LockIcon, PaperclipIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { ActionsMenu, MenuExport, MenuLink } from "@/components/actions-menu"
 import { Choice, Segment, SegmentGroup } from "@/components/choice"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { DataTable, ListToolbar } from "@/components/data-table"
 import { DateInput } from "@/components/date-input"
 import { DetailList } from "@/components/detail-list"
@@ -369,15 +370,15 @@ function EntryForm({ t, accountId, today, categories, invoices }: { t: T; accoun
       </div>
       <div className="grid gap-2">
         <Label htmlFor="e-sphere">{t("cashbook.sphere")}</Label>
-        <Choice
-          id="e-sphere"
-          name="sphere"
-          label={t("cashbook.sphere")}
-          options={SPHERES.map((s) => ({
-            value: s,
-            label: t.dynamic(`cashbook.spheres.${s}`),
-          }))}
-        />
+        {/* A select, not segments: the four tax areas have long names that wrap into two rows on phones. */}
+        <NativeSelect id="e-sphere" name="sphere" defaultValue="" className="w-full">
+          <NativeSelectOption value="">–</NativeSelectOption>
+          {SPHERES.map((s) => (
+            <NativeSelectOption key={s} value={s}>
+              {t.dynamic(`cashbook.spheres.${s}`)}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
       </div>
       {invoices && (
         <div className="grid gap-2">
@@ -443,7 +444,7 @@ async function EntrySheet({ t, ctx, e, reversedBy, canManage, sp }: { t: T; ctx:
   const reversal = reversedBy ?? later?.number
   const entryLink = (id: string | undefined, label: string | null | undefined) =>
     id ? (
-      <Link href={`/cashbook${withParams(sp, { edit: id })}`} scroll={false} className="text-[var(--link)] hover:underline">
+      <Link href={`/cashbook${withParams(sp, { edit: id })}`} scroll={false} className="link">
         {label}
       </Link>
     ) : (
@@ -490,7 +491,7 @@ async function EntrySheet({ t, ctx, e, reversedBy, canManage, sp }: { t: T; ctx:
           doc && {
             label: t("cashbook.invoice"),
             value: (
-              <Link href={`/invoices/${doc.id}`} className="text-[var(--link)] hover:underline">
+              <Link href={`/invoices/${doc.id}`} className="link">
                 {doc.number}
               </Link>
             ),
@@ -513,7 +514,7 @@ async function EntrySheet({ t, ctx, e, reversedBy, canManage, sp }: { t: T; ctx:
         ]}
       />
       <Section id="receipts" title={t("cashbook.receipts")}>
-        <FileList ctx={ctx} entity="cash_entries" entityId={e.id} back={`/cashbook${withParams(sp, {})}`} />
+        <FileList ctx={ctx} entity="cash_entries" entityId={e.id} back={`/cashbook${withParams(sp, {})}`} hideTitle />
       </Section>
     </UrlSheet>
   )

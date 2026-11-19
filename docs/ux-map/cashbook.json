@@ -376,7 +376,7 @@
         "sweep": {
           "done": true,
           "date": "2026-11-19",
-          "note": "Phone toolbar: month switcher and account Segments shared one row, Girokonto was cut off: month now on its own row (ListToolbar search slot), accounts below as the scrolling row; desktop unchanged (accounts right)."
+          "note": "Phone toolbar: month switcher and account Segments shared one row, Girokonto was cut off: month now on its own row (ListToolbar search slot), accounts below as the scrolling row; desktop unchanged. Entry sheet: 'Stornieren' floated in the middle under a wrapped title → sheet actions get their own row on phones (UrlSheet, all sheets); 'Belege' + FileList's own 'Dateien' heading → one heading (hideTitle). Neue Buchung: Bereich was 5 segments wrapping into two rows on phones → a select."
         }
       },
       "uxNotesDone": [

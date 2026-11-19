@@ -64,7 +64,7 @@ export function UrlSheet({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <ContentSheetTitle className="min-w-0 font-heading text-lg font-semibold break-words text-foreground">{title}</ContentSheetTitle>
             {(actions || menu) && (
-              <div className="ml-auto flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2 max-md:w-full md:ml-auto">
                 {actions}
                 {menu}
               </div>

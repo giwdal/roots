@@ -177,15 +177,28 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
             header: t("invoices.issueDate"),
             cell: (d) => day(d.issue_date),
             className: "whitespace-nowrap",
+            phone: false,
           },
           {
             header: t("invoices.dueColumn"),
             cell: (d) => day(d.kind === "quote" ? d.valid_until : d.due_date),
             className: "whitespace-nowrap",
+            phone: false,
           },
           {
             header: t("invoices.status"),
             cell: (d) => <DocBadge t={t} doc={d} today={today} />,
+            phone: false,
+          },
+          {
+            header: t("invoices.issueDate"),
+            cell: (d) => (d.issue_date ? t.date(`${d.issue_date}T12:00:00Z`, { day: "2-digit", month: "2-digit" }) : "–"),
+            table: false,
+          },
+          {
+            header: t("invoices.status"),
+            cell: (d) => <DocBadge t={t} doc={d} today={today} />,
+            table: false,
           },
           {
             header: t("invoices.gross"),

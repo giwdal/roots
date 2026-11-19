@@ -161,7 +161,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
         crumbs={[{ href: `/invoices?kind=${kind}`, label: t("invoices.nav") }, { label: title }]}
         title={title}
         badge={<DocBadge t={t} doc={doc} today={today} />}
-        meta={[doc.recipient_name, !editing && money(doc.gross_total)].filter(Boolean).join(" · ") || undefined}
+        meta={doc.recipient_name || undefined}
         actions={
           <>
             {preview}
@@ -234,13 +234,15 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
         </form>
       )}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+      {/* Phones: the next step as a full-width button under the header (the top bar only has the ⋯). */}
+      {primary && <div className="grid md:hidden [&_button]:h-(--control) [&_button]:w-full [&_form]:grid">{primary}</div>}
 
       {editing ? (
         <>
           {billingMissing && (
             <p className="rounded-lg border bg-muted px-3 py-2 text-sm">
               {t("invoices.billingMissing")}{" "}
-              <Link href="/invoices/settings" className="text-[var(--link)] hover:underline">
+              <Link href="/invoices/settings" className="link">
                 {t("invoices.settings")}
               </Link>
             </p>
@@ -286,7 +288,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
                       {
                         label: t("invoices.recipientName"),
                         value: contact ? (
-                          <Link href={`/contacts/${contact.id}`} className="text-[var(--link)] hover:underline">
+                          <Link href={`/contacts/${contact.id}`} className="link">
                             {doc.recipient_name || contactName(contact)}
                           </Link>
                         ) : (
@@ -300,7 +302,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
                       doc.recipient_email && {
                         label: t("invoices.recipientEmail"),
                         value: (
-                          <a href={`mailto:${doc.recipient_email}`} className="break-all text-[var(--link)] hover:underline">
+                          <a href={`mailto:${doc.recipient_email}`} className="link break-all">
                             {doc.recipient_email}
                           </a>
                         ),
@@ -316,7 +318,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
                     ]}
                   />
                   {contact && (
-                    <Link href={`/invoices?contact=${contact.id}`} className="text-sm text-[var(--link)] hover:underline">
+                    <Link href={`/invoices?contact=${contact.id}`} className="link text-sm">
                       {t("invoices.allOfContact")}
                     </Link>
                   )}
@@ -336,7 +338,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
                     <span className="min-w-0">
                       <span className="font-medium">{i.title}</span>
                       <span className="block text-xs text-muted-foreground">
-                        {t.number(Number(i.quantity))} {t.dynamic(`invoices.units.${i.unit}`)} × {money(i.unit_price)}
+                        {t.number(Number(i.quantity))} {t.has(`invoices.units.${i.unit}`) ? t.dynamic(`invoices.units.${i.unit}`) : i.unit} × {money(i.unit_price)}
                         {doc.tax_mode !== "small_business" && ` · ${t.number(Number(i.tax_rate))} %`}
                       </span>
                       {i.description && <span className="block text-xs whitespace-pre-line text-muted-foreground">{i.description}</span>}

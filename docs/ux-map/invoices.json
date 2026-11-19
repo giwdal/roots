@@ -153,7 +153,12 @@
           "empty text → <EmptyState> with 'Neue Rechnung' for a first-time org; filtered empty keeps a short text",
           "Pager → unchanged"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards cut the dates and the badge (third line too long): now one short line 'TT.MM. · status badge' via phone-only columns (table: false), table unchanged. ListToolbar, coloured badges, EmptyState, export were already in place."
+        }
       },
       "uxNotesDone": [
         0,
@@ -211,7 +216,12 @@
           "?contact=<id> → recipient prefilled from the contact (unchanged meaning)",
           "redirect to /invoices/<id> → after saving (draft) or issuing"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Same editor as a draft: the Empfänger card ran off the right edge on phones (grid items without min-width; fixed once in FormCard + RecordPicker), Texte (intro/outro/internal note) moved behind 'Mehr Angaben (optional)' (open when one is filled). One form, SaveBar 'Entwurf anlegen'."
+        }
       },
       "uxNotesDone": [
         0,
@@ -608,7 +618,12 @@
           "new: Verknüpft section — shop order, payment (via the shop order), cash book entries that paid it, source document / cancellation, contact (with 'Alle Rechnungen' → /invoices?contact=)"
         ],
         "built": true,
-        "kept": "uxNote 6 kept: sending invoices by email is a new feature (mail with PDF attachment, log), not part of this UX pass. Quantity stays a decimal text input (German '1,5'); a 'Mahnung' step does not exist yet."
+        "kept": "uxNote 6 kept: sending invoices by email is a new feature (mail with PDF attachment, log), not part of this UX pass. Quantity stays a decimal text input (German '1,5'); a 'Mahnung' step does not exist yet.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Issued: frozen by law, so no inline editing (correct); next step (Als bezahlt markieren / In Rechnung umwandeln) now also a full-width button under the header on phones (it was only in the phone ⋯); meta no longer repeats the amount shown in Stats; unit labels fell back to the raw key 'invoices.units.Std.' for units that aren't keys (API/shop) – now shows the stored unit; links use the link utility. Draft: phone 'Rechnung ausstellen' button, overflow fixed, Texte behind Mehr Angaben."
+        }
       },
       "uxNotesDone": [
         0,
@@ -891,7 +906,12 @@
           "SaveBar → unchanged (now the only save)"
         ],
         "built": true,
-        "kept": "uxNote 0 kept: the cash book and payments have nothing to set up; the bank hint now says the shop uses this account. uxNote 2 kept: Kleinunternehmer per document stays (API and existing documents set it per document; the default comes from here)."
+        "kept": "uxNote 0 kept: the cash book and payments have nothing to set up; the bank hint now says the shop uses this account. uxNote 2 kept: Kleinunternehmer per document stays (API and existing documents set it per document; the default comes from here).",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: grouped FormCards, TypedInput IBAN/BIC, number ranges, one SaveBar. No change needed (settings page stays a form)."
+        }
       },
       "uxNotesDone": [
         1,

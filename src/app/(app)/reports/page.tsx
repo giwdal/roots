@@ -43,20 +43,20 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           current={p.preset === "custom" ? t("reports.custom") : t.dynamic(`reports.presets.${p.preset}`)}
           options={PRESETS.map((k) => ({ value: k, label: t.dynamic(`reports.presets.${k}`), active: p.preset === k }))}
         />
-        <form key={`${p.from}:${p.to}`} className="flex items-end gap-2" action="/reports">
+        <form key={`${p.from}:${p.to}`} className="grid w-full grid-cols-2 items-end gap-2 sm:flex sm:w-auto" action="/reports">
           <div className="grid gap-1">
             <Label htmlFor="r-from" className="text-xs text-muted-foreground">
               {t("reports.from")}
             </Label>
-            <DateInput id="r-from" name="from" type="date" defaultValue={p.from} className="w-36" />
+            <DateInput id="r-from" name="from" type="date" defaultValue={p.from} className="sm:w-36" />
           </div>
           <div className="grid gap-1">
             <Label htmlFor="r-to" className="text-xs text-muted-foreground">
               {t("reports.to")}
             </Label>
-            <DateInput id="r-to" name="to" type="date" defaultValue={p.to} className="w-36" />
+            <DateInput id="r-to" name="to" type="date" defaultValue={p.to} className="sm:w-36" />
           </div>
-          <Button type="submit" size="sm" variant="outline">
+          <Button type="submit" variant="outline" className="col-span-2">
             {t("reports.show")}
           </Button>
         </form>
@@ -80,10 +80,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               tone={r.members.dues_overdue_cents > 0 ? "warn" : undefined}
             />
           </Stats>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-2">
             <Bars title={t("reports.members.byType")} rows={r.members.by_type.map((x) => ({ label: x.type, value: x.active }))} t={t} />
             {r.members.months.length > 1 && (
-              <div className="grid content-start gap-2">
+              <div className="grid min-w-0 content-start gap-2">
                 <h3 className="text-sm text-muted-foreground">{t("reports.members.perMonth")}</h3>
                 <GroupedBars
                   data={r.members.months.map((m) => ({ label: t.date(`${m.month}-01`, { month: "short", year: "2-digit" }), joined: m.joined, left: m.left }))}
@@ -113,7 +113,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             <Bars title={t("reports.events.membersByType")} rows={Object.entries(e.members_by_type).map(([label, value]) => ({ label, value }))} t={t} />
           )}
           {e.list.length > 1 && (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
               <h3 className="text-sm text-muted-foreground">{t("reports.events.perEvent")}</h3>
               <StackedBars
                 data={[...e.list].reverse().map((x) => ({ label: t.date(x.starts_at, { day: "2-digit", month: "2-digit" }), tickets: x.tickets_in, members: x.members_in, guests: x.guests_in }))}
@@ -196,7 +196,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             ))}
           </Stats>
           {Object.keys(r.cashbook.by_sphere).length > 0 && (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
               <h3 className="text-sm text-muted-foreground">{t("reports.cashbook.bySphere")}</h3>
               <GroupedBars
                 data={Object.entries(r.cashbook.by_sphere).map(([k, v]) => ({
@@ -243,7 +243,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 function Bars({ title, rows, t }: { title: string; rows: { label: string; value: number; extra?: string }[]; t: T }) {
   const max = Math.max(1, ...rows.map((r) => r.value))
   return (
-    <div className="grid content-start gap-2">
+    <div className="grid min-w-0 content-start gap-2">
       <h3 className="text-sm text-muted-foreground">{title}</h3>
       {rows.length ? (
         <ul className="grid gap-1.5">

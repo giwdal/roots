@@ -372,7 +372,12 @@
           "?edit=<entry> sheet: DetailList (unchanged) + invoice link, Belege FileList (unchanged), 'Stornieren' → sheet header action with confirm cashbook.confirmReverse + Hint"
         ],
         "built": true,
-        "kept": "uxNote 6 kept: categories stay free text with suggestions (no new table). uxNote 8: 'Kasse bearbeiten' moved into ⋯ next to 'Neue Kasse'; no delete – entries reference the account, it is switched off with 'Aktiv'. ?edit_account= kept (?edit= is the entry sheet). A negative opening balance can't be typed any more (money input); the server still accepts it."
+        "kept": "uxNote 6 kept: categories stay free text with suggestions (no new table). uxNote 8: 'Kasse bearbeiten' moved into ⋯ next to 'Neue Kasse'; no delete – entries reference the account, it is switched off with 'Aktiv'. ?edit_account= kept (?edit= is the entry sheet). A negative opening balance can't be typed any more (money input); the server still accepts it.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone toolbar: month switcher and account Segments shared one row, Girokonto was cut off: month now on its own row (ListToolbar search slot), accounts below as the scrolling row; desktop unchanged (accounts right)."
+        }
       },
       "uxNotesDone": [
         0,

@@ -3,17 +3,20 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
+// --chart-1 and --chart-2 are both blue: series take the tokens in an order that keeps neighbours apart.
+const ORDER = [1, 4, 3, 5, 2]
+
 // Report charts (shadcn chart = Recharts with the theme's --chart-* colors). Labels come translated from the page.
 
 /** Bars per category; several series stack (e.g. per event: with ticket / members / guests). */
 export function StackedBars({ data, series, height = 240 }: { data: Record<string, string | number>[]; series: { key: string; label: string }[]; height?: number }) {
-  const config = Object.fromEntries(series.map((s, i) => [s.key, { label: s.label, color: `var(--chart-${(i % 5) + 1})` }])) satisfies ChartConfig
+  const config = Object.fromEntries(series.map((s, i) => [s.key, { label: s.label, color: `var(--chart-${ORDER[i % 5]})` }])) satisfies ChartConfig
   return (
     <ChartContainer config={config} className="w-full" style={{ height }}>
-      <BarChart data={data} margin={{ left: -16, right: 8 }}>
+      <BarChart data={data} margin={{ left: 0, right: 8 }}>
         <CartesianGrid vertical={false} />
         <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval="preserveStartEnd" />
-        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width="auto" />
         <ChartTooltip content={<ChartTooltipContent />} />
         {series.length > 1 && <ChartLegend content={<ChartLegendContent />} />}
         {series.map((s, i) => (
@@ -26,13 +29,13 @@ export function StackedBars({ data, series, height = 240 }: { data: Record<strin
 
 /** One value per category, side by side (e.g. joined vs. left per month). */
 export function GroupedBars({ data, series, height = 240 }: { data: Record<string, string | number>[]; series: { key: string; label: string }[]; height?: number }) {
-  const config = Object.fromEntries(series.map((s, i) => [s.key, { label: s.label, color: `var(--chart-${(i % 5) + 1})` }])) satisfies ChartConfig
+  const config = Object.fromEntries(series.map((s, i) => [s.key, { label: s.label, color: `var(--chart-${ORDER[i % 5]})` }])) satisfies ChartConfig
   return (
     <ChartContainer config={config} className="w-full" style={{ height }}>
-      <BarChart data={data} margin={{ left: -16, right: 8 }}>
+      <BarChart data={data} margin={{ left: 0, right: 8 }}>
         <CartesianGrid vertical={false} />
         <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width="auto" />
         <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
         {series.map((s) => (

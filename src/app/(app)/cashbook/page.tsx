@@ -160,7 +160,9 @@ export default async function CashbookPage({ searchParams }: { searchParams: Pro
         />
       ) : (
         <>
-          <ListToolbar>
+          {/* Phones: month on its own row, the accounts below as a scrolling row. */}
+          <ListToolbar
+            search={
             <div className="flex items-center gap-1">
               <Button render={<Link href={nav(m - 2)} scroll={false} />} nativeButton={false} size="icon" variant="ghost" aria-label={t("cashbook.prevMonth")} title={t("cashbook.prevMonth")}>
                 <ChevronLeftIcon />
@@ -170,6 +172,8 @@ export default async function CashbookPage({ searchParams }: { searchParams: Pro
                 <ChevronRightIcon />
               </Button>
             </div>
+            }
+          >
             {accounts.length > 1 && (
               <Segments
                 label={t("cashbook.accounts")}

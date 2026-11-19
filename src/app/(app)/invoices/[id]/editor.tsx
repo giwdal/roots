@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ArrowDownIcon, ArrowUpIcon, PlusCircleIcon, XIcon } from "lucide-react"
+import { ArrowDownIcon, ArrowUpIcon, ChevronRightIcon, PlusCircleIcon, XIcon } from "lucide-react"
 import { ContactPicker } from "@/components/contact-picker"
 import { DateInput } from "@/components/date-input"
 import { FormCard } from "@/components/page"
@@ -283,7 +283,7 @@ export function DocumentEditor({ doc, items, contact, defaultTax }: { doc: Edito
             </li>
           ))}
         </ol>
-        <button type="button" onClick={add} className="inline-flex min-h-8 w-fit items-center gap-1.5 text-sm text-[var(--link)] hover:underline">
+        <button type="button" onClick={add} className="link inline-flex min-h-8 w-fit items-center gap-1.5 text-sm">
           <PlusCircleIcon className="size-4" /> {t("invoices.addItem")}
         </button>
         <dl className="grid w-full grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm sm:ml-auto sm:w-auto sm:min-w-64">
@@ -347,7 +347,12 @@ export function DocumentEditor({ doc, items, contact, defaultTax }: { doc: Edito
         </label>
       </FormCard>
 
-      <FormCard id="texts" title={t("invoices.texts")}>
+      {/* Texts come from the invoice settings; changing them per document is rare. */}
+      <details className="group grid gap-6" open={!!(doc.notes || doc.intro || doc.outro)}>
+        <summary className="link inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm select-none [&::-webkit-details-marker]:hidden">
+          <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
+        </summary>
+      <FormCard id="texts" title={t("invoices.texts")} className="mt-6">
         <div className="grid gap-2">
           <Label htmlFor="d-intro">{t("invoices.intro")}</Label>
           <Textarea id="d-intro" name="intro" rows={3} defaultValue={doc.intro ?? ""} maxLength={5000} />
@@ -361,6 +366,7 @@ export function DocumentEditor({ doc, items, contact, defaultTax }: { doc: Edito
           <Textarea id="d-notes" name="notes" rows={2} defaultValue={doc.notes ?? ""} maxLength={5000} />
         </div>
       </FormCard>
+      </details>
 
       {doc.id ? <SaveBar /> : <SaveBar label={t("invoices.createDraft")} always />}
     </form>

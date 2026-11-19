@@ -152,7 +152,12 @@
           "Weitere Zahlen tiles → unchanged content, linked"
         ],
         "built": true,
-        "kept": "uxNote 3 partly: sections are Section blocks now; an export of the report is not built. 'Umsatz' keeps its name (it sums payments of all sources)."
+        "kept": "uxNote 3 partly: sections are Section blocks now; an export of the report is not built. 'Umsatz' keeps its name (it sums payments of all sources).",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone: the Von/Bis/Anzeigen row pushed the whole page sideways (stats and charts clipped on the right): the range form is a 2-column grid with a full-width Anzeigen (default control height, was sm) on phones; charts sit in minmax(0,1fr) grids so they can't widen the page; Y axis width auto (money values like 1.260 were clipped to '60'); series colours skip --chart-2 next to --chart-1 (both blue: Einnahmen and Ausgaben looked the same)."
+        }
       },
       "uxNotesDone": [
         0,

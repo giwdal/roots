@@ -240,7 +240,12 @@
           "?new=test sheet (amount, email, Zum Checkout) → unchanged; email as TypedInput email; SaveBar always 'Zum Checkout'"
         ],
         "built": true,
-        "kept": "uxNote 4 kept: the payment stays a sheet (?edit=<id>) – links from tickets, shop orders, invoices and contacts point there and its content is short; it now carries the Verknüpft links."
+        "kept": "uxNote 4 kept: the payment stays a sheet (?edit=<id>) – links from tickets, shop orders, invoices and contacts point there and its content is short; it now carries the Verknüpft links.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards cut 'Tickets · 19.11.2026, 01:2…' and the badge: phone line is now 'Wofür · TT.MM. · badge' (phone-only columns), table keeps date + time. Sheet unchanged."
+        }
       },
       "uxNotesDone": [
         0,

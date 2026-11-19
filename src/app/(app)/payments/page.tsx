@@ -182,10 +182,22 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
             header: t("payments.date"),
             cell: (r) => t.date(r.created_at, { dateStyle: "medium", timeStyle: "short" }),
             className: "whitespace-nowrap",
+            phone: false,
           },
           {
             header: t("payments.status"),
             cell: (r) => <PayStatusBadge t={t} status={r.status} />,
+            phone: false,
+          },
+          {
+            header: t("payments.date"),
+            cell: (r) => t.date(r.created_at, { day: "2-digit", month: "2-digit" }),
+            table: false,
+          },
+          {
+            header: t("payments.status"),
+            cell: (r) => <PayStatusBadge t={t} status={r.status} />,
+            table: false,
           },
           {
             header: t("payments.amount"),

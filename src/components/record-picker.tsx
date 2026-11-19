@@ -59,7 +59,7 @@ export function RecordPicker({
   }, [q, open, search])
 
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
       {label && (
         <label htmlFor={id} className="text-sm font-medium">
           {label}

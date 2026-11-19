@@ -259,3 +259,16 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   says ≤ 5). Keep, or move Storniert/Alle into a FilterMenu?
 - `<RefreshOnReturn>` in the App layout re-reads the page's server parts when the tab comes back after ≥ 1 min (unread
   count, lists). OK, or only the count (would need a small client poll / an endpoint)?
+- (Final review, docs/plans/final-review.md #2) **New members are overdue on day one:** dues for a member who joins in
+  November get the year's due date (15.01.) and the full yearly fee. Due date = max(period due, membership start)?
+  And pro-rata for joiners as an org setting (Mitglieder › Einstellungen), or always the full period?
+- (Final review #3) Issued invoices have no "Per E-Mail senden" (PDF attached, logged in Versand). Build it as the
+  invoice's next step (primary until sent, then "Als bezahlt markieren")?
+- (Final review #5) Phones show an issued invoice's main action three times (labelled button in the page, round
+  icon button, ⋯ sheet). Keep only the labelled in-page button on record pages that render one (and no round button)?
+- (Final review #6) The phone back chevron follows the App history (member → contact → back = member) but its label
+  names the parent ("Zurück zu Kontakte"). Label "Zurück" when going back in history?
+- `back()` now redirects with `replace` (Back after an action no longer lands on the same page; after "anlegen" Back
+  goes to the list, not the form). OK as the rule?
+- Confirmations: red button only for destructive questions; wanted steps (bezahlt, ausstellen, senden, freigeben)
+  get the normal button (pattern list `POSITIVE` in confirm-submit.tsx). OK, or an explicit `data-confirm-tone`?

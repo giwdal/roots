@@ -14,11 +14,11 @@ import { getContext } from "@/lib/context"
 import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { pageParam, param, withParams } from "@/lib/url"
-import { NAV } from "@/modules/nav"
+import { areaOfModule, NAV } from "@/modules/nav"
 import { markAllRead } from "./actions"
 
 // The nav area an event type belongs to (its module's area), for the icon and the filter; org/platform events: none.
-const areaOf = (module: string) => NAV.find((a) => a.children.some((c) => [c.module].flat().includes(module)))
+const areaOf = (module: string) => areaOfModule(module)
 
 // Personal inbox across all orgs (and platform events for superadmins), like Linear's inbox: newest day first, unread
 // before read within a day, filter by read state and area; a row opens the record (switching org visibly).

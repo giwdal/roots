@@ -164,3 +164,12 @@ export const NAV: Area[] = [
 export function visibleNav(on: (module: string) => boolean, can: (perm: string) => boolean) {
   return NAV.map((a) => ({ ...a, children: a.children.filter((c) => [c.module].flat().some((m) => m === "org" || on(m)) && [c.permission].flat().some(can)) })).filter((a) => a.children.length) // "org" = core, always on; areas with no visible page drop out
 }
+
+/**
+ * The area a module's own pages live in (Gästelisten → Events, Tickets → Events). Kalender shows many modules' dates
+ * but is nobody's home, so it only counts when nothing else matches. `areas` = NAV or a visibleNav() result.
+ */
+export function areaOfModule<A extends { key: string; children: { module: string | string[] }[] } = Area>(module: string, areas: A[] = NAV as unknown as A[]): A | undefined {
+  const has = (a: A) => a.children.some((c) => [c.module].flat().includes(module))
+  return areas.find((a) => a.key !== "calendar" && has(a)) ?? areas.find(has)
+}

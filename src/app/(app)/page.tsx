@@ -13,7 +13,7 @@ import { getContext } from "@/lib/context"
 import { quickActions } from "@/lib/quick-actions"
 import { titled } from "@/lib/title"
 import { cn } from "@/lib/utils"
-import { param } from "@/lib/url"
+import { APP_HOME, param } from "@/lib/url"
 import { NAV } from "@/modules/nav"
 import type { SelfShift } from "@/shifts/server"
 import { NowCard, type Running } from "./shifts/now-card"
@@ -89,7 +89,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             {waiting.length || unread ? (
               <ul className="divide-y rounded-xl border">
                 {waiting.map((w) => (
-                  <Row key={w.key} href={w.href} icon={<AreaIcon area={w.area} icon={area(w.area).icon} className="size-7" />} label={w.label} end={<Badge variant={w.warn ? "destructive" : "secondary"}>{w.count}</Badge>} />
+                  <Row key={w.key} href={w.href} icon={<AreaIcon area={w.area} icon={area(w.area).icon} className="size-7" />} label={w.warn ? <span className="text-destructive">{w.label}</span> : w.label} />
                 ))}
                 {!!unread && (
                   <Row
@@ -100,7 +100,6 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                       </span>
                     }
                     label={t("home.waiting.unread", { count: unread })}
-                    end={<Badge variant="info">{unread}</Badge>}
                   />
                 )}
               </ul>
@@ -114,7 +113,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               {tasks.length ? (
                 <ul className="divide-y rounded-xl border">
                   {tasks.slice(0, 6).map((x) => (
-                    <Row key={x.id} href={`/?task=${x.id}`} label={x.title} end={x.due_on ? <span className={cn("text-xs tabular-nums", x.due_on < today ? "font-medium text-destructive" : "text-muted-foreground")}>{taskDue(x.due_on)}</span> : null} />
+                    <Row key={x.id} href={`${APP_HOME}?task=${x.id}`} label={x.title} end={x.due_on ? <span className={cn("text-xs tabular-nums", x.due_on < today ? "font-medium text-destructive" : "text-muted-foreground")}>{taskDue(x.due_on)}</span> : null} />
                   ))}
                 </ul>
               ) : (
@@ -174,7 +173,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           )}
         </div>
       </div>
-      <TaskDrawer ctx={ctx} t={t} id={param(sp, "task")} back="/" error={param(sp, "error")} ok={param(sp, "ok")} />
+      <TaskDrawer ctx={ctx} t={t} id={param(sp, "task")} back={APP_HOME} error={param(sp, "error")} ok={param(sp, "ok")} />
     </Page>
   )
 }
@@ -221,7 +220,7 @@ function More({ href, label }: { href: string; label: string }) {
   )
 }
 
-function Row({ href, icon, label, detail, end }: { href: string; icon?: React.ReactNode; label: string; detail?: string; end?: React.ReactNode }) {
+function Row({ href, icon, label, detail, end }: { href: string; icon?: React.ReactNode; label: React.ReactNode; detail?: string; end?: React.ReactNode }) {
   return (
     <li>
       <Link href={href} prefetch={href.startsWith("/notifications/") ? false : undefined} className="flex min-h-12 items-center gap-3 px-4 py-2 text-sm hover:bg-muted active:bg-muted">

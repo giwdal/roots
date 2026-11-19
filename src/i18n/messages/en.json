@@ -217,6 +217,8 @@
     "menuUnread": "Menu, unread notifications"
   },
   "home": {
+    "hello": "Hi {name}, what’s up next?",
+    "helloPlain": "What’s up next?",
     "modules": "Modules",
     "today": "Today",
     "myTasks": "My tasks",

@@ -217,6 +217,8 @@
     "menuUnread": "Menü, ungelesene Benachrichtigungen"
   },
   "home": {
+    "hello": "Hallo {name}, was steht an?",
+    "helloPlain": "Was steht an?",
     "modules": "Module",
     "today": "Heute",
     "myTasks": "Meine Aufgaben",

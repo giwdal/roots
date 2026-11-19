@@ -7,7 +7,8 @@ import { withParams, type SearchParams } from "@/lib/url"
 
 // `phone`: how the column shows in the phone list — "meta" (default: inline in the muted line under the title),
 // "end" (right side of the row; default for right-aligned columns like amounts) or false (left out on phones).
-export type Column<R> = { header: string; cell: (row: R) => React.ReactNode; className?: string; phone?: "meta" | "end" | false }
+// `table: false` = only in the phone list (a compact stand-in for wider table columns), not in the table from md.
+export type Column<R> = { header: string; cell: (row: R) => React.ReactNode; className?: string; phone?: "meta" | "end" | false; table?: false }
 
 const blank = (v: React.ReactNode) => v == null || v === false || v === "" || v === "–"
 
@@ -30,6 +31,7 @@ export function DataTable<R>({
 }) {
   const box = (row: R) =>
     select && <input type="checkbox" name="ids" value={rowKey(row)} form={select.form} aria-label={select.label} className="relative z-10 size-4 accent-primary" />
+  const cols = columns.filter((c) => c.table !== false)
   if (!rows.length) return typeof empty !== "string" ? empty : <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
   return (
     <>
@@ -80,7 +82,7 @@ export function DataTable<R>({
                   <input type="checkbox" data-bulk-all={select.form} aria-label={select.label} className="size-4 accent-primary" />
                 </TableHead>
               )}
-              {columns.map((c, i) => (
+              {cols.map((c, i) => (
                 <TableHead key={i} className={c.className}>
                   {c.header}
                 </TableHead>
@@ -97,7 +99,7 @@ export function DataTable<R>({
                       over the row would cover the whole table (every click opened the last row). The first cell's link
                       is the real one (focus, screen readers); the others are mouse-only copies. Buttons in a cell (copy…) sit above
                       the link, so they do their own thing. */}
-                  {columns.map((c, i) => (
+                  {cols.map((c, i) => (
                     <TableCell key={i} className={cn(c.className, href && "relative [&_button]:relative [&_button]:z-10")}>
                       {i === 0 && href ? (
                         <Link href={href} scroll={false} className="after:absolute after:inset-0 focus-visible:underline focus-visible:outline-none">

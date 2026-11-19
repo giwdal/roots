@@ -191,6 +191,10 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   `coalesce(…, ∞)` never applies. The App shows "noch 0 frei" per type and Einlass shows "online noch frei 0" in red;
   the public shop is not affected (`ticket_offer()`). Fix = one migration: `case when t.quota is null then 2147483647
   else greatest(t.quota - …, 0) end`. OK to run it on production?
+- Shop product page: kept as one form + SaveBar (like Shopify's product editor: price, VAT, variants, description and
+  stock depend on each other) instead of inline fields like the other record pages. OK, or inline the single values
+  (name, price, VAT, category) and keep the form only for variants + description?
+- Inline editing (`patchEvent`, `patchGuestList`) is App-only for now; the key API keeps its full `PATCH` endpoints.
 - Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
   org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed
   from at most 1 000 rows in JS — **#3 is also a correctness bug** (event revenue, check-ins, overdue dues, project

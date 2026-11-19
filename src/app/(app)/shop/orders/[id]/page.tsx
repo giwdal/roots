@@ -174,9 +174,9 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
       {live && (
-        <ol aria-label={t("store.steps.label")} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        <ol aria-label={t("store.steps.label")} className="no-scrollbar -mx-4 flex items-center gap-x-2 overflow-x-auto px-4 text-sm whitespace-nowrap md:mx-0 md:flex-wrap md:px-0">
           {steps.map((s, i) => (
-            <li key={s.label} className="flex items-center gap-1.5">
+            <li key={s.label} className="flex shrink-0 items-center gap-1.5">
               {i > 0 && <span aria-hidden className={cn("h-px w-4 sm:w-8", s.done ? "bg-foreground/40" : "bg-border")} />}
               {s.done ? <CheckCircle2Icon className="size-4 text-[var(--success)]" aria-hidden /> : <CircleIcon className="size-4 text-muted-foreground" aria-hidden />}
               <span className={s.done ? "" : "text-muted-foreground"}>{s.label}</span>
@@ -184,6 +184,9 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
           ))}
         </ol>
       )}
+
+      {/* Phones: the next step as a full-width button in the page (a form button can't be the round + of the tab bar). */}
+      {primary && <div className="grid md:hidden [&_button]:h-(--control) [&_button]:w-full [&_a]:h-(--control) [&_a]:w-full [&_form]:grid">{primary}</div>}
 
       <RecordLayout
         aside={
@@ -328,7 +331,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
               { label: t("store.status"), value: <OrderBadge t={t} status={o.status} /> },
               address && o.delivery === "shipping" && { label: t("store.shippingAddress"), value: <span className="whitespace-pre-line">{address}</span> },
               o.shipping_name && { label: t("store.shippingMethod"), value: o.shipping_name },
-              o.delivery === "shipping" && { label: t("store.tracking"), value: o.tracking },
+              o.delivery === "shipping" && { label: t("store.trackingShort"), value: o.tracking },
             ]}
           />
         </Section>

@@ -128,9 +128,14 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
               </span>
             ),
           },
-          { header: t("store.date"), cell: (o) => t.date(o.placed_at!, { dateStyle: "medium", timeStyle: "short" }), className: "whitespace-nowrap" },
+          { header: t("store.date"), cell: (o) => t.date(o.placed_at!, { dateStyle: "medium", timeStyle: "short" }), className: "whitespace-nowrap", phone: false },
+          // Phones: one muted line with the short date and both states as badges (the table shows them with their detail).
+          { header: t("store.date"), cell: (o) => t.date(o.placed_at!, { day: "2-digit", month: "2-digit" }), table: false },
+          { header: t("store.payment"), cell: (o) => <PayBadge t={t} status={o.pay_orders.status} />, table: false },
+          { header: t("store.status"), cell: (o) => <OrderBadge t={t} status={o.status} />, table: false },
           {
             header: t("store.payment"),
+            phone: false,
             cell: (o) => (
               <span className="grid justify-items-start gap-0.5">
                 <PayBadge t={t} status={o.pay_orders.status} />
@@ -140,6 +145,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/shop/orde
           },
           {
             header: t("store.status"),
+            phone: false,
             cell: (o) => (
               <span className="grid justify-items-start gap-0.5">
                 <OrderBadge t={t} status={o.status} />

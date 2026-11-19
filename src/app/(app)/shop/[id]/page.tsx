@@ -38,7 +38,8 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2,
 const mb = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024 / 1024))} MB`
 
 // One product, opened on how it sells (sold, revenue, still free) and, while a draft, what's missing before it goes
-// live. Then one form with one SaveBar (details, stock + variants, shop page), the music and downloads, the pictures.
+// live. Then the pictures (rail; first on phones, like Shopify), one form with one SaveBar (details, stock + variants,
+// shop page; an editor like Shopify's product page, not inline fields), the music and downloads.
 // Sheets (?edit=): options, one track, a stock booking for the product or a variant.
 export default async function ProductPage({ params, searchParams }: PageProps<"/shop/[id]">) {
   const { id } = await params
@@ -219,7 +220,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
             </Section>
           )}
           <RecordLayout
-            aside={
+            aside={null}
+            top={
               <Section id="images" title={t("store.images")} description={t("store.imagesHint")}>
                 <ul className="grid grid-cols-3 gap-2">
                   {p.images.map((path, i) => (
@@ -275,7 +277,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                   )
                 }
               >
-                <SaleFields t={t} p={p} disabled={!canManage} withStock={!variants?.length} />
+                {/* Without variants the sale fields (stock, max per order, release) come first; with variants the rows do. */}
+                {!variants?.length && <SaleFields t={t} p={p} disabled={!canManage} withStock />}
                 {!variants?.length && p.stock !== null && p.kind === "physical" && (
                   <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
                     {leftLabel(p.id, p.stock)}
@@ -305,6 +308,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                   canAdd={!options.length}
                   disabled={!canManage}
                 />
+                {!!variants?.length && <SaleFields t={t} p={p} disabled={!canManage} withStock={false} />}
               </Section>
               <Section id="page" title={t("store.productPage")}>
                 <PageFields t={t} p={p} disabled={!canManage} />

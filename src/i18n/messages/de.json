@@ -6459,6 +6459,8 @@
     }
   },
   "store": {
+    "soldShort": {"one": "1 verkauft", "other": "{count} verkauft"},
+    "trackingShort": "Sendungsnummer",
     "nav": "Shop",
     "products": "Produkte",
     "orders": "Bestellungen",
@@ -6832,7 +6834,6 @@
     "variantImage": "Bild",
     "noVariantImage": "Kein eigenes Bild",
     "combinationUnavailable": "Diese Kombination ist nicht verfügbar.",
-    "leftColumn": "Frei",
     "vatRate": "inkl. {rate} % MwSt.",
     "vatNone": "ohne MwSt.",
     "plusShipping": "zzgl. Versand",

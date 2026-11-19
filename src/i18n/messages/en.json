@@ -6459,6 +6459,8 @@
     }
   },
   "store": {
+    "soldShort": {"one": "1 sold", "other": "{count} sold"},
+    "trackingShort": "Tracking number",
     "nav": "Shop",
     "products": "Products",
     "orders": "Orders",
@@ -6832,7 +6834,6 @@
     "variantImage": "Picture",
     "noVariantImage": "No own picture",
     "combinationUnavailable": "This combination isn't available.",
-    "leftColumn": "Available",
     "vatRate": "incl. {rate} % VAT",
     "vatNone": "no VAT",
     "plusShipping": "plus shipping",

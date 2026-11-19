@@ -165,8 +165,11 @@ async function ProductList({ ctx, t, sp, q, trash, views, canManage }: { ctx: Ct
             ),
           },
           { header: t("store.lager.onHand"), cell: stock, className: "tabular-nums" },
+          // Phones: "2 verkauft" in the muted line (the table shows pieces + revenue).
+          { header: t("store.sold"), cell: (p) => (sold.get(p.id)?.pieces ? t("store.soldShort", { count: sold.get(p.id)!.pieces }) : null), table: false },
           {
             header: t("store.sold"),
+            phone: false,
             cell: (p) => {
               const s = sold.get(p.id)
               return s?.pieces ? (
@@ -211,11 +214,13 @@ async function StockView({ ctx, t, sp, q, views }: { ctx: Ctx; t: T; sp: SearchP
           { header: t("store.lager.item"), cell: (i) => <span className="font-medium">{i.name}</span> },
           {
             header: t("store.lager.onHand"),
+            className: "text-right",
+            phone: "meta",
             cell: (i) => (i.stock === null ? <span className="text-muted-foreground">{t("store.lager.untracked")}</span> : <span className={cn("tabular-nums", (i.on_hand ?? 0) <= 0 && "font-medium text-destructive")}>{i.on_hand}</span>),
           },
-          { header: t("store.lager.reserved"), cell: (i) => <span className="tabular-nums">{i.reserved || "–"}</span> },
-          { header: t("store.lager.available"), cell: (i) => <span className="tabular-nums">{num(i.available)}</span> },
-          { header: t("store.lager.sold"), cell: (i) => <span className="tabular-nums">{i.sold}</span> },
+          { header: t("store.lager.reserved"), cell: (i) => <span className="tabular-nums">{i.reserved || "–"}</span>, className: "text-right", phone: false },
+          { header: t("store.lager.available"), cell: (i) => <span className="tabular-nums">{num(i.available)}</span>, className: "text-right", phone: "end" },
+          { header: t("store.lager.sold"), cell: (i) => <span className="tabular-nums">{i.sold}</span>, className: "text-right", phone: false },
           { header: t("store.lager.lastMove"), cell: (i) => (i.last_move ? t.date(i.last_move, { dateStyle: "medium" }) : "–"), className: "whitespace-nowrap" },
         ]}
       />

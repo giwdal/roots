@@ -349,7 +349,12 @@
           "?new=order sheet fields (buyer segments, CRM ContactPicker, name/email/phone/company/address, items, delivery, shipping, paid, payment, done, invoice, note, notify) → /shop/orders/new (see that page)"
         ],
         "built": true,
-        "kept": "uxNote 6 kept: /shop stays the products URL (public links, API docs, bookmarks); the sidebar opens Bestellungen first because that is the daily job."
+        "kept": "uxNote 6 kept: /shop stays the products URL (public links, API docs, bookmarks); the sidebar opens Bestellungen first because that is the daily job.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards were squeezed (date, badges and their sub-lines cut off): phones now get '#1002 · Name', the item summary and one line 'TT.MM. · [Bezahlung] · [Status]' with the total on the right (new DataTable column flag `table: false` for phone-only stand-ins; the table keeps date+time and the badges with their detail)."
+        }
       },
       "uxNotesDone": [
         0,
@@ -389,7 +394,12 @@
           "done / invoice / notify checkboxes, note → unchanged",
           "SaveBar 'Bestellung anlegen' → unchanged"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: one form, items first, buyer as Choice, SaveBar 'Bestellung anlegen'. No change."
+        }
       }
     },
     {
@@ -639,7 +649,12 @@
           "?refund=1 sheet fields (pieces per line, 'Alles', other amount, reason, notify) → ?new=refund sheet (unchanged form; button full width at the bottom, confirm store.confirmRefund)",
           "tracking read-only line for shop.view → Lieferung DetailList"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "The next step (Überweisung erhalten / Als versendet markieren …) is a form button, so phones only had it in ⋯: now also a full-width button under the progress row on phones; the progress row scrolls in one line instead of wrapping; 'Sendungsnummer (optional)' label shortened in the facts."
+        }
       },
       "uxNotesDone": [
         0,
@@ -761,7 +776,12 @@
           "gear → unchanged"
         ],
         "built": true,
-        "kept": "uxNote 4 kept: no bulk actions / product export yet (few products per org; status changes are on the product)."
+        "kept": "uxNote 4 kept: no bulk actions / product export yet (few products per org; status changes are on the product).",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards: the sold column (pieces + revenue stacked) squeezed the muted line → phones show '2 verkauft' in the line, the table keeps pieces + revenue."
+        }
       },
       "uxNotesDone": [
         0,
@@ -952,7 +972,12 @@
           "slug 'Adresse' → label 'Adresse' with the '/shop/' prefix shown before the field",
           "SaveBar 'Produkt anlegen' → unchanged; lands on the product page whose checklist names the next steps (Bilder, Beschreibung, Veröffentlichen)"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Produktseite (description, category, address, video) behind 'Mehr Angaben (optional)'; name, price, VAT, kind, stock stay visible."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1274,7 +1299,12 @@
           "new: Bestand booking sheet ?edit=<item id> on the product (same as the Bestand view)"
         ],
         "built": true,
-        "kept": "uxNote 6 kept: the stock field still sets the total received (a correction is booked by trigger) because it is also how 'unlimited' ↔ counted is switched; every tracked item has a 'Bestand buchen' link next to it."
+        "kept": "uxNote 6 kept: the stock field still sets the total received (a correction is booked by trigger) because it is also how 'unlimited' ↔ counted is switched; every tracked item has a 'Bestand buchen' link next to it.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Variant rows broke on desktop (fixed columns wider than the form column beside the rail: names 0 px wide, headers overlapping) → container query (`@container`, table from @xl), 'Frei' under the variant name instead of an own column, header labels wrap/hyphenate; with variants the rows come before max-per-order/release; pictures first on phones (RecordLayout top). Decision: stays one form + SaveBar (an editor like Shopify's product page: prices, variants and description interplay), not inline fields."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1411,7 +1441,12 @@
           "'Verkauft? Als Bestellung erfassen' → link to /shop/orders/new?item=<id>; hint no longer says Verkauf vor Ort is booked here",
           "Verlauf list → unchanged in the sheet"
         ],
-        "built": true
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect to /shop?view=stock (unchanged). Bestand: numbers right-aligned on desktop; phone cards show the on-hand count in the line and 'Verfügbar' on the right."
+        }
       },
       "uxNotesDone": [
         0,
@@ -1633,7 +1668,12 @@
           "Speichern SaveBar → one SaveBar per sheet"
         ],
         "built": true,
-        "kept": "uxNote 2 kept: AGB/Widerruf stay Markdown (public pages render Markdown; changing the format would need a migration) – now a Textarea in a sheet with a Markdown hint. uxNote 3 kept: provider and IBAN belong to Integrationen / Rechnungen, linked from the rows' hints."
+        "kept": "uxNote 2 kept: AGB/Widerruf stay Markdown (public pages render Markdown; changing the format would need a migration) – now a Textarea in a sheet with a Markdown hint. uxNote 3 kept: provider and IBAN belong to Integrationen / Rechnungen, linked from the rows' hints.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: grouped rows, switches save on flip, 'Ändern' sheets per text. No change."
+        }
       },
       "uxNotesDone": [
         0,

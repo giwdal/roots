@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { Choice } from "@/components/choice"
 import { FormCard } from "@/components/page"
@@ -124,9 +125,15 @@ export function ProductForm({ t, small }: { t: T; small?: boolean }) {
       <FormCard id="sale" title={t("store.saleCard")}>
         <SaleFields t={t} />
       </FormCard>
-      <FormCard id="page" title={t("store.productPage")}>
-        <PageFields t={t} />
-      </FormCard>
+      {/* The shop page (description, category, address, video) can follow on the product's page. */}
+      <details className="group grid gap-6">
+        <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
+          <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
+        </summary>
+        <FormCard id="page" title={t("store.productPage")} className="mt-6">
+          <PageFields t={t} />
+        </FormCard>
+      </details>
       <SaveBar label={t("store.createProduct")} always />
     </form>
   )

@@ -78,11 +78,13 @@ export default async function PayrollPage({ searchParams }: PageProps<"/hr/payro
               </span>
             ),
           },
-          { header: t("hr.hours"), cell: (r) => hours(r.approved_minutes), className: "tabular-nums" },
+          { header: t("hr.hours"), cell: (r) => hours(r.approved_minutes), className: "tabular-nums", phone: false },
+          { header: t("hr.hours"), cell: (r) => `${hours(r.approved_minutes)} h`, table: false },
           {
             header: t("hr.rate"),
             cell: (r) => (r.pay_type === "hourly" && r.hourly_rate_cents != null ? `${t.money(r.hourly_rate_cents)}/h` : r.pay_type === "monthly" && r.monthly_salary_cents != null ? t.money(r.monthly_salary_cents) : "–"),
             className: "tabular-nums",
+            phone: false,
           },
           { header: t("hr.grossShort"), cell: (r) => (r.gross_cents != null ? t.money(r.gross_cents) : "–"), className: "text-right tabular-nums" },
           {

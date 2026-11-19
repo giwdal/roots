@@ -2571,7 +2571,7 @@
     "saved": "Gespeichert.",
     "deleted": "Gelöscht.",
     "people": "Besetzung {count} / {needed}",
-    "applied": "beworben",
+    "applied": "Beworben",
     "approve": "Annehmen",
     "checkIn": "Einstempeln",
     "checkOut": "Ausstempeln",
@@ -2586,7 +2586,7 @@
     },
     "noStaff": "Noch niemand im Team.",
     "name": "Name",
-    "inactive": "inaktiv",
+    "inactive": "Inaktiv",
     "roleLabel": "Beschäftigung",
     "rolePlaceholder": "z. B. Minijob, Aushilfe, Ehrenamt",
     "positions": "Positionen",
@@ -2641,7 +2641,7 @@
     },
     "apply": "Bewerben",
     "withdraw": "Zurückziehen",
-    "confirmed": "eingeteilt",
+    "confirmed": "Eingeteilt",
     "selfTarget": "Soll: {hours} h",
     "notInTeam": "Du bist noch nicht im Team dieses Schichtplans.",
     "self": {
@@ -2679,8 +2679,8 @@
     "clockInFree": "Ohne Schicht einstempeln",
     "workedIn": "Gearbeitet im {month}",
     "balanceHint": "Saldo {hours}",
-    "finished": "fertig",
-    "workedHint": "Freigegeben und offen, ohne Pausen",
+    "finished": "Fertig",
+    "workedHint": "Ohne Pausen",
     "noStaffText": "Ins Team kommen Mitglieder eurer Organisation, die Schichten übernehmen.",
     "addStaff": "Person hinzufügen",
     "shiftCountShort": {
@@ -4152,9 +4152,9 @@
     "net": "Arbeitszeit",
     "what": "Schicht / Notiz",
     "status": "Status",
-    "running": "läuft",
-    "approvedBadge": "freigegeben",
-    "openBadge": "offen",
+    "running": "Läuft",
+    "approvedBadge": "Freigegeben",
+    "openBadge": "Offen",
     "start": "Beginn",
     "end": "Ende",
     "breakMinutes": "Pause (Minuten)",
@@ -4167,7 +4167,10 @@
     "approved": "Monat freigegeben.",
     "reopened": "Freigabe aufgehoben.",
     "toApprove": "{count} offen",
-    "warningCount": "{count} Hinweise",
+    "warningCount": {
+      "one": "{count} Hinweis",
+      "other": "{count} Hinweise"
+    },
     "exportOnlyApproved": "{count} Einträge sind noch nicht freigegeben und fehlen im Export.",
     "exportTotals": "Summen pro Person",
     "exportEntries": "Alle Einträge",
@@ -4219,7 +4222,7 @@
     "missingInExport": "Fehlen noch im Export",
     "allApproved": "Alles freigegeben",
     "notices": "Hinweise",
-    "noticesHint": "Pausen, Höchstarbeitszeit, Ruhezeit",
+    "noticesHint": "Pausen, Ruhezeit, 10 h",
     "approveNext": {
       "one": "1 Eintrag im {month} ist noch nicht freigegeben.",
       "other": "{count} Einträge im {month} sind noch nicht freigegeben."
@@ -4235,6 +4238,7 @@
     "projectOptional": "Projekt (optional)"
   },
   "hr": {
+    "privateEmpty": "Noch nichts eingetragen.",
     "nav": "Personal",
     "title": "Personal",
     "tabs": {
@@ -4289,7 +4293,7 @@
     "vacationDays": "Urlaubstage pro Jahr",
     "notes": "Notizen",
     "since": "Seit",
-    "left": "ausgeschieden",
+    "left": "Ausgeschieden",
     "details": "Daten & Vertrag",
     "private": "Persönliche Daten",
     "privateHint": "Nur für Personal-Verwaltende sichtbar.",
@@ -4393,7 +4397,7 @@
     "contactRecord": "Kontakt",
     "hoursPay": "Stunden & Lohn",
     "startsAt": "ab {date}",
-    "active": "aktiv",
+    "active": "Aktiv",
     "editPrivate": "Persönliche Daten bearbeiten",
     "vacationLeftStat": "Urlaub übrig {year}",
     "ofDays": "von {total} Tagen",

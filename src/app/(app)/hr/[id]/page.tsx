@@ -101,10 +101,23 @@ export default async function EmployeePage({ params, searchParams }: { params: P
     </a>
   )
 
+  const privateItems = [
+    { label: t("hr.birthday"), value: priv?.birthday && day(priv.birthday) },
+    { label: t("hr.address"), value: [priv?.street, [priv?.postal_code, priv?.city].filter(Boolean).join(" "), priv?.country && priv.country !== "DE" ? priv.country : null].filter(Boolean).join(", ") },
+    { label: t("hr.nationality"), value: priv?.nationality },
+    { label: t("hr.emergencyContact"), value: priv?.emergency_contact },
+    { label: t("hr.iban"), value: priv?.iban && <span className="font-mono">{priv.iban.replace(/(.{4})/g, "$1 ").trim()}</span> },
+    { label: t("hr.taxId"), value: priv?.tax_id && <span className="font-mono">{priv.tax_id}</span> },
+    { label: t("hr.taxClass"), value: priv?.tax_class },
+    { label: t("hr.socialSecurityNo"), value: priv?.social_security_no },
+    { label: t("hr.healthInsurance"), value: priv?.health_insurance },
+  ].filter((x) => x.value)
+
   const properties = (
     <>
       <Section id="properties" title={t("hr.properties")}>
         <DetailList
+          phoneLimit={5}
           items={[
             prop("employment_type", t("hr.employmentType"), e.employment_type, { kind: "choice", options: EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) })), display: t.dynamic(`hr.types.${e.employment_type}`) }),
             prop("pay_type", t("hr.payType"), e.pay_type, { kind: "choice", options: PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) })), display: t.dynamic(`hr.payTypes.${e.pay_type}`) }),
@@ -276,19 +289,8 @@ export default async function EmployeePage({ params, searchParams }: { params: P
                     </Link>
                   }
                 >
-                  <DetailList
-                    items={[
-                      { label: t("hr.birthday"), value: priv?.birthday && day(priv.birthday) },
-                      { label: t("hr.address"), value: [priv?.street, [priv?.postal_code, priv?.city].filter(Boolean).join(" "), priv?.country && priv.country !== "DE" ? priv.country : null].filter(Boolean).join(", ") },
-                      { label: t("hr.nationality"), value: priv?.nationality },
-                      { label: t("hr.emergencyContact"), value: priv?.emergency_contact },
-                      { label: t("hr.iban"), value: priv?.iban && <span className="font-mono">{priv.iban.replace(/(.{4})/g, "$1 ").trim()}</span> },
-                      { label: t("hr.taxId"), value: priv?.tax_id && <span className="font-mono">{priv.tax_id}</span> },
-                      { label: t("hr.taxClass"), value: priv?.tax_class },
-                      { label: t("hr.socialSecurityNo"), value: priv?.social_security_no },
-                      { label: t("hr.healthInsurance"), value: priv?.health_insurance },
-                    ]}
-                  />
+                  {/* Only what is filled in; the sheet has every field. */}
+                  {privateItems.length ? <DetailList items={privateItems} /> : <p className="text-sm text-muted-foreground">{t("hr.privateEmpty")}</p>}
                 </Section>
               )}
             </div>

@@ -50,6 +50,7 @@
         "No filters (employment type, department, left/active) although those columns exist."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: ListToolbar (search, Beschäftigung filter, Liste · Organigramm), cards with function + type · department · manager · start. 'Ausgeschieden' badge capitalised."},
         "job": "Find a person and open their record; see who works here on what terms.",
         "phone": "Top bar: Personal › Personen, ⋯ (Export, Papierkorb). Round + = Neue Person. Toolbar: search, scroll row: Beschäftigung filter, Segments Liste · Organigramm. Cards: name + 'ausgeschieden' badge, Funktion, Beschäftigung.",
         "desktop": "<ListToolbar> search · Beschäftigung FilterMenu · Segments on the right. Table: Name (+ Funktion), Beschäftigung, Abteilung, Berichtet an, Seit.",
@@ -119,6 +120,7 @@
         "Shift-team link (staff_id) is set implicitly by user, never shown or editable."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Every field was visible and unmarked although most are rarely known when adding someone: Telefon, Berichtet an, Ende and Notizen now behind 'Mehr Angaben (optional)'; member, Funktion, Abteilung and the contract stay."},
         "job": "Create the HR record for an org member.",
         "phone": "One column: Person & Rolle (member search picker, Funktion, Abteilung, Telefon, Berichtet an search picker), Vertrag (Beschäftigung, Vergütung segments → only the matching amount field, Beginn/Ende, Wochenstunden, Urlaubstage), Notizen. SaveBar 'Person anlegen'.",
         "desktop": "Same in form width.",
@@ -208,6 +210,7 @@
         "Same action 'Abwesenheit eintragen' appears twice (⋯ menu and aside card button)."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Eigenschaften showed all 12 values on phones before the main content: DetailList phoneLimit 5 (+ 'n weitere'). Persönliche Daten listed nine '–' rows when empty: now only filled values, else 'Noch nichts eingetragen.' (Ändern opens the sheet). Badge 'Aktiv' capitalised."},
         "job": "One person: their terms, holiday left, absences, this month's hours and pay, documents; record an absence.",
         "phone": "Top bar: ‹ Personen · Name; ⋯ (Persönliche Daten bearbeiten, In den Papierkorb). Identity in the page: name + state badge (aktiv / ausgeschieden / ab <Datum>), meta Beschäftigung · Funktion · Abteilung. Stats (2 per row): Urlaub übrig, Krank {year}, Stunden <Monat>, Brutto ca. Round + = Abwesenheit eintragen (sheet on this page). Then one column (patterns.md §8): Eigenschaften (each value edited in place), Zuordnung (Berichtet an, Schicht-Team › ?edit=links), Abwesenheiten {year} (rows → sheet), Stunden & Lohn (hours, unapproved → Stunden, warnings; not linked → Verknüpfen / Zum Schicht-Team hinzufügen), Persönliche Daten (hr.manage, Ändern → ?edit=private), Verknüpft (Kontakt, Schicht-Team, Stunden), Dokumente.",
         "desktop": "patterns.md §8: identity + Stats on top; main column = Abwesenheiten, Stunden & Lohn, Persönliche Daten; right rail = Eigenschaften (InlineField per value), Zuordnung, Verknüpft, Dokumente. Header: ⋯ + primary Abwesenheit eintragen; no whole-record 'Bearbeiten'.",
@@ -284,6 +287,7 @@
         "No link from an absence to the person's page."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: phone month calendar with dots + day list, '+ Neu' on the day, absence sheet. No change needed."},
         "job": "See who is away when; record and correct absences.",
         "phone": "Top bar: Personal › Abwesenheiten. Meta: 'Heute abwesend: Anna, Ben'. Round + = Abwesenheit eintragen. Toolbar: Art filter, person chip (?person=). Calendar (month/list). Tap → sheet (managers: form; others: facts) with a link to the person.",
         "desktop": "Same with the calendar wide.",
@@ -323,6 +327,7 @@
         "Empty state has no action to create a person."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: indented tree cards, hint line. No change needed."},
         "job": "See who reports to whom.",
         "phone": "Top bar: Personal › Personen; Segments Liste · Organigramm; nested cards; a one-line hint under the chart.",
         "desktop": "Same.",
@@ -361,6 +366,7 @@
         "'{count} offen' unapproved badge gives no link to /shifts/hours where approval happens."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone card line started with a bare '0' (hours) and the rate: now '0 h · Urlaub 1 · badge' (rate stays in the table)."},
         "job": "Each month: check hours, rates, gross and warnings, then hand the export to the tax advisor.",
         "phone": "Top bar: Personal › Lohn, ⋯ Export. Toolbar ‹ Monat ›. Stats: Brutto ca. gesamt · Stunden · Offene Einträge (→ Stunden) · Hinweise. Cards: name + Beschäftigung, Stunden, Brutto, badges. Footnote what roots does (no taxes).",
         "desktop": "Same; table Name (+ Beschäftigung), Stunden, Satz, Brutto, Abwesenheiten, Hinweise.",

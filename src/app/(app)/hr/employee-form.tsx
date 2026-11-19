@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ChevronRightIcon } from "lucide-react"
 import { Choice } from "@/components/choice"
 import { DateInput } from "@/components/date-input"
 import { FormCard } from "@/components/page"
@@ -44,11 +45,6 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
           </div>
           {field("job_title", t("hr.jobTitle"), { maxLength: 100 })}
           {field("department", t("hr.department"), { maxLength: 100 })}
-          <div className="grid content-start gap-2">
-            <Label htmlFor="emp-phone">{t("hr.phone")}</Label>
-            <TypedInput kind="phone" id="emp-phone" name="phone" />
-          </div>
-          <RecordPicker name="manager_id" label={t("hr.manager")} search={searchEmployees} placeholder={t("hr.noManager")} />
         </div>
       </FormCard>
       <FormCard id="contract" title={t("hr.contract")}>
@@ -59,7 +55,6 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
           </div>
           <PayFields labels={{ pay: t("hr.payType"), hourly: t("hr.hourlyRate"), monthly: t("hr.monthlySalary") }} options={PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) }))} defaultType="hourly" hourly="" monthly="" />
           {date("starts_on", t("hr.startsOn"))}
-          {date("ends_on", t("hr.endsOn"))}
           <div className="grid content-start gap-2">
             <Label htmlFor="emp-weekly_hours">{t("hr.weeklyHours")}</Label>
             <TypedInput kind="number" id="emp-weekly_hours" name="weekly_hours" min={0} max={80} step="any" />
@@ -70,9 +65,28 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
           </div>
         </div>
       </FormCard>
-      <FormCard id="notes" title={t("hr.notes")}>
-        <Textarea id="emp-notes" name="notes" rows={3} maxLength={5000} aria-label={t("hr.notes")} />
-      </FormCard>
+      {/* Rarely known when adding someone (progressive disclosure); all of it edits in place on the person page. */}
+      <details className="group grid gap-6">
+        <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
+          <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
+        </summary>
+        <div className="mt-6 grid gap-6">
+          <FormCard id="more" title={t("hr.properties")}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid content-start gap-2">
+                <Label htmlFor="emp-phone">{t("hr.phone")}</Label>
+                <TypedInput kind="phone" id="emp-phone" name="phone" />
+              </div>
+              <RecordPicker name="manager_id" label={t("hr.manager")} search={searchEmployees} placeholder={t("hr.noManager")} />
+              {date("ends_on", t("hr.endsOn"))}
+              <div className="grid content-start gap-2 sm:col-span-2">
+                <Label htmlFor="emp-notes">{t("hr.notes")}</Label>
+                <Textarea id="emp-notes" name="notes" rows={3} maxLength={5000} />
+              </div>
+            </div>
+          </FormCard>
+        </div>
+      </details>
       <SaveBar label={t("hr.create")} always />
     </form>
   )

@@ -2571,7 +2571,7 @@
     "saved": "Saved.",
     "deleted": "Deleted.",
     "people": "Staffed {count} / {needed}",
-    "applied": "applied",
+    "applied": "Applied",
     "approve": "Accept",
     "checkIn": "Clock in",
     "checkOut": "Clock out",
@@ -2586,7 +2586,7 @@
     },
     "noStaff": "Nobody in the team yet.",
     "name": "Name",
-    "inactive": "inactive",
+    "inactive": "Inactive",
     "roleLabel": "Employment",
     "rolePlaceholder": "e.g. mini job, temp, volunteer",
     "positions": "Positions",
@@ -2641,7 +2641,7 @@
     },
     "apply": "Apply",
     "withdraw": "Withdraw",
-    "confirmed": "assigned",
+    "confirmed": "Assigned",
     "selfTarget": "Target: {hours} h",
     "notInTeam": "You're not in this shift plan's team yet.",
     "self": {
@@ -2679,8 +2679,8 @@
     "clockInFree": "Clock in without a shift",
     "workedIn": "Worked in {month}",
     "balanceHint": "Balance {hours}",
-    "finished": "done",
-    "workedHint": "Approved and open, without breaks",
+    "finished": "Done",
+    "workedHint": "Without breaks",
     "noStaffText": "Members of your organisation who take shifts join the team.",
     "addStaff": "Add person",
     "shiftCountShort": {
@@ -4152,9 +4152,9 @@
     "net": "Working time",
     "what": "Shift / note",
     "status": "Status",
-    "running": "running",
-    "approvedBadge": "approved",
-    "openBadge": "open",
+    "running": "Running",
+    "approvedBadge": "Approved",
+    "openBadge": "Open",
     "start": "Start",
     "end": "End",
     "breakMinutes": "Break (minutes)",
@@ -4167,7 +4167,10 @@
     "approved": "Month approved.",
     "reopened": "Approval undone.",
     "toApprove": "{count} open",
-    "warningCount": "{count} warnings",
+    "warningCount": {
+      "one": "{count} notice",
+      "other": "{count} notices"
+    },
     "exportOnlyApproved": "{count} entries aren't approved yet and are missing from the export.",
     "exportTotals": "Totals per person",
     "exportEntries": "All entries",
@@ -4219,7 +4222,7 @@
     "missingInExport": "Not in the export yet",
     "allApproved": "All approved",
     "notices": "Warnings",
-    "noticesHint": "Breaks, maximum hours, rest time",
+    "noticesHint": "Breaks, rest, 10 h",
     "approveNext": {
       "one": "1 entry in {month} isn't approved yet.",
       "other": "{count} entries in {month} aren't approved yet."
@@ -4235,6 +4238,7 @@
     "projectOptional": "Project (optional)"
   },
   "hr": {
+    "privateEmpty": "Nothing entered yet.",
     "nav": "People",
     "title": "People",
     "tabs": {
@@ -4289,7 +4293,7 @@
     "vacationDays": "Holiday days per year",
     "notes": "Notes",
     "since": "Since",
-    "left": "left",
+    "left": "Left",
     "details": "Details & contract",
     "private": "Personal data",
     "privateHint": "Only visible to people who manage HR.",
@@ -4393,7 +4397,7 @@
     "contactRecord": "Contact",
     "hoursPay": "Hours & pay",
     "startsAt": "from {date}",
-    "active": "active",
+    "active": "Active",
     "editPrivate": "Edit personal data",
     "vacationLeftStat": "Holiday left {year}",
     "ofDays": "of {total} days",

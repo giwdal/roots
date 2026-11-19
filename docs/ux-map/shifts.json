@@ -99,6 +99,7 @@
         "Coverage meta always reflects the focused week, even in month or agenda view."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Desktop week grid opened at 07:00, so evening shifts (18–23 h) were below the fold: <CalendarView> now scrolls time grids to an hour before the earliest timed entry (07:00 without entries; shared, helps Kalender too). Phone already uses the phone calendar (week strip + day list, '+ Neu' on the day). Shift sheet checked: Besetzung with Einstempeln per person, Einteilen picker, fields. Badges 'Beworben' etc. capitalised."},
         "job": "Managers see the week's shifts with coverage at a glance, fill gaps (assign, accept applications) and create or move shifts.",
         "phone": "Top bar: Schichten › Plan, ⋯ (gear Einstellungen). Round + = Neue Schicht. Meta line: 'Woche ab <Mo>: 12 von 20 Plätzen besetzt · 3 Bewerbungen'. Toolbar scroll row: Event filter, Ort filter, Segments Plan · Meine (when the person is on the team). Calendar (agenda/day are the useful phone views; view in the URL). Tap a shift → sheet (full width): Besetzung first (people with status, Annehmen / Einstempeln / Ausstempeln / ✕), 'Person einteilen' search picker, then the shift's fields with the SaveBar.",
         "desktop": "Toolbar: Event FilterMenu ('Alle Events'), Ort FilterMenu, Segments Plan · Meine on the right. CalendarView week grid (week/day/month/agenda/per person), drag to move, drag on empty space to create. Sheet over the content area as on phones.",
@@ -218,6 +219,7 @@
         "Empty state for people not in the team has no action or link (dead end); adding someone happens in /shifts/team by a manager."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Zeiten rows squeezed time, break, hours, note and up to three badges into one cut-off line on phones: now 'HH:MM–HH:MM · 7,5 h · one badge' (a warning first, else Offen/Freigegeben) via phone-only columns in components/time-entries.tsx (also Stunden › Person and the project Zeit view). Badges capitalised (Eingeteilt, Beworben, Läuft, Offen, Freigegeben, Fertig)."},
         "job": "A team member checks in and out of today's shift (or clocks free time), sees what's next, takes open shifts and fixes own times.",
         "phone": "Top bar: Schichten › Plan (Meine selected in the Segments row when the person also plans). 'Jetzt' card at the top: running → 'Eingestempelt seit 18:02 · Bar 1' + big full-width 'Ausstempeln'; a shift starting within 2 h → its title/time + big 'Einstempeln'; otherwise the next shift ('Nächste Schicht: Fr 18:00') and a big 'Ohne Schicht einstempeln' with an optional project picker. Stats: Diesen Monat · Soll. Meine Schichten (rows: day/time, what, status, Zurückziehen for applications). Offene Schichten (rows + 'Bewerben'). Zeiten: month switch in the section toolbar, entries as cards, '+ Zeit nachtragen'. Round + = Zeit nachtragen.",
         "desktop": "Jetzt card full width, Stats beside it; then Meine Schichten | Offene Schichten as two columns; Zeiten table full width with the month switch in its toolbar.",
@@ -281,6 +283,7 @@
         "No approve action on the list; approval only on the person page."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards '15 h · 3 Schicl · 23,5 · −16,5 ·' + two stacked badges: now worked hours + one badge (Hinweise first). '1 Hinweise' → plural ('1 Hinweis'). Stat hints shortened so they don't truncate ('Ohne Pausen', 'Pausen, Ruhezeit, 10 h')."},
         "job": "Before payroll: see each person's month (planned vs worked vs target), spot warnings, approve the month and export.",
         "phone": "Top bar: Schichten › Stunden, ⋯ (Alle freigeben, Export Summen / Einträge). Toolbar: ‹ Monat ›. Stats: Gearbeitet · Offen zur Freigabe · Hinweise. Cards: name + status badge, worked / planned, balance.",
         "desktop": "Toolbar month switch; Stats; table Name (+ Soll), Geplant, Gearbeitet, Saldo, Status (offen warning / freigegeben success + Hinweise destructive). Header: 'Alle freigeben' (count in the confirm) + ⋯ export.",
@@ -350,6 +353,7 @@
         "Action buttons placed in a page row, not in the header (other record pages use header actions)."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Entry rows fixed through the shared time-entries phone columns; header badge, Stats, the 'Monat freigeben' next-step card unchanged."},
         "job": "One person's month: check entries and warnings, correct or add, then approve the month.",
         "phone": "Top bar: ‹ Stunden · Name; ⋯ (Freigabe aufheben, Personalakte, Im Team bearbeiten). Badge: freigegeben / N offen. Toolbar ‹ Monat ›. Stats: Gearbeitet · Soll · Saldo · Geplant. Next-step row 'N Einträge offen · Monat freigeben' (confirm). Entries as cards → sheet. Round + = Zeit nachtragen.",
         "desktop": "Same order; table of entries; the next-step row above it.",
@@ -409,6 +413,7 @@
         "Name/e-mail come from the profile and can't be edited here; staff ↔ HR employee link lives in HR (staff_id), not visible here."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop (list + sheet). No change needed."},
         "job": "Who can be planned: add org members to the team, set employment, target hours, positions, active.",
         "phone": "Top bar: ‹ Einstellungen · Team. Round + = Person hinzufügen. Cards: name + inactive badge, Beschäftigung, Positionen, Soll. Sheet: fields + Verknüpft rows (Personalakte, Stunden, Kontakt).",
         "desktop": "Crumbs Schichten › Einstellungen › Team; table as now; sheet.",
@@ -501,6 +506,7 @@
         "Weekday and fixed-people pickers are long checkbox lists rather than chips/segments."
       ],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: Team row ›, position rows, series list + AddLink, series sheet (weekday toggles, TimeInput), Orte. No change needed."},
         "job": "Set up planning once: team, positions, recurring shifts, locations.",
         "phone": "Top bar: ‹ Schichten · Einstellungen. RowGroups: Team (row 'Team · N Personen' ›), Positionen (inline rows: name, Benötigt, Ort, ✕; '+ Position hinzufügen'; one SaveBar), Wiederkehrende Schichten (rows: name · rhythm › sheet; '+ Neue wiederkehrende Schicht'), Orte (row › /settings/locations).",
         "desktop": "Same, form width.",
@@ -534,6 +540,7 @@
       "purpose": "Old address; redirects to /shifts/settings.",
       "links": ["/shifts/settings"],
       "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Redirects to Einstellungen."},
         "job": "Old address.",
         "phone": "–",
         "desktop": "–",

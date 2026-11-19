@@ -85,6 +85,12 @@ export function CalendarView({
     [source, onMove],
   )
 
+  // Time grids open at the earliest timed entry (an hour before), so evening shifts aren't below the fold; 07:00 if none.
+  const firstHour = useMemo(() => {
+    const hours = items.filter((e) => !e.allDay).map((e) => Number(e.start.toLocaleString("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" })))
+    return hours.length ? Math.max(0, Math.min(...hours) - 1) : 7
+  }, [items])
+
   const setParams = (patch: Record<string, string>) => {
     const next = new URLSearchParams(sp)
     for (const [k, v] of Object.entries(patch)) next.set(k, v)
@@ -131,6 +137,7 @@ export function CalendarView({
       weekStartsOn={1}
       dayStartHour={0}
       dayEndHour={24}
+      scrollToHour={firstHour}
       interactions={{ drag: !!onMove, resize: !!onMove, selectSlot: !!newHref }}
       i18n={{
         ...(t.locale === "de"

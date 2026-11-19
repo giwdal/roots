@@ -65,11 +65,13 @@ export async function TimeEntryList({ rows, editHref, people, hideProject }: { r
             return `${m.break} min${m.auto ? ` (${t("time.auto")})` : ""}`
           },
           className: "tabular-nums",
+          phone: false,
         },
         { header: t("time.net"), cell: (r) => (r.ended_at ? hoursText(t, minutes(r).net) : <Badge variant="info">{t("time.running")}</Badge>), className: "tabular-nums" },
-        { header: t("time.what"), cell: (r) => [r.shifts?.positions?.name ?? r.shifts?.title, !hideProject && r.projects?.name, r.tasks?.title, r.note].filter(Boolean).join(" · ") || "–" },
+        { header: t("time.what"), cell: (r) => [r.shifts?.positions?.name ?? r.shifts?.title, !hideProject && r.projects?.name, r.tasks?.title, r.note].filter(Boolean).join(" · ") || "–", phone: false },
         {
           header: t("time.status"),
+          phone: false,
           cell: (r) => (
             <span className="flex flex-wrap gap-1">
               {r.approved_at ? <Badge variant="success">{t("time.approvedBadge")}</Badge> : <Badge variant="warning">{t("time.openBadge")}</Badge>}
@@ -80,6 +82,21 @@ export async function TimeEntryList({ rows, editHref, people, hideProject }: { r
               ))}
             </span>
           ),
+        },
+        // Phones: one badge, a problem first (the sheet shows all of them).
+        {
+          header: t("time.status"),
+          cell: (r) => {
+            const w = warn.get(r.id)?.[0]
+            return w ? (
+              <Badge variant="destructive">{t.dynamic(`time.warnings.${w}.label`)}</Badge>
+            ) : r.approved_at ? (
+              <Badge variant="success">{t("time.approvedBadge")}</Badge>
+            ) : (
+              <Badge variant="warning">{t("time.openBadge")}</Badge>
+            )
+          },
+          table: false,
         },
       ]}
     />

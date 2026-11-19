@@ -112,7 +112,7 @@ export default async function HoursPage({ searchParams }: PageProps<"/shifts/hou
               </span>
             ),
           },
-          { header: t("shifts.planned"), cell: (s) => `${hoursText(t, s.planned)} · ${t("shifts.shiftCountShort", { count: s.count })}`, className: "tabular-nums" },
+          { header: t("shifts.planned"), cell: (s) => `${hoursText(t, s.planned)} · ${t("shifts.shiftCountShort", { count: s.count })}`, className: "tabular-nums", phone: false },
           { header: t("shifts.worked"), cell: (s) => hoursText(t, s.worked), className: "tabular-nums" },
           {
             header: t("shifts.balance"),
@@ -122,15 +122,30 @@ export default async function HoursPage({ searchParams }: PageProps<"/shifts/hou
               return <span className={diff < 0 ? "text-muted-foreground" : "font-medium"}>{`${diff >= 0 ? "+" : "−"}${hoursText(t, Math.abs(diff))}`}</span>
             },
             className: "tabular-nums",
+            phone: false,
           },
           {
             header: t("time.status"),
+            phone: false,
             cell: (s) => (
               <span className="flex flex-wrap gap-1">
                 {s.entries === 0 ? "–" : s.unapproved ? <Badge variant="warning">{t("time.toApprove", { count: s.unapproved })}</Badge> : <Badge variant="success">{t("time.approvedBadge")}</Badge>}
                 {s.warned > 0 && <Badge variant="destructive">{t("time.warningCount", { count: s.warned })}</Badge>}
               </span>
             ),
+          },
+          // Phones: worked hours (above) + one badge, a problem first.
+          {
+            header: t("time.status"),
+            cell: (s) =>
+              s.warned > 0 ? (
+                <Badge variant="destructive">{t("time.warningCount", { count: s.warned })}</Badge>
+              ) : s.entries === 0 ? null : s.unapproved ? (
+                <Badge variant="warning">{t("time.toApprove", { count: s.unapproved })}</Badge>
+              ) : (
+                <Badge variant="success">{t("time.approvedBadge")}</Badge>
+              ),
+            table: false,
           },
         ]}
       />

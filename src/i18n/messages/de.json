@@ -2754,10 +2754,34 @@
     "noMatch": "Keine Dateien gefunden.",
     "entities": {
       "contacts": "Kontakt",
-      "events": "Veranstaltung",
+      "events": "Event",
       "invoices": "Beleg",
-      "memberships": "Mitgliedschaft"
-    }
+      "memberships": "Mitgliedschaft",
+      "courses": "Kurs",
+      "employees": "Person",
+      "products": "Produkt",
+      "projects": "Projekt",
+      "tasks": "Aufgabe",
+      "rentals": "Vergabe",
+      "rental_objects": "Objekt",
+      "cash_entries": "Kassenbuch",
+      "documents": "Beleg",
+      "wiki_pages": "Wiki-Seite"
+    },
+    "emptyText": "Lade Dokumente hoch oder hänge sie an Kontakte, Events und andere Einträge an.",
+    "allFolders": "Alle Ordner",
+    "view": "Ansicht",
+    "list": "Liste",
+    "grid": "Kacheln",
+    "deleted": "Gelöscht",
+    "backToFiles": "Zurück zu den Dateien",
+    "intoFolder": "In den Ordner „{folder}“",
+    "type": "Dateityp",
+    "folderHint": "Ein neuer Name legt einen neuen Ordner an.",
+    "pick": "Dateien auswählen",
+    "orDrop": "oder hierher ziehen",
+    "dropInto": "In „{folder}“ ablegen",
+    "dropHere": "Zum Hochladen loslassen"
   },
   "membership": {
     "nav": "Mitglieder",
@@ -4024,7 +4048,11 @@
       "fixed": "Es ist befristet und endet am {end}.",
       "open": "Es läuft auf unbestimmte Zeit und kann mit einer Frist von {notice} schriftlich gekündigt werden.",
       "openNoNotice": "Es läuft auf unbestimmte Zeit."
-    }
+    },
+    "duplicate": "Duplizieren",
+    "backToTemplates": "Zurück zu den Vorlagen",
+    "confirmSend": "Brief per E-Mail senden?",
+    "confirmSendHint": "Er geht als PDF an die E-Mail-Adresse der Empfängerin oder des Empfängers."
   },
   "search": {
     "askSprout": "Sprout fragen: „{q}“",

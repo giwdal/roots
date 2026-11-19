@@ -1,8 +1,10 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { CopyIcon, PencilIcon } from "lucide-react"
+import { CopyIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { SaveBar } from "@/components/save-bar"
 import { Notice } from "@/components/notice"
-import { PageHeader } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { SubmitButton } from "@/components/submit-button"
 import { UrlSheet } from "@/components/url-sheet"
@@ -43,30 +45,48 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
   const fields = readFields(template.fields)
 
   return (
-    <>
+    <Page size="record">
       <PageHeader
         crumbs={[{ href: "/files", label: t("files.title") }, { href: "/files/templates", label: t("letters.tabs.templates") }, { label: template.name }]}
         title={template.name}
-        badge={<Badge variant={own ? "default" : "outline"}>{own ? t("letters.own") : t("letters.default")}</Badge>}
+        badge={<Badge variant={own ? "secondary" : "outline"}>{own ? t("letters.own") : t("letters.default")}</Badge>}
         description={!own ? t("letters.defaultHint") : undefined}
         actions={
-          canManage && (
-            <>
-              {own && (
-                <Button render={<Link href={withParams(sp, { edit: "1" })} scroll={false} />} nativeButton={false} size="sm" variant="outline">
-                  <PencilIcon /> {t("letters.edit")}
-                </Button>
-              )}
-              <form action={copyTemplate}>
-                <input type="hidden" name="id" value={template.id} />
-                <SubmitButton size="sm" variant={own ? "outline" : "default"}>
-                  <CopyIcon /> {t("letters.copy")}
-                </SubmitButton>
-              </form>
-            </>
+          canManage &&
+          (own ? (
+            <Button render={<Link href={withParams(sp, { edit: "1" })} scroll={false} />} nativeButton={false} size="sm" variant="outline">
+              <PencilIcon /> {t("letters.edit")}
+            </Button>
+          ) : (
+            <SubmitButton form="copy-template" size="sm" variant="outline">
+              <CopyIcon /> {t("letters.copy")}
+            </SubmitButton>
+          ))
+        }
+        menu={
+          canManage &&
+          own && (
+            <ActionsMenu>
+              <MenuSubmit form="copy-template" icon={<CopyIcon />}>
+                {t("letters.duplicate")}
+              </MenuSubmit>
+              <MenuSubmit form="trash-template" icon={<Trash2Icon />} destructive>
+                {t("letters.toTrash")}
+              </MenuSubmit>
+            </ActionsMenu>
           )
         }
       />
+      {canManage && (
+        <>
+          <form id="copy-template" action={copyTemplate} hidden>
+            <input type="hidden" name="id" value={template.id} />
+          </form>
+          <form id="trash-template" action={trashTemplate} hidden>
+            <input type="hidden" name="id" value={template.id} />
+          </form>
+        </>
+      )}
       <Notice error={!editing ? param(sp, "error") : undefined} ok={!editing ? param(sp, "ok") : undefined} />
 
       <Composer
@@ -83,7 +103,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
       />
 
       {editing && (
-        <UrlSheet params={["edit"]} title={t("letters.edit")} description={template.name}>
+        <UrlSheet params={["edit"]} title={t("letters.edit")} description={template.name} wide>
           <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
           <form action={saveTemplate} className="grid gap-5">
             <input type="hidden" name="id" value={template.id} />
@@ -115,16 +135,11 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
                 <span className="text-xs text-muted-foreground">{t("letters.letterheadHelp")}</span>
               </span>
             </label>
-            <div className="flex flex-wrap gap-2">
-              <SubmitButton>{t("letters.save")}</SubmitButton>
-              <SubmitButton formAction={trashTemplate} variant="outline" formNoValidate>
-                {t("letters.toTrash")}
-              </SubmitButton>
-            </div>
+            <SaveBar />
           </form>
         </UrlSheet>
       )}
-    </>
+    </Page>
   )
 }
 

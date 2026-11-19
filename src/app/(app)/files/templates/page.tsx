@@ -1,6 +1,7 @@
 import { FileTextIcon, Trash2Icon } from "lucide-react"
+import { SaveBar } from "@/components/save-bar"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
-import { PageHeader } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
 import { DataTable } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { SubmitButton } from "@/components/submit-button"
@@ -33,16 +34,15 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/files/
   const rows = [...(data ?? [])].sort((a, b) => Number(a.org_id === null) - Number(b.org_id === null))
 
   return (
-    <>
+    <Page>
       <PageHeader
-        icon={FileTextIcon}
-        title={trash ? `${t("letters.title")} · ${t("letters.trash")}` : t("letters.title")}
-        description={t("letters.intro")}
+        area="files"
+        title={trash ? t("letters.trash") : t("letters.title")}
         menu={
           canManage && (
             <ActionsMenu>
               <MenuLink href={trash ? "/files/templates" : "/files/templates?trash=1"} icon={trash ? <FileTextIcon /> : <Trash2Icon />}>
-                {trash ? t("letters.all") : t("letters.trash")}
+                {trash ? t("letters.backToTemplates") : t("letters.trash")}
               </MenuLink>
             </ActionsMenu>
           )
@@ -58,7 +58,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/files/
         empty={trash ? t("letters.emptyTrash") : t("letters.empty")}
         columns={[
           { header: t("letters.name"), cell: (r) => <span className="font-medium">{r.name}</span> },
-          { header: t("letters.kind"), cell: (r) => <Badge variant={r.org_id ? "default" : "outline"}>{r.org_id ? t("letters.own") : t("letters.default")}</Badge> },
+          { header: t("letters.kind"), cell: (r) => <Badge variant={r.org_id ? "secondary" : "outline"}>{r.org_id ? t("letters.own") : t("letters.default")}</Badge> },
           {
             header: trash ? "" : t("letters.updated"),
             className: "whitespace-nowrap",
@@ -80,18 +80,18 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/files/
       />
 
       {creating && (
-        <UrlSheet params={["new"]} title={t("letters.new")}>
+        <UrlSheet params={["new"]} title={t("letters.new")} compact>
           <Notice error={param(sp, "error")} />
           <form action={createTemplate} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="t-name">{t("letters.name")}</Label>
               <Input id="t-name" name="name" required maxLength={120} autoFocus />
             </div>
-            <SubmitButton className="justify-self-start">{t("letters.create")}</SubmitButton>
+            <SaveBar label={t("letters.create")} always />
           </form>
         </UrlSheet>
       )}
-    </>
+    </Page>
   )
 }
 

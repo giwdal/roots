@@ -2754,10 +2754,34 @@
     "noMatch": "No files found.",
     "entities": {
       "contacts": "contact",
-      "events": "event",
+      "events": "Event",
       "invoices": "document",
-      "memberships": "membership"
-    }
+      "memberships": "membership",
+      "courses": "Course",
+      "employees": "Person",
+      "products": "Product",
+      "projects": "Project",
+      "tasks": "Task",
+      "rentals": "Rental",
+      "rental_objects": "Object",
+      "cash_entries": "Cash book",
+      "documents": "Document",
+      "wiki_pages": "Wiki page"
+    },
+    "emptyText": "Upload documents or attach them to contacts, events and other records.",
+    "allFolders": "All folders",
+    "view": "View",
+    "list": "List",
+    "grid": "Tiles",
+    "deleted": "Deleted",
+    "backToFiles": "Back to files",
+    "intoFolder": "Into the folder “{folder}”",
+    "type": "File type",
+    "folderHint": "A new name creates a new folder.",
+    "pick": "Choose files",
+    "orDrop": "or drop them here",
+    "dropInto": "Drop into “{folder}”",
+    "dropHere": "Drop to upload"
   },
   "membership": {
     "nav": "Members",
@@ -4024,7 +4048,11 @@
       "fixed": "It is fixed-term and ends on {end}.",
       "open": "It runs for an indefinite period and can be terminated in writing with {notice} notice.",
       "openNoNotice": "It runs for an indefinite period."
-    }
+    },
+    "duplicate": "Duplicate",
+    "backToTemplates": "Back to templates",
+    "confirmSend": "Send the letter by email?",
+    "confirmSendHint": "It goes as a PDF to the recipient's email address."
   },
   "search": {
     "askSprout": "Ask Sprout: “{q}”",

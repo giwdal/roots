@@ -80,12 +80,12 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
 
       <form action={saveSettings} className="grid gap-6">
         <FormCard id="sepa" title={t("membership.sepa")} description={t("membership.creditorHint")}>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <Field id="s-name" name="creditor_name" label={t("membership.creditorName")} maxLength={70} defaultValue={settings?.creditor_name ?? ctx.org.name} />
             <Field id="s-cid" name="creditor_id" label={t("membership.creditorId")} maxLength={35} defaultValue={settings?.creditor_id ?? ""} placeholder="DE98ZZZ09999999999" className="font-mono tracking-wide" />
           </div>
-          <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-            <div className="grid content-start gap-2">
+          <div className="flex flex-wrap gap-4">
+            <div className="grid w-full max-w-md content-start gap-2">
               <Label htmlFor="s-iban">IBAN</Label>
               <TypedInput kind="iban" id="s-iban" name="iban" defaultValue={settings?.iban ?? ""} />
             </div>
@@ -94,7 +94,7 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
               <TypedInput kind="bic" id="s-bic" name="bic" defaultValue={settings?.bic ?? ""} />
             </div>
           </div>
-          <div className="grid gap-2 sm:max-w-48">
+          <div className="grid gap-2">
             <Label htmlFor="s-day">{t("membership.dueDay")}</Label>
             <TypedInput kind="number" id="s-day" name="due_day" min={1} max={28} defaultValue={settings?.due_day ?? 15} />
           </div>
@@ -144,7 +144,7 @@ function TypeForm({ t, type }: { t: T; type?: Tables<"membership_types"> }) {
     <form action={saveType} className="grid gap-4">
       {type && <input type="hidden" name="id" value={type.id} />}
       <Field id={`t-name-${id}`} name="name" label={t("membership.typeName")} required maxLength={100} defaultValue={type?.name ?? ""} placeholder={type ? undefined : t("membership.typePlaceholder")} />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-wrap gap-4">
         <div className="grid content-start gap-2">
           <Label htmlFor={`t-fee-${id}`}>{t("membership.fee")}</Label>
           <TypedInput kind="money" id={`t-fee-${id}`} name="fee" defaultValue={type?.fee_cents ? formatMoney(type.fee_cents) : ""} />
@@ -158,7 +158,7 @@ function TypeForm({ t, type }: { t: T; type?: Tables<"membership_types"> }) {
         <Label htmlFor={`t-int-${id}`}>{t("membership.interval")}</Label>
         <Choice id={`t-int-${id}`} name="interval" label={t("membership.interval")} required defaultValue={type?.interval ?? "year"} options={INTERVALS.map((i) => ({ value: i, label: t(`membership.intervals.${i}`) }))} />
       </div>
-      <div className="grid gap-2 sm:max-w-48">
+      <div className="grid gap-2">
         <Label htmlFor={`t-notice-${id}`}>{t("membership.noticeMonths")}</Label>
         <TypedInput kind="number" id={`t-notice-${id}`} name="notice_months" min={0} max={24} defaultValue={type?.notice_months ?? 3} />
       </div>

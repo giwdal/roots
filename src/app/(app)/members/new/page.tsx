@@ -30,7 +30,9 @@ export default async function NewMemberPage({ searchParams }: { searchParams: Pr
     <NewPage list={{ href: "/members", label: t("membership.nav") }} title={t("membership.new")} error={param(sp, "error")}>
       <form action={saveMembership} className="grid gap-6">
         <FormCard id="person" title={t("membership.person")}>
-          <ContactPicker name="contact_id" noCreate label={t("membership.existingContact")} initial={preset ? { id: preset.id, label: contactName(preset), detail: preset.email ?? "" } : null} />
+          <div className="max-w-xl">
+            <ContactPicker name="contact_id" noCreate label={t("membership.existingContact")} initial={preset ? { id: preset.id, label: contactName(preset), detail: preset.email ?? "" } : null} />
+          </div>
           {/* No contact yet: type the person here, they become a contact (a picked contact wins). */}
           <details open={!preset && !!param(sp, "error")} className="group grid gap-4">
             <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
@@ -38,7 +40,7 @@ export default async function NewMemberPage({ searchParams }: { searchParams: Pr
             </summary>
             <div className="mt-3 grid gap-4">
               <p className="text-xs text-muted-foreground">{t("membership.newContactHint")}</p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid max-w-xl gap-4 sm:grid-cols-2">
                 <Field id="m-first" name="first_name" label={t("contacts.firstName")} maxLength={100} autoComplete="off" />
                 <Field id="m-last" name="last_name" label={t("contacts.lastName")} maxLength={100} autoComplete="off" />
               </div>

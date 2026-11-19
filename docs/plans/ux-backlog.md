@@ -188,6 +188,9 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
 - [x] S4 (chart-1 green again, five distinct hues) (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
 - [ ] S5 (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
 - [ ] S6 (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
+- [ ] S7 (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
+- [ ] S8 (Schichten) Team's "Beschäftigung" is the free-text `staff.role_label`, while Personal has `employees.employment_type` for the same person: show the HR type when the person is linked (or drop the free text).
+- [ ] S9 (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
 
 ## Z. To discuss tomorrow
 - **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
@@ -217,3 +220,5 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
   entries (payroll history). Keep it that way, or add an archive / anonymise step?
 - Personal: an HR record needs an org member (account). Minijobber without a login can't be added — allow HR records
   without an account (name + email only), as the API's `employees` table would allow?
+- Campaign drafts stay one editor form + SaveBar (name, subject, body, audience, schedule depend on each other, like invoice drafts); sent campaigns are now a read-only page (mail preview + audience). OK?
+- `<CalendarView>` time grids now scroll to an hour before the earliest entry (was a fixed 07:00) in every calendar (Schichten, Kalender, …). OK as the rule?

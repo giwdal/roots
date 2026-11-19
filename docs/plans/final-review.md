@@ -86,3 +86,4 @@ with membership, dues, shop orders #1004–#1007, invoices RE-2026-0004…0007, 
 and 0005 were created before the invoice fix and still say "Offen".
 
 New (seen while fixing): on phones `/projects/tasks` lays out wider than the screen (innerWidth 635 at 390 px with mobile emulation), so the task sheet is cut off on the right; the overflowing element wasn't found yet (not the toolbar scroll rows).
+  Done (2f29b19): `sr-only` labels of icon-only segments are position:absolute and escaped the non-positioned scroll row; sr-only is now pinned and the scroll rows are positioned. All 25 main pages measure 390 px.

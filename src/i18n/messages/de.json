@@ -6557,6 +6557,7 @@
     }
   },
   "store": {
+    "autoInvoiceShort": "Jede bezahlte Bestellung bekommt ihre Rechnung.",
     "tracksInfo": "roots macht daraus die Player-Version für den Shop (MP3 128) und für Käufer:innen MP3 320 + WAV – einzeln und als ein Album-ZIP. Nummer = Reihenfolge. Ohne Häkchen „im Shop abspielbar“ steht der Titel im Player, spielt aber nicht (nur nach dem Kauf).",
     "moreTitle": "Weitere Angaben",
     "stockTitle": "Bestand",

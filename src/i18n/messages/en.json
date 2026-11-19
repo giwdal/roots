@@ -6557,6 +6557,7 @@
     }
   },
   "store": {
+    "autoInvoiceShort": "Every paid order gets its invoice.",
     "tracksInfo": "roots makes the player version for the shop (MP3 128) and, for buyers, MP3 320 + WAV – single tracks and one album ZIP. Number = order. Tracks without “playable in the shop” are listed in the player but don't play (buyers only).",
     "moreTitle": "More details",
     "stockTitle": "Stock",

@@ -4,6 +4,7 @@ import { Notice } from "@/components/notice"
 import { Page, PageHeader } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
 import { RowGroup, SettingRow } from "@/components/section"
+import { TitleTip } from "@/components/info-tip"
 import { TypedInput } from "@/components/typed-input"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,7 +95,7 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sho
 
       <RowGroup id="invoices" title={t("store.invoice")}>
         {ctx.modules.has("invoices") ? (
-          <SettingRow label={t("store.autoInvoice")} hint={t("store.autoInvoiceHint")}>
+          <SettingRow label={t("store.autoInvoice")} hint={t("store.autoInvoiceShort")} info={t("store.autoInvoiceHint")}>
             <SettingSwitch name="auto_invoice" checked={s.auto_invoice} label={t("store.autoInvoice")} />
           </SettingRow>
         ) : (
@@ -102,7 +103,7 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sho
         )}
       </RowGroup>
 
-      <RowGroup id="mails" title={t("store.mails")} description={t("store.mailsHint")}>
+      <RowGroup id="mails" title={<TitleTip tip={t("store.mailsHint")}>{t("store.mails")}</TitleTip>}>
         {MAIL_KINDS.map((k) => (
           <SettingRow key={k} label={t.dynamic(`store.mailKinds.${k}`)} hint={t.dynamic(`store.mailWhen.${k}`)}>
             <span className="flex items-center gap-3">
@@ -160,7 +161,7 @@ async function PartSheet({ t, part, s, mails, rates, error }: { t: Awaited<Retur
         <input type="hidden" name="part" value={part} />
         {part === "page" && (
           <>
-            <div className="grid gap-2">
+            <div className="grid max-w-xl gap-2">
               <Label htmlFor="s-title">{t("store.shopPageTitle")}</Label>
               <Input id="s-title" name="title" maxLength={200} defaultValue={s.title ?? ""} placeholder={t("store.shopTitle")} />
             </div>
@@ -168,9 +169,9 @@ async function PartSheet({ t, part, s, mails, rates, error }: { t: Awaited<Retur
           </>
         )}
         {part === "transfer" && (
-          <div className="grid gap-2 sm:max-w-48">
+          <div className="grid gap-2">
             <Label htmlFor="s-days">{t("store.transferDays")}</Label>
-            <TypedInput kind="number" id="s-days" name="transfer_days" min={1} max={60} defaultValue={String(s.transfer_days)} className="w-full" />
+            <TypedInput kind="number" id="s-days" name="transfer_days" min={1} max={60} defaultValue={String(s.transfer_days)} />
           </div>
         )}
         {part === "pickup" && area("pickup_text", t("store.pickupText"), s.pickup_text, 3, t("store.pickupTextHint"))}

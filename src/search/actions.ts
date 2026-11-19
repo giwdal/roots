@@ -96,7 +96,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     on("automations", "automations.view") ? db.from("workflows").select("id, name, active").eq("org_id", org).is("deleted_at", null).ilike("name", like).order("name").limit(PER_GROUP) : none,
     on("shifts", "shifts.view") ? db.from("staff").select("id, name, active").eq("org_id", org).ilike("name", like).order("name").limit(PER_GROUP) : none,
     on("payments", "payments.view")
-      ? db.from("pay_orders").select("id, customer_name, customer_email, amount_total, currency, created_at").eq("org_id", org).or(`customer_name.ilike.${like},customer_email.ilike.${like}`).order("created_at", { ascending: false }).limit(PER_GROUP)
+      ? db.from("pay_orders").select("id, customer_name, customer_email, amount_total, currency, created_at, source_module, shop_orders(number), pay_order_items(description)").eq("org_id", org).or(`customer_name.ilike.${like},customer_email.ilike.${like}`).order("created_at", { ascending: false }).limit(PER_GROUP).limit(1, { referencedTable: "pay_order_items" })
       : none,
   ])
 
@@ -154,7 +154,13 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     {
       key: "payments",
       label: t("payments.nav"),
-      items: (payments.data ?? []).map((x) => ({ id: x.id, title: x.customer_name || x.customer_email || "–", detail: `${t.money(x.amount_total, x.currency)} · ${day(x.created_at)}`, href: `/payments?edit=${x.id}` })),
+      items: (payments.data ?? []).map((x) => ({ id: x.id, title: x.customer_name || x.customer_email || "–", detail: [
+          // What it was for: the shop order, the event (first ticket line), else the source.
+          x.shop_orders ? t("store.orderTitle", { number: String(x.shop_orders.number) }) : (x.source_module === "tickets" && x.pay_order_items[0]?.description.split(" · ")[0]) || t.dynamic(`payments.sources.${x.source_module}`),
+          t.money(x.amount_total, x.currency),
+          day(x.created_at),
+        ].join(" · "),
+        href: `/payments?edit=${x.id}` })),
     },
     { key: "templates", label: t("letters.title"), items: (templates.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/files/templates/${x.id}` })) },
     { key: "pages", label: t("search.pages"), items: pageHits.slice(0, 8) },

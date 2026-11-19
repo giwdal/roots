@@ -1604,6 +1604,7 @@
       "formerMember": "Former member",
       "unsubscribed": "Unsubscribed",
       "membership": "Membership",
+      "openTotal": "{amount} open",
       "openDues": "Open dues: {amount}",
       "openDuesDetail": {
         "one": "{count} due open",
@@ -3094,6 +3095,7 @@
     "cancelDue": "Cancel",
     "confirmCancelDue": "Cancel this due?",
     "confirmCancelDueHint": "It no longer counts as open. Dues are never deleted.",
+    "statNext": "Next fee",
     "statOpen": "Open",
     "statOverdue": {
       "one": "{count} overdue",

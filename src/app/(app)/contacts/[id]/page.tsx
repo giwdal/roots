@@ -101,7 +101,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         ? by(ctx.supabase.from("rental_contacts").select("role, rentals!inner(id, status, starts_at, ends_at, deleted_at, rental_objects(name))")).is("rentals.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
         : none,
       on("shop", "shop.view")
-        ? by(ctx.supabase.from("shop_orders").select("id, number, status, placed_at, pay_orders(amount_total, currency)")).not("placed_at", "is", null).order("placed_at", { ascending: false }).limit(LIMIT)
+        ? by(ctx.supabase.from("shop_orders").select("id, number, status, placed_at, invoice_id, pay_orders(status, amount_total, currency)")).not("placed_at", "is", null).order("placed_at", { ascending: false }).limit(LIMIT)
         : none,
       on("courses", "courses.view")
         ? by(ctx.supabase.from("course_participants").select("id, status, created_at, course_id, courses!inner(title, deleted_at)")).is("courses.deleted_at", null).order("created_at", { ascending: false }).limit(LIMIT)
@@ -120,7 +120,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
     on("payments", "payments.view") && email
-      ? ctx.supabase.from("pay_orders").select("id, status, source_module, amount_total, currency, created_at").eq("org_id", ctx.org.id).ilike("customer_email", email).order("created_at", { ascending: false }).limit(LIMIT)
+      ? ctx.supabase.from("pay_orders").select("id, status, source_module, amount_total, currency, created_at, shop_orders(number), pay_order_items(description)").eq("org_id", ctx.org.id).ilike("customer_email", email).order("created_at", { ascending: false }).limit(LIMIT).limit(1, { referencedTable: "pay_order_items" })
       : none,
     on("email", "email.view") && email
       ? ctx.supabase.from("email_history").select("id, subject, kind, source, status, delivery, at").eq("org_id", ctx.org.id).ilike("to_email", email).order("at", { ascending: false }).limit(5)
@@ -140,6 +140,13 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const current = memberships?.find((m) => memberState(m, now) !== "ended")
   const owed = (openDues ?? []).reduce((s, d) => s + d.amount_cents, 0)
   const overdue = (openDues ?? []).filter((d) => d.due_on < now)
+  // At a glance: what this person still owes (open dues + unpaid shop orders + open own invoices; a shop order's
+  // invoice is the same money as the order, so it counts once).
+  const unpaidOrders = (shopOrders ?? []).filter((o) => o.status !== "cancelled" && (o.pay_orders?.status === "open" || o.pay_orders?.status === "pending"))
+  const orderInvoices = new Set((shopOrders ?? []).map((o) => o.invoice_id).filter(Boolean))
+  const openInvoices = (docs ?? []).filter((d) => d.kind === "invoice" && d.status === "sent" && !orderInvoices.has(d.id))
+  const openTotal = owed + unpaidOrders.reduce((s, o) => s + (o.pay_orders?.amount_total ?? 0), 0) + openInvoices.reduce((s, d) => s + Number(d.gross_total ?? 0), 0)
+  const lateInvoice = openInvoices.some((d) => d.due_date && d.due_date < now)
   const tel = c.phone?.replace(/[^\d+]/g, "")
   const address = [c.street, [c.postal_code, c.city].filter(Boolean).join(" "), c.country && c.country !== "DE" ? new Intl.DisplayNames([t.locale], { type: "region" }).of(c.country) : null].filter(Boolean)
   const canEditMembers = on("members", "members.manage")
@@ -190,15 +197,17 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
               ) : (
                 !!memberships?.length && <Badge variant="secondary">{t("contacts.hub.formerMember")}</Badge>
               )}
+              {openTotal > 0 && <Badge variant={overdue.length || lateInvoice ? "destructive" : "warning"}>{t("contacts.hub.openTotal", { amount: t.money(openTotal) })}</Badge>}
               {c.user_id && <Badge variant="info">{t("contacts.team.badge")}</Badge>}
               {c.unsubscribed_at && <Badge variant="warning">{t("contacts.hub.unsubscribed")}</Badge>}
             </span>
           )
         }
         meta={
-          (c.company && name !== c.company) || c.tags.length ? (
+          (c.company && name !== c.company) || c.tags.length || current ? (
             <>
               {c.company && name !== c.company && <span>{c.company}</span>}
+              {current && <span>{t("contacts.memberSince", { date: day(current.starts_on) })}</span>}
               {c.tags.map((tg) => (
                 <Badge key={tg} variant="outline">
                   {tg}
@@ -466,8 +475,11 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                   key: o.id,
                   icon: CreditCardIcon,
                   href: `/payments?contact=${c.id}&edit=${o.id}`,
-                  title: t.dynamic(`payments.sources.${o.source_module}`),
-                  detail: [t.money(o.amount_total, o.currency), day(o.created_at)].join(" · "),
+                  // What it was for: the shop order's number, the event (first ticket line), else the source.
+                  title: o.shop_orders
+                    ? t("store.orderTitle", { number: String(o.shop_orders.number) })
+                    : (o.source_module === "tickets" && o.pay_order_items[0]?.description.split(" · ")[0]) || t.dynamic(`payments.sources.${o.source_module}`),
+                  detail: [o.shop_orders || o.source_module === "tickets" ? t.dynamic(`payments.sources.${o.source_module}`) : null, t.money(o.amount_total, o.currency), day(o.created_at)].filter(Boolean).join(" · "),
                   badge: <PayStatusBadge t={t} status={o.status} />,
                 }))}
               />

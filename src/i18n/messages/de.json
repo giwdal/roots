@@ -1604,6 +1604,7 @@
       "formerMember": "Ehemaliges Mitglied",
       "unsubscribed": "Abgemeldet",
       "membership": "Mitgliedschaft",
+      "openTotal": "{amount} offen",
       "openDues": "Offene Beiträge: {amount}",
       "openDuesDetail": {
         "one": "{count} Beitrag offen",
@@ -3094,6 +3095,7 @@
     "cancelDue": "Stornieren",
     "confirmCancelDue": "Beitrag stornieren?",
     "confirmCancelDueHint": "Er gilt dann nicht mehr als offen. Beiträge werden nie gelöscht.",
+    "statNext": "Nächster Beitrag",
     "statOpen": "Offen",
     "statOverdue": {
       "one": "{count} überfällig",

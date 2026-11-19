@@ -36,7 +36,7 @@ type Contact = { id: string; first_name: string | null; last_name: string | null
 type Due = { id: string; description: string; amount_cents: number; due_on: string; status: string; run_id: string | null; failed_at: string | null; reminders: number; reminded_at: string | null }
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
-// One membership, opened on its state: badge, Stats (open, paid until, since, fee) and the next step as the main
+// One membership, opened on its state: badge, Stats (open, paid until, next due) and the next step as the main
 // button (mark the oldest open due paid, or collect it by direct debit). Then the dues with their row actions and the
 // membership's facts; editing, pausing and cancelling happen in sheets (?edit=details, ?new=pause, ?new=cancel).
 async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T; ctx: Ctx; m: Tables<"memberships"> & { contacts: Contact | null }; types: Type[]; defs: FieldDef[]; sp: SearchParams; canManage: boolean }) {
@@ -64,6 +64,9 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
   const overdue = open.filter((d) => isOverdueDue(d, now))
   const remindable = overdue.filter((d) => !d.run_id)
   const next = [...open].filter((d) => !d.run_id).sort((a, b) => a.due_on.localeCompare(b.due_on))[0]
+  const nextDue = [...open].sort((a, b) => a.due_on.localeCompare(b.due_on))[0]
+  // Nothing open: the next period starts the day after "Bezahlt bis" (still to be generated).
+  const nextPeriod = !nextDue && until && interval !== "none" && !m.ends_on ? new Date(Date.parse(`${until}T12:00:00Z`) + 864e5).toISOString().slice(0, 10) : null
   // Paid by direct debit: a mandate and SEPA chosen (or left automatic). Then the next step is the SEPA run.
   const bySepa = !!m.iban && (m.payment_method === "sepa" || !m.payment_method)
   const pausedNow = !!m.paused_from && (!m.paused_until || m.paused_until >= now)
@@ -236,11 +239,12 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
       <Stats>
         <Stat label={t("membership.statOpen")} value={t.money(owed)} hint={overdue.length ? t("membership.statOverdue", { count: overdue.length }) : open.length ? t("membership.statOpenCount", { count: open.length }) : undefined} tone={overdue.length ? "warn" : undefined} href="#dues" />
         <Stat label={t("membership.paidUntilCol")} value={until ? t.date(until) : "–"} />
-        <Stat label={t("membership.since")} value={t.date(m.starts_on)} hint={m.ends_on ? t("membership.state.ending", { date: t.date(m.ends_on) }) : undefined} />
+        {/* Since and fee are properties (editable there); the tiles answer what's due. */}
         <Stat
-          label={t("membership.feeOwn")}
-          value={fee === 0 && interval === "none" ? t("membership.feeNone") : `${t.money(fee)} / ${t(`membership.intervals.${interval}`)}`}
-          hint={m.fee_free_until && m.fee_free_until >= now ? t("membership.feeFreeUntilShort", { date: t.date(m.fee_free_until) }) : undefined}
+          label={t("membership.statNext")}
+          value={nextDue ? t.date(nextDue.due_on) : nextPeriod ? t.date(nextPeriod) : "–"}
+          hint={nextDue ? amountOf(nextDue) : fee === 0 && interval === "none" ? t("membership.feeNone") : `${t.money(fee)} / ${t(`membership.intervals.${interval}`)}`}
+          href={nextDue ? "#dues" : undefined}
         />
       </Stats>
 

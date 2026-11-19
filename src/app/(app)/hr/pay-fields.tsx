@@ -10,7 +10,7 @@ export function PayFields({ labels, options, defaultType, hourly, monthly, disab
   const [type, setType] = useState(defaultType)
   return (
     <>
-      <div className="grid content-start gap-2 sm:col-span-2">
+      <div className="grid basis-full content-start gap-2">
         <Label htmlFor="emp-pay_type">{labels.pay}</Label>
         <SegmentGroup id="emp-pay_type" label={labels.pay}>
           {options.map((o) => (

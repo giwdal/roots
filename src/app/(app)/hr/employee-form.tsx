@@ -33,8 +33,8 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
   return (
     <form action={saveEmployee} className="grid gap-6">
       <FormCard id="role" title={t("hr.roleCard")}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-1 sm:col-span-2">
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <div className="grid max-w-xl gap-1 sm:col-span-2">
             <RecordPicker name="user_id" label={t("hr.member")} search={searchMembers} initial={member} required />
             <p className="text-xs text-muted-foreground">
               {t("hr.memberHint")}{" "}
@@ -48,13 +48,13 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
         </div>
       </FormCard>
       <FormCard id="contract" title={t("hr.contract")}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid content-start gap-2 sm:col-span-2">
-            <Label htmlFor="emp-employment_type">{t("hr.employmentType")}</Label>
-            <Choice id="emp-employment_type" name="employment_type" label={t("hr.employmentType")} required defaultValue="part_time" options={EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) }))} />
-          </div>
+        <div className="grid content-start gap-2">
+          <Label htmlFor="emp-employment_type">{t("hr.employmentType")}</Label>
+          <Choice id="emp-employment_type" name="employment_type" label={t("hr.employmentType")} required defaultValue="part_time" options={EMPLOYMENT_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.types.${x}`) }))} />
+        </div>
+        {/* Pay type on its own line, then amount · hours · holidays · start as one row of short fields. */}
+        <div className="flex flex-wrap gap-x-8 gap-y-4">
           <PayFields labels={{ pay: t("hr.payType"), hourly: t("hr.hourlyRate"), monthly: t("hr.monthlySalary") }} options={PAY_TYPES.map((x) => ({ value: x, label: t.dynamic(`hr.payTypes.${x}`) }))} defaultType="hourly" hourly="" monthly="" />
-          {date("starts_on", t("hr.startsOn"))}
           <div className="grid content-start gap-2">
             <Label htmlFor="emp-weekly_hours">{t("hr.weeklyHours")}</Label>
             <TypedInput kind="number" id="emp-weekly_hours" name="weekly_hours" min={0} max={80} step="any" />
@@ -63,6 +63,7 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
             <Label htmlFor="emp-vacation_days">{t("hr.vacationDays")}</Label>
             <TypedInput kind="number" id="emp-vacation_days" name="vacation_days" min={0} max={365} step="any" />
           </div>
+          {date("starts_on", t("hr.startsOn"))}
         </div>
       </FormCard>
       {/* Rarely known when adding someone (progressive disclosure); all of it edits in place on the person page. */}
@@ -72,7 +73,7 @@ export function EmployeeForm({ t, member }: { t: T; member?: PickerOption | null
         </summary>
         <div className="mt-6 grid gap-6">
           <FormCard id="more" title={t("hr.properties")}>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
               <div className="grid content-start gap-2">
                 <Label htmlFor="emp-phone">{t("hr.phone")}</Label>
                 <TypedInput kind="phone" id="emp-phone" name="phone" />

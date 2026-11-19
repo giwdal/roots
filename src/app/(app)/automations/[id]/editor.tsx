@@ -32,7 +32,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
+import { ContentSheet, ContentSheetTitle } from "@/components/content-sheet"
 import { useT } from "@/i18n/client"
+import { usePhone } from "@/lib/use-phone"
 import { cn } from "@/lib/utils"
 import { ACTIONS, DATA_STEPS, stepKey, triggerKey, validate, WAIT_UNITS, type Graph, type NodeType, type TraceStep } from "@/automations/graph"
 import { creatableFor, deletableFor, def, OBJECTS, searchFields, objectsFor, OPS_FOR, parseRecordTrigger, SCHEDULE_OBJECTS, splitPath, writableFor, type Field, type Kind, type ObjectKey, type RefList } from "@/automations/objects"
@@ -340,6 +342,20 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
     URL.revokeObjectURL(a.href)
   }
   const sel = nodes.find((n) => n.id === selected)
+  const phone = usePhone()
+  const deselect = () => (setSelected(null), setNodes((ns) => ns.map((n) => (n.selected ? { ...n, selected: false } : n))))
+  const inspector = (n: FlowNode) => (
+    <Inspector
+      key={n.id}
+      node={n}
+      options={flowOptions}
+      trigger={triggerEvent}
+      trace={test?.trace ? (traced.get(n.id) ?? null) : undefined}
+      canEdit={canEdit}
+      onChange={(p) => update(n.id, p)}
+      onRemove={() => remove(n.id)}
+    />
+  )
   // Results of data steps, usable by every step as objects ("Ergebnis: Mitgliedschaft").
   const flowOptions: EditorOptions = {
     ...options,
@@ -546,22 +562,15 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
             <MiniMap pannable zoomable className="!hidden md:!block" />
           </ReactFlow>
         </div>
-        <aside className="grid content-start gap-4 rounded-lg border p-3" aria-label={t("automations.settings")}>
-          {sel ? (
-            <Inspector
-              key={sel.id}
-              node={sel}
-              options={flowOptions}
-              trigger={triggerEvent}
-              trace={test?.trace ? (traced.get(sel.id) ?? null) : undefined}
-              canEdit={canEdit}
-              onChange={(p) => update(sel.id, p)}
-              onRemove={() => remove(sel.id)}
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("automations.selectHint")}</p>
-          )}
+        <aside className="grid content-start gap-4 rounded-lg border p-3 max-md:hidden" aria-label={t("automations.settings")}>
+          {sel && !phone ? inspector(sel) : <p className="text-sm text-muted-foreground">{t("automations.selectHint")}</p>}
         </aside>
+        {sel && phone && (
+          // Phones: a tapped step opens its settings as a sheet over the canvas; closing it deselects the step.
+          <ContentSheet key={sel.id} label={t("automations.settings")} onClose={() => {}} onClosed={deselect} header={<ContentSheetTitle className="text-base font-semibold">{t.dynamic(`automations.nodes.${sel.type}`)}</ContentSheetTitle>}>
+            <div className="grid gap-4 px-4 pb-6">{inspector(sel)}</div>
+          </ContentSheet>
+        )}
       </div>
     </div>
   )

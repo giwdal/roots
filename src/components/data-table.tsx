@@ -179,7 +179,7 @@ export function ListToolbar({ search, children }: { search?: React.ReactNode; ch
   return (
     <div className="grid min-w-0 gap-2 md:flex md:flex-wrap md:items-center md:gap-3">
       {search}
-      {children && <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 *:shrink-0 md:contents">{children}</div>}
+      {children && <div className="no-scrollbar relative -mx-4 flex items-center gap-2 overflow-x-auto px-4 *:shrink-0 md:contents">{children}</div>}
     </div>
   )
 }

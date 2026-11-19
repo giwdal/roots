@@ -40,7 +40,7 @@ export function Timeline({ t, items, today, empty, onMove }: { t: T; items: Time
   return (
     <div className="grid gap-4">
       {(dated.length > 0 || (onMove && undated.length > 0)) && (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="relative overflow-x-auto rounded-lg border">
           <TimelineDrop first={first} days={days} start={Math.max(0, Math.round((now - first) / DAY) - 7)} onMove={onMove} style={{ width, minHeight: dated.length ? undefined : "7rem" }}>
             {/* week lines + today */}
             <div className="pointer-events-none absolute inset-0" aria-hidden>

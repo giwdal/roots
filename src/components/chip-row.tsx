@@ -16,7 +16,7 @@ export function ChipRow({ label, className, children }: { label: string; classNa
     nav.scrollLeft += chip.left - box.left - (box.width - chip.width) / 2
   })
   return (
-    <nav ref={ref} aria-label={label} className={cn("flex max-w-full overflow-x-auto", className)}>
+    <nav ref={ref} aria-label={label} className={cn("relative flex max-w-full overflow-x-auto", className)}>
       {children}
     </nav>
   )

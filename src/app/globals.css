@@ -295,3 +295,13 @@
   clip-path: none;
   white-space: normal;
 }
+
+/* Visually hidden text (labels of icon-only segments, buttons) is position: absolute at its static spot; inside a
+   sideways-scrolling row that isn't a positioning container it escaped the clipping and made phone pages wider than
+   the screen. Pinned to the containing block's corner it can never stretch a page. */
+@layer utilities {
+  .sr-only:not(:focus):not(:focus-within) {
+    top: 0;
+    inset-inline-start: 0;
+  }
+}

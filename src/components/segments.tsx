@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
  */
 export function Segments({ label, items, className }: { label: string; items: { href: string; label: React.ReactNode; current: boolean }[]; className?: string }) {
   return (
-    <nav aria-label={label} className={cn("no-scrollbar flex w-fit max-w-full shrink-0 gap-1 justify-self-end overflow-x-auto rounded-lg bg-muted p-1 md:flex-wrap", className)}>
+    <nav aria-label={label} className={cn("no-scrollbar relative flex w-fit max-w-full shrink-0 gap-1 justify-self-end overflow-x-auto rounded-lg bg-muted p-1 md:flex-wrap", className)}>
       {items.map((it) => (
         <Link
           key={it.href}

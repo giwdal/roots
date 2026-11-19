@@ -3,6 +3,7 @@
     "description": "Verein, Betrieb oder Events an einem Ort organisieren."
   },
   "common": {
+    "moreInfo": "Mehr erfahren",
     "showMore": "{count} weitere anzeigen",
     "moreDetails": "Mehr Angaben (optional)",
     "properties": "Eigenschaften",

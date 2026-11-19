@@ -81,6 +81,10 @@ Benachrichtigungen
 | Colour / icon / emoji | swatch / picker popover |
 | Order of items | drag handle + "Nach oben/unten" in ⋯ (touch and keyboard) |
 
+Explanations that aren't needed every time ("what happens if …", legal background, examples) go into an
+`<InfoTip>` (ⓘ next to the label, `src/components/info-tip.tsx`), not a paragraph under the field; keep only a short
+one-line hint visible when it's needed to fill the field correctly.
+
 Labels above fields, required fields are the default (mark *optional* ones with "(optional)", not required ones
 with \*), errors under the field in red, the form keeps what was typed on any error.
 

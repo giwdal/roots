@@ -35,6 +35,7 @@ export function Shortcuts() {
   const mac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform)
   const keys: [string[], string][] = [
     [[mac ? "⌘" : "Ctrl", "K"], t("shortcuts.search")],
+    [[mac ? "⌘" : "Ctrl", "B"], t("shortcuts.sidebar")],
     [["N"], t("shortcuts.new")],
     [["/"], t("shortcuts.listSearch")],
     [["Esc"], t("shortcuts.close")],

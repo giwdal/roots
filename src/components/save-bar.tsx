@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
 import { fieldValues, keepSent, restoreFields, toRestore, type Field, type Sent } from "@/lib/form-snapshot"
 import { appRoute } from "@/lib/url"
+import { cn } from "@/lib/utils"
 
 const SENT_KEY = "roots-form-sent"
 
@@ -105,8 +106,9 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
           : "sticky bottom-0 z-20 -mx-6 mt-2 border-t bg-popover/95 backdrop-blur"
       }
     >
-      <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8">
-        {dirty && !always && <span className="mr-auto text-sm text-muted-foreground">{t("common.unsaved")}</span>}
+      {/* In a sheet on phones the buttons stack full width, the action at the bottom (closest to the thumb). */}
+      <div className={cn("flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8", !target && "max-md:flex-col-reverse max-md:items-stretch max-md:[&>button]:h-(--control)")}>
+        {dirty && !always && <span className={cn("mr-auto text-sm text-muted-foreground", !target && "max-md:hidden")}>{t("common.unsaved")}</span>}
         {dirty && (
           // ponytail: reload instead of form.reset(), chips/pickers keep React state that reset() can't reach.
           <Button type="button" variant="ghost" size="sm" onClick={() => window.location.reload()}>

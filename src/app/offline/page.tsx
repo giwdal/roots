@@ -1,4 +1,5 @@
-import { WifiOffIcon } from "lucide-react"
+import { RotateCwIcon, WifiOffIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 
 // Shown by the service worker when the installed App has no connection.
@@ -12,6 +13,10 @@ export default async function OfflinePage() {
         </span>
         <h1 className="text-lg font-semibold">{t("pwa.offlineTitle")}</h1>
         <p className="text-sm text-muted-foreground">{t("pwa.offlineText")}</p>
+        {/* A plain link to this same address: works without JavaScript (the scripts may not be cached offline). */}
+        <Button render={<a href="" />} nativeButton={false} className="mt-2">
+          <RotateCwIcon /> {t("pwa.reload")}
+        </Button>
       </div>
     </main>
   )

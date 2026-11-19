@@ -31,8 +31,8 @@ const AREA: Record<string, string> = {
 }
 const OWN: Record<string, LucideIcon> = { pages: LayoutGridIcon, files: FileIcon, templates: FileTextIcon }
 
-function GroupIcon({ group }: { group: string }) {
-  const area = NAV.find((a) => a.key === AREA[group])
+function GroupIcon({ group, area: own }: { group: string; area?: string }) {
+  const area = NAV.find((a) => a.key === (own ?? AREA[group]))
   return <AreaIcon area={area?.key ?? "none"} icon={area?.icon ?? OWN[group] ?? SearchIcon} />
 }
 
@@ -133,7 +133,7 @@ export function CommandSearch({ areas = [], quick = [] }: { areas?: { href: stri
   // One result row: area tile, the title with the typed part in bold, a muted detail on the right.
   const hit = (it: SearchItem, group: string) => (
     <>
-      <GroupIcon group={group} />
+      <GroupIcon group={group} area={it.area} />
       <span className="min-w-0 truncate">{mark(it.title, q.trim())}</span>
       {it.detail && <span className="ml-auto max-w-[45%] shrink-0 truncate text-xs text-muted-foreground">{it.detail}</span>}
     </>

@@ -11,7 +11,7 @@ import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
 import { localeNames, locales } from "@/i18n/locales"
-import { activeChildHref, appRoute, within } from "@/lib/url"
+import { activeChildHref, APP_HOME, appRoute, within } from "@/lib/url"
 import { cn } from "@/lib/utils"
 
 type Group = { label?: string; items: SidebarLink[] }
@@ -120,11 +120,12 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
             </ContentSheetClose>
           )}
           {switchOrgs && header}
-          {groups.map((g, i) => (
+          {/* Start is the tab bar's first tab and the inbox the row above: no tiles for them. */}
+          {groups.filter((g) => g.items.some((n) => n.href !== INBOX && n.href !== APP_HOME)).map((g, i) => (
             <section key={i} aria-label={g.label ?? t("shell.mainNav")} className="grid gap-2">
               {g.label && <h3 className="px-1 text-xs font-medium text-muted-foreground">{g.label}</h3>}
               <div className="grid grid-cols-3 gap-2">
-                {g.items.filter((n) => n.href !== INBOX).map((n) => {
+                {g.items.filter((n) => n.href !== INBOX && n.href !== APP_HOME).map((n) => {
                   const on = isActive(n)
                   const body = (
                     <>

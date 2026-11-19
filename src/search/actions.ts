@@ -6,7 +6,7 @@ import { APP_HOME } from "@/lib/url"
 import { visibleNav } from "@/modules/nav"
 import { areaSettings, settingsFor } from "@/settings/sections"
 
-export type SearchItem = { id: string; title: string; detail?: string; href: string }
+export type SearchItem = { id: string; title: string; detail?: string; href: string; area?: string /* pages: the nav area whose tile they show */ }
 export type SearchGroup = { key: string; label: string; items: SearchItem[] }
 
 const PER_GROUP = 5
@@ -35,7 +35,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     { id: "inbox", title: t("inbox.title"), href: "/notifications" },
     // Every page of the sidebar (sub-pages with their area as detail).
     ...visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) =>
-      a.children.map((c) => ({ id: c.href, title: c.label === "nav.overview" ? t.dynamic(a.label) : t.dynamic(c.label), detail: a.children.length > 1 ? t.dynamic(a.label) : undefined, href: c.href })),
+      a.children.map((c) => ({ id: c.href, title: c.label === "nav.overview" ? t.dynamic(a.label) : t.dynamic(c.label), detail: a.children.length > 1 ? t.dynamic(a.label) : undefined, href: c.href, area: a.key })),
     ),
     ...(on("crm", "crm.manage") ? [{ id: "contacts-import", title: t("contacts.import"), detail: t("contacts.title"), href: "/contacts/import" }] : []),
     // Views that aren't sidebar entries: Schichten › Meine, Personen › Organigramm.
@@ -113,8 +113,8 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
 
   const person = (c: { first_name: string | null; last_name: string | null; company: string | null } | null) =>
     [c?.first_name, c?.last_name].filter(Boolean).join(" ") || c?.company || "–"
+  // Records first (what people look for), the matching pages after them.
   const groups: SearchGroup[] = [
-    { key: "pages", label: t("search.pages"), items: pageHits.slice(0, 8) },
     {
       key: "contacts",
       label: t("contacts.title"),
@@ -123,7 +123,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
     {
       key: "members",
       label: t("membership.nav"),
-      items: (members.data ?? []).map((m) => ({ id: m.id, title: person(m.contacts), detail: m.member_no ?? undefined, href: `/members/${m.id}` })),
+      items: (members.data ?? []).map((m) => ({ id: m.id, title: person(m.contacts), detail: m.member_no ? t("membership.numberShort", { number: m.member_no }) : undefined, href: `/members/${m.id}` })),
     },
     { key: "events", label: t("eventsPage.nav"), items: (events.data ?? []).map((e) => ({ id: e.id, title: e.title, detail: day(e.starts_at), href: `/events/${e.id}` })) },
     {
@@ -168,6 +168,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
       items: (payments.data ?? []).map((x) => ({ id: x.id, title: x.customer_name || x.customer_email || "–", detail: `${t.money(x.amount_total, x.currency)} · ${day(x.created_at)}`, href: `/payments?edit=${x.id}` })),
     },
     { key: "templates", label: t("letters.title"), items: (templates.data ?? []).map((x) => ({ id: x.id, title: x.name, href: `/files/templates/${x.id}` })) },
+    { key: "pages", label: t("search.pages"), items: pageHits.slice(0, 8) },
   ]
   return groups.filter((g) => g.items.length)
 }

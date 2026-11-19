@@ -44,7 +44,8 @@ function TooltipContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        className="isolate z-50"
+        // Touch screens: no tooltips (mobile.md §2), labels live in aria-label; a tap or focus would leave one hanging.
+        className="isolate z-50 [@media(hover:none)]:hidden"
       >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"

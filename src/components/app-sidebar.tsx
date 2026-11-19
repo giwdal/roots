@@ -109,6 +109,8 @@ export function AppSidebar({
                     >
                       {n.newTab ? n.icon : <NavIcon icon={n.icon} />}
                       <span>{n.label}</span>
+                      {/* Collapsed to icons: the count becomes a dot on the icon (the badge is hidden then). */}
+                      {!!n.count && <span aria-hidden className="absolute top-1.5 left-6 hidden size-2 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block" />}
                     </SidebarMenuButton>
                     {!!n.count && <SidebarMenuBadge className="tabular-nums">{n.count}</SidebarMenuBadge>}
                     {/* Sub-pages of the current area only: moving to another area collapses this one. */}

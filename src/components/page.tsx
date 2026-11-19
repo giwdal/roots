@@ -1,3 +1,4 @@
+import { isValidElement } from "react"
 import Link from "next/link"
 import { PlusIcon, SettingsIcon, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,15 @@ const WIDTH = { list: "max-w-6xl", record: "max-w-6xl", form: "max-w-3xl" }
 export function Page({ size = "list", className, children }: { size?: keyof typeof WIDTH; className?: string; children: React.ReactNode }) {
   // min-w-0 on every block: one wide child (a table, a calendar header) can never stretch the page past the screen.
   return <div className={cn("grid min-w-0 gap-6 *:min-w-0", WIDTH[size], className)}>{children}</div>
+}
+
+/** Whether a header primary given as a node (a form button) carries an icon (a lucide icon somewhere inside it). */
+function hasIcon(node: React.ReactNode): boolean {
+  if (Array.isArray(node)) return node.some(hasIcon)
+  if (!isValidElement(node)) return false
+  const type = node.type as { $$typeof?: symbol; displayName?: string }
+  if (typeof type === "object" && type.$$typeof === Symbol.for("react.forward_ref") && typeof type.displayName === "string") return true
+  return hasIcon((node.props as { children?: React.ReactNode }).children)
 }
 
 /**
@@ -62,6 +72,9 @@ export function PageHeader({
   const inTopBar = overview || !!titleHidden
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
+  // A form-button primary with an icon (Veröffentlichen, Jetzt senden, Ausstellen) is the round button on phones too
+  // (label only for screen readers); it stays in the ⋯ sheet as well, since a SaveBar hides the round button.
+  const roundForm = !isLink(primary) && !!primary && hasIcon(primary)
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
   const bare = inTopBar && !badge && !meta && !(description && !overview)
   return (
@@ -108,7 +121,7 @@ export function PageHeader({
             {menu}
             </HeaderActions>
             {/* A link primary is the round button on phones (stays out of the top bar); a form button goes into the phone ⋯ sheet. */}
-            <HeaderActions desktop={isLink(primary)} phone={isLink(primary) ? undefined : false}>
+            <HeaderActions desktop={isLink(primary) || roundForm} phone={isLink(primary) || roundForm ? undefined : false}>
             {isLink(primary) && primary.more?.length ? (
               <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />
             ) : isLink(primary) && PrimaryIcon ? (
@@ -123,6 +136,13 @@ export function PageHeader({
               >
                 <PrimaryIcon className="max-md:size-6" /> <span className="max-md:sr-only">{primary.label}</span>
               </Button>
+            ) : roundForm ? (
+              <div
+                data-slot="page-primary"
+                className="contents bar-hide max-md:glass max-md:fixed max-md:right-4 max-md:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] max-md:z-30 max-md:block max-md:size-[3.625rem] max-md:overflow-hidden max-md:rounded-full max-md:[&_button]:size-full max-md:[&_button]:rounded-full max-md:[&_button]:border-0 max-md:[&_button]:bg-transparent max-md:[&_button]:p-0 max-md:[&_button]:text-[0px] max-md:[&_button]:text-foreground max-md:[&_form]:size-full max-md:[&_svg]:size-6"
+              >
+                {primary as React.ReactNode}
+              </div>
             ) : (
               (primary as React.ReactNode)
             )}

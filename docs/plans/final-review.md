@@ -45,31 +45,44 @@ on day one, an invoice that stays "Offen" after its order was paid (fixed), and 
 4. **Team order "Schon übergeben / erledigt" is ticked by default even with "Noch offen".** Result: an unpaid order
    that is "Erledigt", and the progress line shows Bestellt ✓ · Bezahlt ○ · Abholbereit ✓ · Erledigt ✓. Where:
    `shop/orders/new/new-order-form.tsx`. Proposed: untick (and hint) when "Noch offen" is chosen.
+   **Done:** the box is unticked + disabled with a hint while "Noch offen" (completed after the payment, on the order); `readTeamOrder` refuses `done` for open non-free orders (`store.teamOrder.doneOpen`, API 422 `done_open`), test in `fields.test.mjs`.
 5. **Phone: the main action three times on issued invoices** (full-width button in the page, round button, ⋯ sheet).
    The in-page button is the clearest (it has a label; the round button only a wallet icon). Proposed: drop the round
    button when the page renders its own labelled button, or drop the in-page one (→ §Z, relates to S9).
+   **Done:** `<PageHeader primaryInPage>`: the page's labelled full-width button is the only one on phones (no round button, no ⋯ copy); invoice + shop order page.
 6. **Phone back chevron says "Zurück zu Kontakte" but goes to the previous screen** (App history: member → contact →
    back = member). Behaviour is right (native stack); the `aria-label` is wrong whenever the previous screen isn't the
    parent. Proposed: "Zurück" when the history entry is used, the parent's name only for the fallback.
+   **Done:** the label names the previous screen when App history is used (record pages store their name, nav pages by label), else "Zurück"; the parent only for the fallback.
 7. **Phone create pages show ☰ and ‹ next to each other** (bar fallback because the SaveBar hides the tab bar, plus the
    back chevron). Two left icons with different meanings. Proposed: on pages with a back target, the ⋯ sheet gets a
    "Menü" row instead of the ☰ in the top bar.
+   **Done:** the ☰ fallback hides whenever the back chevron shows (plain rule in globals.css; the second nested rule in `@utility bar-fallback` was silently dropped).
 8. **Contact hub lacks the facts at a glance.** No stats/badges for open dues, last payment, next ticket; the
    Mitgliedschaft card shows type + since, not "30,00 € offen". Payments are titled just "Shop" (no order number) in
    the hub and in ⌘K. Proposed: one meta line under the name (open amount, member since) and "Shop #1006" as title.
+   **Done:** badge "… € offen" (open dues + unpaid shop orders + open own invoices; an order's invoice counted once; red when something is overdue), "Mitglied seit" in the meta line; payments titled "Bestellung #1006" / the event, source in the detail line; ⌘K payments show the same in their detail.
 9. **Membership page repeats itself:** Mitglied seit and Beitrag are both a stat tile and a property. Proposed: tiles
    Offen · Bezahlt bis · Nächster Beitrag; properties keep the editable values.
+   **Done:** tiles Offen · Bezahlt bis · Nächster Beitrag (next open due, else the day after Bezahlt bis, with the fee as hint).
 10. **0 € team order with "Rechnung erstellen" ticked** silently gets no invoice (free orders never do). Proposed:
     disable the box while the total is 0 with the reason.
+    **Done:** the invoice box is disabled with "Kostenlose Bestellungen bekommen keine Rechnung."
 11. **Publishing from Event › Tickets jumps to Übersicht** (the form posts to the overview); stay on the tab.
+    **Done:** the status forms send the current path (`<HereInput>`), the action returns there.
 12. **Ticket type cards on phones** show price, "0" and "noch 0 frei" stacked without labels; "0 verkauft".
 13. **Task sheet title is the project's name**, the task title sits below as the first field. Reads as if the project
     was opened. Proposed: title = task, project as the meta line (link).
+    **Done:** `<UrlSheet titleHidden>`: the editable task title is the visible title, project link + created date as the meta line.
 14. **Neues Event:** Kapazität sits in the "Beschreibung" card; belongs to "Wo" or a "Tickets" card.
+    **Done:** Kapazität is in the Wo card.
 15. **Hours with two decimals** (28,52 h, 0,02 h) next to 7,5 h; `hoursText` could show h:mm or one decimal.
+    **Done:** `hoursText` shows h:mm.
 16. Dev console: Base UI warns "changing the default value of an uncontrolled FieldControl" on the invoice draft after
     picking a contact (harmless, but noise in the logs).
 
 Data note: UX Test now holds review records (events "Review Konzert D/P", "Review Back-Test", contact "Rita ReviewP"
 with membership, dues, shop orders #1004–#1007, invoices RE-2026-0004…0007, project "Review Projekt D"). RE-2026-0004
 and 0005 were created before the invoice fix and still say "Offen".
+
+New (seen while fixing): on phones `/projects/tasks` lays out wider than the screen (innerWidth 635 at 390 px with mobile emulation), so the task sheet is cut off on the right; the overflowing element wasn't found yet (not the toolbar scroll rows).

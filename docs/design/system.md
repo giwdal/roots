@@ -96,3 +96,36 @@ Lucide only. 16 px in buttons, rows, menus, badges (12 px); 20 px in the tab bar
 | `link` / `<AddLink>` | inline text actions ("+ Hinzufügen", "Alle anzeigen") in `--link`, no underline until hover |
 | `destructive` | only inside confirmations and menus (red item) |
 All buttons `text-sm font-medium`, icon 16 px, height from the size tokens.
+
+## Forms: where inputs go, how wide, how structured (binding)
+
+**Structure**
+- A form is a stack of sections (`<FormCard>` / `<Section>` with a short noun title: "Preis", "Versand", "Adresse"),
+  ordered by how often people need them: what defines the thing first, rare settings last behind "Mehr Angaben".
+- Inside a section: label above the field, `gap-4` between fields, `gap-2` label → field. Related short fields share a
+  row (`grid gap-4 sm:grid-cols-2` or a fixed-width row: PLZ + Ort, Start + Ende, Betrag + MwSt.); long fields span the row.
+- One question per row: a checkbox/switch row is "label left, control right" in settings (patterns.md §2) and
+  "checkbox + label" in forms; its dependent fields appear indented right below it only when it is on.
+- Hints: at most one short line under a field (`text-xs text-muted-foreground`), only when needed to fill it in
+  correctly. Everything else (what happens if …, legal background, examples) goes into `<InfoTip>` next to the label.
+- Labels are short nouns ("Vorschlag", not "Vorschlag (vorausgefüllt, optional)"); optional fields say "(optional)"
+  only when most fields in the form are required.
+
+**Widths (by kind, not by available space)** — fields don't stretch to 1600 px:
+| Kind | Width |
+|---|---|
+| Name, title, subject, email, URL, address line | full row of its column, max `max-w-xl` |
+| Long text (description, note) | full row, `max-w-2xl` |
+| Money, number, quantity, percentage | `w-40` (right-aligned value) |
+| Date | `w-44`; date + time side by side (`w-44` + `w-28`) |
+| Time | `w-28` |
+| PLZ | `w-28`; Ort fills the rest of that row |
+| IBAN | `max-w-md`; BIC `w-40` |
+| Phone | `max-w-xs` |
+| Choice (segments) | as wide as its options; select ≤ 15 options `max-w-xs` |
+| Pickers (RecordPicker, tags) | `max-w-xl` |
+
+`<TypedInput kind>` sets these widths itself for its kinds; plain `<Input>` gets the class from this table.
+
+**Which control** — patterns.md §4 (segments ≤ 5, select ≤ 15, search picker beyond; switch when it takes effect at
+once, checkbox inside a form that is saved; DateInput/TimeInput, never native date/time).

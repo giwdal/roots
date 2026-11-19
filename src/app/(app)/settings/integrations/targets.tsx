@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { TitleTip } from "@/components/info-tip"
 import { SaveBar } from "@/components/save-bar"
 import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { Choice } from "@/components/choice"
@@ -51,7 +52,7 @@ export async function NotificationsSection({ sp }: { sp: SearchParams }) {
   const botConnected = botRow?.status === "connected"
 
   return (
-    <Section id="notifications" title={t("notifications.targets")} description={t("notifications.intro")}>
+    <Section id="notifications" title={<TitleTip tip={t("notifications.intro")}>{t("notifications.targets")}</TitleTip>}>
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href={withParams(sp, { new: "webhook", edit: undefined })} scroll={false} />} nativeButton={false} size="sm">
           {t("notifications.newWebhook")}

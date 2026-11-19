@@ -40,7 +40,7 @@ export function NewKey({ groups }: { groups: { module: string; label: string; pe
           {state.error}
         </p>
       )}
-      <div className="grid gap-2">
+      <div className="grid max-w-xl gap-2">
         <Label htmlFor="key-name">{t("api.name")}</Label>
         <Input id="key-name" name="name" required maxLength={100} placeholder={t("api.namePlaceholder")} />
       </div>

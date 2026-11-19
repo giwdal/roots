@@ -93,7 +93,7 @@ function FieldForm({ t, action, entity, field }: { t: T; action: (fd: FormData) 
     <form action={action} className="group/field grid gap-4">
       {field && <input type="hidden" name="id" value={field.id} />}
       {entity && <input type="hidden" name="entity" value={entity} />}
-      <div className="grid gap-2">
+      <div className="grid max-w-xl gap-2">
         <Label htmlFor="f-label">{t("fields.label")}</Label>
         <Input id="f-label" name="label" defaultValue={field?.label} required maxLength={100} />
       </div>

@@ -20,7 +20,7 @@ export function OptionRows({ defaultOptions, colors }: { defaultOptions: string[
     <>
       <div className="grid gap-2">
         <Label htmlFor="f-options">{t("fields.options")}</Label>
-        <Textarea id="f-options" name="options" rows={4} value={text} onChange={(e) => setText(e.target.value)} aria-describedby="f-options-help" />
+        <Textarea id="f-options" name="options" rows={4} value={text} onChange={(e) => setText(e.target.value)} aria-describedby="f-options-help" className="max-w-xl" />
         <p id="f-options-help" className="text-xs text-muted-foreground">
           {t("fields.optionsHint")}
         </p>
@@ -34,7 +34,7 @@ export function OptionRows({ defaultOptions, colors }: { defaultOptions: string[
         }}>
           <legend className="mb-1 text-sm font-medium">{t("fields.colors")}</legend>
           {options.map((o, i) => (
-            <div key={o} className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-2 text-sm">
+            <div key={o} className="grid max-w-xl grid-cols-[minmax(0,1fr)_9rem] items-center gap-2 text-sm">
               <input type="hidden" name={`color_name_${i}`} value={o} />
               <span className="flex min-w-0 items-center gap-2">
                 <span className="size-3 shrink-0 rounded-full" style={{ background: DOT[picked[o] ?? ""] ?? "transparent" }} aria-hidden />

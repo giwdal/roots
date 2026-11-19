@@ -103,7 +103,7 @@ export default async function ApiSettings({ searchParams }: PageProps<"/settings
         ]}
       />
       <RowGroup id="ai" title={t("settings.allowAi")}>
-        <SettingRow label={t("settings.allowAiLabel")} hint={t("settings.allowAiHint")}>
+        <SettingRow label={t("settings.allowAiLabel")} hint={t("settings.allowAiShort")} info={t("settings.allowAiHint")}>
           <ActionSwitch checked={org?.allow_ai ?? true} label={t("settings.allowAiLabel")} action={setAllowAi} confirmOff="settings.confirmAiOff" />
         </SettingRow>
       </RowGroup>

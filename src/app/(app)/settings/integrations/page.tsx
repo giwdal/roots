@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { InfoTip } from "@/components/info-tip"
 import { Link2Icon } from "lucide-react"
 import { LinkRows } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
@@ -115,8 +116,9 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                           {t("common.save")}
                         </SubmitButton>
                       </div>
-                      <p className="text-xs text-muted-foreground">{t.dynamic(`integrations.costs.hint.${i.key}`)}</p>
-                      {ctx.modules.has("shop") && <p className="text-xs text-muted-foreground">{t("integrations.costs.onlyTickets")}</p>}
+                      <p className="text-xs text-muted-foreground">
+                        {t.dynamic(`integrations.costs.hint.${i.key}`)} {ctx.modules.has("shop") && <InfoTip>{t("integrations.costs.onlyTickets")}</InfoTip>}
+                      </p>
                     </form>
                   </details>
                 )}

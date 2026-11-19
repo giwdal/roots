@@ -264,6 +264,7 @@
     }
   },
   "settings": {
+    "allowAiShort": "Teammitglieder dürfen KI-Apps wie Claude mit dieser Organisation verbinden.",
     "title": "Einstellungen",
     "nav": "Einstellungen",
     "tabs": {
@@ -301,7 +302,7 @@
     "claudeSteps": "Claude (claude.ai und Desktop): Einstellungen → Connectors → „Add custom connector“ → Adresse oben einfügen → anmelden, Organisation und Zugriff wählen.",
     "claudeCodeHint": "Claude Code im Terminal: Befehl kopieren und ausführen, beim ersten Aufruf meldest du dich an.",
     "allowAi": "KI-Apps",
-    "allowAiHint": "Dürfen Mitglieder des Teams KI-Apps wie Claude mit dieser Organisation verbinden? Ausgeschaltet funktionieren auch bestehende Verbindungen sofort nicht mehr. API-Schlüssel sind davon nicht betroffen.",
+    "allowAiHint": "Ausgeschaltet funktionieren auch bestehende Verbindungen sofort nicht mehr. API-Schlüssel sind davon nicht betroffen.",
     "allowAiLabel": "KI-Apps erlauben",
     "groups": {
       "me": "Du",

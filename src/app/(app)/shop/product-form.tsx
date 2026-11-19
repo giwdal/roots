@@ -1,9 +1,10 @@
-import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { Choice } from "@/components/choice"
+import { TipLabel } from "@/components/info-tip"
 import { FormCard } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { SaveBar } from "@/components/save-bar"
+import { MoreDetails } from "@/components/section"
 import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,26 +18,26 @@ import { NypFields } from "./nyp-fields"
 
 type P = Tables<"products"> | null | undefined
 
-/** Name, price (+ name your price), VAT, kind. */
+/** Name, price + VAT in one row, name your price, kind. */
 export function ProductFields({ t, p, small, disabled }: { t: T; p?: P; small?: boolean; disabled?: boolean }) {
   return (
     <>
-      <div className="grid content-start gap-2">
+      <div className="grid max-w-xl content-start gap-2">
         <Label htmlFor="p-name">{t("store.productName")}</Label>
         <Input id="p-name" name="name" required maxLength={200} defaultValue={p?.name ?? ""} disabled={disabled} placeholder={t("store.productNamePlaceholder")} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-wrap items-start gap-4">
         <div className="grid content-start gap-2">
           <Label htmlFor="p-price">{small ? t("store.price") : t("store.priceGross")}</Label>
-          <TypedInput kind="money" id="p-price" name="price" required defaultValue={p ? priceInput(p.price_cents) : ""} disabled={disabled} className="w-full" />
+          <TypedInput kind="money" id="p-price" name="price" required defaultValue={p ? priceInput(p.price_cents) : ""} disabled={disabled} />
         </div>
         {small ? (
           // Kleinunternehmer: no VAT anywhere, so no rate to pick; the stored rate only applies once they switch.
           <div className="grid content-start gap-2">
             <input type="hidden" name="tax_rate" value={String(p?.tax_rate ?? 19)} />
-            <Label>{t("store.taxRate")}</Label>
-            <p className="text-sm text-muted-foreground">
-              {t("store.smallBusinessNoVat")}{" "}
+            <TipLabel tip={t("store.smallBusinessNoVat")}>{t("store.taxRate")}</TipLabel>
+            <p className="flex h-(--control) items-center gap-3 text-sm">
+              {t("store.noVat")}
               <Link href="/invoices/settings" className="text-[var(--link)] hover:underline">
                 {t("store.smallBusinessChange")}
               </Link>
@@ -48,51 +49,45 @@ export function ProductFields({ t, p, small, disabled }: { t: T; p?: P; small?: 
             <Choice id="p-tax" name="tax_rate" required label={t("store.taxRate")} defaultValue={String(p?.tax_rate ?? 19)} disabled={disabled} options={TAX_RATES.map((r) => ({ value: String(r), label: `${r} %` }))} />
           </div>
         )}
-        <NypFields on={p?.name_your_price ?? false} suggested={p?.suggested_cents != null ? priceInput(p.suggested_cents) : ""} disabled={disabled} />
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-kind">{t("store.kind")}</Label>
-          <Choice id="p-kind" name="kind" required label={t("store.kind")} defaultValue={p?.kind ?? "physical"} disabled={disabled} options={PRODUCT_KINDS.map((k) => ({ value: k, label: t.dynamic(`store.kinds.${k}`) }))} />
-        </div>
+      </div>
+      <NypFields on={p?.name_your_price ?? false} suggested={p?.suggested_cents != null ? priceInput(p.suggested_cents) : ""} disabled={disabled} />
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-kind">{t("store.kind")}</Label>
+        <Choice id="p-kind" name="kind" required label={t("store.kind")} defaultValue={p?.kind ?? "physical"} disabled={disabled} options={PRODUCT_KINDS.map((k) => ({ value: k, label: t.dynamic(`store.kinds.${k}`) }))} />
       </div>
     </>
   )
 }
 
-/** Stock (only without variants), max per order, release date. */
-export function SaleFields({ t, p, disabled, withStock = true }: { t: T; p?: P; disabled?: boolean; withStock?: boolean }) {
+/** Stock (only without variants: with variants every row has its own). */
+export function StockField({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {withStock ? (
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-stock">{t("store.stock")}</Label>
-          <TypedInput kind="number" id="p-stock" name="stock" min={0} defaultValue={p?.stock ?? ""} placeholder={t("store.unlimited")} disabled={disabled} className="w-full" />
-          <p className="text-xs text-muted-foreground">{t("store.stockHint")}</p>
-        </div>
-      ) : (
-        <input type="hidden" name="stock" value={p?.stock ?? ""} />
-      )}
-      <div className="grid content-start gap-2">
-        <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
-        <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} defaultValue={p?.max_per_order ?? 10} disabled={disabled} className="w-full" />
-      </div>
-      <div className="grid content-start gap-2">
-        <Label htmlFor="p-release">{t("store.releaseOn")}</Label>
-        <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
-        <p className="text-xs text-muted-foreground">{t("store.releaseHint")}</p>
-      </div>
+    <div className="grid content-start gap-2">
+      <TipLabel htmlFor="p-stock" tip={t("store.stockHint")}>
+        {t("store.stock")}
+      </TipLabel>
+      <TypedInput kind="number" id="p-stock" name="stock" min={0} defaultValue={p?.stock ?? ""} placeholder={t("store.unlimited")} disabled={disabled} />
     </div>
   )
 }
 
-/** What the product page in the shop shows: description, category, address, video. */
-export function PageFields({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+/** The rarely needed rest, behind "Mehr Angaben": release date, max per order, category, address, video. */
+export function MoreFields({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
   return (
     <>
-      <div className="grid content-start gap-2">
-        <Label htmlFor="p-description">{t("store.description")}</Label>
-        {disabled ? <div className="text-sm text-muted-foreground">{p?.description ? t("store.descriptionSet") : "–"}</div> : <RichTextEditor id="p-description" name="description" defaultValue={p?.description ?? ""} />}
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="grid content-start gap-2">
+          <TipLabel htmlFor="p-release" tip={t("store.releaseHint")}>
+            {t("store.releaseOn")}
+          </TipLabel>
+          <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
+        </div>
+        <div className="grid content-start gap-2">
+          <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
+          <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} defaultValue={p?.max_per_order ?? 10} disabled={disabled} />
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid max-w-xl gap-4 sm:grid-cols-2">
         <div className="grid content-start gap-2">
           <Label htmlFor="p-category">{t("store.category")}</Label>
           <Input id="p-category" name="category" maxLength={60} defaultValue={p?.category ?? ""} disabled={disabled} placeholder={t("store.categoryPlaceholder")} />
@@ -104,13 +99,27 @@ export function PageFields({ t, p, disabled }: { t: T; p?: P; disabled?: boolean
             <Input id="p-slug" name="slug" maxLength={80} defaultValue={p?.slug ?? ""} disabled={disabled} placeholder={t("store.slugPlaceholder")} />
           </div>
         </div>
-        <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="p-video">{t("store.video")}</Label>
-          <TypedInput kind="url" id="p-video" name="video_url" defaultValue={p?.video_url ?? ""} disabled={disabled} placeholder="https://youtube.com/watch?v=…" />
-          <p className="text-xs text-muted-foreground">{t("store.videoHint")}</p>
-        </div>
+      </div>
+      <div className="grid gap-2">
+        <TipLabel htmlFor="p-video" tip={t("store.videoHint")}>
+          {t("store.video")}
+        </TipLabel>
+        <TypedInput kind="url" id="p-video" name="video_url" defaultValue={p?.video_url ?? ""} disabled={disabled} placeholder="https://youtube.com/watch?v=…" />
       </div>
     </>
+  )
+}
+
+/** Whether "Mehr Angaben" starts open: one of its fields differs from the default. */
+export const moreSet = (p: P) => !!p && (!!p.release_at || p.max_per_order !== 10 || !!p.category || !!p.video_url)
+
+/** The description shown on the product page in the shop. */
+export function DescriptionField({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+  return (
+    <div className="grid max-w-2xl content-start gap-2">
+      <Label htmlFor="p-description">{t("store.description")}</Label>
+      {disabled ? <div className="text-sm text-muted-foreground">{p?.description ? t("store.descriptionSet") : "–"}</div> : <RichTextEditor id="p-description" name="description" defaultValue={p?.description ?? ""} />}
+    </div>
   )
 }
 
@@ -122,18 +131,17 @@ export function ProductForm({ t, small }: { t: T; small?: boolean }) {
       <FormCard id="details" title={t("store.product")}>
         <ProductFields t={t} small={small} />
       </FormCard>
-      <FormCard id="sale" title={t("store.saleCard")}>
-        <SaleFields t={t} />
+      <FormCard id="sale" title={t("store.stockTitle")}>
+        <StockField t={t} />
       </FormCard>
-      {/* The shop page (description, category, address, video) can follow on the product's page. */}
-      <details className="group grid gap-6">
-        <summary className="inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm text-[var(--link)] select-none hover:underline [&::-webkit-details-marker]:hidden">
-          <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
-        </summary>
-        <FormCard id="page" title={t("store.productPage")} className="mt-6">
-          <PageFields t={t} />
+      <MoreDetails label={t("common.moreDetails")}>
+        <FormCard id="page" title={t("store.productPage")}>
+          <DescriptionField t={t} />
         </FormCard>
-      </details>
+        <FormCard id="more" title={t("store.moreTitle")}>
+          <MoreFields t={t} />
+        </FormCard>
+      </MoreDetails>
       <SaveBar label={t("store.createProduct")} always />
     </form>
   )

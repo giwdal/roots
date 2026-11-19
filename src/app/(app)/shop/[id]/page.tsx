@@ -7,7 +7,8 @@ import { MultiSelect } from "@/components/multi-select"
 import { Notice } from "@/components/notice"
 import { Page, PageHeader, RecordLayout } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
-import { Section } from "@/components/section"
+import { MoreDetails, Section } from "@/components/section"
+import { TitleTip } from "@/components/info-tip"
 import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
 import { TypedInput } from "@/components/typed-input"
@@ -28,7 +29,7 @@ import { stockItem } from "@/shop/stock"
 import { priceInput } from "@/tickets/price"
 import { productImage, restoreProduct, saveOptions, saveProduct, saveTrack, setProductStatus, trashProduct } from "../actions"
 import { ProductBadge } from "../badges"
-import { PageFields, ProductFields, SaleFields } from "../product-form"
+import { DescriptionField, MoreFields, ProductFields, StockField, moreSet } from "../product-form"
 import { StockSheet } from "../stock-sheet"
 import { AudioUpload } from "./audio-upload"
 import { PictureAdd } from "./picture-add"
@@ -267,8 +268,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
               </Section>
               <Section
                 id="variants"
-                title={variants?.length ? t("store.variants") : t("store.saleCard")}
-                description={variants?.length ? t("store.variantsHint") : undefined}
+                title={variants?.length ? <TitleTip tip={t("store.variantsHint")}>{t("store.variants")}</TitleTip> : t("store.stockTitle")}
                 action={
                   canManage && (
                     <Button render={<Link href={`${here}?edit=options`} scroll={false} />} nativeButton={false} size="sm" variant="ghost">
@@ -277,8 +277,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                   )
                 }
               >
-                {/* Without variants the sale fields (stock, max per order, release) come first; with variants the rows do. */}
-                {!variants?.length && <SaleFields t={t} p={p} disabled={!canManage} withStock />}
+                {/* Without variants one stock for the product; with variants every row has its own. */}
+                {variants?.length ? <input type="hidden" name="stock" value={p.stock ?? ""} /> : <StockField t={t} p={p} disabled={!canManage} />}
                 {!variants?.length && p.stock !== null && p.kind === "physical" && (
                   <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
                     {leftLabel(p.id, p.stock)}
@@ -308,20 +308,24 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                   canAdd={!options.length}
                   disabled={!canManage}
                 />
-                {!!variants?.length && <SaleFields t={t} p={p} disabled={!canManage} withStock={false} />}
               </Section>
               <Section id="page" title={t("store.productPage")}>
-                <PageFields t={t} p={p} disabled={!canManage} />
+                <DescriptionField t={t} p={p} disabled={!canManage} />
               </Section>
               {tracks.length > 0 && (
-                <Section id="track-price" title={t("store.trackPrice")} description={t("store.trackPriceHint")}>
-                  <TypedInput kind="money" id="track-price" name="track_price" defaultValue={p.track_price_cents != null ? priceInput(p.track_price_cents) : ""} placeholder="–" disabled={!canManage} aria-label={t("store.trackPrice")} className="sm:max-w-40" />
+                <Section id="track-price" title={<TitleTip tip={t("store.trackPriceHint")}>{t("store.trackPrice")}</TitleTip>}>
+                  <TypedInput kind="money" id="track-price" name="track_price" defaultValue={p.track_price_cents != null ? priceInput(p.track_price_cents) : ""} placeholder="–" disabled={!canManage} aria-label={t("store.trackPrice")} />
                 </Section>
               )}
+              <MoreDetails label={t("common.moreDetails")} open={moreSet(p)}>
+                <Section id="more" title={t("store.moreTitle")}>
+                  <MoreFields t={t} p={p} disabled={!canManage} />
+                </Section>
+              </MoreDetails>
               {canManage && <SaveBar />}
             </form>
 
-            <Section id="music" title={t("store.tracks")} description={t("store.tracksHint")}>
+            <Section id="music" title={<TitleTip tip={t("store.tracksInfo")}>{t("store.tracks")}</TitleTip>} description={t("store.tracksHint")}>
               {busyAudio && <AutoRefresh />}
               {tracks.length > 0 && (
                 <ol className="grid divide-y rounded-lg border">
@@ -359,7 +363,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
             </Section>
 
             {ctx.can("org.files.view") && (
-              <Section id="downloads" title={t("store.downloads")} description={t("store.downloadsHint")}>
+              <Section id="downloads" title={<TitleTip tip={t("store.downloadsHint")}>{t("store.downloads")}</TitleTip>}>
                 <FileList ctx={ctx} entity="products" entityId={p.id} back={here} hideTitle />
               </Section>
             )}

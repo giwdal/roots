@@ -4439,7 +4439,7 @@
     "rhythm": "Rhythmus",
     "takeAttendance": "Anwesenheit",
     "timeOfDay": "Uhrzeit",
-    "today": "heute",
+    "today": "Heute",
     "trashHint": "Gelöschtes wird nach {days} Tagen endgültig entfernt.",
     "waitingHint": "Wird ein Platz frei, rückt die oberste Person nach.",
     "weekly": "jede Woche",
@@ -4475,8 +4475,11 @@
     "details": "Kursdaten",
     "nextDate": "Nächster Termin",
     "places": "Belegt",
-    "full": "voll",
-    "waitingCount": "{count} warten",
+    "full": "Voll",
+    "waitingCount": {
+      "one": "{count} wartet",
+      "other": "{count} warten"
+    },
     "participants": "Teilnehmende",
     "addPerson": "Person hinzufügen",
     "searchContact": "Kontakt suchen…",
@@ -4498,9 +4501,9 @@
     "rate": "{rate} % da",
     "status": "Status",
     "statuses": {
-      "enrolled": "angemeldet",
+      "enrolled": "Angemeldet",
       "waiting": "Warteliste",
-      "cancelled": "abgemeldet"
+      "cancelled": "Abgemeldet"
     },
     "dates": "Termine",
     "noDates": "Noch keine Termine.",
@@ -6093,6 +6096,7 @@
     "portalNone": "Gerade läuft bei dir nichts.",
     "portalRole": "Du bist",
     "portalDocs": "Dokumente",
+    "nextShort": "ab {date}",
     "nextFrom": "ab {date}: {who}",
     "rentCol": "Miete",
     "depositShort": "Kaution {amount}",
@@ -7167,6 +7171,10 @@
       "projects": "Projekte",
       "rentals": "Vermietung",
       "courses": "Kurse"
+    },
+    "projectMarks": {
+      "start": "Start",
+      "end": "Ende"
     },
     "rentalMarks": {
       "start": "Mietbeginn",

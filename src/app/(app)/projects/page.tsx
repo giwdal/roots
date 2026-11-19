@@ -172,10 +172,16 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     )
                   },
                 },
-                { header: t("projects.lead"), cell: (r) => r.people[0]?.name ?? "–" },
+                { header: t("projects.lead"), cell: (r) => r.people[0]?.name ?? "–", phone: false },
                 {
                   header: t("projects.period"),
                   cell: (r) => (r.start_on || r.due_on ? [r.start_on, r.due_on].map((d) => (d ? t.date(`${d}T12:00:00`, { dateStyle: "medium" }) : "…")).join(" – ") : "–"),
+                  phone: false,
+                },
+                {
+                  header: t("projects.end"),
+                  table: false,
+                  cell: (r) => (r.due_on ? <span className={!r.done && r.due_on < today ? "text-destructive" : undefined}>{t.date(`${r.due_on}T12:00:00`, { day: "numeric", month: "short", year: "2-digit" })}</span> : null),
                 },
                 { header: t("projects.progress"), cell: (r) => r.progress ?? "–" },
               ]}

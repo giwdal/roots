@@ -158,6 +158,7 @@ export function Board({
 
 // Title with tags top right (max 2 + "+n", so cards stay small), description preview, then due date, subtasks, people.
 function TaskCard({ task, today }: { task: BoardTask; today: string }) {
+  const t = useT()
   const overdue = task.due_on && !task.done && task.due_on < today
   return (
     <Link href={task.href} scroll={false} className="grid min-w-0 gap-1.5 text-sm">
@@ -185,7 +186,7 @@ function TaskCard({ task, today }: { task: BoardTask; today: string }) {
         <span className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {task.due_on && (
             <span className={cn("inline-flex items-center gap-1", overdue && "font-medium text-destructive")}>
-              <CalendarIcon className="size-3.5" /> {new Date(`${task.due_on}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "2-digit" })}
+              <CalendarIcon className="size-3.5" /> {t.date(`${task.due_on}T12:00:00`, { weekday: "short", day: "numeric", month: "short" })}
             </span>
           )}
           {task.progress && (

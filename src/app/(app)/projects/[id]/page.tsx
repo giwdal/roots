@@ -143,7 +143,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
           }
         >
           {nextTasks.length > 0 ? (
-            <ul className="grid divide-y rounded-lg border">
+            <ul className="divide-y overflow-hidden rounded-lg border">
               {nextTasks.map((x) => {
                 const s = statusOf(x.status_id)
                 const late = x.due_on && x.due_on < today
@@ -284,7 +284,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         <UrlSheet params={["edit"]} title={t("projects.links")} meta={p.name}>
           <Notice error={param(sp, "error")} />
           {linked.length > 0 && (
-            <ul className="grid divide-y rounded-lg border">
+            <ul className="divide-y overflow-hidden rounded-lg border">
               {linked.map((l) => {
                 const Icon = KIND_ICON[l.entity] ?? LinkIcon
                 return (

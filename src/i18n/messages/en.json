@@ -4439,7 +4439,7 @@
     "rhythm": "Rhythm",
     "takeAttendance": "Attendance",
     "timeOfDay": "Time",
-    "today": "today",
+    "today": "Today",
     "trashHint": "Deleted items are removed for good after {days} days.",
     "waitingHint": "When a place frees up, the first person moves up.",
     "weekly": "every week",
@@ -4475,8 +4475,11 @@
     "details": "Course details",
     "nextDate": "Next date",
     "places": "Taken",
-    "full": "full",
-    "waitingCount": "{count} waiting",
+    "full": "Full",
+    "waitingCount": {
+      "one": "{count} waiting",
+      "other": "{count} waiting"
+    },
     "participants": "Participants",
     "addPerson": "Add a person",
     "searchContact": "Search contacts…",
@@ -4498,9 +4501,9 @@
     "rate": "{rate} % present",
     "status": "Status",
     "statuses": {
-      "enrolled": "enrolled",
-      "waiting": "waiting list",
-      "cancelled": "cancelled"
+      "enrolled": "Enrolled",
+      "waiting": "Waiting list",
+      "cancelled": "Cancelled"
     },
     "dates": "Dates",
     "noDates": "No dates yet.",
@@ -6093,6 +6096,7 @@
     "portalNone": "Nothing running for you right now.",
     "portalRole": "You are",
     "portalDocs": "Documents",
+    "nextShort": "from {date}",
     "nextFrom": "from {date}: {who}",
     "rentCol": "Rent",
     "depositShort": "Deposit {amount}",
@@ -7167,6 +7171,10 @@
       "projects": "Projects",
       "rentals": "Rentals",
       "courses": "Courses"
+    },
+    "projectMarks": {
+      "start": "Start",
+      "end": "End"
     },
     "rentalMarks": {
       "start": "Rental starts",

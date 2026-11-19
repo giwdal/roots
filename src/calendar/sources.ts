@@ -1,7 +1,8 @@
 // The shared calendar: dated things from every module in one shape (CalendarEntry), read through the person's own
 // client (RLS) and only from modules that are on and they may see. Each module keeps its own table; a new module
 // with dates adds a loader here. Rules: times as timestamptz (Berlin when shown), date-only things are all-day,
-// long-term rentals show their key dates (start, last day to give notice, end), not a year-long bar.
+// long-term rentals show their key dates (start, last day to give notice, end), not a year-long bar; projects longer than
+// two weeks show their start and end.
 import { DOT } from "@/projects/fields"
 import { longTerm, termInfo } from "@/rentals/fields"
 import type { getContext } from "@/lib/context"
@@ -82,7 +83,16 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
       const { data } = await ctx.supabase.from("projects").select("id, name, color, start_on, end_on").eq("org_id", org).is("deleted_at", null).or(`start_on.not.is.null,end_on.not.is.null`).limit(500)
       return (data ?? [])
         .filter((p) => (p.start_on ?? p.end_on!) <= toDay && (p.end_on ?? p.start_on!) >= fromDay)
-        .map((p) => ({ source: "projects", id: p.id, title: p.name, starts_at: day(p.start_on ?? p.end_on!), ends_at: day(p.end_on ?? p.start_on!), all_day: true, color: DOT[p.color] ?? COLOR.projects, href: `/projects/${p.id}` }))
+        .flatMap((p): CalendarEntry[] => {
+          const a = p.start_on ?? p.end_on!
+          const b = p.end_on ?? p.start_on!
+          const entry = { source: "projects" as const, all_day: true, ends_at: null, color: DOT[p.color] ?? COLOR.projects, href: `/projects/${p.id}` }
+          // Up to two weeks: one bar. Longer projects (months) only mark their start and end, like long-term rentals.
+          if (Date.parse(b) - Date.parse(a) <= 14 * 86_400_000) return [{ ...entry, id: p.id, title: p.name, starts_at: day(a), ends_at: day(b) }]
+          return [[a, "start"], [b, "end"]]
+            .filter(([d]) => d >= fromDay && d <= toDay)
+            .map(([d, kind]) => ({ ...entry, id: `${p.id}-${kind}`, title: `${p.name} · ${t.dynamic(`calendar.projectMarks.${kind}`)}`, starts_at: day(d) }))
+        })
     },
     rentals: async () => {
       const { data } = await ctx.supabase.from("rentals").select("id, status, unit, starts_at, ends_at, renew_months, notice_months, notice_at, rental_objects(name)").eq("org_id", org).is("deleted_at", null).neq("status", "cancelled").lt("starts_at", to).limit(2000)

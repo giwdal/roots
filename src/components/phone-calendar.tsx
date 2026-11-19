@@ -65,8 +65,10 @@ export function PhoneCalendar({
     return m
   }, [entries])
 
+  // Long entries (a project over months) dot only their first and last day, so dots still mark what happens when.
   const dots = (d: Date) => {
-    const list = byDay.get(key(d)) ?? []
+    const k = key(d)
+    const list = (byDay.get(k) ?? []).filter((e) => e.end.getTime() - e.start.getTime() <= 7 * 86_400_000 || k === key(e.start) || k === key(e.end))
     const colors = [...new Set(list.map((e) => e.color ?? "var(--primary)"))].slice(0, 3)
     return (
       <span className="flex h-1.5 gap-0.5" aria-hidden>
@@ -120,7 +122,8 @@ export function PhoneCalendar({
     if (e.allDay) return t("calendar.allDay")
     const last = subMilliseconds(e.end, 1)
     if (key(e.start) === key(last) || e.end <= e.start) return e.end > e.start ? `${format(e.start, "HH:mm")}–${format(e.end, "HH:mm")}` : format(e.start, "HH:mm")
-    return `${format(e.start, "d.M. HH:mm")} – ${format(e.end, "d.M. HH:mm")}`
+    const f = e.start.getFullYear() === e.end.getFullYear() ? "d.M. HH:mm" : "d.M.yyyy"
+    return `${format(e.start, f)} – ${format(e.end, f)}`
   }
 
   return (

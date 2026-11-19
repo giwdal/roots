@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -101,7 +101,7 @@ export function TimelineBar({
       onPointerUp={up}
       onPointerCancel={() => ((drag.current = null), setShift({ a: 0, b: 0 }))}
       className={cn(
-        "group/bar absolute top-1.5 flex h-7 min-w-7 touch-pan-y items-center overflow-hidden rounded-md border-l-4 px-2 text-xs font-medium whitespace-nowrap text-foreground select-none hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "group/bar absolute top-1.5 flex h-7 min-w-7 touch-pan-y items-center overflow-clip rounded-md border-l-4 px-2 text-xs font-medium whitespace-nowrap text-foreground select-none hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         onMove && "cursor-grab active:cursor-grabbing",
         done && "opacity-50",
         pending && "animate-pulse",
@@ -109,7 +109,7 @@ export function TimelineBar({
       style={{ left: `${((a - first) / DAY / days) * 100}%`, width: `calc(${((b - a) / DAY + 1) / days} * 100%)`, borderColor: color, background: `color-mix(in oklch, ${color} 22%, var(--background))` }}
     >
       {onMove && <span data-edge="start" className="absolute inset-y-0 left-0 w-2 cursor-ew-resize hover:bg-foreground/10" aria-hidden />}
-      <span className="truncate">{done ? `✓ ${label}` : label}</span>
+      <span className="sticky left-2 truncate">{done ? `✓ ${label}` : label}</span>
       {onMove && <span data-edge="end" className="absolute inset-y-0 right-0 w-2 cursor-ew-resize hover:bg-foreground/10" aria-hidden />}
     </Link>
   )
@@ -137,8 +137,14 @@ export function UndatedChip({ id, href, title, color, draggable }: { id: string;
 }
 
 /** The timeline's chart: undated items dropped on it get the day under the pointer as their end (due) date. */
-export function TimelineDrop({ first, days, onMove, style, children }: { first: number; days: number; onMove?: (id: string, start: string | null, end: string | null) => Promise<{ error?: string }>; style: React.CSSProperties; children: React.ReactNode }) {
+export function TimelineDrop({ first, days, start: open, onMove, style, children }: { first: number; days: number; start?: number; onMove?: (id: string, start: string | null, end: string | null) => Promise<{ error?: string }>; style: React.CSSProperties; children: React.ReactNode }) {
   const router = useRouter()
+  const ref = useRef<HTMLDivElement>(null)
+  // Opens scrolled to day `start` (about a week before today) when the timeline is wider than its box (phones).
+  useEffect(() => {
+    const box = ref.current?.parentElement
+    if (box && open && box.scrollWidth > box.clientWidth) box.scrollLeft = (open / days) * box.scrollWidth
+  }, [open, days])
   const [over, setOver] = useState<number | null>(null) // day index under the pointer while dragging
   const [pending, start] = useTransition()
   const dayAt = (e: React.DragEvent) => {
@@ -147,6 +153,7 @@ export function TimelineDrop({ first, days, onMove, style, children }: { first: 
   }
   return (
     <div
+      ref={ref}
       className={cn("relative", pending && "opacity-70")}
       style={style}
       onDragOver={(e) => {

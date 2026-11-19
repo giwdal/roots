@@ -50,6 +50,16 @@ export const sourcesFor = (ctx: Ctx) => CALENDAR_SOURCES.filter((s) => ctx.modul
 const day = (v: string) => `${v}T00:00:00`
 const berlinDay = (v: string) => new Date(v).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
+type RentalTerm = { starts_at: string; ends_at: string | null; renew_months: number | null; notice_months: number | null; notice_at: string | null }
+/** A long-term contract's key dates as [day, kind]: start, the last day to give notice (renewing), the end (fixed). */
+export function rentalMarks(r: RentalTerm): [string, "start" | "deadline" | "end"][] {
+  const marks: [string, "start" | "deadline" | "end"][] = [[berlinDay(r.starts_at), "start"]]
+  const term = termInfo({ end: r.ends_at ? berlinDay(r.ends_at) : null, renew_months: r.renew_months, notice_months: r.notice_months, noticeGiven: !!r.notice_at }, berlinDay(new Date().toISOString()))
+  if (term.kind === "renew") marks.push([term.deadline, "deadline"])
+  if (term.kind === "fixed") marks.push([term.end, "end"])
+  return marks
+}
+
 /** Everything dated between `from` and `to` (ISO) from the given sources. */
 export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, only: CalendarSource[]): Promise<CalendarEntry[]> {
   const org = ctx.org.id
@@ -106,11 +116,7 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
           continue
         }
         // Long-term contracts: only their key dates, as all-day markers.
-        const marks: [string, string][] = [[berlinDay(r.starts_at), "start"]]
-        const term = termInfo({ end: r.ends_at ? berlinDay(r.ends_at) : null, renew_months: r.renew_months, notice_months: r.notice_months, noticeGiven: !!r.notice_at }, berlinDay(new Date().toISOString()))
-        if (term.kind === "renew") marks.push([term.deadline, "deadline"])
-        if (term.kind === "fixed") marks.push([term.end, "end"])
-        for (const [d, kind] of marks)
+        for (const [d, kind] of rentalMarks(r))
           if (d >= fromDay && d <= toDay) out.push({ source: "rentals", id: `${r.id}-${kind}`, title: `${name} · ${t.dynamic(`calendar.rentalMarks.${kind}`)}`, starts_at: day(d), ends_at: null, all_day: true, color: COLOR.rentals, href })
       }
       return out

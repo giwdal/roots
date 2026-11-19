@@ -185,7 +185,7 @@ Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/
       collapsible `<DetailList limit>` would serve every record page).
 - [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
 - [ ] S3 (Finanzen) Issued invoices: the internal note (`notes`, never printed) can't be changed after issuing (the document is frozen as a whole); a note edited in place would need the freeze trigger to allow `notes`.
-- [ ] S4 (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
+- [x] S4 (chart-1 green again, five distinct hues) (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
 - [ ] S5 (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
 - [ ] S6 (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
 

@@ -35,6 +35,8 @@ How it is built (done, shell pass):
 - Primary on phones: a link primary is the round button; a form-button primary (Jetzt senden, Veröffentlichen,
   Ausstellen) is the round button too when it has an icon (label for screen readers only) and also stays in the ⋯
   sheet, because a SaveBar hides the round button. Give such buttons an icon.
+  A page that shows its form-button primary itself as a full-width labelled button under the header (invoice, shop
+  order) passes `primaryInPage`: then no round button and no copy in the ⋯ sheet, so the action appears once.
 - Search: `<CommandSearch>` renders a `<ContentSheet>` on phones (field + Abbrechen on top, recents from this browser,
   results with the area's `<AreaIcon>`); the Suche tab focuses a stand-in field during the tap so iOS opens the
   keyboard. `body { overflow-x: clip }` on phones stops the sideways shift.

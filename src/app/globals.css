@@ -132,10 +132,14 @@
   }
 }
 
-/* Phones: the top bar's menu button shows only while the floating bar is hidden by a SaveBar or a page's own tab bar. */
+/* Phones: the top bar's menu button shows only while the floating bar is hidden by a SaveBar or a page's own tab bar,
+   and never next to the back chevron (deeper pages: back is the way out, two left icons would compete). */
 @utility bar-fallback {
   @media (max-width: 767.98px) {
     body:not(:has([data-slot="save-bar"], [data-own-tab-bar])) & {
+      display: none;
+    }
+    body:has([data-slot="topbar-back"]) & {
       display: none;
     }
   }

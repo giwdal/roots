@@ -152,6 +152,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/sh
           )
         }
         primary={primary}
+        primaryInPage
       />
       {canManage &&
         MAIL_KINDS.map((k) => (

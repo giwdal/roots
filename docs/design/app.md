@@ -101,7 +101,9 @@ desktop. Build the phone layout first, then add `sm:`/`md:`/`lg:`.
   its own tab bar. Content scrolls under the glass; space below it comes from `--mobile-bar`. Glass = the `.glass`
   class (`@utility glass` in `globals.css`, derived from the theme tokens), with a solid fallback for "reduce
   transparency". While the bar is hidden by a SaveBar or a page's own tab bar, the top bar shows the menu button
-  (`@utility bar-fallback`), so phones never lose the menu.
+  (`@utility bar-fallback`), so phones never lose the menu; not on deeper pages with a back chevron (‹ is the way
+  out there, never ☰ and ‹ side by side). The chevron's label names where it really goes: the previous screen when the
+  App's history is used (its name if known, else "Zurück"), the parent only for the fallback.
 - **Menü** opens a bottom sheet, not the sidebar, with no title row and no X (grab handle, swipe or backdrop close it): the org switcher only when there is more than one org to choose (several orgs or a platform admin), the inbox (Benachrichtigungen) as the first row with its unread count (the Menü tab shows a dot while there are unread ones), the nav areas (no search field: Suche is its own tab) as a 3-column tile grid (icon + label, active area on a neutral muted tile), an area with sub-pages drills into big rows (back = ‹ Menü), account rows at the bottom; it always opens at the tiles, never drilled into the current area. Same `groups` as the sidebar (`<MobileMenu>`), so new modules appear automatically.
 - **Phone-critical flows** (check these at 375px first, with touch): Einlass/Scan, Meine Schichten incl. clock in/out,
   looking up a contact and calling/mailing them, tasks, notifications, Sprout.

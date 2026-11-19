@@ -207,6 +207,7 @@ export default async function DocumentPage({ params, searchParams }: PageProps<"
           </ActionsMenu>
         }
         primary={primary}
+        primaryInPage
       />
       {canManage && (
         <>

@@ -212,6 +212,7 @@
     "search": "Suche",
     "menu": "Menü",
     "tabs": "Navigation",
+    "back": "Zurück",
     "backTo": "Zurück zu {label}",
     "menuUnread": "Menü, ungelesene Benachrichtigungen"
   },

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useSyncExternalStore } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ChevronLeftIcon } from "lucide-react"
@@ -46,25 +46,51 @@ export function backTarget(crumbs: Crumbs, groups: NavGroup[], pathname: string)
 // The App's own history of this tab (sessionStorage): like a native navigation stack, "back" returns to the screen
 // the person came from inside the App (member → contact → back = member); only without one (deep link, reload of a
 // first page) it falls back to the parent. Going back to the previous entry pops it, any other move pushes.
+// Record pages also leave their name (last crumb) here, so the chevron can say where it really goes.
 const STACK = "roots-nav"
-const readStack = (): string[] => {
+const TITLES = "roots-nav-titles"
+const read = <T,>(key: string, empty: T): T => {
   try {
-    return JSON.parse(sessionStorage.getItem(STACK) ?? "[]")
+    return JSON.parse(sessionStorage.getItem(key) ?? "null") ?? empty
   } catch {
-    return []
+    return empty
   }
 }
-function useNavStack() {
-  const path = usePathname()
+const write = (key: string, value: unknown) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value))
+  } catch {}
+}
+const readStack = () => read<string[]>(STACK, [])
+
+/** Keeps the stack and returns the previous screen's path (null = no App history: back goes to the parent). */
+function useNavStack(path: string, title: string | undefined) {
+  const [prev, setPrev] = useState<string | null>(null)
   useEffect(() => {
     const s = readStack()
-    if (s.at(-1) === path) return
-    if (s.at(-2) === path) s.pop()
-    else s.push(path)
-    try {
-      sessionStorage.setItem(STACK, JSON.stringify(s.slice(-50)))
-    } catch {}
+    if (s.at(-1) !== path) {
+      if (s.at(-2) === path) s.pop()
+      else s.push(path)
+      write(STACK, s.slice(-50))
+    }
+    setPrev(s.at(-2) ?? null) // eslint-disable-line react-hooks/set-state-in-effect -- sessionStorage only exists in the browser
   }, [path])
+  useEffect(() => {
+    if (!title) return
+    const titles = read<Record<string, string>>(TITLES, {})
+    if (titles[path] === title) return
+    const keep = Object.entries({ ...titles, [path]: title }).slice(-50)
+    write(TITLES, Object.fromEntries(keep))
+  }, [path, title])
+  return prev
+}
+
+/** The name of a screen in the stack: a record page's stored name, else its nav page; unknown = null. */
+function screenName(path: string, groups: NavGroup[]): string | null {
+  const stored = read<Record<string, string>>(TITLES, {})[path]
+  if (stored) return stored
+  const page = groups.flatMap((g) => g.items.flatMap((i) => [i, ...(i.children ?? [])])).find((p) => appRoute(p.href.split("?")[0]) === appRoute(path))
+  return page?.label ?? null
 }
 
 /**
@@ -74,9 +100,13 @@ function useNavStack() {
 export function TopbarTitle({ groups, children }: { groups: NavGroup[]; children: React.ReactNode }) {
   const t = useT()
   const crumbs = useSyncExternalStore(subscribe, () => current, () => null)
-  const back = backTarget(crumbs, groups, usePathname())
+  const path = usePathname()
+  const back = backTarget(crumbs, groups, path)
   const router = useRouter()
-  useNavStack()
+  const prev = useNavStack(path, crumbs?.at(-1)?.label)
+  // With App history the chevron goes to the previous screen (its name if known, else just "Zurück"); without, to the parent.
+  const prevName = prev && (back && appRoute(prev) === appRoute(back.href.split("?")[0]) ? back.label : screenName(prev, groups))
+  const label = !prev ? t("shell.backTo", { label: back?.label ?? "" }) : prevName ? t("shell.backTo", { label: prevName }) : t("shell.back")
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden text-sm">
       {back && (
@@ -87,7 +117,8 @@ export function TopbarTitle({ groups, children }: { groups: NavGroup[]; children
             e.preventDefault()
             router.back()
           }}
-          aria-label={t("shell.backTo", { label: back.label })}
+          aria-label={label}
+          data-slot="topbar-back"
           className="-ml-2 grid size-9 shrink-0 touch-manipulation place-items-center rounded-lg [-webkit-tap-highlight-color:transparent] active:bg-muted md:hidden"
         >
           <ChevronLeftIcon className="size-5" />

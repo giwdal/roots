@@ -49,6 +49,7 @@ export function PageHeader({
   primary,
   settings,
   titleHidden,
+  primaryInPage,
 }: {
   title: React.ReactNode
   area?: string
@@ -62,6 +63,7 @@ export function PageHeader({
   primary?: { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } | React.ReactNode
   settings?: { href: string; label: string } | false
   titleHidden?: boolean // the page shows the title itself (an editor's title field): only for screen readers here
+  primaryInPage?: boolean // phones: the page shows the (form-button) primary itself as a full-width labelled button, so no round button and no copy in the ⋯ sheet
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
@@ -74,7 +76,7 @@ export function PageHeader({
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
   // A form-button primary with an icon (Veröffentlichen, Jetzt senden, Ausstellen) is the round button on phones too
   // (label only for screen readers); it stays in the ⋯ sheet as well, since a SaveBar hides the round button.
-  const roundForm = !isLink(primary) && !!primary && hasIcon(primary)
+  const roundForm = !isLink(primary) && !!primary && hasIcon(primary) && !primaryInPage
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
   const bare = inTopBar && !badge && !meta && !(description && !overview)
   return (
@@ -104,7 +106,7 @@ export function PageHeader({
             {/* Phones: one ⋯ in the top bar whose sheet holds the gear, the actions, the menu's items and a form-button primary. */}
             <HeaderActions
               phone={
-                <PhoneMenu settings={settings || undefined} actions={actions || undefined} primary={!isLink(primary) && primary ? (primary as React.ReactNode) : undefined}>
+                <PhoneMenu settings={settings || undefined} actions={actions || undefined} primary={!isLink(primary) && primary && !primaryInPage ? (primary as React.ReactNode) : undefined}>
                   {menu || undefined}
                 </PhoneMenu>
               }

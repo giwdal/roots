@@ -17,11 +17,11 @@ export function CourseForm({ t, locations, first }: { t: T; locations: { id: str
   return (
     <form action={saveCourse} className="grid gap-6">
       <FormCard id="details" title={t("courses.details")}>
-        <div className="grid gap-2">
+        <div className="grid max-w-xl gap-2">
           <Label htmlFor="c-title">{t("courses.titleLabel")}</Label>
           <Input id="c-title" name="title" required maxLength={200} placeholder={t("courses.titlePlaceholder")} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="grid content-start gap-2">
             <Label htmlFor="c-instructor">{t("courses.instructor")}</Label>
             <Input id="c-instructor" name="instructor" maxLength={200} />
@@ -39,7 +39,7 @@ export function CourseForm({ t, locations, first }: { t: T; locations: { id: str
         </div>
         <div className="grid gap-2">
           <Label htmlFor="c-description">{t("courses.description")}</Label>
-          <Textarea id="c-description" name="description" rows={3} maxLength={5000} />
+          <Textarea id="c-description" name="description" rows={3} maxLength={5000} className="max-w-2xl" />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="track_attendance" value="1" defaultChecked className="size-4 accent-primary" />
@@ -48,7 +48,7 @@ export function CourseForm({ t, locations, first }: { t: T; locations: { id: str
       </FormCard>
       <details open={!!first} className="group grid gap-4 rounded-xl border p-4 [&>summary]:list-none">
         <summary className="cursor-pointer text-sm font-medium">{t("courses.firstDate")}</summary>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
           <div className="grid content-start gap-2">
             <Label htmlFor="c-start">{t("courses.start")}</Label>
             <DateInput id="c-start" name="starts_at" type="datetime-local" defaultValue={first?.start ?? ""} />

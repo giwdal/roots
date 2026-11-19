@@ -33,7 +33,7 @@ export function PositionRows({ initial, locations }: { initial: PositionRow[]; l
   return (
     <div ref={box} className="grid gap-2">
       {rows.length > 0 && (
-        <ul className="grid divide-y rounded-xl border">
+        <ul className="grid max-w-2xl divide-y rounded-xl border">
           {rows.map((r) => (
             <li key={r.key} className="grid grid-cols-[minmax(0,1fr)_5rem_auto] items-center gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,11rem)_auto]">
               <input type="hidden" name="pos_id" value={r.id ?? ""} />

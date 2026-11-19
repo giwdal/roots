@@ -10,6 +10,7 @@ import { Page, PageHeader } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
 import { AddLink, RowGroup } from "@/components/section"
 import { TimeInput } from "@/components/time-input"
+import { TitleTip } from "@/components/info-tip"
 import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
 import { Input } from "@/components/ui/input"
@@ -76,7 +77,7 @@ export default async function ShiftSettings({ searchParams }: PageProps<"/shifts
         </form>
       </section>
 
-      <RowGroup id="series" title={t("shifts.seriesTitle")} description={t("shifts.seriesHint")}>
+      <RowGroup id="series" title={<TitleTip tip={t("shifts.seriesHint")}>{t("shifts.seriesTitle")}</TitleTip>}>
         {(series ?? []).map((s) => (
           <Link key={s.id} href={withParams(sp, { edit: s.id, new: undefined })} scroll={false} className={ROW}>
             <span className="grid min-w-0 flex-1">
@@ -123,7 +124,7 @@ export default async function ShiftSettings({ searchParams }: PageProps<"/shifts
                 <Choice id="se-pos" name="position" label={t("shifts.position")} defaultValue={editing?.position_id} options={(positions ?? []).map((p) => ({ value: p.id, label: p.name }))} />
               </div>
             )}
-            <div className="grid gap-2">
+            <div className="grid max-w-xl gap-2">
               <Label htmlFor="se-name">{t("shifts.titleLabel")}</Label>
               <Input id="se-name" name="name" defaultValue={editing?.name ?? ""} maxLength={100} placeholder={t("shifts.seriesNamePlaceholder")} />
             </div>
@@ -152,7 +153,7 @@ export default async function ShiftSettings({ searchParams }: PageProps<"/shifts
               </div>
               <p className="text-xs text-muted-foreground">{t("shifts.overnightHint")}</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-wrap gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="se-sd">{t("shifts.startDate")}</Label>
                 <DateInput id="se-sd" name="start_date" type="date" required defaultValue={editing?.start_date ?? new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })} />
@@ -162,18 +163,20 @@ export default async function ShiftSettings({ searchParams }: PageProps<"/shifts
                 <DateInput id="se-ed" name="end_date" type="date" defaultValue={editing?.end_date ?? ""} />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="se-needed">{t("shifts.needed")}</Label>
-              <TypedInput kind="number" id="se-needed" name="needed" min={1} max={100} step={1} defaultValue={editing?.needed ?? 1} />
-            </div>
-            {(locations?.length ?? 0) > 0 && (
-              <div className="grid gap-2">
-                <Label htmlFor="se-loc">{t("shifts.location")}</Label>
-                <Choice id="se-loc" name="location" label={t("shifts.location")} defaultValue={editing?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+            <div className="flex flex-wrap gap-4">
+              <div className="grid content-start gap-2">
+                <Label htmlFor="se-needed">{t("shifts.needed")}</Label>
+                <TypedInput kind="number" id="se-needed" name="needed" min={1} max={100} step={1} defaultValue={editing?.needed ?? 1} />
               </div>
-            )}
+              {(locations?.length ?? 0) > 0 && (
+                <div className="grid min-w-48 flex-1 content-start gap-2">
+                  <Label htmlFor="se-loc">{t("shifts.location")}</Label>
+                  <Choice id="se-loc" name="location" label={t("shifts.location")} defaultValue={editing?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+                </div>
+              )}
+            </div>
             {active.length > 0 && (
-              <div className="grid gap-2">
+              <div className="grid max-w-xl gap-2">
                 <Label htmlFor="se-staff">{t("shifts.fixedPeople")}</Label>
                 <MultiSelect id="se-staff" name="default_staff" options={active.map((s) => ({ value: s.id, label: s.name }))} defaultValue={editing?.default_staff ?? []} placeholder={t("shifts.searchPerson")} />
                 <p className="text-xs text-muted-foreground">{t("shifts.fixedHint")}</p>

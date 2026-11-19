@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ClipboardCheckIcon, FolderKanbanIcon, RepeatIcon, Trash2Icon, UserPlusIcon } from "lucide-react"
+import { ClipboardCheckIcon, FolderKanbanIcon, RepeatIcon, Trash2Icon, UserMinusIcon, UserPlusIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { contactName } from "@/app/(app)/contacts/fields"
 import { ActionsMenu, MenuExport, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { Choice } from "@/components/choice"
@@ -82,16 +83,30 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
   const sheetOpen = !!editing || ["series", "date", "person"].includes(newParam ?? "")
   const location = (locations ?? []).find((l) => l.id === c.location_id)
 
-  const statusButton = (pid: string, status: "enrolled" | "cancelled", label: string) => (
-    <form action={setParticipantStatus}>
-      <input type="hidden" name="id" value={pid} />
-      <input type="hidden" name="course_id" value={id} />
-      <input type="hidden" name="status" value={status} />
-      <SubmitButton size="sm" variant={status === "cancelled" ? "ghost" : "outline"} className={status === "cancelled" ? "text-muted-foreground" : undefined} data-confirm={status === "cancelled" ? "courses.confirmRemove" : undefined}>
-        {label}
-      </SubmitButton>
-    </form>
-  )
+  // A row's one action: a quiet button from md, the row's ⋯ on phones (patterns §5); one hidden form serves both.
+  const statusButton = (pid: string, status: "enrolled" | "cancelled", label: string) => {
+    const form = `p-${pid}-${status}`
+    const confirm = status === "cancelled" ? "courses.confirmRemove" : undefined
+    return (
+      <>
+        <form id={form} action={setParticipantStatus} hidden>
+          <input type="hidden" name="id" value={pid} />
+          <input type="hidden" name="course_id" value={id} />
+          <input type="hidden" name="status" value={status} />
+        </form>
+        <SubmitButton form={form} size="sm" variant={status === "cancelled" ? "ghost" : "outline"} className={cn("max-md:hidden", status === "cancelled" && "text-muted-foreground")} data-confirm={confirm}>
+          {label}
+        </SubmitButton>
+        <span className="md:hidden">
+          <ActionsMenu>
+            <MenuSubmit form={form} icon={status === "cancelled" ? <UserMinusIcon /> : <UserPlusIcon />} confirm={confirm}>
+              {label}
+            </MenuSubmit>
+          </ActionsMenu>
+        </span>
+      </>
+    )
+  }
   const person = (p: (typeof enrolled)[number]) => (
     <span className="grid min-w-0 flex-1">
       {p.contacts ? (

@@ -2856,7 +2856,6 @@
     "newContact": "– Create a new person –",
     "newContactHint": "Or a new person: enter name and/or email, they are added as a contact.",
     "mandate": "SEPA direct debit mandate",
-    "mandateHint": "Optional. With IBAN and mandate date, dues can be collected by direct debit.",
     "accountHolder": "Account holder (if different)",
     "bicOptional": "BIC (optional)",
     "mandateRef": "Mandate reference",

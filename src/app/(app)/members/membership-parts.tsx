@@ -68,7 +68,7 @@ export function MembershipFields({ t, types, m, defs, optional }: { t: T; types:
           <p className="text-xs text-muted-foreground">{t("membership.paymentAuto")}</p>
         </div>
       </FormCard>
-      <FormCard id="mandate" title={t("membership.mandate")} description={t("membership.mandateHint")}>
+      <FormCard id="mandate" title={t("membership.mandate")}>
         <MandateFields t={t} m={m} />
       </FormCard>
       <FormCard id="more" title={defs.length ? t("membership.moreFields") : t("membership.note")}>

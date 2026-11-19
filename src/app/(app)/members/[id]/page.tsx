@@ -339,7 +339,6 @@ async function MembershipBody({ t, ctx, m, types, defs, sp, canManage }: { t: T;
         <UrlSheet params={["edit"]} title={t("membership.mandate")} compact>
           <form action={saveMembershipBank} className="grid gap-4">
             <input type="hidden" name="id" value={m.id} />
-            <p className="text-sm text-muted-foreground">{t("membership.mandateHint")}</p>
             <MandateFields t={t} m={m} />
             <SaveBar />
           </form>

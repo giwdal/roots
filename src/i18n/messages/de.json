@@ -2856,7 +2856,6 @@
     "newContact": "– Neue Person anlegen –",
     "newContactHint": "Oder neue Person: Name und/oder E-Mail eintragen, sie wird als Kontakt angelegt.",
     "mandate": "SEPA-Lastschriftmandat",
-    "mandateHint": "Optional. Mit IBAN und Mandatsdatum können Beiträge per Lastschrift eingezogen werden.",
     "accountHolder": "Kontoinhaber:in (falls abweichend)",
     "bicOptional": "BIC (optional)",
     "mandateRef": "Mandatsreferenz",

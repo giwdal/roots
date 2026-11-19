@@ -1,6 +1,7 @@
 import { FlaskConicalIcon } from "lucide-react"
 import { DateInput } from "@/components/date-input"
 import { EmailBodyField } from "@/components/email-body-field"
+import { TitleTip } from "@/components/info-tip"
 import { FormCard, RecordLayout } from "@/components/page"
 import { RecordPicker, type PickerOption } from "@/components/record-picker"
 import { SaveBar } from "@/components/save-bar"
@@ -45,7 +46,7 @@ export function CampaignForm({
       <RecordLayout
         aside={
           <>
-            <FormCard id="audience" title={t("email.audience")} description={reach == null ? t("email.audienceHint") : t("email.reach", { count: reach })}>
+            <FormCard id="audience" title={<TitleTip tip={t("email.audienceHint")}>{t("email.audience")}</TitleTip>} description={reach == null ? undefined : t("email.reach", { count: reach })}>
               <fieldset disabled={!editable} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label>{t("email.audienceTags")}</Label>

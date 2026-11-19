@@ -69,7 +69,7 @@ export default async function WikiPageView({ params, searchParams }: { params: P
   )
 
   return (
-    <div className="grid max-w-6xl min-w-0 gap-6">
+    <div className="grid min-w-0 gap-6">
       <PageHeader
         crumbs={[{ href: "/wiki", label: t("wiki.title") }, ...ancestors.map((p) => ({ href: `/wiki/${p.id}`, label: p.title })), { label: page.title }]}
         title={

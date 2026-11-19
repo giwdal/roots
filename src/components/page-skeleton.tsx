@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 // jumps: lists = toolbar + rows, records = identity + stats + main column and right rail (patterns.md §8).
 export function PageSkeleton() {
   return (
-    <div className="grid max-w-6xl gap-6" aria-busy="true">
+    <div className="grid min-w-0 gap-6" aria-busy="true">
       <div className="flex flex-wrap gap-2">
         <Skeleton className="h-(--control) w-full sm:w-64" />
         <Skeleton className="h-(--control) w-28" />
@@ -21,7 +21,7 @@ export function PageSkeleton() {
 
 export function RecordSkeleton() {
   return (
-    <div className="grid max-w-6xl gap-6" aria-busy="true">
+    <div className="grid min-w-0 gap-6" aria-busy="true">
       <div className="grid gap-2">
         <Skeleton className="h-7 w-56" />
         <Skeleton className="h-4 w-40" />

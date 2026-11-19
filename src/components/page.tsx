@@ -15,7 +15,8 @@ import { TopbarCrumbs } from "@/components/topbar-crumbs"
 // The App's page anatomy (see /style/app): <Page> sets one of three widths, <PageHeader> is the same header everywhere,
 // <RecordLayout> is a record page's two columns, <FormCard> groups fields by topic, <EmptyState> fills empty lists.
 
-const WIDTH = { list: "max-w-6xl", record: "max-w-6xl", form: "max-w-3xl" }
+// Every page fills the content area (user, 19 Nov: one consistent edge); `size` stays for callers and documents intent.
+const WIDTH = { list: "", record: "", form: "" }
 
 /** list = lists, boards, calendars · record = a record's page (content + details column) · form = forms, setup, new. */
 export function Page({ size = "list", className, children }: { size?: keyof typeof WIDTH; className?: string; children: React.ReactNode }) {

@@ -16,9 +16,9 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     items: g.sections.map((s) => ({ href: `/settings/${s.key}`, label: t.dynamic(`settings.tabs.${s.key}`) })),
   }))
   return (
-    <div className="grid max-w-5xl gap-6 md:grid-cols-[auto_1fr]">
+    <div className="grid gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
       <SectionNav label={t("shell.settings")} groups={groups} className="max-md:hidden" />
-      <div className="grid max-w-3xl min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
         <SettingsTitle />
         {children}
       </div>

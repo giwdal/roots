@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ListIcon, Trash2Icon } from "lucide-react"
+import { ListIcon } from "lucide-react"
 import { Notice } from "@/components/notice"
-import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { PageHeader } from "@/components/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,7 @@ import { param } from "@/lib/url"
 import { trashWorkflow } from "../actions"
 import { WorkflowEditor, type EditorOptions } from "./editor"
 
-// One workflow on the canvas (desktop works best; phones can view and switch it on/off).
+// One workflow on the canvas (desktop works best; phones can view, edit steps in a sheet and switch it on/off).
 // Every field the org's forms ask for, as answer fields of a submission ("submission.answers.<key>"): label from
 // the form, kind from the field; consents by their text; the mandate only as masked IBAN. Same field in several
 // forms = one entry naming the forms.
@@ -115,29 +114,20 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
         crumbs={[{ href: "/automations", label: t("automations.title") }, { label: wf.name }]}
         title={wf.name}
         titleHidden={canEdit}
-        badge={<Badge variant={wf.active ? "success" : "secondary"}>{t(wf.active ? "automations.on" : "automations.off")}</Badge>}
+        badge={!canEdit && <Badge variant={wf.active ? "success" : "secondary"}>{t(wf.active ? "automations.on" : "automations.off")}</Badge>}
         actions={
           <Button render={<Link href={`/automations/${id}/runs`} />} nativeButton={false} size="sm" variant="outline">
             <ListIcon /> {t("automations.runs")}
           </Button>
         }
-        menu={
-          canEdit && (
-            <ActionsMenu>
-              <MenuSubmit form="trash-workflow" icon={<Trash2Icon />} destructive>
-                {t("automations.toTrash")}
-              </MenuSubmit>
-            </ActionsMenu>
-          )
-        }
       />
+      {/* Posted by "In den Papierkorb" in the editor's ⋯ menu. */}
       {canEdit && (
         <form id="trash-workflow" action={trashWorkflow} hidden>
           <input type="hidden" name="id" value={id} />
         </form>
       )}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      {wf.active && canEdit && <p className="text-sm text-muted-foreground">{t("automations.activeHint")}</p>}
       <WorkflowEditor id={id} name={wf.name} description={wf.description ?? ""} graph={graph} options={options} canEdit={canEdit} active={wf.active} />
     </div>
   )

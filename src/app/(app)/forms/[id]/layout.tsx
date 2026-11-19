@@ -5,7 +5,7 @@ import { requirePerm } from "@/lib/context"
 export default async function FormLayout({ children }: LayoutProps<"/forms/[id]">) {
   const ctx = await requirePerm("forms.view")
   if (!ctx.modules.has("forms")) notFound()
-  return <div className="grid max-w-6xl gap-6">{children}</div>
+  return <div className="grid min-w-0 gap-6">{children}</div>
 }
 
 export const instant = false

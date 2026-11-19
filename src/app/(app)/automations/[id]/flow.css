@@ -1,18 +1,37 @@
-/* The automations canvas (@xyflow/react) in the App's theme: controls, mini map and attribution follow the tokens in
+/* The automations canvas (@xyflow/react) in the App's theme: connectors, controls and selection follow the tokens in
    light and dark instead of xyflow's white defaults. */
 .react-flow {
   --xy-background-color: transparent;
+  --xy-edge-stroke: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  --xy-edge-stroke-selected: var(--ring);
+  --xy-edge-stroke-width: 1.5;
+  --xy-connectionline-stroke: var(--ring);
   --xy-controls-button-background-color: var(--card);
   --xy-controls-button-background-color-hover: var(--muted);
-  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-color: var(--muted-foreground);
   --xy-controls-button-color-hover: var(--foreground);
   --xy-controls-button-border-color: var(--border);
-  --xy-controls-box-shadow: 0 0 0 1px var(--border);
-  --xy-minimap-background-color: var(--card);
-  --xy-minimap-mask-background-color: color-mix(in oklch, var(--background) 60%, transparent);
-  --xy-minimap-node-background-color: var(--muted);
+  --xy-controls-box-shadow: none;
+  --xy-node-boxshadow-selected: none;
   --xy-attribution-background-color: transparent;
 }
-.react-flow__attribution a {
-  color: var(--muted-foreground);
+/* Cards draw their own selection ring. */
+.react-flow__node.selected,
+.react-flow__node:focus-visible {
+  outline: none;
+}
+/* Small, rounded zoom controls (one group) in the canvas corner. */
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.react-flow__controls-button {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-bottom: 0;
+}
+.react-flow__controls-button + .react-flow__controls-button {
+  border-left: 1px solid var(--border);
 }

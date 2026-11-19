@@ -102,7 +102,7 @@ export function SaveBar({ label, always, confirm }: { label?: string; always?: b
     <div
       role="region"
       aria-label={t("common.unsaved")}
-      data-slot={target ? "save-bar" : undefined}
+      data-slot={target ? "save-bar" : "sheet-save-bar"}
       className={
         target
           ? "sticky bottom-0 max-md:bottom-(--keyboard) z-20 mt-auto border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"

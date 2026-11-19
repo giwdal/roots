@@ -82,7 +82,8 @@ export function UrlSheet({
         </div>
       }
     >
-      <div className="grid flex-1 content-start gap-6 px-6 pt-6 pb-8">{children}</div>
+      {/* With a SaveBar the bar is the end of the dialog (no empty space under its buttons). */}
+      <div className="grid flex-1 content-start gap-6 px-6 pt-6 pb-8 has-[[data-slot=sheet-save-bar]]:pb-0">{children}</div>
     </ContentSheet>
   )
 }

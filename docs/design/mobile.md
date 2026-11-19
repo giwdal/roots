@@ -65,6 +65,9 @@ One shared way, so pages don't build two UIs (`usePhone()` in `src/lib/use-phone
 
 ## 3. Screens
 
+- **Phone list rows carry at most three things** (user, 19 Nov): the title, one muted line (status badge + the
+  one fact that decides the next tap, e.g. who rents it / since when), and one short value on the right (amount with
+  its unit stacked underneath). Kind, deposit, secondary dates stay on desktop and on the record.
 - **Lists**: `<DataTable>` cards — whole card tappable (≥ 56 px high), title + status badge on line 1, one muted line
   (date/amount) on line 2, chevron right. Toolbar: search field full width, then the `<Segments>` view switch full width (every
   view visible, equal parts), filter buttons wrapping below — nothing scrolls sideways or gets cut off (user, 19 Nov). Pagination as "Mehr laden" at the end.

@@ -7073,7 +7073,10 @@
       "contactExists": "Diese E-Mail gehört schon zu einem Kontakt – bitte „Kontakt aus dem CRM“ wählen.",
       "invoice": "Rechnung erstellen",
       "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse.",
-      "quantity": "Anzahl"
+      "quantity": "Anzahl",
+      "doneOpen": "Eine offene Bestellung kann noch nicht erledigt sein – erst nach dem Zahlungseingang.",
+      "doneOpenHint": "Erst wenn bezahlt ist: Die Bestellung bleibt offen, bis das Geld da ist. Danach auf der Bestellung als erledigt markieren.",
+      "invoiceFree": "Kostenlose Bestellungen bekommen keine Rechnung."
     },
     "payFilter": {
       "open": "Noch zu bezahlen",

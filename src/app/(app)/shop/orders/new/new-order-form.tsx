@@ -38,12 +38,17 @@ export function NewOrderForm({ currency, initialItem }: { currency: string; init
   const [paid, setPaid] = useState<"cash" | "transfer" | "">("cash")
   const [openHow, setOpenHow] = useState<"pickup" | "transfer">("pickup")
   const [invoice, setInvoice] = useState<boolean | null>(null) // null = follow the default (a buyer with an address)
+  const [doneWish, setDone] = useState(true)
   const [loading, start] = useTransition()
   const set = (k: keyof Buyer) => (e: React.ChangeEvent<HTMLInputElement>) => setBuyer({ ...buyer, [k]: e.target.value })
   const qty = (l: Line) => Math.max(1, Math.min(1000, Math.trunc(Number(l.q)) || 1))
   const total = lines.reduce((s, l) => s + (l.item ? qty(l) * (moneyCents(l.price) ?? 0) : 0), 0)
   const withBuyer = mode !== "none" && (mode === "new" || !!contact)
-  const wantInvoice = invoice ?? (withBuyer && !!buyer.street && !!buyer.city)
+  // Free orders never get an invoice; an open order can't be "erledigt" yet (completed once the money came).
+  const free = total === 0 && lines.some((l) => l.item)
+  const wantInvoice = !free && (invoice ?? (withBuyer && !!buyer.street && !!buyer.city))
+  const canDone = !!paid || free
+  const done = canDone && doneWish
   const how = delivery === "pickup" ? openHow : "transfer"
   const update = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((x) => (x.key === key ? { ...x, ...patch } : x)))
   const field = (k: keyof Buyer, label: string, props: Omit<React.ComponentProps<typeof Input>, "kind"> = {}) => (
@@ -173,15 +178,18 @@ export function NewOrderForm({ currency, initialItem }: { currency: string; init
             </SegmentGroup>
           </div>
         )}
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="done" value="1" defaultChecked className="size-4 accent-primary" />
-          {t("store.teamOrder.done")}
+        <label className="flex items-start gap-2 text-sm has-disabled:text-muted-foreground">
+          <input type="checkbox" name="done" value="1" checked={done} disabled={!canDone} onChange={(e) => setDone(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
+          <span>
+            {t("store.teamOrder.done")}
+            {!canDone && <span className="block text-xs text-muted-foreground">{t("store.teamOrder.doneOpenHint")}</span>}
+          </span>
         </label>
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" checked={wantInvoice} onChange={(e) => setInvoice(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
+        <label className="flex items-start gap-2 text-sm has-disabled:text-muted-foreground">
+          <input type="checkbox" checked={wantInvoice} disabled={free} onChange={(e) => setInvoice(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
           <span>
             {t("store.teamOrder.invoice")}
-            <span className="block text-xs text-muted-foreground">{t("store.teamOrder.invoiceHint")}</span>
+            <span className="block text-xs text-muted-foreground">{t(free ? "store.teamOrder.invoiceFree" : "store.teamOrder.invoiceHint")}</span>
           </span>
         </label>
       </FormCard>

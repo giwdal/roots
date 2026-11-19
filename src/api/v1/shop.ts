@@ -431,7 +431,7 @@ export const endpoints: Endpoint[] = [
     permission: "shop.manage",
     tag: TAG,
     summary: "Enter an order (sold offline)",
-    description: "For orders that happened outside the shop (in person, by phone): any products/variants of the org (`items[].id` = variant id, or product id without variants) at the given gross price per piece. `paid` = cash/transfer marks it paid now; without it the order is open (`payment` transfer = with invoice, pickup = pay on pickup). `done` completes it. `contact_id` links a CRM contact. `notify` sends the buyer the usual confirmation mail. `invoice` issues an invoice (else none). The buyer is always a CRM contact or nobody (`buyer`). Stock and automatic invoices work as for shop orders.",
+    description: "For orders that happened outside the shop (in person, by phone): any products/variants of the org (`items[].id` = variant id, or product id without variants) at the given gross price per piece. `paid` = cash/transfer marks it paid now; without it the order is open (`payment` transfer = with invoice, pickup = pay on pickup). `done` completes it (handed over / sent), only together with `paid` or for a free order: an open order is completed after its payment (422 `done_open` otherwise). `contact_id` links a CRM contact. `notify` sends the buyer the usual confirmation mail. `invoice` issues an invoice (else none). The buyer is always a CRM contact or nobody (`buyer`). Stock and automatic invoices work as for shop orders.",
     body: z
       .object({
         items: z.array(z.object({ id: uuid, quantity: z.number().int().min(1).max(1000), price_cents: z.number().int().min(0) })).min(1).max(30),

@@ -155,4 +155,8 @@ test("team order: lines, buyer, delivery address, paid vs open", () => {
   assert.equal(readTeamOrder(g({ ...base, delivery: "shipping" })).error, "store.teamOrder.addressRequired")
   const open = readTeamOrder(g({ ...base, delivery: "shipping", paid: "", street: "A 1", postal_code: "10115", city: "Berlin", shipping: "4,90" })).order
   assert.deepEqual([open.paid, open.payment, open.shipping_cents], [null, "transfer", 490])
+  // Erledigt only with the money: an open order can't be completed, a paid or free one can.
+  assert.equal(readTeamOrder(g({ ...base, paid: "", done: "1" })).error, "store.teamOrder.doneOpen")
+  assert.equal(readTeamOrder(g({ ...base, done: "1" })).order.done, true)
+  assert.equal(readTeamOrder(g({ ...base, paid: "", done: "1", lines: JSON.stringify([{ id: V, q: 1, p: 0 }]) })).order.done, true)
 })

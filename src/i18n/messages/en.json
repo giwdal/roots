@@ -7073,7 +7073,10 @@
       "contactExists": "This email already belongs to a contact – please choose “Contact from the CRM”.",
       "invoice": "Issue an invoice",
       "invoiceHint": "Private buyers don't need an invoice – the sale is recorded either way. Up to €250 a simplified invoice without an address is fine.",
-      "quantity": "Quantity"
+      "quantity": "Quantity",
+      "doneOpen": "An open order can't be done yet – only once it is paid.",
+      "doneOpenHint": "Only once it's paid: the order stays open until the money arrives. Then mark it done on the order.",
+      "invoiceFree": "Free orders get no invoice."
     },
     "payFilter": {
       "open": "Still to pay",

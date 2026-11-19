@@ -5,6 +5,7 @@ import { Toolbar } from "@base-ui/react/toolbar"
 import Image from "@tiptap/extension-image"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import { Placeholder } from "@tiptap/extensions"
 import {
   BoldIcon,
   BracesIcon,
@@ -35,6 +36,7 @@ export function RichTextEditor({
   name,
   defaultValue = "",
   placeholders,
+  placeholder,
   disabled,
   className,
   id,
@@ -43,6 +45,7 @@ export function RichTextEditor({
   name: string
   defaultValue?: string
   placeholders?: string[]
+  placeholder?: string // muted hint while empty ("Beschreibung hinzufügen …")
   disabled?: boolean
   className?: string
   id?: string
@@ -51,14 +54,14 @@ export function RichTextEditor({
   const t = useT()
   const [html, setHtml] = useState(defaultValue)
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false, autolink: true } }), Image],
+    extensions: [StarterKit.configure({ link: { openOnClick: false, autolink: true } }), Image, ...(placeholder ? [Placeholder.configure({ placeholder })] : [])],
     content: defaultValue,
     editable: !disabled,
     immediatelyRender: false, // server render: the editor mounts on the client
     editorProps: {
       attributes: {
         ...(id ? { id } : {}),
-        class: "prose-sm min-h-48 px-3 py-2 outline-none [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
+        class: "prose-sm min-h-48 px-3 py-2 outline-none [&_.is-empty]:before:pointer-events-none [&_.is-empty]:before:float-left [&_.is-empty]:before:h-0 [&_.is-empty]:before:text-muted-foreground [&_.is-empty]:before:content-[attr(data-placeholder)] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
       },
     },
     onUpdate: ({ editor }) => {

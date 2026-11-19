@@ -118,19 +118,6 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
       <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-1">{properties}</aside>
       <div className="grid min-w-0 content-start gap-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-        <Section id="description" title={t("projects.description")}>
-          {canManage ? (
-            <AutosaveForm action={patchProject} className="grid gap-1">
-              <input type="hidden" name="id" value={p.id} />
-              <input type="hidden" name="field" value="description" />
-              <RichTextEditor name="value" defaultValue={p.description} className="[&_.ProseMirror]:min-h-24" />
-            </AutosaveForm>
-          ) : p.description ? (
-            <RichTextEditor name="description" defaultValue={p.description} disabled className="border-transparent [&_[role=toolbar]]:hidden" />
-          ) : (
-            <p className="text-sm text-muted-foreground">–</p>
-          )}
-        </Section>
         <Section
           id="tasks"
           title={t("projects.openTasks", { count: open.length })}
@@ -202,6 +189,20 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         </Section>
       </div>
       <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-2">
+        {/* The description is context, not the work: under the properties, the editor's toolbar only while editing. */}
+        <Section id="description" title={t("projects.description")}>
+          {canManage ? (
+            <AutosaveForm action={patchProject} className="grid gap-1">
+              <input type="hidden" name="id" value={p.id} />
+              <input type="hidden" name="field" value="description" />
+              <RichTextEditor name="value" defaultValue={p.description} placeholder={t("projects.descriptionPlaceholder")} className="border-transparent shadow-none hover:border-input focus-within:border-input dark:bg-transparent [&:not(:focus-within)_[role=toolbar]]:hidden [&_.ProseMirror]:min-h-16" />
+            </AutosaveForm>
+          ) : p.description ? (
+            <RichTextEditor name="description" defaultValue={p.description} disabled className="border-transparent [&_[role=toolbar]]:hidden" />
+          ) : (
+            <p className="text-sm text-muted-foreground">–</p>
+          )}
+        </Section>
         <Section
           id="links"
           title={t("projects.links")}

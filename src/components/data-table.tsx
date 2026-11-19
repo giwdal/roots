@@ -171,15 +171,19 @@ export const pageRange = (page: number) => [(page - 1) * PAGE_SIZE, page * PAGE_
 export { SearchBox } from "./search-box"
 
 /**
- * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: search full width, then
- * one row with the view switch (<Segments>, every view visible) and the filters as icon buttons next to it; nothing
- * scrolls or gets cut off. From md: one wrapping row; give a view switch `className="ml-auto"` to put it on the right.
+ * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: the search field with the
+ * filters as icon buttons beside it, the view switch below (every view visible); nothing scrolls or gets cut off. From md: one wrapping row; give a view switch `className="ml-auto"` to put it on the right.
  */
 export function ListToolbar({ search, children }: { search?: React.ReactNode; children?: React.ReactNode }) {
+  // Phones: the search field with the filters as icon buttons beside it (one row), the view switch (<Segments>) as
+  // its own full-width row below; without a search field the switch and the filter icons share one row.
+  const seg = "[&>[data-slot=segments]]:min-w-0 [&>:has([data-slot=segments])]:min-w-0"
+  const phoneWithSearch = "max-md:has-[[role=search]]:[&>[data-slot=segments]]:order-last max-md:has-[[role=search]]:[&>[data-slot=segments]]:basis-full max-md:has-[[role=search]]:[&>:has([data-slot=segments])]:order-last max-md:has-[[role=search]]:[&>:has([data-slot=segments])]:basis-full"
+  const phoneNoSearch = "max-md:[&>[data-slot=segments]]:flex-1 max-md:[&>:has([data-slot=segments])]:flex-1"
   return (
-    <div className="grid min-w-0 gap-2 md:flex md:flex-wrap md:items-center md:gap-3">
-      {search}
-      {children && <div className="group/tools relative flex flex-wrap items-center gap-2 md:contents max-md:[&>:has([data-slot=segments])]:order-first max-md:[&>:has([data-slot=segments])]:min-w-0 max-md:[&>:has([data-slot=segments])]:flex-1 max-md:[&>[data-slot=segments]]:order-first max-md:[&>[data-slot=segments]]:min-w-0 max-md:[&>[data-slot=segments]]:flex-1">{children}</div>}
+    <div data-slot="list-toolbar" className={cn("relative flex min-w-0 flex-wrap items-center gap-2 md:gap-3", seg, phoneNoSearch, phoneWithSearch)}>
+      {search && <div className="min-w-0 flex-1 md:max-w-xs md:flex-none md:basis-xs">{search}</div>}
+      {children}
     </div>
   )
 }

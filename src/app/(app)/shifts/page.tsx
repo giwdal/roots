@@ -63,13 +63,11 @@ export default async function ShiftPlan({ searchParams }: PageProps<"/shifts">) 
     ? q.eq("event_id", eventId)
     : q.gte("starts_at", fromLocalInput(`${addDays(focus, -42)}T00:00`)!.toISOString()).lt("starts_at", fromLocalInput(`${addDays(focus, 49)}T00:00`)!.toISOString())
   if (locationId) q = q.eq("location_id", locationId)
-  const [{ data: shifts }, { data: staff }, { data: positions }, { data: locations }, { data: events }, { data: picked }] = await Promise.all([
+  const [{ data: shifts }, { data: staff }, { data: positions }, { data: locations }, { data: picked }] = await Promise.all([
     q,
     ctx.supabase.from("staff").select("id, name").eq("org_id", ctx.org.id).eq("active", true).order("name"),
     ctx.supabase.from("positions").select("id, name").eq("org_id", ctx.org.id).order("position").order("name"),
     ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name"),
-    // The event filter offers recent and coming events; the shift form searches all of them.
-    ctx.supabase.from("events").select("id, title, starts_at").eq("org_id", ctx.org.id).is("deleted_at", null).gte("starts_at", new Date(new Date().getTime() - 30 * 86_400_000).toISOString()).order("starts_at").limit(100),
     eventId ? ctx.supabase.from("events").select("id, title, starts_at").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
   ])
   // Check-in/out of a shift = its time entry per person.
@@ -123,12 +121,11 @@ export default async function ShiftPlan({ searchParams }: PageProps<"/shifts">) 
       />
       <Notice error={!editing && !creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
       <ListToolbar>
-        {event ? (
+        {/* No event filter here (user, 19 Nov); coming from an event ("Schichten planen") shows it as a chip to clear. */}
+        {event && (
           <Button render={<Link href={`/shifts${withParams(sp, { event: undefined, edit: undefined, new: undefined })}`} aria-label={`${event.title} – ${t("common.clear")}`} />} nativeButton={false} size="sm" variant="secondary">
             {event.title} <XIcon />
           </Button>
-        ) : (
-          !!events?.length && <FilterMenu param="event" label={t("shifts.event")} allLabel={t("shifts.allEvents")} options={events.map((e) => ({ value: e.id, label: `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}` }))} />
         )}
         {(locations?.length ?? 0) > 0 && <FilterMenu param="location" label={t("shifts.location")} allLabel={t("shifts.allLocations")} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />}
         {ctx.can("shifts.self") && <PlanViews t={t} current="plan" />}

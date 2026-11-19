@@ -103,14 +103,15 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
               <Input id="ev-address" name="venue_address" defaultValue={ev?.venue_address ?? ""} maxLength={500} autoComplete="off" />
             </div>
           </div>
+          {/* How many fit belongs to the place. */}
+          <div className="grid gap-2 sm:max-w-48">
+            <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
+            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} className="w-full" />
+          </div>
         </FormCard>
 
         <FormCard id="about" title={t("eventsPage.description")}>
           <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} />
-          <div className="grid gap-2">
-            <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
-            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
-          </div>
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 

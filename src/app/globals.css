@@ -139,9 +139,12 @@
     body:not(:has([data-slot="save-bar"], [data-own-tab-bar])) & {
       display: none;
     }
-    body:has([data-slot="topbar-back"]) & {
-      display: none;
-    }
+  }
+}
+/* Deeper pages: the back chevron is the way out, no menu button beside it (own rule: a utility keeps one nested rule). */
+@media (max-width: 767.98px) {
+  body:has([data-slot="topbar-back"]) .bar-fallback {
+    display: none;
   }
 }
 

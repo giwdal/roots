@@ -673,6 +673,7 @@
     },
     "setupTitle": "So richtet ihr {name} ein",
     "costs": {
+      "onlyTickets": "Gilt nur für Tickets. Im Shop gibt es keine Servicegebühr: dort kann auch per Überweisung bezahlt werden, und ein Aufschlag nur für die Online-Zahlung wäre nicht erlaubt (§ 270a BGB).",
       "title": "Kosten für Ticketverkauf weitergeben",
       "passOn": "Servicegebühr auf jede bezahlte Online-Ticketbestellung aufschlagen",
       "percent": "Prozent",
@@ -2722,6 +2723,8 @@
     "overnightHint": "Ein Ende vor dem Beginn geht bis zum nächsten Tag."
   },
   "locations": {
+    "saved": "Ort gespeichert.",
+    "deleted": "Ort gelöscht.",
     "title": "Ort",
     "intro": "Orte deiner Organisation – eigener Club, Café, externe Locations. Events und Schichten können einem Ort zugeordnet werden.",
     "name": "Name",

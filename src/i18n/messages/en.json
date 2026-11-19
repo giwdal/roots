@@ -673,6 +673,7 @@
     },
     "setupTitle": "How to set up {name}",
     "costs": {
+      "onlyTickets": "Applies to tickets only. The shop adds no service fee: buyers can also pay by bank transfer there, and a surcharge for online payment alone isn't allowed (§ 270a BGB).",
       "title": "Pass ticket sales costs on",
       "passOn": "Add a service fee to every paid online ticket order",
       "percent": "Percent",
@@ -2722,6 +2723,8 @@
     "overnightHint": "An end before the start runs into the next day."
   },
   "locations": {
+    "saved": "Place saved.",
+    "deleted": "Place deleted.",
     "title": "Location",
     "intro": "Your organisation's locations – own club, café, external venues. Events and shifts can be assigned to a location.",
     "name": "Name",

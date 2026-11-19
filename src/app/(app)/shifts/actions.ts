@@ -229,29 +229,6 @@ export async function selfAction(fd: FormData) {
   back(here, { ok: t.dynamic(`shifts.self.${action}`) })
 }
 
-// --- Locations (core settings) ------------------------------------------------------------------
-export async function saveLocation(fd: FormData) {
-  const ctx = await requirePerm("org.settings.manage")
-  const t = await getT()
-  const locId = id(fd, "id")
-  const name = str(fd, "name", 100)
-  if (!name) back("/settings/locations", { error: t("errors.invalid_input") })
-  const row = { name, address: str(fd, "address", 500), notes: str(fd, "notes", 2000) }
-  const { error } = locId
-    ? await ctx.supabase.from("locations").update(row).eq("id", locId).eq("org_id", ctx.org.id)
-    : await ctx.supabase.from("locations").insert({ ...row, org_id: ctx.org.id })
-  if (error) back("/settings/locations", { error: dbError(t, error) })
-  back("/settings/locations", { ok: t("shifts.saved") })
-}
-
-export async function deleteLocation(fd: FormData) {
-  const ctx = await requirePerm("org.settings.manage")
-  const t = await getT()
-  const { error } = await ctx.supabase.from("locations").delete().eq("id", String(fd.get("id"))).eq("org_id", ctx.org.id)
-  if (error) back("/settings/locations", { error: dbError(t, error) })
-  back("/settings/locations", { ok: t("shifts.deleted") })
-}
-
 // Calendar drag & drop: move a shift (same duration or resized). Returns an error text instead of redirecting.
 export async function moveShift(shiftId: string, start: string, end: string): Promise<{ error?: string }> {
   const ctx = await requirePerm("shifts.manage")

@@ -6,7 +6,7 @@ import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { param } from "@/lib/url"
-import { deleteLocation, saveLocation } from "../../shifts/actions"
+import { deleteLocation, saveLocation } from "./actions"
 
 // Places of the org (own club, external venues, café…), used by events and shift planning.
 export default async function LocationsSettings({ searchParams }: PageProps<"/settings/locations">) {

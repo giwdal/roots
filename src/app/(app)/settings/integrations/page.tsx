@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { Link2Icon } from "lucide-react"
+import { LinkRows } from "@/components/link-rows"
 import { Notice } from "@/components/notice"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
@@ -114,6 +116,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                         </SubmitButton>
                       </div>
                       <p className="text-xs text-muted-foreground">{t.dynamic(`integrations.costs.hint.${i.key}`)}</p>
+                      {ctx.modules.has("shop") && <p className="text-xs text-muted-foreground">{t("integrations.costs.onlyTickets")}</p>}
                     </form>
                   </details>
                 )}
@@ -130,8 +133,9 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                   </p>
                 )}
                 <div className="mt-auto flex flex-wrap gap-2">
+                  {/* One outline button per card (no primaries on this page): the next step for its state. Ways to
+                      connect (several accounts kinds, an API key) are chosen in the connect sheet. */}
                   {i.connect ? (
-                    // Linked: no connect buttons, only what fits the state (finish setup / check / disconnect).
                     row?.status === "connected" ? null : row?.status === "pending" ? (
                       <>
                         <Button
@@ -145,6 +149,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                           }
                           nativeButton={false}
                           size="sm"
+                          variant="outline"
                         >
                           {t("integrations.continueSetup")}
                         </Button>
@@ -156,35 +161,17 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                           </form>
                         )}
                       </>
+                    ) : (i.connect.modes ?? []).length > 1 || i.fields ? (
+                      <Button render={<Link href={`?connect=${i.key}`} scroll={false} />} nativeButton={false} size="sm" variant="outline">
+                        {t("integrations.connect")}
+                      </Button>
                     ) : (
-                      <>
-                        {(i.connect.modes ?? ["default"]).map((mode, n) => (
-                          <Button
-                            key={mode}
-                            render={<a href={`/api/integrations/${i.key}/connect?mode=${mode}`} />}
-                            nativeButton={false}
-                            size="sm"
-                            variant={n === 0 ? "default" : "outline"}
-                          >
-                            {t.has(`integrations.${i.key}.modes.${mode}`)
-                              ? t.dynamic(`integrations.${i.key}.modes.${mode}`)
-                              : t("integrations.connect")}
-                          </Button>
-                        ))}
-                        {i.fields && (
-                          <Button
-                            render={<Link href={`?connect=${i.key}`} scroll={false} />}
-                            nativeButton={false}
-                            size="sm"
-                            variant="outline"
-                          >
-                            {t.dynamic(`integrations.${i.key}.keyButton`)}
-                          </Button>
-                        )}
-                      </>
+                      <Button render={<a href={`/api/integrations/${i.key}/connect?mode=${i.connect.modes?.[0] ?? "default"}`} />} nativeButton={false} size="sm" variant="outline">
+                        {t("integrations.connect")}
+                      </Button>
                     )
                   ) : (
-                    <Button render={<Link href={`?connect=${i.key}`} scroll={false} />} nativeButton={false} size="sm">
+                    <Button render={<Link href={`?connect=${i.key}`} scroll={false} />} nativeButton={false} size="sm" variant="outline">
                       {row ? t("integrations.edit") : t("integrations.connect")}
                     </Button>
                   )}
@@ -204,13 +191,28 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
 
       <NotificationsSection sp={sp} />
 
-      {connecting?.fields && (
+      {connecting && (connecting.fields || (connecting.connect?.modes ?? []).length > 1) && !(connecting.connect && current) && (
         <UrlSheet
           params={["connect"]}
           title={t("integrations.connectTitle", { name: connecting.name })}
           description={t.dynamic(`integrations.${connecting.key}.description`)}
         >
+          {connecting.connect && (
+            // Account-linking ways (OAuth, a new account …): one row each; an API key below as the alternative.
+            <div className="grid gap-2">
+              <LinkRows
+                rows={(connecting.connect.modes ?? ["default"]).map((mode) => ({
+                  key: mode,
+                  icon: Link2Icon,
+                  href: `/api/integrations/${connecting.key}/connect?mode=${mode}`,
+                  title: t.has(`integrations.${connecting.key}.modes.${mode}`) ? t.dynamic(`integrations.${connecting.key}.modes.${mode}`) : t("integrations.connect"),
+                }))}
+              />
+            </div>
+          )}
+          {connecting.fields && (
           <form action={connectIntegration.bind(null, connecting.key)} className="grid gap-4">
+            {connecting.connect && <h3 className="pt-2 text-sm font-medium">{t.dynamic(`integrations.${connecting.key}.keyButton`)}</h3>}
             <Notice error={param(sp, "error")} />
             {t.has(`integrations.${connecting.key}.setup`) && (
               // One step per line in integrations.<key>.setup: what to do at the provider before pasting anything here.
@@ -231,12 +233,14 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
                   <Input
                     id={`f-${f.key}`}
                     name={f.key}
-                    // Not type="password": browsers would offer (and autofill) the login password into API key fields.
+                    // Not type="password": browsers would offer (and autofill) the login password into API key fields;
+                    // secrets are masked with CSS instead.
                     type="text"
                     autoComplete="off"
                     spellCheck={false}
                     data-1p-ignore
                     data-lpignore="true"
+                    className={f.secret ? "[-webkit-text-security:disc]" : undefined}
                     placeholder={f.secret && current?.secret_id ? t("integrations.secretSaved") : f.placeholder}
                     defaultValue={f.secret ? undefined : fieldValue(current?.config as Record<string, unknown> | undefined, f.key)}
                     required={f.secret && !current?.secret_id}
@@ -247,6 +251,7 @@ export default async function IntegrationsSettings({ searchParams }: PageProps<"
             })}
             <SaveBar label={t("common.save")} always />
           </form>
+          )}
         </UrlSheet>
       )}
     </div>

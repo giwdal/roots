@@ -6,6 +6,12 @@ import { emailConfigured } from "@/events/channels/email"
 import { eventTypes, personChannels } from "@/events/registry"
 import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
+import { areaOfModule, NAV } from "@/modules/nav"
+
+const order = (k: string) => {
+  const i = NAV.findIndex((a) => a.key === k)
+  return i < 0 ? NAV.length + (k === "org" ? 0 : 1) : i
+}
 
 // Du › Benachrichtigungen: per kind of event and channel, a switch that saves on flip. Only events this person can be
 // told about (module on, permission held); grouped by area. The org's webhooks / Telegram live in Integrationen.
@@ -20,8 +26,14 @@ export default async function NotificationSettings() {
       (!e.audience.permission || ctx.can(e.audience.permission)),
   )
   const isOn = (type: string, channel: string, defaults: string[]) => prefs?.find((p) => p.event_type === type && p.channel === channel)?.enabled ?? defaults.includes(channel)
-  const groups = [...new Set(types.map((e) => e.module))].map((m) => ({ module: m, types: types.filter((e) => e.module === m) }))
-  const groupLabel = (m: string) => (m === "org" ? t("general.org") : m === "platform" ? t("admin.title") : t.dynamic(`modules.${m}.name`))
+  // Grouped by the sidebar's areas (Events, Shop, Finanzen …), in sidebar order; org / platform events after them.
+  const groupOf = (m: string) => (m === "org" || m === "platform" ? m : (areaOfModule(m)?.key ?? m))
+  const keys = [...new Set(types.map((e) => groupOf(e.module)))].sort((a, b) => order(a) - order(b))
+  const groups = keys.map((k) => ({ module: k, types: types.filter((e) => groupOf(e.module) === k) }))
+  const groupLabel = (k: string) => {
+    const area = NAV.find((a) => a.key === k)
+    return k === "org" ? t("general.org") : k === "platform" ? t("admin.title") : area ? t.dynamic(area.label) : t.dynamic(`modules.${k}.name`)
+  }
 
   return (
     <div className="grid gap-8">

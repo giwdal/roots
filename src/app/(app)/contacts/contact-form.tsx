@@ -16,7 +16,7 @@ type Contact = Tables<"contacts">
 // The contact's fields, grouped in cards: /contacts/new and the details of /contacts/[id].
 function Field({ id, label, ...props }: { id: string; label: string } & React.ComponentProps<typeof Input>) {
   return (
-    <div className="grid gap-2">
+    <div className="grid max-w-xl content-start gap-2">
       <Label htmlFor={id}>{label}</Label>
       <Input id={id} {...props} />
     </div>
@@ -30,7 +30,7 @@ export function ContactForm({ t, action, c, disabled, defs, tags }: { t: T; acti
       {c && <input type="hidden" name="id" value={c.id} />}
       <fieldset disabled={disabled} className="grid gap-6">
         <FormCard id="person" title={t("contacts.person")} description={t("contacts.personHint")}>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-xl gap-4 sm:grid-cols-2">
             <Field id="c-first" name="first_name" label={t("contacts.firstName")} defaultValue={c?.first_name ?? ""} maxLength={100} autoComplete="off" />
             <Field id="c-last" name="last_name" label={t("contacts.lastName")} defaultValue={c?.last_name ?? ""} maxLength={100} autoComplete="off" />
           </div>
@@ -42,7 +42,7 @@ export function ContactForm({ t, action, c, disabled, defs, tags }: { t: T; acti
         </FormCard>
 
         <FormCard id="reach" title={t("contacts.reach")}>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <div className="grid content-start gap-2">
               <Label htmlFor="c-email">{t("contacts.email")}</Label>
               <TypedInput kind="email" id="c-email" name="email" defaultValue={c?.email ?? ""} autoComplete="off" />
@@ -56,7 +56,7 @@ export function ContactForm({ t, action, c, disabled, defs, tags }: { t: T; acti
 
         <FormCard id="address" title={t("contacts.address")}>
           <Field id="c-street" name="street" label={t("contacts.street")} defaultValue={c?.street ?? ""} maxLength={200} autoComplete="off" />
-          <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4">
+          <div className="grid max-w-xl grid-cols-[7rem_minmax(0,1fr)] gap-4">
             <div className="grid content-start gap-2">
               <Label htmlFor="c-zip">{t("contacts.postalCode")}</Label>
               <TypedInput kind="postcode" id="c-zip" name="postal_code" defaultValue={c?.postal_code ?? ""} country={c?.country} autoComplete="off" />
@@ -70,7 +70,7 @@ export function ContactForm({ t, action, c, disabled, defs, tags }: { t: T; acti
         </FormCard>
 
         <FormCard id="more" title={t("contacts.more")}>
-          <div className="grid gap-2">
+          <div className="grid max-w-xl gap-2">
             <Label htmlFor="c-tags">{t("contacts.tags")}</Label>
             <TagSelect id="c-tags" name="tags" options={tags} defaultValue={c?.tags ?? []} creatable disabled={disabled} />
             <p id="c-tags-help" className="text-xs text-muted-foreground">

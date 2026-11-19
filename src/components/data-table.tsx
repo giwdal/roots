@@ -171,15 +171,15 @@ export const pageRange = (page: number) => [(page - 1) * PAGE_SIZE, page * PAGE_
 export { SearchBox } from "./search-box"
 
 /**
- * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: search full width, the
- * view switch (<Segments>) full width below it with every view visible, the filter buttons wrap underneath — nothing
+ * A list's toolbar: the <SearchBox> and then filters / <Segments> / view switches. Phones: search full width, then
+ * one row with the view switch (<Segments>, every view visible) and the filters as icon buttons next to it; nothing
  * scrolls or gets cut off. From md: one wrapping row; give a view switch `className="ml-auto"` to put it on the right.
  */
 export function ListToolbar({ search, children }: { search?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="grid min-w-0 gap-2 md:flex md:flex-wrap md:items-center md:gap-3">
       {search}
-      {children && <div className="relative flex flex-wrap items-center gap-2 md:contents max-md:[&>:has([data-slot=segments])]:order-first max-md:[&>:has([data-slot=segments])]:w-full max-md:[&>[data-slot=segments]]:order-first">{children}</div>}
+      {children && <div className="group/tools relative flex flex-wrap items-center gap-2 md:contents max-md:[&>:has([data-slot=segments])]:order-first max-md:[&>:has([data-slot=segments])]:min-w-0 max-md:[&>:has([data-slot=segments])]:flex-1 max-md:[&>[data-slot=segments]]:order-first max-md:[&>[data-slot=segments]]:min-w-0 max-md:[&>[data-slot=segments]]:flex-1">{children}</div>}
     </div>
   )
 }

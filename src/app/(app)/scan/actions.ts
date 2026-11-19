@@ -11,6 +11,9 @@ import { qrSvg } from "@/tickets/server"
 
 export type ScanResult = { result: "ok" | "used" | "invalid" | "error"; holder?: string | null; type?: string | null; at?: string | null; message?: string; member?: MemberAtDoor }
 
+const scanError = (t: Awaited<ReturnType<typeof getT>>, e: { message?: string } | null) =>
+  e?.message === "not_allowed" || e?.message === "event_cancelled" ? t.dynamic(`errors.${e.message}`) : t("tickets.scanFailed")
+
 // Called by the scanner page for every code (camera or typed).
 export async function checkIn(eventId: string, code: string): Promise<ScanResult> {
   const ctx = await requirePerm("tickets.scan")
@@ -24,25 +27,27 @@ export async function checkIn(eventId: string, code: string): Promise<ScanResult
       const m = await memberDoor(ctx.supabase, eventId, { code: clean }, false)
       return m.result === "invalid" ? { result: "invalid" } : { result: "ok", member: m }
     } catch (e) {
-      return { result: "error", message: (e as { message?: string }).message === "not_allowed" ? t("errors.not_allowed") : t("tickets.scanFailed") }
+      return { result: "error", message: scanError(t, e as { message?: string }) }
     }
   }
   if (members && isMemberCode(clean)) return member()
   const { data, error } = await ctx.supabase.rpc("check_in_ticket", { p_event: eventId, p_code: clean }).maybeSingle()
-  if (error || !data) return { result: "error", message: error?.message === "not_allowed" ? t("errors.not_allowed") : t("tickets.scanFailed") }
+  // A cancelled event is "invalid", not "error": offline check-ins then sync as conflicts instead of retrying forever.
+  if (error?.message === "event_cancelled") return { result: "invalid", message: t("errors.event_cancelled") }
+  if (error || !data) return { result: "error", message: scanError(t, error) }
   if (data.result === "invalid" && members) return member()
   return { result: data.result as ScanResult["result"], holder: data.holder_name, type: data.type_name, at: data.checked_in_at }
 }
 
 /** Let a looked-up member in (scanner card button). */
-export async function admitMember(eventId: string, contactId: string): Promise<MemberAtDoor | { result: "error"; message: string }> {
+export async function admitMember(eventId: string, contactId: string): Promise<MemberAtDoor | { result: "error"; message: string; cancelled?: boolean }> {
   const ctx = await requirePerm("tickets.scan")
   const t = await getT()
   if (!/^[0-9a-f-]{36}$/.test(eventId) || !/^[0-9a-f-]{36}$/.test(contactId)) return { result: "invalid" }
   try {
     return await memberDoor(ctx.supabase, eventId, { contactId }, true)
-  } catch {
-    return { result: "error", message: t("tickets.scanFailed") }
+  } catch (e) {
+    return { result: "error", message: scanError(t, e as { message?: string }), cancelled: (e as { message?: string }).message === "event_cancelled" }
   }
 }
 
@@ -82,8 +87,8 @@ export async function syncCheckIns(eventId: string, codes: string[]): Promise<{ 
     if (code.startsWith("member:")) {
       const m = await admitMember(eventId, code.slice(7))
       if (m.result === "ok") synced++
-      else if (m.result === "error") throw new Error(m.message)
-      else conflicts.push(m.name ?? code)
+      else if (m.result === "error" && !m.cancelled) throw new Error(m.message)
+      else conflicts.push(("name" in m && m.name) || code)
       continue
     }
     const r = await checkIn(eventId, code)

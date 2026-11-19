@@ -390,6 +390,20 @@ begin
     select result into v_res from public.check_in_ticket(v_ev, v_code);        assert v_res = 'used', 'second scan says used';
     select result into v_res from public.check_in_ticket(v_ev, 'ZZZZZZZZZZ');  assert v_res = 'invalid', 'unknown code invalid';
     reset role;
+    -- a cancelled event lets nobody in (B1): the other ticket of the order is still valid
+    declare v_was text;
+    begin
+      select status into v_was from public.events where id = v_ev;
+      update public.events set status = 'cancelled' where id = v_ev;
+      select code into v_code from public.tickets where order_id = v_order and status = 'valid';
+      set local role authenticated;
+      begin
+        perform public.check_in_ticket(v_ev, v_code);
+        assert false, 'checked in at a cancelled event';
+      exception when raise_exception then assert sqlerrm = 'event_cancelled', 'cancelled event: ' || sqlerrm; end;
+      reset role;
+      update public.events set status = v_was where id = v_ev;
+    end;
     -- Tiers: Early (1 left) → Regular; codes: -50 %, max 1 use, unlocks the hidden Crew type
     declare v_vip uuid; v_crew uuid; v_order2 uuid; v_price int; v_tier text;
     begin
@@ -1002,7 +1016,7 @@ begin
   end;
 
   -- Guest lists of an event get their own hidden ticket type; every entry a ticket (QR, counts against capacity)
-  declare v_ev uuid; v_list uuid; v_type uuid; v_active boolean;
+  declare v_ev uuid; v_list uuid; v_type uuid; v_active boolean; v_entry uuid; v_code text; v_res text;
   begin
     insert into public.org_modules (org_id, module_key) values (org_a, 'guestlists') on conflict do nothing;
     insert into public.events (org_id, title, slug, starts_at) values (org_a, 'GL Party', 'gl-party', now() + interval '3 days') returning id into v_ev;
@@ -1015,6 +1029,17 @@ begin
     select count(*) into n from public.tickets where type_id = v_type and status = 'valid';  assert n = 1, 'each guest gets a ticket';
     update public.guest_lists set name = 'Crew' where id = v_list;
     select count(*) into n from public.ticket_types where id = v_type and name = 'Gästeliste: Crew';  assert n = 1, 'renaming the list renames its type';
+
+    -- One admission per guest (#32): checking in by name uses up the QR ticket, a scan records the name check-in
+    select k.guest_entry_id, k.code into v_entry, v_code from public.tickets k where k.type_id = v_type and k.status = 'valid';
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.guest_checkins (org_id, entry_id, event_id) values (org_a, v_entry, v_ev);
+    select result into v_res from public.check_in_ticket(v_ev, v_code);  assert v_res = 'used', 'scan after name check-in: ' || v_res;
+    delete from public.guest_checkins where entry_id = v_entry and event_id = v_ev;
+    select result into v_res from public.check_in_ticket(v_ev, v_code);  assert v_res = 'ok', 'undo makes the ticket valid again: ' || v_res;
+    select count(*) into n from public.guest_checkins where entry_id = v_entry and event_id = v_ev;  assert n = 1, 'a scan records the guest check-in';
+    reset role;
   end;
 
   -- Assistant: chats and AI keys are private to their person (not even teammates in the same org see them)
@@ -1194,6 +1219,92 @@ begin
     reset role;
   end;
 
+  -- Contacts merge: everything of D moves to K, D goes to the trash, chosen fields come from D; guards hold
+  declare v_k uuid; v_d uuid; v_x uuid; v_f uuid; v_z uuid; v_type uuid; v_doc uuid; v_m uuid; v_wf uuid; v_runs int; v_row record; v_course uuid; v_obj uuid; v_rent uuid;
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.contacts (org_id, first_name, last_name, email, tags) values (org_a, 'Anna', 'Muster', 'k@merge.test', '{a}') returning id into v_k;
+    insert into public.contacts (org_id, first_name, last_name, email, tags, unsubscribed_at) values (org_a, ' anna', 'muster  ', 'd@merge.test', '{A,b}', now()) returning id into v_d;
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'X', 'x@merge.test') returning id into v_x;
+    select count(*) into n from public.contact_duplicates(org_a) where a_id = least(v_k, v_d) and b_id = greatest(v_k, v_d);
+    assert n = 1, 'duplicates by name (case, spaces)';
+    insert into public.contact_notes (org_id, contact_id, body) values (org_a, v_k, 'K'), (org_a, v_d, 'D');
+    v_type := (select id from public.membership_types where org_id = org_a limit 1);
+    insert into public.memberships (org_id, contact_id, type_id, starts_on, ends_on) values (org_a, v_d, v_type, '2022-01-01', '2022-12-31') returning id into v_m;
+    insert into public.memberships (org_id, contact_id, type_id, starts_on, ends_on) values (org_a, v_x, v_type, '2022-06-01', '2022-08-31');
+    insert into public.documents (org_id, kind, contact_id, recipient_name, recipient_address, service_from)
+      values (org_a, 'invoice', v_d, 'Anna D', 'Str. 1\n12345 Ort', current_date) returning id into v_doc;
+    insert into public.document_items (org_id, document_id, position, title, unit, unit_price, tax_rate) values (org_a, v_doc, 0, 'Leistung', 'hour', 5000, 19);
+    perform public.issue_document(v_doc);
+    insert into public.workflows (org_id, name, active, trigger_type, graph) values (org_a, 'Merge', true, 'record:memberships:update', '{"nodes": [], "edges": []}') returning id into v_wf;
+    -- Same person twice in a full course (D has the place, Z and then K wait) and on one rental (D main tenant, K member)
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'Z', 'z@merge.test') returning id into v_z;
+    insert into public.courses (org_id, title, capacity) values (org_a, 'Merge-Kurs', 1) returning id into v_course;
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_d);
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_z); -- waits longer than K
+    insert into public.course_participants (org_id, course_id, contact_id) values (org_a, v_course, v_k);
+    insert into public.rental_objects (org_id, kind, name, rentable) values (org_a, 'room', 'Merge-Raum', true) returning id into v_obj;
+    insert into public.rentals (org_id, object_id, starts_at) values (org_a, v_obj, '2027-01-01') returning id into v_rent;
+    insert into public.rental_contacts (org_id, rental_id, contact_id, role) values (org_a, v_rent, v_d, 'main'), (org_a, v_rent, v_k, 'member');
+    reset role;
+    update public.contacts set member_code = 'ABCDEFGHJKLM' where id = v_d;
+    insert into public.contacts (org_id, email) values (org_b, 'f@merge.test') returning id into v_f;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.merge_contacts(v_x, v_d);
+      assert false, 'overlapping memberships must stop the merge';
+    exception when raise_exception then assert sqlerrm = 'membership_overlap', 'overlap: ' || sqlerrm; end;
+    begin
+      perform public.merge_contacts(v_k, v_k);
+      assert false, 'merge with itself';
+    exception when raise_exception then assert sqlerrm = 'merge_same', 'same: ' || sqlerrm; end;
+    begin
+      perform public.merge_contacts(v_k, v_f);
+      assert false, 'merge with a contact of another org';
+    exception when raise_exception then assert sqlerrm = 'merge_not_found', 'foreign: ' || sqlerrm; end;
+    reset role;
+    select deleted_at is null as live, (select count(*) from public.contact_notes where contact_id = v_d) as notes into v_row from public.contacts where id = v_d;
+    assert v_row.live and v_row.notes = 1, 'a failed merge changes nothing';
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.merge_contacts(v_k, v_d);
+      assert false, 'B must not merge contacts of A';
+    exception when raise_exception then assert sqlerrm = 'not_allowed', 'B: ' || sqlerrm; end;
+    select count(*) into n from public.contact_duplicates(org_a);               assert n = 0, 'B sees duplicates of A';
+    reset role;
+    select count(*) into v_runs from public.workflow_runs where workflow_id = v_wf;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    assert public.merge_contacts(v_k, v_d, '{email,member_code}', 'Zusammengeführt') = v_k, 'merge returns the kept contact';
+    reset role;
+    select count(*) into n from public.contact_notes where contact_id = v_k;    assert n = 3, 'notes moved + merge note';
+    select count(*) into n from public.memberships where id = v_m and contact_id = v_k; assert n = 1, 'membership moved';
+    select * into v_row from public.contacts where id = v_d;
+    assert v_row.deleted_at is not null and v_row.member_code is null and v_row.email = 'd@merge.test', 'dropped contact in the trash, card code freed';
+    select * into v_row from public.contacts where id = v_k;
+    assert v_row.email = 'd@merge.test' and v_row.member_code = 'ABCDEFGHJKLM', 'taken email + card code';
+    assert v_row.tags = '{a,b}', 'tags united: ' || v_row.tags::text;
+    assert v_row.unsubscribed_at is not null and v_row.first_name = 'Anna', 'opt-out wins, untaken fields stay';
+    select * into v_row from public.documents where id = v_doc;
+    assert v_row.contact_id = v_k and v_row.recipient_name = 'Anna D', 'issued invoice moves, recipient frozen';
+    select count(*) into n from public.workflow_runs where workflow_id = v_wf;  assert n = v_runs, 'merge starts no workflow runs';
+    select count(*) into n from public.contact_duplicates(org_a) where v_k in (a_id, b_id); assert n = 0, 'merged pair is no duplicate any more';
+    select count(*) into n from public.course_participants where course_id = v_course and contact_id = v_k and status = 'enrolled'; assert n = 1, 'merge keeps the better course place';
+    select count(*) into n from public.course_participants where course_id = v_course and contact_id = v_z and status = 'waiting'; assert n = 1, 'merge moves nobody else up';
+    select count(*) into n from public.hub_events where org_id = org_a and type = 'course.moved_up' and payload->>'contact_id' = v_z::text; assert n = 0, 'merge mails nobody a course place';
+    select count(*) into n from public.rental_contacts where rental_id = v_rent and contact_id = v_k and role = 'main'; assert n = 1, 'merge keeps the main tenant';
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      update public.documents set contact_id = v_x where id = v_doc;
+      assert false, 'issued invoice link stays frozen outside a merge';
+    exception when raise_exception then null; end;
+    reset role;
+  end;
+
   -- API keys: the service role gets org rights only with a live key of that org (x-api-key-hash + x-org-id),
   -- only for the key's permissions that its creator (A, owner) still has; never owner rights.
   reset role;
@@ -1274,6 +1385,10 @@ begin
   exception when insufficient_privilege then null;
   end;
   reset role;
+
+  -- contact search over custom values: text and numbers only, nothing for a non-object
+  assert public.custom_text('{"nr":"TA-90","n":7,"ok":true}') = '7 TA-90', 'custom_text keeps text + numbers, drops booleans';
+  assert public.custom_text('[]') is null and public.custom_text('{"ok":true}') is null, 'custom_text: nothing to search';
 
   raise exception 'isolation: all checks passed';
 end $$;

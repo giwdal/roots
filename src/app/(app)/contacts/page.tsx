@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { ContactImportBody } from "./import/body"
 import { UrlSheet } from "@/components/url-sheet"
 import { notFound, redirect } from "next/navigation"
@@ -46,7 +47,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
   query = trash
     ? query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
     : query.is("deleted_at", null).order("last_name", { nullsFirst: false }).order("first_name").order("company")
-  if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email", "phone", "city"])
+  if (q) query = matchWords(query, q, CONTACT_SEARCH)
   if (tag) query = query.contains("tags", [tag])
   const [{ data }, { data: tagRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id })])
   const rows = data?.slice(0, PAGE_SIZE) ?? []

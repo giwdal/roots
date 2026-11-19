@@ -1,6 +1,7 @@
 "use server"
 
 import { getT } from "@/i18n/server"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { getContext } from "@/lib/context"
 import { APP_HOME } from "@/lib/url"
 import { visibleNav } from "@/modules/nav"
@@ -52,7 +53,7 @@ export async function searchApp(input: string): Promise<SearchGroup[]> {
   const day = (v: string | null) => (v ? t.date(v, { dateStyle: "medium" }) : undefined)
   const [contacts, members, events, docs, forms, campaigns, mailTemplates, files, templates, wiki, projects, tasks, objects, products, shopOrders, guestLists, employees, courses, workflows, staff, payments] = await Promise.all([
     on("crm", "crm.view")
-      ? matchWords(db.from("contacts").select("id, first_name, last_name, company, email").eq("org_id", org).is("deleted_at", null), q, ["first_name", "last_name", "company", "email", "phone", "city"]).limit(PER_GROUP)
+      ? matchWords(db.from("contacts").select("id, first_name, last_name, company, email").eq("org_id", org).is("deleted_at", null), q, CONTACT_SEARCH).limit(PER_GROUP)
       : none,
     on("members", "members.view")
       ? matchWords(db.from("memberships").select("id, member_no, contacts!inner(first_name, last_name, company)").eq("org_id", org).is("deleted_at", null), q, ["first_name", "last_name", "company"], { referencedTable: "contacts" }).limit(PER_GROUP)

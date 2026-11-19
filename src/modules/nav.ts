@@ -40,6 +40,7 @@ export const NAV: Area[] = [
     icon: ContactIcon,
     children: [
       { href: "/contacts", label: "contacts.nav", module: "crm", permission: "crm.view" },
+      { href: "/contacts/duplicates", label: "contacts.duplicates.nav", module: "crm", permission: "crm.view" },
     ],
   },
   {

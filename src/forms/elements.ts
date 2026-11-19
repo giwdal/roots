@@ -68,6 +68,9 @@ export type Submission = {
  * Raw form values → submission, or an errors.* key (+ the field's label for the message).
  * Only fields the form contains are read; required = the element's flag.
  */
+// browser checkboxes post "on"; the API docs say "1"
+const checked = (v: string) => ["on", "1", "true"].includes(v.trim().toLowerCase())
+
 export function readSubmission(
   els: Element[],
   get: (key: string) => string,
@@ -95,14 +98,14 @@ export function readSubmission(
       const bic = get("bic").toUpperCase().replace(/\s/g, "")
       if (!ibanValid(iban)) return { error: "errors.invalid_iban" }
       if (bic && !/^[A-Z0-9]{8}([A-Z0-9]{3})?$/.test(bic)) return { error: "errors.invalid_bic" }
-      if (get("mandate_ok") !== "on") return { error: "errors.mandate_required" }
+      if (!checked(get("mandate_ok"))) return { error: "errors.mandate_required" }
       Object.assign(membership, { iban, bic: bic || null, account_holder: get("account_holder").trim().slice(0, 70) || null })
     }
   }
   const consents: Submission["consents"] = []
   for (const e of els)
     if (e.kind === "consent") {
-      const accepted = get(`consent.${e.id}`) === "on"
+      const accepted = checked(get(`consent.${e.id}`))
       if (e.required && !accepted) return { error: "errors.consent_required", field: e.label }
       consents.push({ label: e.label, accepted })
     }

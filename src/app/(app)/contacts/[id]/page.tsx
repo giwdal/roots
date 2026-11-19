@@ -11,6 +11,7 @@ import {
   KeyRoundIcon,
   ListChecksIcon,
   MailIcon,
+  MergeIcon,
   PencilIcon,
   PhoneIcon,
   ReceiptTextIcon,
@@ -118,7 +119,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   // guest-list entries don't point at contacts: the contact's email links them (same rule as Zahlungen › ?contact=).
   // Shift team + HR record: by contact, else by the contact's linked account (both are org members' records).
   const byAccount = !staff?.length && c.user_id
-  const [{ data: team }, { data: linkedElsewhere }, { data: payments }, { data: mails }, { data: guests }, { data: staffOfUser }, { data: employeeOfUser }] = await Promise.all([
+  // Same first + last name = possible duplicate (managers can merge it); % and _ are literal here.
+  const like = (v: string) => v.trim().replace(/[\\%_]/g, "\\$&")
+  const [{ data: team }, { data: linkedElsewhere }, { data: payments }, { data: mails }, { data: guests }, { data: staffOfUser }, { data: employeeOfUser }, { data: sameName }] = await Promise.all([
     canManage || c.user_id ? ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id) : Promise.resolve({ data: [] }),
     canManage ? ctx.supabase.from("contacts").select("user_id").eq("org_id", ctx.org.id).not("user_id", "is", null).is("deleted_at", null) : Promise.resolve({ data: [] }),
     on("payments", "payments.view") && email
@@ -132,6 +135,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
       : none,
     byAccount && on("shifts", "shifts.manage") ? ctx.supabase.from("staff").select("id, name, active, role_label, employees(id, job_title, deleted_at)").eq("org_id", ctx.org.id).eq("user_id", c.user_id!).limit(1) : none,
     c.user_id && on("hr", "hr.view") ? ctx.supabase.from("employees").select("id, job_title, name").eq("org_id", ctx.org.id).eq("user_id", c.user_id).is("deleted_at", null).limit(1) : none,
+    canManage && !c.deleted_at && c.first_name?.trim() && c.last_name?.trim()
+      ? ctx.supabase.from("contacts").select("id, first_name, last_name, company, email").eq("org_id", ctx.org.id).is("deleted_at", null).neq("id", c.id).ilike("first_name", like(c.first_name)).ilike("last_name", like(c.last_name)).limit(3)
+      : none,
   ])
   const { data: people } = team?.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", team.map((m) => m.user_id)) : { data: [] }
   const linked = people?.find((p) => p.id === c.user_id)
@@ -262,6 +268,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
               )}
               {canManage && (
                 <>
+                  <MenuLink href={`/contacts/${c.id}/merge`} icon={<MergeIcon />}>
+                    {t("contacts.merge.action")}
+                  </MenuLink>
                   <MenuSeparator />
                   <MenuSubmit form="trash-contact" icon={<Trash2Icon />} destructive>
                     {t("contacts.toTrash")}
@@ -295,6 +304,11 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         <RecordLayout
           aside={
             <>
+              {!!sameName?.length && (
+                <Section id="duplicate" title={t("contacts.merge.duplicate")}>
+                  <LinkRows rows={sameName.map((o) => ({ key: o.id, href: `/contacts/${c.id}/merge?with=${o.id}`, icon: MergeIcon, title: contactName(o), detail: o.email ?? "", badge: t("contacts.duplicates.merge") }))} />
+                </Section>
+              )}
               {(linked || canManage) && (
                 <Section id="team" title={<TitleTip tip={t("contacts.team.hint")}>{t("contacts.team.title")}</TitleTip>}>
                   {linked ? (

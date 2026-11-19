@@ -7,7 +7,7 @@ import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
 import { back } from "@/lib/url"
 import type { ImportOutcome } from "@/components/csv-import"
-import { importContactRows, uniqueError } from "@/contacts/server"
+import { importContactRows, mergeContacts, uniqueError } from "@/contacts/server"
 import { fromForm, parseTags, readContact } from "./fields"
 import type { TablesUpdate } from "@/lib/supabase/types"
 
@@ -179,4 +179,15 @@ export async function bulkContacts(fd: FormData) {
   const results = await Promise.all(changes.map((c) => ctx.supabase.from("contacts").update({ tags: c.tags }).eq("id", c.id).eq("org_id", ctx.org.id)))
   const failed = results.find((r) => r.error)?.error
   back(to, failed ? { error: dbError(t, failed) } : { ok: t("common.bulkDone", { count: changes.length }) })
+}
+
+// Merge form (/contacts/<id>/merge): `id` stays, `drop` goes; every `take.<field>` = "drop" takes that field from it.
+export async function mergeContact(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const drop = String(fd.get("drop") ?? "")
+  const take = [...fd.entries()].filter(([k, v]) => k.startsWith("take.") && v === "drop").map(([k]) => k.slice(5))
+  const r = await mergeContacts(ctx.supabase, ctx.org.id, { keepId: id, dropId: drop, take }, t)
+  if ("error" in r) back(`${PATH}/${id}/merge?with=${encodeURIComponent(drop)}`, { error: r.error })
+  back(`${PATH}/${id}`, { ok: t("contacts.merge.done") })
 }

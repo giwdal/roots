@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { contactSearch } from "@/contacts/search"
 import { deliverSoon } from "@/events/worker"
 import { messages } from "@/i18n/config"
 import { createT } from "@/i18n/translate"
@@ -296,7 +297,7 @@ export const endpoints: Endpoint[] = [
     summary: "List memberships",
     query: page.extend({
       status: z.enum(["active", "ended", "all"]).default("all"),
-      q: z.string().max(100).optional().describe("Search in the member's name, company, email"),
+      q: z.string().max(100).optional().describe("Search in the member's name, company, email, phone, city and custom field values"),
       contact_id: uuid.optional(),
       type_id: uuid.optional(),
       updated_since: z.iso.datetime({ offset: true }).optional(),
@@ -317,7 +318,7 @@ export const endpoints: Endpoint[] = [
       if (query.contact_id) q = q.eq("contact_id", query.contact_id)
       if (query.type_id) q = q.eq("type_id", query.type_id)
       if (query.updated_since) q = q.gte("updated_at", query.updated_since)
-      if (s) q = q.or(["first_name", "last_name", "company", "email"].map((c) => `${c}.ilike.%${s}%`).join(","), { referencedTable: "contacts" })
+      if (s) q = q.or(contactSearch(s), { referencedTable: "contacts" })
       const { data } = await q
       return paged(((data ?? []) as unknown as MembershipRow[]).map(membershipOut), query)
     },
@@ -499,7 +500,7 @@ export const endpoints: Endpoint[] = [
     tag: "Members",
     summary: "Member check-in at the door",
     description:
-      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). Needs the members and tickets modules.",
+      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). A cancelled event lets nobody in: `admit` fails with 422 `event_cancelled`. Needs the members and tickets modules.",
     body: z.object({ code: z.string().max(40).optional(), contact_id: uuid.optional(), admit: z.boolean().optional() }).strict(),
     response: z.object({
       result: z.enum(["invalid", "not_member", "member", "ok", "already"]),

@@ -1,6 +1,7 @@
 import { z } from "zod"
+import { contactSearch } from "@/contacts/search"
 import { readContact } from "@/app/(app)/contacts/fields"
-import { importContactRows } from "@/contacts/server"
+import { importContactRows, mergeContacts } from "@/contacts/server"
 import { deliverSoon } from "@/events/worker"
 import { messages } from "@/i18n/config"
 import { createT } from "@/i18n/translate"
@@ -100,7 +101,7 @@ export const endpoints: Endpoint[] = [
     tag: "Contacts",
     summary: "List contacts",
     query: page.extend({
-      q: z.string().max(100).optional().describe("Search in name, company, email, phone, city"),
+      q: z.string().max(100).optional().describe("Search in name, company, email, phone, city and custom field values"),
       tag: z.string().max(40).optional(),
       email: z.string().max(320).optional().describe("Exact email"),
       updated_since: z.iso.datetime({ offset: true }).optional().describe("For syncing: changed after this time"),
@@ -109,7 +110,7 @@ export const endpoints: Endpoint[] = [
     async handler({ db, orgId, query }) {
       let q = db.from("contacts").select(CONTACT_COLS).eq("org_id", orgId).is("deleted_at", null).order("created_at").range(query.offset, query.offset + query.limit)
       const s = query.q?.replace(/[%,()*]/g, "").trim()
-      if (s) q = q.or(["first_name", "last_name", "company", "email", "phone", "city"].map((c) => `${c}.ilike.%${s}%`).join(","))
+      if (s) q = q.or(contactSearch(s))
       if (query.tag) q = q.contains("tags", [query.tag])
       if (query.email) q = q.eq("email", query.email.trim().toLowerCase())
       if (query.updated_since) q = q.gte("updated_at", query.updated_since)
@@ -136,6 +137,25 @@ export const endpoints: Endpoint[] = [
         .order("deleted_at", { ascending: false })
         .range(query.offset, query.offset + query.limit)
       return paged(data as (Record<string, unknown> & { deleted_at: string })[] | null, query)
+    },
+  }),
+  endpoint({
+    method: "GET",
+    path: "/contacts/duplicates",
+    permission: "crm.view",
+    tag: "Contacts",
+    summary: "List possible duplicate contacts",
+    description:
+      "Pairs of live contacts with the same first and last name (case and spaces ignored; email is unique per org anyway). Nothing is merged automatically: decide per pair, then POST /contacts/{id}/merge.",
+    query: page,
+    response: list(z.object({ a: Contact, b: Contact })),
+    async handler({ db, orgId, query }) {
+      const { data: pairs, error } = await db.rpc("contact_duplicates", { p_org: orgId, p_limit: query.limit + 1, p_offset: query.offset })
+      if (error) throw coreDbError(error)
+      const ids = [...new Set((pairs ?? []).flatMap((p) => [p.a_id, p.b_id]))]
+      const { data: rows } = ids.length ? await db.from("contacts").select(CONTACT_COLS).eq("org_id", orgId).in("id", ids) : { data: [] }
+      const byId = new Map((rows ?? []).map((c) => [c.id, c]))
+      return paged((pairs ?? []).filter((p) => byId.has(p.a_id) && byId.has(p.b_id)).map((p) => ({ a: byId.get(p.a_id)!, b: byId.get(p.b_id)! })), query)
     },
   }),
   endpoint({
@@ -243,6 +263,28 @@ export const endpoints: Endpoint[] = [
     async handler({ db, orgId, params }) {
       await trashRow(db, "public.contacts", params.id, true)
       const { data } = await db.from("contacts").select(CONTACT_COLS).eq("id", params.id).eq("org_id", orgId).single()
+      return data
+    },
+  }),
+  endpoint({
+    method: "POST",
+    path: "/contacts/{id}/merge",
+    permission: "crm.manage",
+    tag: "Contacts",
+    summary: "Merge another contact into this one",
+    description:
+      "Two contacts of the same person become this one ({id}). Everything on `merge_id` moves here: memberships (needs members.manage), tickets, notes, files, invoices/quotes, form submissions, shop orders, cash book entries, email sends, automation runs, line-up artists, shift staff, project links, courses and rentals (a double place in the same course/rental is removed). Its portal logins end. Then `merge_id` goes to the trash (restorable for 30 days). `take` lists the fields whose value comes from `merge_id` (first_name, last_name, company, email, phone, address = street + postal code + city + country, birthday, member_code = the member card, user_id = the app login, custom.<key>); fields empty here are always filled from `merge_id`; all others keep this contact's value. Tags are united, an unsubscribe on either stays, a note records the merge. Issued invoices keep their printed recipient. Starts no automations, sends nothing. 409 if both have a membership in the same period.",
+    body: z.object({ merge_id: uuid.describe("The contact that goes away"), take: z.array(z.string().max(60)).max(60).default([]) }).strict(),
+    response: Contact,
+    async handler({ db, orgId, params, body }) {
+      const r = await mergeContacts(db, orgId, { keepId: params.id, dropId: body.merge_id, take: body.take }, en)
+      if ("error" in r) {
+        if (r.code === "merge_not_found") throw notFound()
+        if (r.code === "membership_overlap") throw new ApiError(409, "membership_overlap", "Both contacts have a membership in the same period: end one first.")
+        if (r.code === "merge_same" || r.code === "invalid_input") throw new ApiError(422, r.code, r.error)
+        throw coreDbError({ message: r.code ?? "", code: "P0001" })
+      }
+      const { data } = await db.from("contacts").select(CONTACT_COLS).eq("id", r.id).eq("org_id", orgId).single()
       return data
     },
   }),

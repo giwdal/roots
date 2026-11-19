@@ -1,4 +1,5 @@
 import { contactName, CONTACT_FIELDS } from "@/app/(app)/contacts/fields"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { notOver } from "@/rentals/fields"
 import type { getT } from "@/i18n/server"
 import type { getContext } from "@/lib/context"
@@ -170,7 +171,7 @@ export const EXPORTERS: Record<string, Exporter> = {
       const rows = await all((from, to) => {
         let query = ctx.supabase.from("contacts").select("*").eq("org_id", ctx.org.id).is("deleted_at", null).order("last_name").order("first_name").range(from, to)
         if (picked(sp).length) return query.in("id", picked(sp))
-        if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email", "phone", "city"])
+        if (q) query = matchWords(query, q, CONTACT_SEARCH)
         if (tag) query = query.contains("tags", [tag])
         return query
       })
@@ -201,7 +202,7 @@ export const EXPORTERS: Record<string, Exporter> = {
         if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
         if (status === "ended") query = query.lt("ends_on", now)
         if (type) query = query.eq("type_id", type)
-        if (q) query = matchWords(query, q, ["first_name", "last_name", "company", "email"], { referencedTable: "contacts" })
+        if (q) query = matchWords(query, q, CONTACT_SEARCH, { referencedTable: "contacts" })
         return query
       })
       const memberCols = MEMBER_FIELDS.map((f) => f.key)

@@ -821,6 +821,7 @@
     "not_signed_in": "Bitte melde dich zuerst an.",
     "owner_only": "Nur Inhaber können ändern, wer Inhaber ist.",
     "last_owner": "Eine Organisation braucht mindestens einen Inhaber.",
+    "event_cancelled": "Das Event ist abgesagt – kein Einlass.",
     "invite_invalid": "Diese Einladung ist ungültig oder abgelaufen.",
     "invite_wrong_email": "Diese Einladung ging an {detail}. Melde dich mit dieser E-Mail an, um sie anzunehmen.",
     "unknown_module": "Unbekanntes Modul.",
@@ -897,7 +898,9 @@
       "code": "Fehlercode: {code}"
     },
     "not_found": "Nicht gefunden.",
-    "stock_negative": "Das würde den Bestand unter null bringen."
+    "stock_negative": "Das würde den Bestand unter null bringen.",
+    "merge_same": "Ein Kontakt kann nicht mit sich selbst zusammengeführt werden.",
+    "merge_not_found": "Einer der beiden Kontakte wurde nicht gefunden (gelöscht oder aus einer anderen Organisation)."
   },
   "admin": {
     "title": "Plattform",
@@ -1622,7 +1625,58 @@
       "inactive": "Inaktiv"
     },
     "confirmDeleteNote": "Notiz löschen?",
-    "confirmDeleteNoteHint": "Die Notiz verschwindet aus dem Verlauf."
+    "confirmDeleteNoteHint": "Die Notiz verschwindet aus dem Verlauf.",
+    "merge": {
+      "title": "Zusammenführen",
+      "action": "Mit anderem Kontakt zusammenführen",
+      "pick": "Welcher Kontakt ist dieselbe Person?",
+      "next": "Weiter",
+      "swap": "Tauschen",
+      "into": "{drop} wird in {keep} übernommen. {drop} kommt danach in den Papierkorb.",
+      "choose": "Welcher Wert bleibt?",
+      "keepThis": "dieser Kontakt",
+      "takeOther": "anderer Kontakt",
+      "chooseHint": "Nur Felder, die bei beiden ausgefüllt sind und sich unterscheiden. Leere Felder füllt der andere Kontakt automatisch.",
+      "noChoice": "Keine widersprüchlichen Felder: leere Felder werden aus dem anderen Kontakt ergänzt.",
+      "address": "Adresse",
+      "memberCode": "Mitgliedskarte (QR)",
+      "userId": "App-Login",
+      "linked": "verknüpft",
+      "always": "Tags werden zusammengelegt; ist einer der beiden vom Newsletter abgemeldet, bleibt die Abmeldung.",
+      "moves": "Wird übertragen",
+      "nothingMoves": "Am anderen Kontakt hängt nichts.",
+      "cardWarning": "Beide haben eine Mitgliedskarte. Nur die gewählte bleibt gültig.",
+      "submit": "Zusammenführen",
+      "confirm": "Kontakte zusammenführen?",
+      "confirmHint": "Der andere Kontakt kommt in den Papierkorb, alles daran hängt danach an diesem.",
+      "done": "Kontakte zusammengeführt",
+      "note": "Zusammengeführt mit {name} ({email})",
+      "duplicate": "Mögliches Duplikat",
+      "duplicateHint": "Gleicher Name wie {name}.",
+      "refs": {
+        "memberships": "Mitgliedschaften",
+        "tickets": "Tickets",
+        "notes": "Notizen",
+        "files": "Dateien",
+        "documents": "Rechnungen & Angebote",
+        "shop_orders": "Shop-Bestellungen",
+        "form_submissions": "Formular-Einsendungen",
+        "courses": "Kurse",
+        "rentals": "Vermietungen",
+        "email_sends": "Versendete Mails",
+        "cash_entries": "Kassenbuch-Buchungen",
+        "artists": "Künstler im Lineup",
+        "staff": "Schicht-Personen"
+      }
+    },
+    "duplicates": {
+      "nav": "Duplikate",
+      "a": "Kontakt",
+      "b": "Gleicher Name",
+      "merge": "Zusammenführen",
+      "empty": "Keine möglichen Duplikate",
+      "emptyText": "Hier erscheinen Kontakte mit gleichem Vor- und Nachnamen."
+    }
   },
   "fields": {
     "intro": "Eigene Felder für deine Daten, z. B. Mitgliedsnummer oder Kleidergröße bei Kontakten. Sie erscheinen in Formularen und im CSV-Import.",

@@ -2466,12 +2466,21 @@
   "door": {
     "tabs": "Einlass-Ansichten",
     "tab": {
+      "all": "Alle",
+      "list": "Liste",
       "scan": "Scannen",
       "guests": "Gäste",
       "tickets": "Tickets",
       "members": "Mitglieder",
       "sale": "Verkauf"
     },
+    "kind": {
+      "ticket": "Ticket",
+      "guest": "Gästeliste",
+      "member": "Mitglied"
+    },
+    "searchAllMembers": "Name, Code oder Mitglied suchen…",
+    "noOne": "Niemand gefunden",
     "searchGuests": "Name suchen…",
     "searchTickets": "Name oder Code suchen…",
     "guestCount": "{in} von {total} drin",
@@ -2489,6 +2498,7 @@
     "searchMembers": "Mitglied suchen (Name, Nr., E-Mail)",
     "inside": "Drin: {count}",
     "member": {
+      "open": "Öffnen",
       "member": "Mitglied",
       "ok": "Eingecheckt",
       "already": "Schon eingecheckt",

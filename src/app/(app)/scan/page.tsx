@@ -10,6 +10,7 @@ import { SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { SubmitButton } from "@/components/submit-button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
@@ -17,13 +18,13 @@ import { memberDoor, type MemberAtDoor } from "@/members/door"
 import { guestCheckIn, memberDoorCheckIn, ticketDoorCheckIn } from "./actions"
 import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
-import { IdCardIcon, ScanLineIcon, ShoppingCartIcon, TicketIcon, UsersIcon } from "lucide-react"
+import { ScanLineIcon, ShoppingCartIcon, UsersIcon } from "lucide-react"
 import { DoorSale } from "./door-sale"
 import { doorOffer, doorSells, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
 import { ChipRow } from "@/components/chip-row"
 
-const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, tickets: TicketIcon, members: IdCardIcon, guests: UsersIcon } as const
+const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, list: UsersIcon } as const
 
 // Door: pick the event (today's first), then scan QR codes, check guest lists, or look up tickets by name.
 export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
@@ -46,7 +47,8 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const current = events?.find((e) => e.id === param(sp, "event")) ?? events?.find((e) => e.starts_at >= since)
   const canMembers = canScan && ctx.modules.has("members")
   const [stats, sells] = current && canScan ? await Promise.all([doorStats(ctx.org.id, current.id), doorSells(ctx.org.id, current.door)]) : [null, false]
-  const tabs = [...(canScan ? ["scan", ...(sells ? ["sale"] : []), "tickets"] : []), ...(canMembers ? ["members"] : []), ...(canGuests ? ["guests"] : [])]
+  // Lookups: "Alle" (tickets + guest lists in one list, members when searching) first, then each kind on its own.
+  const tabs = [...(canScan ? ["scan", ...(sells ? ["sale"] : [])] : []), "all", ...(canScan ? ["tickets"] : []), ...(canMembers ? ["members"] : []), ...(canGuests ? ["guests"] : [])]
   const tab = tabs.find((x) => x === param(sp, "tab")) ?? tabs[0]
   // Phones show one view (`tab`, bottom tab bar). Desktop is a door dashboard: an action panel (Scannen · Verkauf)
   // next to the live numbers and a lookup panel (Tickets · Gäste · Mitglieder, `look`), all at once.
@@ -101,13 +103,14 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
             aria-label={t("door.tabs")}
             className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
           >
-            {tabs.map((x) => {
+            {[...actions, "list"].map((x) => {
               const Icon = TAB_ICONS[x as keyof typeof TAB_ICONS]
+              const current = x === "list" ? !actions.includes(tab) : x === tab
               return (
                 <Link
                   key={x}
-                  href={href({ tab: x, look: lookups.includes(x) ? x : undefined })}
-                  aria-current={x === tab ? "page" : undefined}
+                  href={x === "list" ? href({ tab: look, look }) : href({ tab: x })}
+                  aria-current={current ? "page" : undefined}
                   className="flex min-h-14 flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 text-xs text-muted-foreground active:bg-muted aria-[current=page]:font-medium aria-[current=page]:text-primary"
                 >
                   <Icon className="size-5" />
@@ -137,10 +140,11 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
               {lookups.length > 1 && (
                 <Segments
                   label={t("door.lookup")}
-                  className="justify-self-start max-md:hidden"
-                  items={lookups.map((x) => ({ href: href({ look: x }), label: t.dynamic(`door.tab.${x}`), current: x === look }))}
+                  className="justify-self-start max-md:w-full"
+                  items={lookups.map((x) => ({ href: href({ look: x, tab: actions.includes(tab) ? tab : x }), label: t.dynamic(`door.tab.${x}`), current: x === look }))}
                 />
               )}
+              {look === "all" && <Everyone eventId={current.id} q={q} canScan={canScan} canGuests={canGuests} canMembers={canMembers} />}
               {look === "guests" && <Guests eventId={current.id} q={q} list={param(sp, "list")} />}
               {look === "tickets" && <Tickets eventId={current.id} q={q} />}
               {look === "members" && <Members eventId={current.id} q={q} who={param(sp, "who")} sp={sp} />}
@@ -153,10 +157,11 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   )
 }
 
-async function Guests({ eventId, q, list }: { eventId: string; q?: string; list?: string }) {
-  const ctx = await getContext()
-  const t = await getT()
-  // Lists of this event + permanent lists (valid at every event).
+type Ctx = Awaited<ReturnType<typeof getContext>>
+type T = Awaited<ReturnType<typeof getT>>
+
+// Guest-list entries for this event: its lists + permanent lists (valid at every event).
+async function loadGuests(ctx: Ctx, eventId: string, q?: string, list?: string) {
   const { data: lists } = await ctx.supabase
     .from("guest_lists")
     .select("id, name, door_price, event_id")
@@ -175,38 +180,57 @@ async function Guests({ eventId, q, list }: { eventId: string; q?: string; list?
   const { data } = await entries
   const byId = new Map(lists?.map((l) => [l.id, l]))
   const rows = (data ?? []).map((e) => ({ ...e, list: byId.get(e.list_id)!, at: e.guest_checkins.find((c) => c.event_id === eventId)?.checked_in_at }))
-  const inCount = rows.filter((r) => r.at).length
+  return { lists: lists ?? [], rows }
+}
+type GuestRow = Awaited<ReturnType<typeof loadGuests>>["rows"][number]
 
+// `pill` = which kind of entry (only in "Alle").
+function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: string; list?: string }, pill?: boolean) {
+  return (
+    <DoorRow
+      key={`g${r.id}`}
+      title={r.name}
+      pill={pill ? t("door.kind.guest") : undefined}
+      meta={[r.list.name, r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")}
+      done={!!r.at}
+    >
+      <form action={guestCheckIn} className="flex items-center gap-2">
+        <input type="hidden" name="event" value={eventId} />
+        <input type="hidden" name="entry" value={r.id} />
+        <input type="hidden" name="name" value={r.name} />
+        <input type="hidden" name="tab" value={back.tab} />
+        <input type="hidden" name="q" value={back.q ?? ""} />
+        <input type="hidden" name="list" value={back.list ?? ""} />
+        {r.at ? (
+          <>
+            <Badge variant="success">{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</Badge>
+            <input type="hidden" name="undo" value="1" />
+            <SubmitButton size="lg" variant="ghost" className="h-11">
+              {t("door.undo")}
+            </SubmitButton>
+          </>
+        ) : (
+          <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
+        )}
+      </form>
+    </DoorRow>
+  )
+}
+
+async function Guests({ eventId, q, list }: { eventId: string; q?: string; list?: string }) {
+  const ctx = await getContext()
+  const t = await getT()
+  const { lists, rows } = await loadGuests(ctx, eventId, q, list)
+  const inCount = rows.filter((r) => r.at).length
   return (
     <section className="grid gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox size="lg" q={q} label={t("door.searchGuests")} keep={{ event: eventId, tab: "guests", ...(list ? { list } : {}) }} />
-        {(lists?.length ?? 0) > 1 && <FilterMenu param="list" label={t("door.list")} allLabel={t("door.allLists")} options={(lists ?? []).map((l) => ({ value: l.id, label: l.name }))} />}
+        {lists.length > 1 && <FilterMenu param="list" label={t("door.list")} allLabel={t("door.allLists")} options={lists.map((l) => ({ value: l.id, label: l.name }))} />}
         <span className="text-sm text-muted-foreground md:ml-auto">{t("door.guestCount", { in: inCount, total: rows.length })}</span>
       </div>
       <ul className="grid gap-2">
-        {rows.map((r) => (
-          <DoorRow key={r.id} title={r.name} meta={[r.list.name, r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")} done={!!r.at}>
-            <form action={guestCheckIn} className="flex items-center gap-2">
-              <input type="hidden" name="event" value={eventId} />
-              <input type="hidden" name="entry" value={r.id} />
-              <input type="hidden" name="name" value={r.name} />
-              <input type="hidden" name="q" value={q ?? ""} />
-              <input type="hidden" name="list" value={list ?? ""} />
-              {r.at ? (
-                <>
-                  <Badge variant="success">{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</Badge>
-                  <input type="hidden" name="undo" value="1" />
-                  <SubmitButton size="lg" variant="ghost" className="h-11">
-                    {t("door.undo")}
-                  </SubmitButton>
-                </>
-              ) : (
-                <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
-              )}
-            </form>
-          </DoorRow>
-        ))}
+        {rows.map((r) => guestRow(t, eventId, r, { tab: "guests", q, list }))}
         {!rows.length && <li className="text-sm text-muted-foreground">{t("door.noGuests")}</li>}
       </ul>
     </section>
@@ -260,9 +284,7 @@ async function DoorCash({ eventId }: { eventId: string }) {
   )
 }
 
-async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
-  const ctx = await getContext()
-  const t = await getT()
+async function loadTickets(ctx: Ctx, eventId: string, q?: string) {
   let query = ctx.supabase
     .from("tickets")
     .select("id, code, holder_name, status, checked_in_at, ticket_types(name), pay_orders(customer_name, paid_at)")
@@ -271,31 +293,79 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
     .order("holder_name")
     .limit(200)
   if (q) query = query.or(`holder_name.ilike.%${q}%,code.ilike.%${q}%`)
-  const { data: all } = await query
+  const { data } = await query
   // Cancelled = void tickets of orders that were paid (refunds), not reservations that simply expired.
   // ponytail: expired reservations still count toward the 200 limit; filter in SQL if that bites.
-  const data = all?.filter((k) => k.status !== "void" || k.pay_orders?.paid_at)
+  return (data ?? []).filter((k) => k.status !== "void" || k.pay_orders?.paid_at)
+}
+type TicketRow = Awaited<ReturnType<typeof loadTickets>>[number]
+const ticketName = (k: TicketRow) => k.holder_name ?? k.pay_orders?.customer_name ?? "–"
+
+function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?: string }, pill?: boolean) {
+  return (
+    <DoorRow key={`t${k.id}`} title={ticketName(k)} pill={pill ? t("door.kind.ticket") : undefined} meta={[k.ticket_types?.name, k.code].filter(Boolean).join(" · ")} done={k.status !== "valid"}>
+      {k.status === "void" ? (
+        <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
+      ) : k.status === "used" ? (
+        <Badge variant="success">{t("door.inSince", { time: k.checked_in_at ? t.date(k.checked_in_at, { timeStyle: "short" }) : "" })}</Badge>
+      ) : (
+        <form action={ticketDoorCheckIn}>
+          <input type="hidden" name="event" value={eventId} />
+          <input type="hidden" name="code" value={k.code} />
+          <input type="hidden" name="tab" value={back.tab} />
+          <input type="hidden" name="q" value={back.q ?? ""} />
+          <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
+        </form>
+      )}
+    </DoorRow>
+  )
+}
+
+async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
+  const ctx = await getContext()
+  const t = await getT()
+  const data = await loadTickets(ctx, eventId, q)
   return (
     <section className="grid gap-3">
       <SearchBox size="lg" q={q} label={t("door.searchTickets")} keep={{ event: eventId, tab: "tickets" }} />
       <ul className="grid gap-2">
-        {(data ?? []).map((k) => (
-          <DoorRow key={k.id} title={k.holder_name ?? k.pay_orders?.customer_name ?? "–"} meta={[k.ticket_types?.name, k.code].filter(Boolean).join(" · ")} done={k.status !== "valid"}>
-            {k.status === "void" ? (
-              <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
-            ) : k.status === "used" ? (
-              <Badge variant="success">{t("door.inSince", { time: k.checked_in_at ? t.date(k.checked_in_at, { timeStyle: "short" }) : "" })}</Badge>
-            ) : (
-              <form action={ticketDoorCheckIn}>
-                <input type="hidden" name="event" value={eventId} />
-                <input type="hidden" name="code" value={k.code} />
-                <input type="hidden" name="q" value={q ?? ""} />
-                <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
-              </form>
-            )}
-          </DoorRow>
-        ))}
-        {!data?.length && <li className="text-sm text-muted-foreground">{t("door.noTickets")}</li>}
+        {data.map((k) => ticketRow(t, eventId, k, { tab: "tickets", q }))}
+        {!data.length && <li className="text-sm text-muted-foreground">{t("door.noTickets")}</li>}
+      </ul>
+    </section>
+  )
+}
+
+// "Alle": everyone expected tonight in one list (tickets + guest lists, by name, a pill says which); members have no
+// entry for an event, so they only join when searching (a hit opens their card on the Mitglieder view).
+async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventId: string; q?: string; canScan: boolean; canGuests: boolean; canMembers: boolean }) {
+  const ctx = await getContext()
+  const t = await getT()
+  const [tickets, guests, { data: members }] = await Promise.all([
+    canScan ? loadTickets(ctx, eventId, q) : [],
+    canGuests ? loadGuests(ctx, eventId, q).then((g) => g.rows) : [],
+    canMembers && q ? ctx.supabase.rpc("member_door_search", { p_event: eventId, p_q: q }) : Promise.resolve({ data: [] }),
+  ])
+  const rows = [
+    ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q }, true) })),
+    ...guests.map((g) => ({ name: g.name, node: guestRow(t, eventId, g, { tab: "all", q }, true) })),
+    ...(members ?? []).map((m) => ({
+      name: m.name ?? "",
+      node: (
+        <DoorRow key={`m${m.contact_id}`} title={m.name ?? "–"} pill={t("door.kind.member")} meta={m.member_no ? t("membership.numberShort", { number: m.member_no }) : undefined}>
+          <Button render={<Link href={`/scan?${new URLSearchParams({ event: eventId, tab: "members", look: "members", q: q ?? "", who: m.contact_id })}`} />} nativeButton={false} size="lg" variant="outline" className="h-11 px-6">
+            {t("door.member.open")}
+          </Button>
+        </DoorRow>
+      ),
+    })),
+  ].sort((a, b) => a.name.localeCompare(b.name, t.locale))
+  return (
+    <section className="grid gap-3">
+      <SearchBox size="lg" q={q} label={canMembers ? t("door.searchAllMembers") : t("door.searchTickets")} keep={{ event: eventId, tab: "all" }} />
+      <ul className="grid gap-2">
+        {rows.map((r) => r.node)}
+        {!rows.length && <li className="text-sm text-muted-foreground">{t("door.noOne")}</li>}
       </ul>
     </section>
   )
@@ -347,11 +417,14 @@ async function Members({ eventId, q, who, sp }: { eventId: string; q?: string; w
 export const instant = false
 
 // One person at the door: big name, one muted line, the action on the right (wraps below on narrow phones).
-function DoorRow({ title, meta, done, children }: { title: string; meta?: string; done?: boolean; children: React.ReactNode }) {
+function DoorRow({ title, pill, meta, done, children }: { title: string; pill?: string; meta?: string; done?: boolean; children: React.ReactNode }) {
   return (
     <li className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 ${done ? "bg-muted/50" : ""}`}>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-medium">{title}</p>
+        <p className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-base font-medium">{title}</span>
+          {pill && <Badge variant="outline" className="shrink-0">{pill}</Badge>}
+        </p>
         {meta && <p className="truncate text-sm text-muted-foreground">{meta}</p>}
       </div>
       {children}

@@ -105,7 +105,7 @@ export async function guestCheckIn(fd: FormData) {
   const t = await getT()
   const event = String(fd.get("event") ?? "")
   const entry = String(fd.get("entry") ?? "")
-  const here = `/scan?${new URLSearchParams({ event, tab: "guests", q: String(fd.get("q") ?? ""), list: String(fd.get("list") ?? "") })}`
+  const here = `/scan?${new URLSearchParams({ event, tab: String(fd.get("tab") || "guests"), q: String(fd.get("q") ?? ""), list: String(fd.get("list") ?? "") })}`
   if (fd.get("undo") === "1") {
     const { error } = await ctx.supabase.from("guest_checkins").delete().eq("entry_id", entry).eq("event_id", event).eq("org_id", ctx.org.id)
     if (error) back(here, { error: dbError(t, error) })
@@ -118,7 +118,7 @@ export async function guestCheckIn(fd: FormData) {
 
 export async function ticketDoorCheckIn(fd: FormData) {
   const event = String(fd.get("event") ?? "")
-  const here = `/scan?${new URLSearchParams({ event, tab: "tickets", q: String(fd.get("q") ?? "") })}`
+  const here = `/scan?${new URLSearchParams({ event, tab: String(fd.get("tab") || "tickets"), q: String(fd.get("q") ?? "") })}`
   const t = await getT()
   const r = await checkIn(event, String(fd.get("code") ?? ""))
   if (r.result === "ok") back(here, { ok: t("door.checkedIn", { name: r.holder ?? String(fd.get("code")) }) })

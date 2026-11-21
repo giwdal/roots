@@ -258,6 +258,21 @@ export function Scanner({ eventId }: { eventId: string }) {
   }
   return (
     <div ref={root} className="grid gap-4">
+      <div className="grid gap-2">
+        {camera && (
+          <div className="relative w-full sm:max-w-md">
+            <video ref={video} muted playsInline className="aspect-square w-full rounded-xl border bg-muted object-cover" />
+            {found && (
+              <svg viewBox={`0 0 ${found.w} ${found.h}`} preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 size-full rounded-xl" aria-hidden>
+                <polygon points={found.pts} className="fill-primary/20 stroke-primary" strokeWidth={Math.max(found.w, found.h) / 100} strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+        )}
+        <Button type="button" size="lg" variant={camera ? "outline" : "default"} onClick={() => toggleCamera(!camera)} className="h-14 w-full text-base sm:max-w-md">
+          {camera ? <CameraOffIcon /> : <CameraIcon />} {camera ? t("tickets.cameraOff") : t("tickets.cameraOn")}
+        </Button>
+      </div>
       {last?.member ? (
         <MemberCard t={t} m={last.member}>
           <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)} className="justify-self-start">
@@ -314,21 +329,6 @@ export function Scanner({ eventId }: { eventId: string }) {
           <RefreshCwIcon />
         </Button>
         {syncNote && <span>{syncNote}</span>}
-      </div>
-      <div className="grid gap-2">
-        {camera && (
-          <div className="relative w-full sm:max-w-md">
-            <video ref={video} muted playsInline className="aspect-square w-full rounded-xl border bg-muted object-cover" />
-            {found && (
-              <svg viewBox={`0 0 ${found.w} ${found.h}`} preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 size-full rounded-xl" aria-hidden>
-                <polygon points={found.pts} className="fill-primary/20 stroke-primary" strokeWidth={Math.max(found.w, found.h) / 100} strokeLinejoin="round" />
-              </svg>
-            )}
-          </div>
-        )}
-        <Button type="button" size="lg" variant={camera ? "outline" : "default"} onClick={() => toggleCamera(!camera)} className="h-14 w-full text-base sm:max-w-md">
-          {camera ? <CameraOffIcon /> : <CameraIcon />} {camera ? t("tickets.cameraOff") : t("tickets.cameraOn")}
-        </Button>
       </div>
     </div>
   )

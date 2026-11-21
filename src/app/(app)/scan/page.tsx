@@ -23,11 +23,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
-import { CheckIcon, ScanLineIcon, ShoppingCartIcon, UsersIcon } from "lucide-react"
+import { CheckIcon, ScanLineIcon, ShoppingCartIcon, UndoIcon, UsersIcon, XCircleIcon } from "lucide-react"
 import { DoorSale } from "./door-sale"
 import { doorOffer, doorSells, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
-import { ActionsMenu, MenuLink } from "@/components/actions-menu"
+import { ActionsMenu, MenuLink, MenuSubmit } from "@/components/actions-menu"
 
 const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, list: UsersIcon } as const
 
@@ -319,26 +319,34 @@ function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?:
       {k.status === "void" ? (
         <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
       ) : k.status === "used" ? (
-        <form action={ticketDoorUndo} className="flex items-center gap-2">
-          {hidden}
-          <input type="hidden" name="id" value={k.id} />
+        // Checked in: the time, and Auschecken (let in by mistake) in ⋯ so the name keeps its room.
+        <div className="flex items-center gap-1">
           {k.checked_in_at && <span className="text-sm text-muted-foreground tabular-nums">{t("door.inSince", { time: t.date(k.checked_in_at, { timeStyle: "short" }) })}</span>}
-          <SubmitButton size="lg" variant="ghost" className="h-11">
-            {t("door.checkOut")}
-          </SubmitButton>
-        </form>
+          <form id={`undo-${k.id}`} action={ticketDoorUndo} hidden>
+            {hidden}
+            <input type="hidden" name="id" value={k.id} />
+          </form>
+          <ActionsMenu>
+            <MenuSubmit form={`undo-${k.id}`} icon={<UndoIcon />}>
+              {t("door.checkOut")}
+            </MenuSubmit>
+          </ActionsMenu>
+        </div>
       ) : (
-        <div className="flex items-center gap-2">
-          {back.canCancel && (
-            <Button render={<Link href={`/scan?${new URLSearchParams({ event: eventId, tab: back.tab, q: back.q ?? "", edit: k.id })}`} scroll={false} />} nativeButton={false} size="lg" variant="ghost" className="h-11">
-              {t("door.cancel")}
-            </Button>
-          )}
+        // One button (Einchecken); Stornieren lives in ⋯.
+        <div className="flex items-center gap-1">
           <form action={ticketDoorCheckIn}>
             {hidden}
             <input type="hidden" name="code" value={k.code} />
-            <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
+            <SubmitButton size="lg" className="h-11 px-5">{t("door.checkIn")}</SubmitButton>
           </form>
+          {back.canCancel && (
+            <ActionsMenu>
+              <MenuLink href={`/scan?${new URLSearchParams({ event: eventId, tab: back.tab, q: back.q ?? "", edit: k.id })}`} icon={<XCircleIcon />} destructive>
+                {t("door.cancel")}
+              </MenuLink>
+            </ActionsMenu>
+          )}
         </div>
       )}
     </DoorRow>

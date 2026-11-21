@@ -430,7 +430,7 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
   )
 }
 
-// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; the line below says ticket type / GL: <list>; members carry a pill); members have no
+// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; the line below says what it is: ticket type, GL: <list> or Mitglied); members have no
 // entry for an event, so they only join when searching (a hit opens their card on the Mitglieder view).
 async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventId: string; q?: string; canScan: boolean; canGuests: boolean; canMembers: boolean }) {
   const ctx = await getContext()
@@ -446,7 +446,7 @@ async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventI
     ...(members ?? []).map((m) => ({
       name: m.name ?? "",
       node: (
-        <DoorRow key={`m${m.contact_id}`} title={m.name ?? "–"} pill={t("door.kind.member")} meta={m.member_no ? t("membership.numberShort", { number: m.member_no }) : undefined}>
+        <DoorRow key={`m${m.contact_id}`} title={m.name ?? "–"} meta={[t("door.kind.member"), m.member_no && t("membership.numberShort", { number: m.member_no })].filter(Boolean).join(" · ")}>
           <Button render={<Link href={`/scan?${new URLSearchParams({ event: eventId, tab: "members", look: "members", q: q ?? "", who: m.contact_id })}`} />} nativeButton={false} size="lg" variant="outline" className="h-11 px-6">
             {t("door.member.open")}
           </Button>
@@ -511,14 +511,11 @@ async function Members({ eventId, q, who, sp }: { eventId: string; q?: string; w
 export const instant = false
 
 // One person at the door: big name, one muted line, the action on the right (wraps below on narrow phones).
-function DoorRow({ title, pill, meta, done, children }: { title: string; pill?: string; meta?: string; done?: boolean; children: React.ReactNode }) {
+function DoorRow({ title, meta, done, children }: { title: string; meta?: string; done?: boolean; children: React.ReactNode }) {
   return (
     <li className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 ${done ? "bg-muted/50" : ""}`}>
       <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-base font-medium">{title}</span>
-          {pill && <Badge variant="outline" className="shrink-0">{pill}</Badge>}
-        </p>
+        <p className="truncate text-base font-medium">{title}</p>
         {meta && <p className="truncate text-sm text-muted-foreground">{meta}</p>}
       </div>
       {children}

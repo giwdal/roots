@@ -69,14 +69,16 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
     .trim()
   // Door settings (methods, terminal, cash book) are the event's ticket settings: the gear goes there.
   const settingsHref = current && ctx.modules.has("tickets") && ctx.can("tickets.manage") ? `/events/${current.id}/tickets?edit=settings#door` : undefined
+  // "Einlass · <event>" as the page title (top bar); long names are cut so the bar keeps its buttons.
+  const short = (x: string) => (x.length > 28 ? `${x.slice(0, 27).trimEnd()}…` : x)
+  const title = current ? `${t("tickets.scanNav")} · ${short(current.title)}` : t("tickets.scanNav")
   return (
     <Page size="list">
       {/* Einlass hides the tab bar (it has its own): the top bar's back chevron is the way out. */}
-      <TopbarCrumbs items={[{ href: "/events", label: t("eventsPage.title") }, { label: t("tickets.scanNav") }]} />
+      <TopbarCrumbs items={[{ href: "/events", label: t("eventsPage.title") }, { label: title }]} />
       <PageHeader
         area="events"
-        title={t("tickets.scanNav")}
-        meta={current ? `${current.title} · ${t.date(current.starts_at, { dateStyle: "short" })}` : undefined}
+        title={title}
         settings={settingsHref ? { href: settingsHref, label: t("door.settingsLink") } : false}
         menu={
           (events?.length ?? 0) > 1 && (

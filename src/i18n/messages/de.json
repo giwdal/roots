@@ -1896,6 +1896,8 @@
       "other": "{count} Mitglieder eingelassen"
     },
     "shopSettings": "Shop-Einstellungen",
+    "waitlistOn": "Warteliste bei Ausverkauf",
+    "waitlistOnHint": "Aus = der Shop zeigt nur „ausverkauft“. Wer schon auf der Liste steht, behält seinen Platz.",
     "showCodeField": "Feld für Rabattcodes im Shop anzeigen",
     "showCodeFieldHint": "Aus = kein Eingabefeld; Rabatt-Links (…?code=) funktionieren trotzdem.",
     "unlockedBy": "Freigeschaltet durch",
@@ -4192,6 +4194,7 @@
     "recent": "Zuletzt geöffnet"
   },
   "waitlist": {
+    "off": "Für dieses Event gibt es keine Warteliste.",
     "title": "Ausgebucht – Warteliste",
     "text": "Trag dich ein: Wird ein Platz frei, bekommst du eine E-Mail und kannst ihn 24 Stunden lang sichern.",
     "name": "Dein Name",

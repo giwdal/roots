@@ -32,6 +32,7 @@ export const Event = z.object({
   max_tickets_per_order: z.number().int(),
   links: z.array(z.object({ label: z.string(), url: z.string() })).describe("The event's own links (max 3), shown as buttons on its page"),
   show_code_field: z.boolean().describe("Shop shows the discount code field (?code= links work either way)"),
+  waitlist: z.boolean().describe("Sold out → the shop offers the waiting list (default true)"),
   door: z.object({ methods: z.array(z.enum(DOOR_METHODS)), reader_id: z.string().nullable(), cash_account_id: uuid.nullable() }).describe("Door sales (POS): payment methods offered, card reader, cash book account for cash"),
   email_template_id: uuid.nullable().describe("Email template for this event's ticket, guest-list and waiting-list mails (null = the org's default, else roots' built-in mail). See GET /email/templates"),
   custom: Custom,
@@ -41,7 +42,7 @@ export const Event = z.object({
   updated_at: ts,
 })
 export const EVENT_COLS =
-  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
+  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, waitlist, door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
 const eventOut = <T extends { image_path: string | null; door: unknown }>({ image_path, ...e }: T) => ({ ...e, door: readDoor(e.door), image_url: imageUrl(image_path) ?? null })
 
 const EventFields = z.object({
@@ -59,6 +60,7 @@ const EventFields = z.object({
   max_tickets_per_order: z.number().int().min(1).max(100),
   email_template_id: uuid.nullable().describe("An email template of the org (GET /email/templates); null = the org's default"),
   show_code_field: z.boolean().describe("Show the discount code field in the shop (default true); ?code= links work either way"),
+  waitlist: z.boolean().describe("Offer the waiting list when sold out (default true); off = joining is refused, people already on it keep their place"),
   door: z
     .object({ methods: z.array(z.enum(DOOR_METHODS)).max(3), reader_id: z.string().max(100).nullable().optional(), cash_account_id: uuid.nullable().optional() })
     .describe("Door sales (POS): methods cash | qr | terminal (default all), the card reader (from the SumUp integration), a cash book account (kind cash) that cash sales are booked into"),

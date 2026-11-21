@@ -38,7 +38,7 @@ export default async function PublicEvent({ params, searchParams }: PageProps<"/
   if (!s) notFound()
   const [e, siteData] = await Promise.all([cachedEvent(s.org.id, slug), cachedSite(s.org.id)])
   if (!e) notFound()
-  const shop = () => (e.status === "published" ? <TicketShop site={site} slug={slug} eventId={e.id} max={e.max_tickets_per_order} code={code} waitlist={waitlist} codeField={e.show_code_field} /> : null)
+  const shop = () => (e.status === "published" ? <TicketShop site={site} slug={slug} eventId={e.id} max={e.max_tickets_per_order} code={code} waitlist={waitlist} codeField={e.show_code_field} waitlistOn={e.waitlist} /> : null)
   const t = await getT()
   if (siteData?.event_html) return <TemplatedEvent site={site} org={s.org} e={e} template={siteData.event_html} shop={shop()} t={t} />
   const sameDay = e.ends_at && new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime() < 86_400_000

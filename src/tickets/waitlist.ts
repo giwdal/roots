@@ -24,6 +24,8 @@ export async function offerWaitlist() {
 
 /** Public: join an event's waiting list (only while nothing is on sale). Throws message keys. */
 export async function joinWaitlist(w: { orgId: string; eventId: string; name: string; email: string; quantity: number }) {
+  const { data: ev } = await db().from("events").select("waitlist").eq("id", w.eventId).eq("org_id", w.orgId).maybeSingle()
+  if (!ev?.waitlist) throw new Error("waitlist.off") // switched off for this event (Ticket-Einstellungen)
   const offer = await ticketOffer(w.eventId)
   if (!offer.length || offer.some((o) => !o.hidden && o.remaining !== 0)) throw new Error("waitlist.notFull")
   const { error } = await db().from("event_waitlist").insert({ org_id: w.orgId, event_id: w.eventId, name: w.name, email: w.email, quantity: w.quantity })

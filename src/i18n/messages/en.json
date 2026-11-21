@@ -1896,6 +1896,8 @@
       "other": "{count} members admitted"
     },
     "shopSettings": "Shop settings",
+    "waitlistOn": "Waiting list when sold out",
+    "waitlistOnHint": "Off = the shop only says sold out. People already on the list keep their place.",
     "showCodeField": "Show the discount code field in the shop",
     "showCodeFieldHint": "Off = no input field; discount links (…?code=) still work.",
     "unlockedBy": "Unlocked by",
@@ -4192,6 +4194,7 @@
     "recent": "Recently opened"
   },
   "waitlist": {
+    "off": "This event has no waiting list.",
     "title": "Sold out – waiting list",
     "text": "Sign up: when a spot frees up you get an email and can secure it for 24 hours.",
     "name": "Your name",

@@ -9,7 +9,7 @@ import { joinWaitlistAction } from "./actions"
 
 // Ticket types with quantity fields; a plain GET form to the checkout step (works without JS).
 // Free events say "Anmeldung"; sold out → waiting list; ?w=<token> = a waiting-list offer with held seats.
-export async function TicketShop({ site, slug, eventId, max, code, waitlist, codeField = true }: { site: string; slug: string; eventId: string; max: number; code: string | null; waitlist: string | null; codeField?: boolean }) {
+export async function TicketShop({ site, slug, eventId, max, code, waitlist, codeField = true, waitlistOn = true }: { site: string; slug: string; eventId: string; max: number; code: string | null; waitlist: string | null; codeField?: boolean; waitlistOn?: boolean }) {
   const s = (await getSite(site))!
   const [{ data: offer }, claim] = await Promise.all([
     s.db.rpc("ticket_offer", { p_event: eventId, p_code: code ?? undefined, p_waitlist: waitlist ?? undefined }),
@@ -107,7 +107,7 @@ export async function TicketShop({ site, slug, eventId, max, code, waitlist, cod
           </SubmitButton>
         )}
       </form>
-      {soldOut && (
+      {soldOut && waitlistOn && (
         <form action={joinWaitlistAction} className="grid gap-3 border-t pt-4">
           <input type="hidden" name="site" value={site} />
           <input type="hidden" name="slug" value={slug} />

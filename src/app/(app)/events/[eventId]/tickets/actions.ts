@@ -121,7 +121,7 @@ export async function saveTicketSettings(fd: FormData) {
   // Event fields need events.manage (RLS); ticket managers without it get an error from the DB.
   const { error, count } = await ctx.supabase
     .from("events")
-    .update({ ticket_names: names, max_tickets_per_order: max, show_code_field: fd.get("show_code_field") === "on", ...(door && { door }) }, { count: "exact" })
+    .update({ ticket_names: names, max_tickets_per_order: max, show_code_field: fd.get("show_code_field") === "on", waitlist: fd.get("waitlist") === "on", ...(door && { door }) }, { count: "exact" })
     .eq("id", eventId)
     .eq("org_id", ctx.org.id)
   if (error || !count) back(retry, { error: error ? dbError(t, error) : t("errors.not_allowed") })

@@ -63,7 +63,7 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
   list = status ? list.eq("status", status) : list.neq("status", "reserved")
   if (q) list = list.or(`code.ilike.%${q}%,holder_name.ilike.%${q}%`)
   const [{ data: ev }, { data: types }, { data: tickets }, { data: avail }, { data: counts }, { data: tiers }, { data: codes }] = await Promise.all([
-    ctx.supabase.from("events").select("id, title, slug, status, starts_at, ticket_names, max_tickets_per_order, show_code_field").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
+    ctx.supabase.from("events").select("id, title, slug, status, starts_at, ticket_names, max_tickets_per_order, show_code_field, waitlist").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
     ctx.supabase.from("ticket_types").select("*").eq("event_id", eventId).order("position").order("price"),
     list,
     ctx.supabase.rpc("ticket_availability", { p_event: eventId }),
@@ -330,6 +330,9 @@ export default async function EventTickets({ params, searchParams }: PageProps<"
               </SettingRow>
               <SettingRow label={t("tickets.showCodeField")} hint={t("tickets.showCodeFieldHint")} htmlFor="t-code-field">
                 <input id="t-code-field" type="checkbox" name="show_code_field" defaultChecked={ev.show_code_field} className="size-5 accent-primary" />
+              </SettingRow>
+              <SettingRow label={t("tickets.waitlistOn")} hint={t("tickets.waitlistOnHint")} htmlFor="t-waitlist">
+                <input id="t-waitlist" type="checkbox" name="waitlist" defaultChecked={ev.waitlist} className="size-5 accent-primary" />
               </SettingRow>
             </RowGroup>
             <DoorFields eventId={ev.id} />

@@ -2476,7 +2476,6 @@
       "sale": "Verkauf"
     },
     "kind": {
-      "ticket": "Ticket",
       "guest": "Gästeliste",
       "member": "Mitglied"
     },

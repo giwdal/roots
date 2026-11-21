@@ -2476,7 +2476,6 @@
       "sale": "Sell"
     },
     "kind": {
-      "ticket": "Ticket",
       "guest": "Guest list",
       "member": "Member"
     },

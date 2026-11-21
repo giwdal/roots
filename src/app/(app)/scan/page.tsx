@@ -306,7 +306,7 @@ type TicketRow = Awaited<ReturnType<typeof loadTickets>>[number]
 const ticketName = (k: TicketRow) => k.holder_name ?? k.pay_orders?.customer_name ?? "–"
 
 // Valid: Einchecken (+ Stornieren for whoever may cancel); checked in: the time + Auschecken (let in by mistake).
-function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?: string; canCancel?: boolean }, pill?: boolean) {
+function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?: string; canCancel?: boolean }) {
   const hidden = (
     <>
       <input type="hidden" name="event" value={eventId} />
@@ -315,7 +315,7 @@ function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?:
     </>
   )
   return (
-    <DoorRow key={`t${k.id}`} title={ticketName(k)} pill={pill ? t("door.kind.ticket") : undefined} meta={[k.ticket_types?.name, k.code].filter(Boolean).join(" · ")} done={k.status !== "valid"}>
+    <DoorRow key={`t${k.id}`} title={ticketName(k)} meta={[k.ticket_types?.name, k.code].filter(Boolean).join(" · ")} done={k.status !== "valid"}>
       {k.status === "void" ? (
         <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
       ) : k.status === "used" ? (
@@ -421,7 +421,7 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
   )
 }
 
-// "Alle": everyone expected tonight in one list (tickets + guest lists, by name, a pill says which); members have no
+// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; guests and members carry a pill, tickets show their type below); members have no
 // entry for an event, so they only join when searching (a hit opens their card on the Mitglieder view).
 async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventId: string; q?: string; canScan: boolean; canGuests: boolean; canMembers: boolean }) {
   const ctx = await getContext()
@@ -432,7 +432,7 @@ async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventI
     canMembers && q ? ctx.supabase.rpc("member_door_search", { p_event: eventId, p_q: q }) : Promise.resolve({ data: [] }),
   ])
   const rows = [
-    ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q, canCancel: ctx.can("tickets.manage") || ctx.can("payments.refund") }, true) })),
+    ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q, canCancel: ctx.can("tickets.manage") || ctx.can("payments.refund") }) })),
     ...guests.map((g) => ({ name: g.name, node: guestRow(t, eventId, g, { tab: "all", q }, true) })),
     ...(members ?? []).map((m) => ({
       name: m.name ?? "",

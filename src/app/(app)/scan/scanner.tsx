@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react"
-import { CameraIcon, CameraOffIcon, CloudOffIcon, RefreshCwIcon } from "lucide-react"
+import { CameraIcon, CameraOffIcon, CloudOffIcon, RefreshCwIcon, XIcon } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 import type { MemberAtDoor } from "@/members/door"
-import { admitMember, checkIn, scanList, scanMembers, syncCheckIns, type ScanEntry, type ScanResult } from "./actions"
+import { admitMember, checkIn, lookupCode, scanList, scanMembers, syncCheckIns, type ScanEntry, type ScanResult } from "./actions"
 import { MemberCard } from "./member-card"
 import { doorChanged } from "./door-stats"
 import { SubmitButton } from "@/components/submit-button"
@@ -110,6 +111,18 @@ export function Scanner({ eventId }: { eventId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per event
   }, [eventId])
 
+  // No connection: look the code up in the device list (no check-in yet).
+  function peekLocally(code: string): ScanResult {
+    const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
+    const cur = load(eventId)
+    const e = cur.list[clean]
+    if (!e) {
+      const m = cur.members?.find((x) => x.code === clean || x.number === clean)
+      return m ? { result: "ok", member: { ...m, result: m.checked_in_at ? "already" : "member" } } : { result: "invalid" }
+    }
+    return { result: e.status === "used" ? "used" : "valid", holder: e.holder, type: e.type }
+  }
+
   // No connection: decide on the device and queue the check-in.
   function checkLocally(code: string): ScanResult {
     const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
@@ -124,6 +137,7 @@ export function Scanner({ eventId }: { eventId: string }) {
     return { result: "ok", holder: e.holder, type: e.type, at: new Date().toISOString() }
   }
 
+  // Step 1 (camera or typed code): look up and show the card; nothing is checked in yet.
   function submit(code: string) {
     const now = Date.now()
     if (busy.current || (code === recent.current.code && now - recent.current.at < 4000)) return // same QR still in view
@@ -132,20 +146,39 @@ export function Scanner({ eventId }: { eventId: string }) {
     start(async () => {
       let r: ScanResult
       try {
+        r = navigator.onLine ? await lookupCode(eventId, code) : peekLocally(code)
+        if (r.result === "error" && !navigator.onLine) r = peekLocally(code)
+      } catch {
+        r = peekLocally(code) // request failed (bad venue Wi-Fi): fall back to the device list
+      }
+      setLast({ ...r, code })
+      navigator.vibrate?.(r.result === "valid" || r.member ? 80 : [80, 60, 80])
+      busy.current = false
+    })
+  }
+
+  // Step 2: "Einchecken" on the card. Done → the card goes away, ready for the next person.
+  function confirm(code: string) {
+    start(async () => {
+      let r: ScanResult
+      try {
         r = navigator.onLine ? await checkIn(eventId, code) : checkLocally(code)
         if (r.result === "error" && !navigator.onLine) r = checkLocally(code)
       } catch {
-        r = checkLocally(code) // request failed (bad venue Wi-Fi): fall back to the device list
+        r = checkLocally(code)
       }
-      if (r.result === "ok" || r.result === "used") {
-        const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
-        const cur = load(eventId)
-        if (cur.list[clean]?.status === "valid") update({ ...cur, list: { ...cur.list, [clean]: { ...cur.list[clean], status: "used" } } })
+      const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
+      const cur = load(eventId)
+      if ((r.result === "ok" || r.result === "used") && cur.list[clean]?.status === "valid") update({ ...cur, list: { ...cur.list, [clean]: { ...cur.list[clean], status: "used" } } })
+      if (r.result === "ok") {
+        setLast(null)
+        toast.success(t("door.checkedIn", { name: r.holder ?? code }))
+        doorChanged(!navigator.onLine)
+        navigator.vibrate?.(80)
+      } else {
+        setLast({ ...r, code })
+        navigator.vibrate?.([80, 60, 80])
       }
-      setLast({ ...r, code })
-      if (r.result === "ok") doorChanged(!navigator.onLine)
-      navigator.vibrate?.(r.result === "ok" ? 80 : [80, 60, 80])
-      busy.current = false
     })
   }
 
@@ -194,7 +227,9 @@ export function Scanner({ eventId }: { eventId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- submit is stable enough (refs + transition)
   }, [camera])
 
-  const tone = last?.result === "ok" ? "border-primary bg-primary/15" : last?.result === "used" ? "border-border bg-muted" : "border-destructive bg-destructive/10"
+  // Readable from a step away: valid = green, already in = amber, anything else = red.
+  const tone =
+    last?.result === "valid" ? "border-[var(--success)] bg-[var(--success)]/20" : last?.result === "used" ? "border-[var(--warning)] bg-[var(--warning)]/20" : "border-destructive bg-destructive/20"
 
   const count = Object.keys(store.list).length
   // No connection: let in on the device, sync later (conflict if another device let them in meanwhile).
@@ -225,21 +260,6 @@ export function Scanner({ eventId }: { eventId: string }) {
   }
   return (
     <div ref={root} className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        {!online && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-2 py-0.5 text-destructive">
-            <CloudOffIcon className="size-3.5" /> {t("tickets.offline")}
-          </span>
-        )}
-        <span>
-          {store.at ? t("tickets.listInfo", { count, time: t.date(store.at, { timeStyle: "short" }) }) : t("tickets.listLoading")}
-          {store.queue.length > 0 && ` · ${t("tickets.queued", { count: store.queue.length })}`}
-        </span>
-        <Button type="button" size="xs" variant="ghost" onClick={() => sync().then(refresh)} aria-label={t("tickets.refreshList")}>
-          <RefreshCwIcon />
-        </Button>
-        {syncNote && <span>{syncNote}</span>}
-      </div>
       {last?.member ? (
         <MemberCard t={t} m={last.member}>
           <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)} className="justify-self-start">
@@ -247,31 +267,25 @@ export function Scanner({ eventId }: { eventId: string }) {
           </Button>
         </MemberCard>
       ) : last && (
-        <div role="status" aria-live="assertive" className={cn("grid gap-1 rounded-xl border-2 p-4", tone)}>
-          <p className="text-2xl font-semibold">{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
-          <p className="font-mono text-sm">{last.code}</p>
-          {(last.holder || last.type) && <p>{[last.holder, last.type].filter(Boolean).join(" · ")}</p>}
-          {last.result === "used" && last.at && (
-            <p className="text-sm text-muted-foreground">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>
+        <div role="status" aria-live="assertive" className={cn("flex items-center gap-3 rounded-xl border-2 p-4 sm:max-w-md", tone)}>
+          <div className="grid min-w-0 flex-1 gap-0.5">
+            <p className="text-xl font-semibold">{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
+            {last.holder && <p className="truncate text-base font-medium">{last.holder}</p>}
+            <p className="truncate text-sm text-muted-foreground">{[last.type, last.code].filter(Boolean).join(" · ")}</p>
+            {last.result === "used" && last.at && <p className="text-sm text-muted-foreground">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>}
+            {last.message && <p className="text-sm">{last.message}</p>}
+          </div>
+          {last.result === "valid" ? (
+            <Button type="button" size="lg" disabled={pending} onClick={() => confirm(last.code)} className="h-14 shrink-0 px-6 text-base">
+              {t("tickets.checkIn")}
+            </Button>
+          ) : (
+            <Button type="button" size="icon" variant="ghost" onClick={() => setLast(null)} aria-label={t("common.close")}>
+              <XIcon />
+            </Button>
           )}
-          {last.message && <p className="text-sm">{last.message}</p>}
         </div>
       )}
-      <div className="grid gap-2">
-        {camera && (
-          <div className="relative w-full sm:max-w-md">
-            <video ref={video} muted playsInline className="aspect-square w-full rounded-xl border bg-muted object-cover" />
-            {found && (
-              <svg viewBox={`0 0 ${found.w} ${found.h}`} preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 size-full rounded-xl" aria-hidden>
-                <polygon points={found.pts} className="fill-primary/20 stroke-primary" strokeWidth={Math.max(found.w, found.h) / 100} strokeLinejoin="round" />
-              </svg>
-            )}
-          </div>
-        )}
-        <Button type="button" size="lg" variant={camera ? "outline" : "default"} onClick={() => toggleCamera(!camera)} className="h-14 w-full text-base sm:max-w-md">
-          {camera ? <CameraOffIcon /> : <CameraIcon />} {camera ? t("tickets.cameraOff") : t("tickets.cameraOn")}
-        </Button>
-      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -288,6 +302,36 @@ export function Scanner({ eventId }: { eventId: string }) {
           {t("tickets.checkIn")}
         </SubmitButton>
       </form>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        {!online && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-2 py-0.5 text-destructive">
+            <CloudOffIcon className="size-3.5" /> {t("tickets.offline")}
+          </span>
+        )}
+        <span>
+          {store.at ? t("tickets.listInfo", { count, time: t.date(store.at, { timeStyle: "short" }) }) : t("tickets.listLoading")}
+          {store.queue.length > 0 && ` · ${t("tickets.queued", { count: store.queue.length })}`}
+        </span>
+        <Button type="button" size="xs" variant="ghost" onClick={() => sync().then(refresh)} aria-label={t("tickets.refreshList")}>
+          <RefreshCwIcon />
+        </Button>
+        {syncNote && <span>{syncNote}</span>}
+      </div>
+      <div className="grid gap-2">
+        {camera && (
+          <div className="relative w-full sm:max-w-md">
+            <video ref={video} muted playsInline className="aspect-square w-full rounded-xl border bg-muted object-cover" />
+            {found && (
+              <svg viewBox={`0 0 ${found.w} ${found.h}`} preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 size-full rounded-xl" aria-hidden>
+                <polygon points={found.pts} className="fill-primary/20 stroke-primary" strokeWidth={Math.max(found.w, found.h) / 100} strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+        )}
+        <Button type="button" size="lg" variant={camera ? "outline" : "default"} onClick={() => toggleCamera(!camera)} className="h-14 w-full text-base sm:max-w-md">
+          {camera ? <CameraOffIcon /> : <CameraIcon />} {camera ? t("tickets.cameraOff") : t("tickets.cameraOn")}
+        </Button>
+      </div>
     </div>
   )
 }

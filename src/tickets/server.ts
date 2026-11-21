@@ -180,9 +180,9 @@ export async function voidTickets(order: PaidOrder) {
   if (error) throw error
 }
 
-/** Cancel one ticket: refund what it cost (if paid and something is left to refund), then void it.
+/** Cancel one ticket: refund what it cost (if paid, something is left to refund and `refund` isn't false), then void it.
  *  Returns the refund status, or null when there was no money to give back. Throws message keys. */
-export async function cancelTicket(orgId: string, ticketId: string, reason?: string) {
+export async function cancelTicket(orgId: string, ticketId: string, reason?: string, refund = true) {
   const { data: k } = await db()
     .from("tickets")
     .select("id, status, price, type_id, order_id, pay_orders(status, pay_order_items(source_id, unit_amount))")
@@ -192,19 +192,32 @@ export async function cancelTicket(orgId: string, ticketId: string, reason?: str
   if (!k) throw new Error("errors.not_found")
   if (!["valid", "used", "reserved"].includes(k.status)) throw new Error("tickets.notCancellable")
   const price = k.price ?? k.pay_orders?.pay_order_items.find((i) => i.source_id === k.type_id)?.unit_amount ?? 0
-  let refund: string | null = null
-  if (price > 0 && ["paid", "partially_refunded"].includes(k.pay_orders?.status ?? "")) {
+  let refunded: string | null = null
+  if (refund && price > 0 && ["paid", "partially_refunded"].includes(k.pay_orders?.status ?? "")) {
     try {
-      refund = await refundOrder(k.order_id, price, reason)
+      refunded = await refundOrder(k.order_id, price, reason)
     } catch (e) {
       // Less left than the ticket's price (earlier partial refunds): give back the rest.
       if (!(e instanceof Error && e.message === "payments.invalidRefund")) throw e
-      refund = await refundOrder(k.order_id, undefined, reason).catch(() => null)
+      refunded = await refundOrder(k.order_id, undefined, reason).catch(() => null)
     }
   }
   const { error } = await db().from("tickets").update({ status: "void" }).eq("id", k.id)
   if (error) throw error
-  return refund
+  return refunded
+}
+
+/** Undo a check-in (let in by mistake): the ticket is valid again. A guest-list ticket's name check-in goes with it (trigger). */
+export async function undoCheckIn(orgId: string, eventId: string, ticketId: string) {
+  const { error, count } = await db()
+    .from("tickets")
+    .update({ status: "valid", checked_in_at: null, checked_in_by: null }, { count: "exact" })
+    .eq("id", ticketId)
+    .eq("org_id", orgId)
+    .eq("event_id", eventId)
+    .eq("status", "used")
+  if (error) throw error
+  if (!count) throw new Error("errors.not_found")
 }
 
 /** The buyer's tickets, if the token matches the order. */

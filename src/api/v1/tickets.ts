@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { cancelTicket } from "@/tickets/server"
+import { cancelTicket, undoCheckIn } from "@/tickets/server"
 import { checkCode, checkTicketType, checkTier, CODE_KINDS, MAX_PRICE, normalizeCode } from "@/tickets/fields"
 import { ApiError, dbError, endpoint, list, notFound, page, paged, uuid, type Endpoint } from "../core"
 import { clean, eventOf, invalid } from "./events"
@@ -423,15 +423,15 @@ export const endpoints: Endpoint[] = [
     path: "/tickets/{id}/cancel",
     permission: "payments.refund",
     tag: "Tickets",
-    summary: "Cancel one ticket and refund its price",
+    summary: "Cancel one ticket (and refund its price)",
     description:
-      "Refunds what this ticket cost through the payment provider (if its order is paid and something is left to refund; the service fee stays), then voids the ticket: its QR code no longer gets in. Other tickets of the order stay valid. `refund` = succeeded / pending / failed, or null when nothing was paid.",
-    body: z.object({ reason: z.string().trim().max(500).optional() }).strict(),
+      "Refunds what this ticket cost through the payment provider (if its order is paid, something is left to refund and `refund` isn't false; the service fee stays), then voids the ticket: its QR code no longer gets in. Other tickets of the order stay valid. `refund` in the response = succeeded / pending / failed, or null when nothing was given back.",
+    body: z.object({ reason: z.string().trim().max(500).optional(), refund: z.boolean().optional().describe("false = void without giving money back (default true)") }).strict(),
     response: z.object({ refund: z.enum(["succeeded", "pending", "failed"]).nullable(), ticket: Ticket }),
     async handler({ db, orgId, params, body }) {
       let refund: string | null
       try {
-        refund = await cancelTicket(orgId, params.id, body.reason)
+        refund = await cancelTicket(orgId, params.id, body.reason, body.refund !== false)
       } catch (e) {
         const key = e instanceof Error ? e.message : ""
         if (key === "errors.not_found") throw notFound()
@@ -441,6 +441,27 @@ export const endpoints: Endpoint[] = [
       }
       const { data } = await db.from("tickets").select(TICKET_COLS).eq("id", params.id).eq("org_id", orgId).single()
       return { refund: refund as "succeeded" | "pending" | "failed" | null, ticket: data! }
+    },
+  }),
+  endpoint({
+    method: "POST",
+    path: "/tickets/{id}/check-out",
+    permission: "tickets.scan",
+    tag: "Tickets",
+    summary: "Undo a ticket's check-in",
+    description: "For someone let in by mistake: the ticket is valid again (its QR code gets in once more). A guest-list ticket's name check-in is removed with it. 404 when the ticket isn't checked in.",
+    response: Ticket,
+    async handler({ db, orgId, params }) {
+      const { data: k } = await db.from("tickets").select("event_id").eq("id", params.id).eq("org_id", orgId).maybeSingle()
+      if (!k) throw notFound()
+      try {
+        await undoCheckIn(orgId, k.event_id, params.id)
+      } catch (e) {
+        if (e instanceof Error && e.message === "errors.not_found") throw notFound()
+        throw dbError(e as { message: string })
+      }
+      const { data } = await db.from("tickets").select(TICKET_COLS).eq("id", params.id).eq("org_id", orgId).single()
+      return data!
     },
   }),
   endpoint({

@@ -15,7 +15,12 @@ import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
 import { memberDoor, type MemberAtDoor } from "@/members/door"
-import { guestCheckIn, memberDoorCheckIn, ticketDoorCheckIn } from "./actions"
+import { guestCheckIn, memberDoorCheckIn, ticketDoorCancel, ticketDoorCheckIn, ticketDoorUndo } from "./actions"
+import { Choice } from "@/components/choice"
+import { DetailList } from "@/components/detail-list"
+import { UrlSheet } from "@/components/url-sheet"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
 import { ScanLineIcon, ShoppingCartIcon, UsersIcon } from "lucide-react"
@@ -147,6 +152,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
               {look === "all" && <Everyone eventId={current.id} q={q} canScan={canScan} canGuests={canGuests} canMembers={canMembers} />}
               {look === "guests" && <Guests eventId={current.id} q={q} list={param(sp, "list")} />}
               {look === "tickets" && <Tickets eventId={current.id} q={q} />}
+              {canScan && /^[0-9a-f-]{36}$/.test(param(sp, "edit") ?? "") && <CancelTicket eventId={current.id} id={param(sp, "edit")!} tab={tab} q={q} />}
               {look === "members" && <Members eventId={current.id} q={q} who={param(sp, "who")} sp={sp} />}
             </div>
           </div>
@@ -301,23 +307,95 @@ async function loadTickets(ctx: Ctx, eventId: string, q?: string) {
 type TicketRow = Awaited<ReturnType<typeof loadTickets>>[number]
 const ticketName = (k: TicketRow) => k.holder_name ?? k.pay_orders?.customer_name ?? "–"
 
-function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?: string }, pill?: boolean) {
+// Valid: Einchecken (+ Stornieren for whoever may cancel); checked in: the time + Auschecken (let in by mistake).
+function ticketRow(t: T, eventId: string, k: TicketRow, back: { tab: string; q?: string; canCancel?: boolean }, pill?: boolean) {
+  const hidden = (
+    <>
+      <input type="hidden" name="event" value={eventId} />
+      <input type="hidden" name="tab" value={back.tab} />
+      <input type="hidden" name="q" value={back.q ?? ""} />
+    </>
+  )
   return (
     <DoorRow key={`t${k.id}`} title={ticketName(k)} pill={pill ? t("door.kind.ticket") : undefined} meta={[k.ticket_types?.name, k.code].filter(Boolean).join(" · ")} done={k.status !== "valid"}>
       {k.status === "void" ? (
         <Badge variant="destructive">{t("tickets.statuses.void")}</Badge>
       ) : k.status === "used" ? (
-        <Badge variant="success">{t("door.inSince", { time: k.checked_in_at ? t.date(k.checked_in_at, { timeStyle: "short" }) : "" })}</Badge>
-      ) : (
-        <form action={ticketDoorCheckIn}>
-          <input type="hidden" name="event" value={eventId} />
-          <input type="hidden" name="code" value={k.code} />
-          <input type="hidden" name="tab" value={back.tab} />
-          <input type="hidden" name="q" value={back.q ?? ""} />
-          <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
+        <form action={ticketDoorUndo} className="flex items-center gap-2">
+          {hidden}
+          <input type="hidden" name="id" value={k.id} />
+          {k.checked_in_at && <span className="text-sm text-muted-foreground tabular-nums">{t("door.inSince", { time: t.date(k.checked_in_at, { timeStyle: "short" }) })}</span>}
+          <SubmitButton size="lg" variant="ghost" className="h-11">
+            {t("door.checkOut")}
+          </SubmitButton>
         </form>
+      ) : (
+        <div className="flex items-center gap-2">
+          {back.canCancel && (
+            <Button render={<Link href={`/scan?${new URLSearchParams({ event: eventId, tab: back.tab, q: back.q ?? "", edit: k.id })}`} scroll={false} />} nativeButton={false} size="lg" variant="ghost" className="h-11">
+              {t("door.cancel")}
+            </Button>
+          )}
+          <form action={ticketDoorCheckIn}>
+            {hidden}
+            <input type="hidden" name="code" value={k.code} />
+            <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
+          </form>
+        </div>
       )}
     </DoorRow>
+  )
+}
+
+// "Stornieren" (?edit=<ticket>): void it, with or without giving the money back; the note goes to the refund.
+async function CancelTicket({ eventId, id, tab, q }: { eventId: string; id: string; tab: string; q?: string }) {
+  const ctx = await getContext()
+  const t = await getT()
+  const { data: k } = await ctx.supabase
+    .from("tickets")
+    .select("id, code, holder_name, status, price, ticket_types(name), pay_orders(customer_name, status)")
+    .eq("id", id)
+    .eq("event_id", eventId)
+    .eq("org_id", ctx.org.id)
+    .maybeSingle()
+  if (!k || k.status !== "valid") return null
+  const paid = (k.price ?? 0) > 0 && ["paid", "partially_refunded"].includes(k.pay_orders?.status ?? "")
+  const canRefund = paid && ctx.can("payments.refund")
+  return (
+    <UrlSheet params={["edit"]} title={t("door.cancelTitle")} compact>
+      <form action={ticketDoorCancel} className="grid gap-4">
+        <input type="hidden" name="event" value={eventId} />
+        <input type="hidden" name="tab" value={tab} />
+        <input type="hidden" name="q" value={q ?? ""} />
+        <input type="hidden" name="id" value={k.id} />
+        <DetailList
+          items={[
+            { label: t("tickets.holder"), value: k.holder_name ?? k.pay_orders?.customer_name },
+            { label: t("tickets.typeName"), value: [k.ticket_types?.name, k.code].filter(Boolean).join(" · ") },
+            paid && { label: t("tickets.price"), value: t.money(k.price ?? 0) },
+          ]}
+        />
+        {canRefund ? (
+          <div className="grid gap-2">
+            <Label htmlFor="door-refund">{t("door.refund")}</Label>
+            <Choice id="door-refund" name="refund" label={t("door.refund")} required defaultValue="1" options={[{ value: "1", label: t("door.refundYes") }, { value: "0", label: t("door.refundNo") }]} />
+          </div>
+        ) : (
+          <input type="hidden" name="refund" value="0" />
+        )}
+        {canRefund && (
+          <div className="grid gap-2">
+            <Label htmlFor="door-reason">{t("door.cancelNote")}</Label>
+            <Textarea id="door-reason" name="reason" rows={2} maxLength={500} />
+          </div>
+        )}
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <SubmitButton variant="destructive" data-confirm="door.confirmCancel">
+            {t("door.cancel")}
+          </SubmitButton>
+        </div>
+      </form>
+    </UrlSheet>
   )
 }
 
@@ -325,11 +403,12 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
   const ctx = await getContext()
   const t = await getT()
   const data = await loadTickets(ctx, eventId, q)
+  const canCancel = ctx.can("tickets.manage") || ctx.can("payments.refund")
   return (
     <section className="grid gap-3">
       <SearchBox size="lg" q={q} label={t("door.searchTickets")} keep={{ event: eventId, tab: "tickets" }} />
       <ul className="grid gap-2">
-        {data.map((k) => ticketRow(t, eventId, k, { tab: "tickets", q }))}
+        {data.map((k) => ticketRow(t, eventId, k, { tab: "tickets", q, canCancel }))}
         {!data.length && <li className="text-sm text-muted-foreground">{t("door.noTickets")}</li>}
       </ul>
     </section>
@@ -347,7 +426,7 @@ async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventI
     canMembers && q ? ctx.supabase.rpc("member_door_search", { p_event: eventId, p_q: q }) : Promise.resolve({ data: [] }),
   ])
   const rows = [
-    ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q }, true) })),
+    ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q, canCancel: ctx.can("tickets.manage") || ctx.can("payments.refund") }, true) })),
     ...guests.map((g) => ({ name: g.name, node: guestRow(t, eventId, g, { tab: "all", q }, true) })),
     ...(members ?? []).map((m) => ({
       name: m.name ?? "",

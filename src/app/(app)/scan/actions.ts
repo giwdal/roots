@@ -7,9 +7,10 @@ import { back } from "@/lib/url"
 import { isMemberCode, memberDoor, memberDoorList, type MemberAtDoor } from "@/members/door"
 import { cancelDoorSale, doorSaleStatus, doorStats, payAtDoor, sellAtDoor } from "@/tickets/door"
 import { DOOR_METHODS, readLines, type DoorMethod } from "@/tickets/door-fields"
-import { qrSvg } from "@/tickets/server"
+import { cancelTicket, qrSvg, undoCheckIn } from "@/tickets/server"
+import { getContext } from "@/lib/context"
 
-export type ScanResult = { result: "ok" | "used" | "invalid" | "error"; holder?: string | null; type?: string | null; at?: string | null; message?: string; member?: MemberAtDoor }
+export type ScanResult = { result: "ok" | "valid" | "used" | "invalid" | "error"; holder?: string | null; type?: string | null; at?: string | null; message?: string; member?: MemberAtDoor }
 
 const scanError = (t: Awaited<ReturnType<typeof getT>>, e: { message?: string } | null) =>
   e?.message === "not_allowed" || e?.message === "event_cancelled" ? t.dynamic(`errors.${e.message}`) : t("tickets.scanFailed")
@@ -37,6 +38,28 @@ export async function checkIn(eventId: string, code: string): Promise<ScanResult
   if (error || !data) return { result: "error", message: scanError(t, error) }
   if (data.result === "invalid" && members) return member()
   return { result: data.result as ScanResult["result"], holder: data.holder_name, type: data.type_name, at: data.checked_in_at }
+}
+
+// Scanner, step 1: who is this? Looks the code up without checking in ("valid" → the card's Einchecken button calls
+// checkIn). Members as in checkIn: their card shows, letting in is admitMember.
+export async function lookupCode(eventId: string, code: string): Promise<ScanResult> {
+  const ctx = await requirePerm("tickets.scan")
+  const t = await getT()
+  const clean = String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20)
+  if (!/^[0-9a-f-]{36}$/.test(eventId) || !clean) return { result: "invalid" }
+  const members = ctx.modules.has("members")
+  if (members && isMemberCode(clean)) return checkIn(eventId, clean) // member codes only look up there
+  const [{ data: ev }, { data: k, error }] = await Promise.all([
+    ctx.supabase.from("events").select("status").eq("id", eventId).eq("org_id", ctx.org.id).maybeSingle(),
+    ctx.supabase.from("tickets").select("status, holder_name, checked_in_at, ticket_types(name), pay_orders(customer_name)").eq("event_id", eventId).eq("org_id", ctx.org.id).eq("code", clean).maybeSingle(),
+  ])
+  if (error) return { result: "error", message: scanError(t, error) }
+  if (ev?.status === "cancelled") return { result: "invalid", message: t("errors.event_cancelled") }
+  if (!k) return members ? checkIn(eventId, clean) : { result: "invalid" }
+  const who = { holder: k.holder_name ?? k.pay_orders?.customer_name ?? null, type: k.ticket_types?.name ?? null }
+  if (k.status === "valid") return { result: "valid", ...who }
+  if (k.status === "used") return { result: "used", ...who, at: k.checked_in_at }
+  return { result: "invalid", ...who, message: t("tickets.statuses.void") }
 }
 
 /** Let a looked-up member in (scanner card button). */
@@ -123,6 +146,38 @@ export async function ticketDoorCheckIn(fd: FormData) {
   const r = await checkIn(event, String(fd.get("code") ?? ""))
   if (r.result === "ok") back(here, { ok: t("door.checkedIn", { name: r.holder ?? String(fd.get("code")) }) })
   back(here, { error: r.message ?? t.dynamic(`tickets.scanResult.${r.result}`) })
+}
+
+const listHere = (fd: FormData, extra: Record<string, string> = {}) =>
+  `/scan?${new URLSearchParams({ event: String(fd.get("event") ?? ""), tab: String(fd.get("tab") || "tickets"), q: String(fd.get("q") ?? ""), ...extra })}`
+
+// Door lists: check a ticket out again (let in by mistake).
+export async function ticketDoorUndo(fd: FormData) {
+  const ctx = await requirePerm("tickets.scan")
+  const t = await getT()
+  const here = listHere(fd)
+  try {
+    await undoCheckIn(ctx.org.id, String(fd.get("event") ?? ""), String(fd.get("id") ?? ""))
+  } catch (e) {
+    back(here, { error: e instanceof Error && e.message.includes(".") ? t.dynamic(e.message) : dbError(t, e as { message: string }) })
+  }
+  back(here, { ok: t("door.undone") })
+}
+
+// Door lists → "Stornieren" sheet: void the ticket, with or without giving the money back (refund = payments.refund).
+export async function ticketDoorCancel(fd: FormData) {
+  const ctx = await getContext()
+  const t = await getT()
+  const refund = fd.get("refund") === "1"
+  const here = listHere(fd)
+  if (!ctx.can(refund ? "payments.refund" : "tickets.manage")) back(here, { error: t("errors.not_allowed") })
+  let status: string | null = null
+  try {
+    status = await cancelTicket(ctx.org.id, String(fd.get("id") ?? ""), String(fd.get("reason") ?? "").slice(0, 500) || undefined, refund)
+  } catch (e) {
+    back(listHere(fd, { edit: String(fd.get("id") ?? "") }), { error: e instanceof Error && e.message.includes(".") ? t.dynamic(e.message) : t("errors.generic") })
+  }
+  back(here, { ok: status === "pending" ? t("payments.refundPending") : t("payments.ticketCancelled") })
 }
 
 // Door → Mitglieder tab (search by name): look up = link, let in = this form.

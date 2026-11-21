@@ -2494,7 +2494,7 @@
     "undo": "Rückgängig",
     "undone": "Check-in zurückgenommen.",
     "inSince": "Check-in: {time}",
-    "onList": "Gästeliste: {list}",
+    "onList": "GL: {list}",
     "checkOut": "Auschecken",
     "cancel": "Stornieren",
     "cancelTitle": "Ticket stornieren",

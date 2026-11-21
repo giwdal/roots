@@ -2494,7 +2494,7 @@
     "undo": "Undo",
     "undone": "Check-in undone.",
     "inSince": "Check-in: {time}",
-    "onList": "Guest list: {list}",
+    "onList": "GL: {list}",
     "checkOut": "Check out",
     "cancel": "Cancel ticket",
     "cancelTitle": "Cancel ticket",

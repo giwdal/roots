@@ -188,7 +188,6 @@ async function loadGuests(ctx: Ctx, eventId: string, q?: string, list?: string) 
 }
 type GuestRow = Awaited<ReturnType<typeof loadGuests>>["rows"][number]
 
-// `pill` = which kind of entry (only in "Alle").
 function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: string; list?: string }) {
   const fields = (
     <>
@@ -431,7 +430,7 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
   )
 }
 
-// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; the line below says ticket type / Gästeliste: <list>; members carry a pill); members have no
+// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; the line below says ticket type / GL: <list>; members carry a pill); members have no
 // entry for an event, so they only join when searching (a hit opens their card on the Mitglieder view).
 async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventId: string; q?: string; canScan: boolean; canGuests: boolean; canMembers: boolean }) {
   const ctx = await getContext()

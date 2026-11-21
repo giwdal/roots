@@ -190,6 +190,16 @@ type GuestRow = Awaited<ReturnType<typeof loadGuests>>["rows"][number]
 
 // `pill` = which kind of entry (only in "Alle").
 function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: string; list?: string }, pill?: boolean) {
+  const fields = (
+    <>
+      <input type="hidden" name="event" value={eventId} />
+      <input type="hidden" name="entry" value={r.id} />
+      <input type="hidden" name="name" value={r.name} />
+      <input type="hidden" name="tab" value={back.tab} />
+      <input type="hidden" name="q" value={back.q ?? ""} />
+      <input type="hidden" name="list" value={back.list ?? ""} />
+    </>
+  )
   return (
     <DoorRow
       key={`g${r.id}`}
@@ -198,25 +208,26 @@ function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: s
       meta={[r.list.name, r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")}
       done={!!r.at}
     >
-      <form action={guestCheckIn} className="flex items-center gap-2">
-        <input type="hidden" name="event" value={eventId} />
-        <input type="hidden" name="entry" value={r.id} />
-        <input type="hidden" name="name" value={r.name} />
-        <input type="hidden" name="tab" value={back.tab} />
-        <input type="hidden" name="q" value={back.q ?? ""} />
-        <input type="hidden" name="list" value={back.list ?? ""} />
-        {r.at ? (
-          <>
-            <Badge variant="success">{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</Badge>
+      {r.at ? (
+        // Checked in: same as a ticket row – the time, Auschecken in ⋯.
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-muted-foreground tabular-nums">{t("door.inSince", { time: t.date(r.at, { timeStyle: "short" }) })}</span>
+          <form id={`gundo-${r.id}`} action={guestCheckIn} hidden>
+            {fields}
             <input type="hidden" name="undo" value="1" />
-            <SubmitButton size="lg" variant="ghost" className="h-11">
-              {t("door.undo")}
-            </SubmitButton>
-          </>
-        ) : (
-          <SubmitButton size="lg" className="h-11 px-6">{t("door.checkIn")}</SubmitButton>
-        )}
-      </form>
+          </form>
+          <ActionsMenu>
+            <MenuSubmit form={`gundo-${r.id}`} icon={<UndoIcon />}>
+              {t("door.checkOut")}
+            </MenuSubmit>
+          </ActionsMenu>
+        </div>
+      ) : (
+        <form action={guestCheckIn}>
+          {fields}
+          <SubmitButton size="lg" className="h-11 px-5">{t("door.checkIn")}</SubmitButton>
+        </form>
+      )}
     </DoorRow>
   )
 }

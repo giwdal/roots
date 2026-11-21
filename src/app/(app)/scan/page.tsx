@@ -23,11 +23,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
-import { ScanLineIcon, ShoppingCartIcon, UsersIcon } from "lucide-react"
+import { CheckIcon, ScanLineIcon, ShoppingCartIcon, UsersIcon } from "lucide-react"
 import { DoorSale } from "./door-sale"
 import { doorOffer, doorSells, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
-import { ChipRow } from "@/components/chip-row"
+import { ActionsMenu, MenuLink } from "@/components/actions-menu"
 
 const TAB_ICONS = { scan: ScanLineIcon, sale: ShoppingCartIcon, list: UsersIcon } as const
 
@@ -67,17 +67,6 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const q = param(sp, "q")
     ?.replace(/[%,()*]/g, "")
     .trim()
-  const eventChip = (href: string, active: boolean, label: string) => (
-    <Link
-      key={href}
-      href={href}
-      aria-current={active ? "true" : undefined}
-      className="inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm whitespace-nowrap text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:bg-primary aria-[current=true]:font-medium aria-[current=true]:text-primary-foreground"
-    >
-      {label}
-    </Link>
-  )
-
   // Door settings (methods, terminal, cash book) are the event's ticket settings: the gear goes there.
   const settingsHref = current && ctx.modules.has("tickets") && ctx.can("tickets.manage") ? `/events/${current.id}/tickets?edit=settings#door` : undefined
   return (
@@ -87,16 +76,23 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
       <PageHeader
         area="events"
         title={t("tickets.scanNav")}
+        meta={current ? `${current.title} · ${t.date(current.starts_at, { dateStyle: "short" })}` : undefined}
         settings={settingsHref ? { href: settingsHref, label: t("door.settingsLink") } : false}
+        menu={
+          (events?.length ?? 0) > 1 && (
+            // Switching the event lives in ⋯ (an action sheet on phones), so the door screen stays calm.
+            <ActionsMenu label={t("tickets.pickEvent")}>
+              {events!.map((e) => (
+                <MenuLink key={e.id} href={`/scan?event=${e.id}&tab=${tab}${look ? `&look=${look}` : ""}`} icon={<CheckIcon className={e.id === current?.id ? undefined : "invisible"} />}>
+                  {`${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`}
+                </MenuLink>
+              ))}
+            </ActionsMenu>
+          )
+        }
       />
       <div className="grid gap-4 pb-24 md:pb-0">
-      {!events?.length ? (
-        <p className="text-sm text-muted-foreground">{t("tickets.noEventsToScan")}</p>
-      ) : (
-        <ChipRow label={t("tickets.pickEvent")} className="-mx-1 gap-1 px-1 pb-1">
-          {events.map((e) => eventChip(`/scan?event=${e.id}&tab=${tab}${look ? `&look=${look}` : ""}`, e.id === current?.id, `${e.title} · ${t.date(e.starts_at, { dateStyle: "short" })}`))}
-        </ChipRow>
-      )}
+      {!events?.length && <p className="text-sm text-muted-foreground">{t("tickets.noEventsToScan")}</p>}
       {current && (
         <>
           <Notice error={param(sp, "error")} ok={param(sp, "ok")} />

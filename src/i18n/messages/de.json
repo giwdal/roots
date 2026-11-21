@@ -2476,7 +2476,6 @@
       "sale": "Verkauf"
     },
     "kind": {
-      "guest": "Gästeliste",
       "member": "Mitglied"
     },
     "searchAllMembers": "Name, Code oder Mitglied suchen…",
@@ -2495,6 +2494,7 @@
     "undo": "Rückgängig",
     "undone": "Check-in zurückgenommen.",
     "inSince": "Check-in: {time}",
+    "onList": "Gästeliste: {list}",
     "checkOut": "Auschecken",
     "cancel": "Stornieren",
     "cancelTitle": "Ticket stornieren",

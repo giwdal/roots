@@ -189,7 +189,7 @@ async function loadGuests(ctx: Ctx, eventId: string, q?: string, list?: string) 
 type GuestRow = Awaited<ReturnType<typeof loadGuests>>["rows"][number]
 
 // `pill` = which kind of entry (only in "Alle").
-function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: string; list?: string }, pill?: boolean) {
+function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: string; list?: string }) {
   const fields = (
     <>
       <input type="hidden" name="event" value={eventId} />
@@ -204,8 +204,7 @@ function guestRow(t: T, eventId: string, r: GuestRow, back: { tab: string; q?: s
     <DoorRow
       key={`g${r.id}`}
       title={r.name}
-      pill={pill ? t("door.kind.guest") : undefined}
-      meta={[r.list.name, r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")}
+      meta={[t("door.onList", { list: r.list.name }), r.list.door_price > 0 && t("guestlists.atDoor", { price: t.money(r.list.door_price) })].filter(Boolean).join(" · ")}
       done={!!r.at}
     >
       {r.at ? (
@@ -432,7 +431,7 @@ async function Tickets({ eventId, q }: { eventId: string; q?: string }) {
   )
 }
 
-// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; guests and members carry a pill, tickets show their type below); members have no
+// "Alle": everyone expected tonight in one list (tickets + guest lists, by name; the line below says ticket type / Gästeliste: <list>; members carry a pill); members have no
 // entry for an event, so they only join when searching (a hit opens their card on the Mitglieder view).
 async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventId: string; q?: string; canScan: boolean; canGuests: boolean; canMembers: boolean }) {
   const ctx = await getContext()
@@ -444,7 +443,7 @@ async function Everyone({ eventId, q, canScan, canGuests, canMembers }: { eventI
   ])
   const rows = [
     ...tickets.map((k) => ({ name: ticketName(k), node: ticketRow(t, eventId, k, { tab: "all", q, canCancel: ctx.can("tickets.manage") || ctx.can("payments.refund") }) })),
-    ...guests.map((g) => ({ name: g.name, node: guestRow(t, eventId, g, { tab: "all", q }, true) })),
+    ...guests.map((g) => ({ name: g.name, node: guestRow(t, eventId, g, { tab: "all", q }) })),
     ...(members ?? []).map((m) => ({
       name: m.name ?? "",
       node: (

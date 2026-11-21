@@ -2476,7 +2476,6 @@
       "sale": "Sell"
     },
     "kind": {
-      "guest": "Guest list",
       "member": "Member"
     },
     "searchAllMembers": "Search name, code or member…",
@@ -2495,6 +2494,7 @@
     "undo": "Undo",
     "undone": "Check-in undone.",
     "inSince": "Check-in: {time}",
+    "onList": "Guest list: {list}",
     "checkOut": "Check out",
     "cancel": "Cancel ticket",
     "cancelTitle": "Cancel ticket",

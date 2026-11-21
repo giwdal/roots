@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react"
 import { CameraIcon, CameraOffIcon, CloudOffIcon, RefreshCwIcon, XIcon } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useT } from "@/i18n/client"
@@ -171,8 +170,7 @@ export function Scanner({ eventId }: { eventId: string }) {
       const cur = load(eventId)
       if ((r.result === "ok" || r.result === "used") && cur.list[clean]?.status === "valid") update({ ...cur, list: { ...cur.list, [clean]: { ...cur.list[clean], status: "used" } } })
       if (r.result === "ok") {
-        setLast(null)
-        toast.success(t("door.checkedIn", { name: r.holder ?? code }))
+        setLast(null) // the card going away (and the buzz) is the confirmation
         doorChanged(!navigator.onLine)
         navigator.vibrate?.(80)
       } else {

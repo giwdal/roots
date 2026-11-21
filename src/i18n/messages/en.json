@@ -2570,7 +2570,7 @@
     },
     "settings": {
       "title": "Door sales",
-      "description": "Selling at the door (Door → Sell): tickets at any price and custom amounts. Tickets sold count as let in right away.",
+      "description": "Selling at the door (Door → Sell): tickets at any price and custom amounts. Tickets sold count as let in right away. With no payment method ticked, the door doesn't sell.",
       "methods": "Payment methods",
       "unavailable": {
         "cash": "",

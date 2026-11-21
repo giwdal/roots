@@ -533,7 +533,7 @@ async function DoorFields({ eventId }: { eventId: string }) {
       <input type="hidden" name="door_present" value="1" />
       {DOOR_METHODS.map((m) => (
         <SettingRow key={m} label={t.dynamic(`door.sale.method.${m}`)} hint={can[m] ? undefined : t.dynamic(`door.settings.unavailable.${m}`)} htmlFor={`door-${m}`}>
-          <input id={`door-${m}`} type="checkbox" name="methods" value={m} defaultChecked={d.methods.includes(m)} disabled={!can[m]} className="size-5 accent-primary" />
+          <input id={`door-${m}`} type="checkbox" name="methods" value={m} defaultChecked={can[m] && d.methods.includes(m)} disabled={!can[m]} className="size-5 accent-primary" />
         </SettingRow>
       ))}
       {can.terminal && (

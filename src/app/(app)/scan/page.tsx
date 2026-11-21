@@ -19,7 +19,7 @@ import { MemberCard } from "./member-card"
 import { Scanner } from "./scanner"
 import { IdCardIcon, ScanLineIcon, ShoppingCartIcon, TicketIcon, UsersIcon } from "lucide-react"
 import { DoorSale } from "./door-sale"
-import { doorOffer, doorStats, doorSummary } from "@/tickets/door"
+import { doorOffer, doorSells, doorStats, doorSummary } from "@/tickets/door"
 import { DoorStats } from "./door-stats"
 import { ChipRow } from "@/components/chip-row"
 
@@ -37,7 +37,7 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
   const since = new Date(now - 12 * 3600_000).toISOString()
   const { data: events } = await ctx.supabase
     .from("events")
-    .select("id, title, starts_at")
+    .select("id, title, starts_at, door")
     .eq("org_id", ctx.org.id)
     .eq("status", "published")
     .gte("starts_at", new Date(now - 7 * 86_400_000).toISOString())
@@ -45,8 +45,8 @@ export default async function DoorPage({ searchParams }: PageProps<"/scan">) {
     .limit(20)
   const current = events?.find((e) => e.id === param(sp, "event")) ?? events?.find((e) => e.starts_at >= since)
   const canMembers = canScan && ctx.modules.has("members")
-  const stats = current && canScan ? await doorStats(ctx.org.id, current.id) : null
-  const tabs = [...(canScan ? ["scan", "sale", "tickets"] : []), ...(canMembers ? ["members"] : []), ...(canGuests ? ["guests"] : [])]
+  const [stats, sells] = current && canScan ? await Promise.all([doorStats(ctx.org.id, current.id), doorSells(ctx.org.id, current.door)]) : [null, false]
+  const tabs = [...(canScan ? ["scan", ...(sells ? ["sale"] : []), "tickets"] : []), ...(canMembers ? ["members"] : []), ...(canGuests ? ["guests"] : [])]
   const tab = tabs.find((x) => x === param(sp, "tab")) ?? tabs[0]
   // Phones show one view (`tab`, bottom tab bar). Desktop is a door dashboard: an action panel (Scannen · Verkauf)
   // next to the live numbers and a lookup panel (Tickets · Gäste · Mitglieder, `look`), all at once.

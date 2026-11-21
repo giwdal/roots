@@ -2570,7 +2570,7 @@
     },
     "settings": {
       "title": "Abendkasse",
-      "description": "Verkauf an der Tür (Einlass → Verkauf): Tickets zu jedem Preis und freie Beträge. Verkaufte Tickets gelten sofort als eingelassen.",
+      "description": "Verkauf an der Tür (Einlass → Verkauf): Tickets zu jedem Preis und freie Beträge. Verkaufte Tickets gelten sofort als eingelassen. Ohne angehakte Zahlungsart gibt es keinen Verkauf an der Tür.",
       "methods": "Zahlungsarten",
       "unavailable": {
         "cash": "",

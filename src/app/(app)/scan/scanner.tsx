@@ -259,38 +259,54 @@ export function Scanner({ eventId }: { eventId: string }) {
       : last?.result === "used"
         ? "bg-[var(--warning)] text-black"
         : "bg-destructive text-white"
-  const memberCard = last?.member && (
-    <MemberCard t={t} m={last.member}>
-      <div className="flex gap-2">
-        <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)}>
-          {pending ? t("door.member.admitting") : t("door.member.admit")}
-        </Button>
-        <Button type="button" size="lg" variant="ghost" onClick={() => setLast(null)}>
-          {t("common.close")}
-        </Button>
-      </div>
-    </MemberCard>
+  // The result card. Over the camera (`full`) it fills the whole window: status big at the top, the action full width
+  // at the bottom (thumb reach); with the camera off it is a normal card below the start button.
+  const close = (cls?: string) => (
+    <Button type="button" size="icon-lg" variant="ghost" onClick={() => setLast(null)} aria-label={t("common.close")} className={cn("shrink-0 text-current hover:bg-black/10", cls)}>
+      <XIcon />
+    </Button>
   )
-  const ticketCard = last && !last.member && (
-    <div role="status" aria-live="assertive" className={cn("flex items-center gap-3 rounded-xl p-4 shadow-lg sm:max-w-md", tone)}>
-      <div className="grid min-w-0 flex-1 gap-0.5">
-        <p className="text-xl font-semibold">{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
-        {last.holder && <p className="truncate text-base font-medium">{last.holder}</p>}
-        <p className="truncate text-sm opacity-80">{[last.type, last.code].filter(Boolean).join(" · ")}</p>
-        {last.result === "used" && last.at && <p className="text-sm opacity-80">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>}
-        {last.message && <p className="text-sm">{last.message}</p>}
+  const memberCard = (full: boolean) =>
+    last?.member && (
+      <div className={cn("grid gap-3", full && "size-full grid-rows-[minmax(0,1fr)_auto] rounded-xl bg-background p-3 shadow-lg")}>
+        <div className={cn(full && "overflow-y-auto")}>
+          <MemberCard t={t} m={last.member} />
+        </div>
+        <div className={cn("flex gap-2", full && "flex-col-reverse")}>
+          <Button type="button" size="lg" variant="ghost" onClick={() => setLast(null)} className={cn(full && "h-12")}>
+            {t("common.close")}
+          </Button>
+          {last.member.result === "member" && (
+            <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)} className={cn(full && "h-14 text-base")}>
+              {pending ? t("door.member.admitting") : t("door.member.admit")}
+            </Button>
+          )}
+        </div>
       </div>
-      {last.result === "valid" ? (
-        <Button type="button" size="lg" disabled={pending} onClick={() => confirm(last.code)} className="h-14 shrink-0 bg-white px-6 text-base text-black hover:bg-white/90">
-          {t("tickets.checkIn")}
-        </Button>
-      ) : (
-        <Button type="button" size="icon-lg" variant="ghost" onClick={() => setLast(null)} aria-label={t("common.close")} className="text-current hover:bg-black/10">
-          <XIcon />
-        </Button>
-      )}
-    </div>
-  )
+    )
+  const ticketCard = (full: boolean) =>
+    last &&
+    !last.member && (
+      <div role="status" aria-live="assertive" className={cn("rounded-xl p-4 shadow-lg sm:max-w-md", tone, full ? "flex size-full flex-col gap-4 p-5" : "flex items-center gap-3")}>
+        <div className={cn("grid min-w-0 flex-1 gap-0.5", full && "content-start gap-2")}>
+          <div className="flex items-start gap-2">
+            <p className={cn("min-w-0 flex-1 font-semibold", full ? "text-3xl" : "text-xl")}>{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
+            {full && close("-mt-1 -mr-2")}
+          </div>
+          {last.holder && <p className={cn("font-medium break-words", full ? "text-2xl" : "truncate text-base")}>{last.holder}</p>}
+          <p className={cn("opacity-80", full ? "text-base" : "truncate text-sm")}>{[last.type, last.code].filter(Boolean).join(" · ")}</p>
+          {last.result === "used" && last.at && <p className="text-sm opacity-80">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>}
+          {last.message && <p className="text-sm">{last.message}</p>}
+        </div>
+        {last.result === "valid" ? (
+          <Button type="button" size="lg" disabled={pending} onClick={() => confirm(last.code)} className={cn("shrink-0 bg-white text-black hover:bg-white/90", full ? "h-16 w-full text-lg" : "h-14 px-6 text-base")}>
+            {t("tickets.checkIn")}
+          </Button>
+        ) : (
+          !full && close()
+        )}
+      </div>
+    )
 
   return (
     <div ref={root} className="grid gap-4">
@@ -303,15 +319,14 @@ export function Scanner({ eventId }: { eventId: string }) {
               <polygon points={found.pts} className="fill-primary/20 stroke-primary" strokeWidth={Math.max(found.w, found.h) / 100} strokeLinejoin="round" />
             </svg>
           )}
-          {ticketCard && <div className="absolute inset-x-3 bottom-3">{ticketCard}</div>}
-          {memberCard && <div className="absolute inset-3 flex flex-col justify-end overflow-hidden"><div className="max-h-full overflow-y-auto rounded-xl bg-background shadow-lg">{memberCard}</div></div>}
+          {last && <div className="absolute inset-0">{last.member ? memberCard(true) : ticketCard(true)}</div>}
         </div>
       ) : (
         <>
           <Button type="button" size="lg" onClick={() => toggleCamera(true)} className="h-14 w-full text-base sm:max-w-md">
             <CameraIcon /> {t("tickets.cameraOn")}
           </Button>
-          {ticketCard}
+          {ticketCard(false)}
         </>
       )}
       {camera && (
@@ -319,7 +334,7 @@ export function Scanner({ eventId }: { eventId: string }) {
           <CameraOffIcon /> {t("tickets.cameraOff")}
         </Button>
       )}
-      {!camera && memberCard}
+      {!camera && memberCard(false)}
       <form
         onSubmit={(e) => {
           e.preventDefault()

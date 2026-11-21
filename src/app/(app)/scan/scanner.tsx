@@ -225,34 +225,6 @@ export function Scanner({ eventId }: { eventId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- submit is stable enough (refs + transition)
   }, [camera])
 
-  // Readable from a step away, also over the camera: solid green = valid, amber = already in, red = anything else.
-  const tone =
-    last?.result === "valid"
-      ? "bg-[var(--success)] text-white"
-      : last?.result === "used"
-        ? "bg-[var(--warning)] text-black"
-        : "bg-destructive text-white"
-  const ticketCard = last && !last.member && (
-    <div role="status" aria-live="assertive" className={cn("flex items-center gap-3 rounded-xl p-4 shadow-lg sm:max-w-md", tone)}>
-      <div className="grid min-w-0 flex-1 gap-0.5">
-        <p className="text-xl font-semibold">{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
-        {last.holder && <p className="truncate text-base font-medium">{last.holder}</p>}
-        <p className="truncate text-sm opacity-80">{[last.type, last.code].filter(Boolean).join(" · ")}</p>
-        {last.result === "used" && last.at && <p className="text-sm opacity-80">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>}
-        {last.message && <p className="text-sm">{last.message}</p>}
-      </div>
-      {last.result === "valid" ? (
-        <Button type="button" size="lg" disabled={pending} onClick={() => confirm(last.code)} className="h-14 shrink-0 bg-white px-6 text-base text-black hover:bg-white/90">
-          {t("tickets.checkIn")}
-        </Button>
-      ) : (
-        <Button type="button" size="icon-lg" variant="ghost" onClick={() => setLast(null)} aria-label={t("common.close")} className="text-current hover:bg-black/10">
-          <XIcon />
-        </Button>
-      )}
-    </div>
-  )
-
   const count = Object.keys(store.list).length
   // No connection: let in on the device, sync later (conflict if another device let them in meanwhile).
   function admitLocally(contactId: string): MemberAtDoor {
@@ -280,6 +252,46 @@ export function Scanner({ eventId }: { eventId: string }) {
       if (r.result === "ok") doorChanged(!navigator.onLine)
     })
   }
+  // Readable from a step away, also over the camera: solid green = valid, amber = already in, red = anything else.
+  const tone =
+    last?.result === "valid"
+      ? "bg-[var(--success)] text-white"
+      : last?.result === "used"
+        ? "bg-[var(--warning)] text-black"
+        : "bg-destructive text-white"
+  const memberCard = last?.member && (
+    <MemberCard t={t} m={last.member}>
+      <div className="flex gap-2">
+        <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)}>
+          {pending ? t("door.member.admitting") : t("door.member.admit")}
+        </Button>
+        <Button type="button" size="lg" variant="ghost" onClick={() => setLast(null)}>
+          {t("common.close")}
+        </Button>
+      </div>
+    </MemberCard>
+  )
+  const ticketCard = last && !last.member && (
+    <div role="status" aria-live="assertive" className={cn("flex items-center gap-3 rounded-xl p-4 shadow-lg sm:max-w-md", tone)}>
+      <div className="grid min-w-0 flex-1 gap-0.5">
+        <p className="text-xl font-semibold">{t.dynamic(`tickets.scanResult.${last.result}`)}</p>
+        {last.holder && <p className="truncate text-base font-medium">{last.holder}</p>}
+        <p className="truncate text-sm opacity-80">{[last.type, last.code].filter(Boolean).join(" · ")}</p>
+        {last.result === "used" && last.at && <p className="text-sm opacity-80">{t("tickets.usedAt", { time: t.date(last.at, { timeStyle: "short" }) })}</p>}
+        {last.message && <p className="text-sm">{last.message}</p>}
+      </div>
+      {last.result === "valid" ? (
+        <Button type="button" size="lg" disabled={pending} onClick={() => confirm(last.code)} className="h-14 shrink-0 bg-white px-6 text-base text-black hover:bg-white/90">
+          {t("tickets.checkIn")}
+        </Button>
+      ) : (
+        <Button type="button" size="icon-lg" variant="ghost" onClick={() => setLast(null)} aria-label={t("common.close")} className="text-current hover:bg-black/10">
+          <XIcon />
+        </Button>
+      )}
+    </div>
+  )
+
   return (
     <div ref={root} className="grid gap-4">
       {camera ? (
@@ -292,6 +304,7 @@ export function Scanner({ eventId }: { eventId: string }) {
             </svg>
           )}
           {ticketCard && <div className="absolute inset-x-3 bottom-3">{ticketCard}</div>}
+          {memberCard && <div className="absolute inset-3 flex flex-col justify-end overflow-hidden"><div className="max-h-full overflow-y-auto rounded-xl bg-background shadow-lg">{memberCard}</div></div>}
         </div>
       ) : (
         <>
@@ -306,13 +319,7 @@ export function Scanner({ eventId }: { eventId: string }) {
           <CameraOffIcon /> {t("tickets.cameraOff")}
         </Button>
       )}
-      {last?.member && (
-        <MemberCard t={t} m={last.member}>
-          <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)} className="justify-self-start">
-            {pending ? t("door.member.admitting") : t("door.member.admit")}
-          </Button>
-        </MemberCard>
-      )}
+      {!camera && memberCard}
       <form
         onSubmit={(e) => {
           e.preventDefault()

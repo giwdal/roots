@@ -13,7 +13,7 @@ import type { TablesUpdate } from "@/lib/supabase/types"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 import { checkEvent, EVENT_STATUSES, insertEvent } from "./fields"
-import { readEventType, withTypeDefaults } from "./type-fields"
+import { readEventType } from "./type-fields"
 import { readEventLinks } from "@/site/blocks"
 
 const PATH = "/events"
@@ -69,13 +69,12 @@ export async function createEvent(fd: FormData) {
   if ("error" in r) back(`${PATH}/new`, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
   if ("error" in c) back(`${PATH}/new`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  // The form prefills from the type in the browser; a plain form post (no JS) gets the same from here.
-  let row = r.row!
-  if (row.event_type_id) {
-    const { data: type } = await ctx.supabase.from("event_types").select("capacity, active").eq("id", row.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
+  // The form prefills the capacity from the type in the browser; here only a type that is gone or inactive is refused.
+  if (r.row!.event_type_id) {
+    const { data: type } = await ctx.supabase.from("event_types").select("active").eq("id", r.row!.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
     if (!type?.active) back(`${PATH}/new`, { error: t("errors.invalid_input") })
-    row = withTypeDefaults(type, fd.has("capacity") ? row : { ...row, capacity: undefined }) as typeof row // capacity undefined = not posted, the type fills it
   }
+  const row = r.row!
   const res = await insertEvent(ctx.supabase, { ...row, custom: c.custom, org_id: ctx.org.id }, r.slug ?? null)
   if (res.error) back(`${PATH}/new`, { error: res.error.code === "23505" ? t("errors.slug_taken") : dbError(t, res.error) })
   refreshPublic(ctx.org.id) // public pages show this

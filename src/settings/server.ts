@@ -58,9 +58,14 @@ export async function createField(db: Db, orgId: string, input: FieldInput & { e
 export async function updateField(db: Db, orgId: string, id: string, input: FieldInput): Promise<SetupFail | { id: string }> {
   const f = clean(input)
   if (!f.label) return { error: "errors.invalid_input" }
-  const { data: old } = await db.from("custom_fields").select("type").eq("id", id).eq("org_id", orgId).maybeSingle()
+  const { data: old } = await db.from("custom_fields").select("type, key, entity").eq("id", id).eq("org_id", orgId).maybeSingle()
   if (!old) return { error: "errors.not_allowed" }
   if (old.type === "select" && !f.options.length) return { error: "errors.options_required" }
+  // A visit counting rule matches one option; removing it would silently stop counting (same error as deleting the field).
+  if (old.type === "select" && old.entity === "events") {
+    const { data: rules } = await db.from("membership_types").select("visit_count_value").eq("org_id", orgId).eq("visit_count_field", old.key)
+    if ((rules ?? []).some((r) => !f.options.includes(r.visit_count_value ?? ""))) return { error: "errors.field_in_use" }
+  }
   const colors = optionColors(input, f.options)
   const { error } = await db.from("custom_fields").update({ label: f.label, required: f.required, ...(old.type === "select" ? { options: f.options, option_colors: colors } : {}) }).eq("id", id).eq("org_id", orgId)
   return error ? { error: "db", db: error } : { id }

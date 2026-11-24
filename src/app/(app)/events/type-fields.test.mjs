@@ -14,18 +14,17 @@ test("name is required, colour must be known, capacity is a positive whole numbe
   assert.equal(readEventType({ name: "A", color: "neon" }, []).error, "errors.invalid_input")
   assert.equal(readEventType({ name: "A", capacity: 0 }, []).error, "errors.invalid_input")
   assert.equal(readEventType({ name: "A", capacity: "2.5" }, []).error, "errors.invalid_input")
-  const ok = readEventType({ name: "A", color: "gray", capacity: "300", counts_visit: "on" }, []).row
-  assert.deepEqual([ok.color, ok.capacity, ok.counts_visit, ok.active], ["gray", 300, true, true])
-  assert.equal(readEventType({ name: "A", counts_visit: false }, []).row.counts_visit, false)
-  assert.equal(readEventType({ name: "A" }, []).row.counts_visit, true) // default
+  const ok = readEventType({ name: "A", color: "gray", capacity: "300" }, []).row
+  assert.deepEqual([ok.color, ok.capacity, ok.active], ["gray", 300, true])
+  assert.equal("counts_visit" in ok, false) // which events count lives on the membership type, not on the event type
   assert.equal(readEventType({ name: "A", capacity: "" }, []).row.capacity, null)
 })
 
 test("type defaults fill what the row leaves out, the row wins (API semantics)", () => {
-  const t = { counts_visit: false, capacity: 300 }
-  assert.deepEqual(withTypeDefaults(t, { title: "x" }), { title: "x", counts_visit: false, capacity: 300 })
+  const t = { capacity: 300 }
+  assert.deepEqual(withTypeDefaults(t, { title: "x" }), { title: "x", capacity: 300 })
   assert.equal(withTypeDefaults(t, { capacity: null }).capacity, null) // cleared on purpose = stays cleared
-  assert.equal(withTypeDefaults(t, { counts_visit: true }).counts_visit, true)
-  assert.deepEqual(withTypeDefaults({ counts_visit: true, capacity: null }, { title: "x" }), { title: "x", counts_visit: true }) // no capacity preset
+  assert.equal(withTypeDefaults(t, { capacity: 50 }).capacity, 50)
+  assert.deepEqual(withTypeDefaults({ capacity: null }, { title: "x" }), { title: "x" }) // no capacity preset
   assert.deepEqual(withTypeDefaults(null, { title: "x" }), { title: "x" }) // no type = no change
 })

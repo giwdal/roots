@@ -842,6 +842,7 @@
     "image_type": "Only PNG, JPG, WebP or GIF.",
     "image_too_large": "The image is larger than 2 MB.",
     "slug_taken": "This slug is already taken.",
+    "field_in_use": "This event field is used as the counting rule of a membership type. Change the membership type first.",
     "invalid_time": "Please enter a valid date and time.",
     "end_before_start": "The end must be after the start.",
     "invalid_input": "Please check your input.",
@@ -1426,9 +1427,6 @@
     "colors": { "gray": "Gray", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "red": "Red", "purple": "Purple", "pink": "Pink" },
     "defaults": "Defaults for new events",
     "defaultsHint": "Only applied when creating. Changing the type later doesn't change existing events.",
-    "countsVisit": "Counts as a member visit",
-    "yes": "yes",
-    "no": "no",
     "events": "Events",
     "status": "Status",
     "active": "active",
@@ -1462,8 +1460,6 @@
     "description": "Description",
     "capacity": "Capacity (optional)",
     "type": "Type",
-    "countsVisit": "Counts as a member visit",
-    "countsVisitHint": "Off: member check-ins don't raise their visit counter, and the door stays open even at the limit (e.g. club night). They still count as attendees and towards capacity.",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
     "imageHint": "PNG, JPG, WebP or GIF, max. 2 MB.",
@@ -3012,8 +3008,15 @@
     "entryFee": "Entry fee (€)",
     "noticeMonths": "Notice (months)",
     "visitLimit": "Visit limit",
-    "visitLimitHint": "Empty = unlimited. After that the door blocks unless someone lets them in anyway. Only events with \"Counts as a visit\" count.",
+    "visitLimitHint": "Empty = unlimited. After that the door blocks unless someone lets them in anyway. Which events count is set below.",
     "visitLimitShort": "max. {n} visits",
+    "countRuleField": "Only events with this event field count",
+    "countRuleAll": "Every event counts",
+    "countRuleValue": "\"{field}\" is",
+    "countRuleYes": "Yes",
+    "countRuleHint": "Create the field under Settings → Fields for events. Events without this value don't count, so new events need the field. With \"Every event counts\" every event counts.",
+    "countRuleShort": "counts: {field} = {value}",
+    "countRuleProblem": "The event field or its value no longer exists, so the door counts no visit. Pick the field again or set \"Every event counts\".",
     "typeActive": "active",
     "addType": "Add",
     "deleteType": "Delete membership type",
@@ -4967,7 +4970,6 @@
       "event_type": {
         "name": "Name",
         "slug": "Short name",
-        "counts_visit": "Counts as a member visit",
         "capacity": "Capacity"
       },
       "membership_type": {
@@ -4993,8 +4995,7 @@
         "starts_at": "Start",
         "ends_at": "End",
         "venue_name": "Venue",
-        "capacity": "Capacity",
-        "counts_visit": "Counts as a member visit"
+        "capacity": "Capacity"
       },
       "slot": {
         "title": "Title",

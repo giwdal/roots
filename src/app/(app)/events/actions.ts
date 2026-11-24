@@ -50,8 +50,6 @@ function readEvent(fd: FormData) {
     links: readEventLinks([0, 1, 2].map((i) => ({ label: fd.get(`link_label_${i}`), url: fd.get(`link_url_${i}`) }))) as never,
     // Only in the form when the org has event types; otherwise left as it is.
     ...(fd.has("event_type") && { event_type_id: /^[0-9a-f-]{36}$/.test(String(fd.get("event_type"))) ? String(fd.get("event_type")) : null }),
-    // Only in the form when the members module is on; otherwise left as it is.
-    ...(fd.has("counts_visit_field") && { counts_visit: fd.get("counts_visit") === "on" }),
     // Only in the form for people who see the email templates; otherwise left as it is.
     ...(fd.has("email_template") && { email_template_id: /^[0-9a-f-]{36}$/.test(String(fd.get("email_template"))) ? String(fd.get("email_template")) : null }),
   }
@@ -71,10 +69,10 @@ export async function createEvent(fd: FormData) {
   if ("error" in r) back(`${PATH}/new`, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
   if ("error" in c) back(`${PATH}/new`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  // The form prefills from the type in the browser; a plain form post (no JS, or members module off) gets the same from here.
+  // The form prefills from the type in the browser; a plain form post (no JS) gets the same from here.
   let row = r.row!
   if (row.event_type_id) {
-    const { data: type } = await ctx.supabase.from("event_types").select("counts_visit, capacity, active").eq("id", row.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
+    const { data: type } = await ctx.supabase.from("event_types").select("capacity, active").eq("id", row.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
     if (!type?.active) back(`${PATH}/new`, { error: t("errors.invalid_input") })
     row = withTypeDefaults(type, fd.has("capacity") ? row : { ...row, capacity: undefined }) as typeof row // capacity undefined = not posted, the type fills it
   }
@@ -220,7 +218,7 @@ export async function saveEventType(fd: FormData) {
   const id = String(fd.get("id") ?? "")
   const { data: others } = await ctx.supabase.from("event_types").select("id, slug").eq("org_id", ctx.org.id)
   const r = readEventType(
-    { name: fd.get("name"), slug: String(fd.get("slug") ?? "").trim() || (others ?? []).find((o) => o.id === id)?.slug, color: fd.get("color"), capacity: fd.get("capacity"), counts_visit: fd.getAll("counts_visit").includes("on"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
+    { name: fd.get("name"), slug: String(fd.get("slug") ?? "").trim() || (others ?? []).find((o) => o.id === id)?.slug, color: fd.get("color"), capacity: fd.get("capacity"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
     (others ?? []).filter((o) => o.id !== id).map((o) => o.slug),
   )
   if ("error" in r) back(SETTINGS, { error: t.dynamic(r.error) })

@@ -59,7 +59,6 @@ export default async function EventSettingsPage({ searchParams }: PageProps<"/ev
               ),
             },
             { header: t("eventTypes.slug"), cell: (x) => <span className="text-muted-foreground">{x.slug}</span> },
-            { header: t("eventTypes.countsVisit"), cell: (x) => (x.counts_visit ? t("eventTypes.yes") : t("eventTypes.no")) },
             { header: t("eventTypes.events"), cell: (x) => <span className="tabular-nums">{counts.get(x.id) ?? 0}</span> },
             { header: t("eventTypes.status"), cell: (x) => (x.active ? <Badge>{t("eventTypes.active")}</Badge> : <Badge variant="outline">{t("eventTypes.inactive")}</Badge>) },
           ]}
@@ -107,11 +106,6 @@ function TypeForm({ t, type }: { t: T; type?: Tables<"event_types"> }) {
         <div className="grid gap-3 rounded-lg border p-4">
           <p className="text-sm font-medium">{t("eventTypes.defaults")}</p>
           <p className="text-xs text-muted-foreground">{t("eventTypes.defaultsHint")}</p>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="hidden" name="counts_visit" value="off" />
-            <input type="checkbox" className="size-4 accent-primary" name="counts_visit" value="on" defaultChecked={type?.counts_visit ?? true} />
-            {t("eventTypes.countsVisit")}
-          </label>
           <div className="grid gap-2">
             <Label htmlFor={`et-cap-${id}`}>{t("eventsPage.capacity")}</Label>
             <TypedInput kind="number" id={`et-cap-${id}`} name="capacity" min={1} step={1} defaultValue={type?.capacity ?? ""} />

@@ -9,6 +9,7 @@ import type { ImportOutcome } from "@/components/csv-import"
 import { loadFields, patchCustom, readCustom } from "@/lib/custom-fields"
 import { validRangeFormat } from "@/lib/number-ranges"
 import { INTERVALS } from "@/members/dues"
+import { readVisitRule } from "@/members/visit-rule"
 import * as members from "@/members/server"
 import { compact, CREDITOR_ID, PAYMENT_METHODS, today, type Fail } from "@/members/server"
 import { bicValid, ibanValid, moneyCents } from "@/lib/inputs"
@@ -223,7 +224,10 @@ export async function saveType(fd: FormData) {
   const name = str(fd, "name", 100)
   if (!name) back(TYPES, { error: t("membership.nameRequired") })
   const interval = INTERVALS.find((i) => i === fd.get("interval")) ?? "year"
+  const rule = readVisitRule(await loadFields(ctx.supabase, ctx.org.id, "events"), fd.get("visit_count_field"), fd.get("visit_count_value"))
+  if ("error" in rule) back(TYPES, { error: t.dynamic(rule.error) })
   const row = {
+    ...rule.rule,
     name,
     fee_cents: cents(fd, "fee"),
     entry_fee_cents: cents(fd, "entry_fee"),

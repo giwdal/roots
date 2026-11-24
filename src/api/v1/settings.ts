@@ -202,7 +202,7 @@ export const endpoints: Endpoint[] = [
     permission: "org.settings.manage",
     tag: "Settings",
     summary: "Delete a custom field",
-    description: "Stored values stay in the records (hidden); creating the field again with the same label brings them back.",
+    description: "Stored values stay in the records (hidden); creating the field again with the same label brings them back. 422 `field_in_use` while a membership type uses an event field as its visit counting rule (change the membership type first).",
     response: z.object({ id: uuid }),
     async handler({ db, orgId, params }) {
       const { error, count } = await db.from("custom_fields").delete({ count: "exact" }).eq("id", params.id).eq("org_id", orgId)

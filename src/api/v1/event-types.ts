@@ -15,19 +15,17 @@ const EventType = z.object({
   slug: z.string().describe("Short name, unique in the organisation (a–z, 0–9, hyphens); usable instead of the id in the events API"),
   color: z.enum(STATUS_COLORS).nullable().describe("Colour in calendar and lists"),
   active: z.boolean().describe("Inactive types can't be chosen for new events"),
-  counts_visit: z.boolean().describe("Default for the new event's counts_visit (member check-ins count towards membership visit limits)"),
   capacity: z.number().int().nullable().describe("Default for the new event's capacity (null = none)"),
   created_at: ts,
   updated_at: ts,
 })
-const COLS = "id, name, slug, color, active, counts_visit, capacity, created_at, updated_at"
+const COLS = "id, name, slug, color, active, capacity, created_at, updated_at"
 const Input = z
   .object({
     name: z.string().trim().min(1).max(100),
     slug: z.string().describe("Optional, made from the name when empty; numbered if taken"),
     color: z.enum(STATUS_COLORS).nullable(),
     active: z.boolean(),
-    counts_visit: z.boolean(),
     capacity: z.number().int().min(1).nullable(),
   })
   .partial()
@@ -77,7 +75,7 @@ export const endpoints: Endpoint[] = [
     tag: "Events",
     summary: "Create an event type",
     description:
-      "A type labels events (filters, colour) and presets new events: `counts_visit` and `capacity` are copied into an event created with this type unless the request sets them. Changing a type later does not change existing events. 409 `slug_taken` if a given slug is in use.",
+      "A type labels events (filters, colour) and presets new events: `capacity` is copied into an event created with this type unless the request sets it. (Which events count towards a membership type's visit limit is set on the membership type, not here.) Changing a type later does not change existing events. 409 `slug_taken` if a given slug is in use.",
     body: Input.required({ name: true }),
     response: EventType,
     status: 201,

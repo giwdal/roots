@@ -3,8 +3,8 @@ import { STATUS_COLORS } from "../../../projects/fields.ts"
 import { EVENT_SLUG } from "./fields.ts"
 import { slugify } from "./slug.ts"
 
-export type TypeInput = { name?: unknown; slug?: unknown; color?: unknown; active?: unknown; counts_visit?: unknown; capacity?: unknown }
-export type TypeDefaults = { counts_visit: boolean; capacity: number | null }
+export type TypeInput = { name?: unknown; slug?: unknown; color?: unknown; active?: unknown; capacity?: unknown }
+export type TypeDefaults = { capacity: number | null }
 export type TypeRow = TypeDefaults & { name: string; slug: string; color: string | null; active: boolean }
 
 const bool = (v: unknown, fallback: boolean) => (v === undefined ? fallback : v === true || v === "on")
@@ -25,14 +25,13 @@ export function readEventType(input: TypeInput, existingSlugs: string[]): { row:
     slug = base
     for (let n = 2; existingSlugs.includes(slug); n++) slug = `${base.slice(0, 76)}-${n}`
   }
-  return { row: { name, slug, color, active: bool(input.active, true), counts_visit: bool(input.counts_visit, true), capacity: capRaw } }
+  return { row: { name, slug, color, active: bool(input.active, true), capacity: capRaw } }
 }
 
 /** Create-time defaults: only keys the row leaves out (`undefined`) come from the type; what the row sets, even `null`, wins. */
 export function withTypeDefaults<T extends Record<string, unknown>>(type: TypeDefaults | null, row: T): T & Partial<TypeDefaults> {
   if (!type) return row
   const out: Record<string, unknown> = { ...row }
-  if (out.counts_visit === undefined) out.counts_visit = type.counts_visit
   if (out.capacity === undefined && type.capacity !== null) out.capacity = type.capacity
   return out as T & Partial<TypeDefaults>
 }

@@ -842,6 +842,7 @@
     "image_type": "Nur PNG, JPG, WebP oder GIF.",
     "image_too_large": "Das Bild ist größer als 2 MB.",
     "slug_taken": "Dieser Slug ist schon vergeben.",
+    "field_in_use": "Dieses Event-Feld wird als Zählregel einer Mitgliedsart benutzt. Ändere erst die Mitgliedsart.",
     "invalid_time": "Bitte gib ein gültiges Datum mit Uhrzeit an.",
     "end_before_start": "Das Ende muss nach dem Beginn liegen.",
     "invalid_input": "Bitte prüfe deine Eingaben.",
@@ -1426,9 +1427,6 @@
     "colors": { "gray": "Grau", "blue": "Blau", "green": "Grün", "yellow": "Gelb", "orange": "Orange", "red": "Rot", "purple": "Lila", "pink": "Pink" },
     "defaults": "Voreinstellungen für neue Events",
     "defaultsHint": "Gilt nur beim Anlegen. Spätere Änderungen am Typ ändern bestehende Events nicht.",
-    "countsVisit": "Zählt als Mitglieder-Besuch",
-    "yes": "ja",
-    "no": "nein",
     "events": "Events",
     "status": "Status",
     "active": "aktiv",
@@ -1462,8 +1460,6 @@
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
     "type": "Typ",
-    "countsVisit": "Zählt als Mitglieder-Besuch",
-    "countsVisitHint": "Aus: Check-ins von Mitgliedern erhöhen ihren Besuchszähler nicht, und die Tür bleibt auch am Limit offen (z. B. Klubnacht). Sie zählen trotzdem als Besucher:innen und zur Kapazität.",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
     "imageHint": "PNG, JPG, WebP oder GIF, max. 2 MB.",
@@ -3012,8 +3008,15 @@
     "entryFee": "Aufnahme (€)",
     "noticeMonths": "Frist (Monate)",
     "visitLimit": "Besuchslimit",
-    "visitLimitHint": "Leer = unbegrenzt. Danach sperrt die Tür, außer man lässt bewusst trotzdem ein. Es zählen nur Veranstaltungen mit „Zählt als Besuch“.",
+    "visitLimitHint": "Leer = unbegrenzt. Danach sperrt die Tür, außer man lässt bewusst trotzdem ein. Welche Events zählen, steht unten.",
     "visitLimitShort": "max. {n} Besuche",
+    "countRuleField": "Es zählen nur Events mit diesem Event-Feld",
+    "countRuleAll": "Alle Events zählen",
+    "countRuleValue": "„{field}“ ist",
+    "countRuleYes": "Ja",
+    "countRuleHint": "Das Feld legst du unter Einstellungen → Felder für Events an. Events ohne diesen Wert zählen nicht, neue Events brauchen das Feld also. Bei „Alle Events zählen“ zählt jedes Event.",
+    "countRuleShort": "zählt: {field} = {value}",
+    "countRuleProblem": "Das Event-Feld oder sein Wert gibt es nicht mehr. Die Tür zählt deshalb keinen Besuch. Wähle das Feld neu oder setze „Alle Events zählen“.",
     "typeActive": "aktiv",
     "addType": "Hinzufügen",
     "deleteType": "Mitgliedsart löschen",
@@ -4967,7 +4970,6 @@
       "event_type": {
         "name": "Name",
         "slug": "Kurzname",
-        "counts_visit": "Zählt als Mitglieder-Besuch",
         "capacity": "Kapazität"
       },
       "membership_type": {
@@ -4993,8 +4995,7 @@
         "starts_at": "Beginn",
         "ends_at": "Ende",
         "venue_name": "Ort",
-        "capacity": "Kapazität",
-        "counts_visit": "Zählt als Mitglieder-Besuch"
+        "capacity": "Kapazität"
       },
       "slot": {
         "title": "Titel",

@@ -1436,6 +1436,18 @@ begin
     reset role;
   end;
 
+  -- A custom field used as a membership type's counting rule can't be deleted until the rule is changed (field_in_use)
+  declare v_f uuid; v_mt uuid;
+  begin
+    insert into public.custom_fields (org_id, entity, key, label, type) values (org_a, 'events', 'regel_zaehlt', 'Regel', 'boolean') returning id into v_f;
+    insert into public.membership_types (org_id, name, visit_limit, visit_count_field, visit_count_value) values (org_a, 'Mit Regel', 3, 'regel_zaehlt', 'true') returning id into v_mt;
+    begin delete from public.custom_fields where id = v_f; assert false, 'a field used by a counting rule was deleted';
+    exception when others then if sqlerrm <> 'field_in_use' then raise; end if; end;
+    update public.membership_types set visit_count_field = null, visit_count_value = null where id = v_mt;
+    delete from public.custom_fields where id = v_f;
+    get diagnostics n = row_count;                                             assert n = 1, 'a field no rule uses can be deleted';
+  end;
+
   -- Event types: per org, an event may only use its own org's type, a type in use can't be deleted
   declare v_ta uuid; v_tx uuid; v_x uuid; v_e uuid;
   begin

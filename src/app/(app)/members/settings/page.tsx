@@ -67,7 +67,12 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
                   x.notice_months ? t("membership.noticeShortValue", { n: x.notice_months }) : null,
                   x.prorate && t("membership.prorate"),
                   x.visit_limit ? t("membership.visitLimitShort", { n: x.visit_limit }) : null,
-                  x.visit_limit && x.visit_count_field ? t("membership.countRuleShort", { field: eventFields.find((f) => f.key === x.visit_count_field)?.label ?? x.visit_count_field, value: x.visit_count_value ?? "" }) : null,
+                  x.visit_limit && x.visit_count_field
+                    ? t("membership.countRuleShort", {
+                        field: eventFields.find((f) => f.key === x.visit_count_field)?.label ?? x.visit_count_field,
+                        value: eventFields.find((f) => f.key === x.visit_count_field)?.type === "boolean" ? t("membership.countRuleYes") : (x.visit_count_value ?? ""),
+                      })
+                    : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

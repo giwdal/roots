@@ -35,6 +35,7 @@ test("field and value go together, the field must be an event field of an allowe
   assert.equal(readVisitRule(defs, "", "Session").error, "errors.invalid_input") // value without field
   assert.equal(readVisitRule(defs, "gibtsnicht", "x").error, "errors.invalid_input") // unknown field
   assert.equal(readVisitRule(defs, "anzahl", "3").error, "errors.invalid_input") // number is not offered
+  assert.equal(readVisitRule(defs, "reihe", "x".repeat(201)).error, "errors.invalid_input") // the column holds at most 200 characters
 })
 
 test("a rule whose field or value no longer exists is reported (the door then counts nothing)", () => {

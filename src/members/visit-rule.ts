@@ -20,7 +20,9 @@ export function readVisitRule(defs: FieldDef[], field: unknown, value: unknown):
   if (r.error) return { error: r.error }
   // A boolean "No" is not stored on events (parseValue drops it), so only "Yes" can be matched.
   if (r.value === undefined || (def.type === "boolean" && r.value !== true)) return { error: "errors.invalid_input" }
-  return { rule: { visit_count_field: key, visit_count_value: String(r.value) } }
+  const out = String(r.value)
+  if (out.length > 200) return { error: "errors.invalid_input" } // column limit (migration 20261124120000)
+  return { rule: { visit_count_field: key, visit_count_value: out } }
 }
 
 /** A stored rule whose field or value was removed from the org's event fields (the door would count nothing). */

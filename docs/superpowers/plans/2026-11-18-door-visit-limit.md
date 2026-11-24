@@ -146,7 +146,7 @@ Das macht der Nutzer selbst oder es geschieht auf ausdrücklichen Auftrag. Kein 
 5. **Team informieren:** Wer `tickets.scan` hat, kann an der Tür den Override setzen (Sperre ab dem 5. zählenden Besuch). Kurz zeigen, wie die Karte „x von 4“ und „zählt nicht“ aussieht.
 
 **Aufräumen (erst wenn die Tür stimmt):**
-1. Es gibt nichts abzuschalten: Die Probebesuch-Automation und das Kontaktfeld „Probebesuche“ existieren in Coppi nicht (geprüft am 24.11.2026). Offen bleibt in #16 nur, was bei Besuch 4 passiert (Antrags-Mail, Status, Aufgabe). Das reagiert auf das Check-in-Ereignis der Tür.
+1. Es gibt nichts abzuschalten: Die Probebesuch-Automation und das Kontaktfeld „Probebesuche“ existieren in Coppi nicht (geprüft am 24.11.2026). Offen bleibt in #16 nur, was bei Besuch 4 passiert (Antrags-Mail, Status, Aufgabe). Das reagiert auf das Check-in-Ereignis der Tür (live in Domes getestet am 24.11.2026): Auslöser `membership.checked_in`, Bedingungen `payload.visits` = 4 **und** `event.custom.zaehlt_als_probebesuch` = true (sonst löst ein nicht zählendes Event erneut aus). Nicht „Nur einmal pro Person“ einstellen, das verhindert den Lauf bei Besuch 4. Die Läufe starten erst mit dem Minuten-Worker (rund 35 Sekunden nach dem Check-in).
 2. Für diese Automation braucht Coppi das Kontaktfeld „Antragsstatus“ (gesendet/zurück/bestätigt) aus #15. Es existiert in Coppi ebenfalls noch nicht.
 3. Den Schalter „Zählt als Besuch“ gibt es nicht mehr. Wenn jemand ihn im Event-Formular sucht: die Regel steht jetzt an der Mitgliedsart.
 

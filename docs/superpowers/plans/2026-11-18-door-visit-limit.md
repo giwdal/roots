@@ -20,7 +20,7 @@
 ### So funktioniert es (Vorschlag #2)
 
 **Einrichten (einmal pro Org):**
-1. Die Org hat ein Event-Custom-Field (Settings → Felder, Bereich Events). Beispiel Coppi: das vorhandene Feld „Zählt als Probebesuch" (Typ Ja/Nein).
+1. Die Org hat ein Event-Custom-Field (Settings → Felder, Bereich Events). Beispiel Coppi: ein neues Feld „Zählt als Probebesuch“ (Typ Ja/Nein). Es muss dort erst angelegt werden: In Coppi (Produktion, geprüft am 24.11.2026) gibt es nur das Kontaktfeld „DJ-Alias“, keine Event-Felder.
 2. An der Mitgliedsart „Probe" steht: Besuchslimit 4, Regel „Zählt nur Events, bei denen ‚Zählt als Probebesuch' = Ja".
 3. Beim Anlegen eines Events füllt das Team das Feld aus. Das Feld liegt in `events.custom`, wie heute bei allen Custom Fields.
 
@@ -53,7 +53,7 @@ Alle eingelassenen Check-ins bleiben normale Tickets. Die echte Besucherzahl in 
 ### Warum #2 besser ist als #1
 
 1. **Kein Coppi-Wissen im Kern.** #1 baut „dieses Event zählt für Probebesuche" als feste Spalte für alle Orgs ein. Kaum eine andere Org nutzt das so. #2 fragt nur „Feld = Wert". Jede Org baut ihre eigene Regel, auch eine ganz andere (z. B. „Kategorie = Kurs").
-2. **Coppi hat das Feld schon.** Issue #15 hat die Event-Felder „Typ" und „Zählt als Probebesuch" angelegt, und die Werte stehen in `events.custom`. Mit #2 nutzt die Tür sie direkt. Bei #1 müsste Coppi alle Events auf die neue Spalte umstellen und das alte Feld abschalten.
+2. **Der Aufwand für Coppi bleibt klein.** In Coppi (Produktion, geprüft am 24.11.2026) gibt es keine Event-Felder, keinen Probebesuch-Zähler und keine Automationen, nur das Kontaktfeld „DJ-Alias“. Mit #2 legt Coppi einmal ein Event-Feld „Zählt als Probebesuch“ (Ja/Nein) an und stellt die Regel an der Mitgliedsart „Trial“ ein. Es gibt keinen vorhandenen Datenbestand, der dabei umgestellt werden müsste.
 3. **Die Regel gehört zur Mitgliedsart.** Verschiedene Arten können verschiedene Regeln haben (Probe zählt nur Sessions, eine andere Art zählt alles). #1 hat einen Schalter pro Event für alle Arten gleich.
 4. **Weniger Schema und keine zweite Wahrheit.** #2 entfernt zwei Spalten (`events.counts_visit`, `event_types.counts_visit`) und fügt zwei an `membership_types` hinzu. Das Kopieren der Typ-Voreinstellung für die Zählregel entfällt.
 5. **Der Event-Typ wird einfacher.** Er bleibt Name, Slug, Farbe, Aktiv und Standard-Kapazität. Er trägt keine Zähllogik mehr.
@@ -128,7 +128,7 @@ Die Datenbank ist von allen Branches geteilt. `main` kennt `counts_visit` nicht,
 
 **Task 11 (Pläne und PR):** In `2026-11-18-event-types.md` einen Hinweis oben ergänzen („Zähllogik entfernt, siehe Vorschlag #2") und die `counts_visit`-Stellen im Datenmodell und in Task 2–4 streichen. PR-Beschreibung aktualisieren (Abschnitt Event-Typen, Hinweis auf Regel und Rückbau-Migration).
 
-**Nach dem Merge (ersetzt den alten Abschnitt unten):** siehe „Einrichtung in Coppi“ weiter unten. Kurz: Limit und Regel an der Mitgliedsart, mit dem **vorhandenen** Event-Feld „Zählt als Probebesuch" = Ja (aus #15), Events nachpflegen, dann #16 abschalten. Kein Test in Coppi, nur in Domes.
+**Nach dem Merge (ersetzt den alten Abschnitt unten):** siehe „Einrichtung in Coppi“ weiter unten. Kurz: Event-Feld „Zählt als Probebesuch“ (Ja/Nein) **neu anlegen**, Sessions auf Ja setzen, an der Mitgliedsart „Trial“ Limit und Regel eintragen. Es gibt in Coppi nichts abzuschalten (kein Zähler, keine Automation). Kein Test in Coppi, nur in Domes.
 
 ### Einrichtung in Coppi (nach dem Merge, kein Code)
 
@@ -136,18 +136,18 @@ Das macht der Nutzer selbst oder es geschieht auf ausdrücklichen Auftrag. Kein 
 
 **Vor dem Einrichten:**
 1. Reihenfolge im Deploy: erst `feat/custom-field-search` nach `main`, dann PR 42 (mit der Migration `20261124120000`), dann erst die Einrichtung in Coppi.
-2. Vor dem Umstellen die Zähler vergleichen: Für jedes aktuelle Trial-Mitglied den alten Wert im Kontaktfeld „Probebesuche“ (Automation #16) neben die Zahl der Tür stellen (Mitglieder-Tab zeigt `visits`). Weichen sie ab, entscheidet das Team, welche Zahl gilt. Die Tür übernimmt den alten Zähler nicht.
+2. Es gibt in Coppi keinen alten Zähler zu vergleichen: kein Kontaktfeld „Probebesuche“ und keine Automation (geprüft am 24.11.2026). Der Zähler der Tür beginnt bei den Check-ins seit Beginn der Mitgliedschaft.
 
 **Einrichten:**
-1. **Event-Feld prüfen:** Das Feld „Zählt als Probebesuch“ (Typ Ja/Nein) aus #15 muss unter Settings → Felder (Events) existieren. Der Key steht dort, die Regel nutzt ihn.
+1. **Event-Feld anlegen:** Einstellungen → Felder → Bereich „Events“ → Neues Feld. Bezeichnung „Zählt als Probebesuch“, Typ Ja/Nein, kein Pflichtfeld. Der Typ lässt sich später nicht ändern.
 2. **Events nachpflegen:** Jedes Event, das zählen soll (die Sessions), braucht den Wert „Ja“. Events ohne Wert zählen nicht. Das gilt auch für **vergangene** Sessions, denn die Tür zählt seit Beginn der Mitgliedschaft. Klubnächte bleiben „Nein“ oder leer. Kommende Events: Feld beim Anlegen ausfüllen.
 3. **Mitgliedsart „Trial“:** Besuchslimit auf 4 und die Regel „Zählt nur Events, bei denen ‚Zählt als Probebesuch‘ = Ja“ setzen (Mitglieder → Einstellungen → Mitgliedsarten).
 4. **Event-Typen (optional, nur Optik):** „Session“ und „Klubnacht“ mit Farbe anlegen, Standard-Kapazität setzen. Die Typen zählen nichts. Sie färben Kalender, Liste und Tür-Chips und füllen die Kapazität vor.
 5. **Team informieren:** Wer `tickets.scan` hat, kann an der Tür den Override setzen (Sperre ab dem 5. zählenden Besuch). Kurz zeigen, wie die Karte „x von 4“ und „zählt nicht“ aussieht.
 
 **Aufräumen (erst wenn die Tür stimmt):**
-1. Die Probebesuch-Automation (#16) abschalten, damit nicht zwei Zähler laufen.
-2. Das Kontaktfeld „Probebesuche“ nicht mehr pflegen. Löschen erst nach einer Woche ohne Abweichung, denn gelöschte Werte sind weg.
+1. Es gibt nichts abzuschalten: Die Probebesuch-Automation und das Kontaktfeld „Probebesuche“ existieren in Coppi nicht (geprüft am 24.11.2026). Offen bleibt in #16 nur, was bei Besuch 4 passiert (Antrags-Mail, Status, Aufgabe). Das reagiert auf das Check-in-Ereignis der Tür.
+2. Für diese Automation braucht Coppi das Kontaktfeld „Antragsstatus“ (gesendet/zurück/bestätigt) aus #15. Es existiert in Coppi ebenfalls noch nicht.
 3. Den Schalter „Zählt als Besuch“ gibt es nicht mehr. Wenn jemand ihn im Event-Formular sucht: die Regel steht jetzt an der Mitgliedsart.
 
 ### Prüfung (Domes-Testorg, nach der Umsetzung)
@@ -470,4 +470,4 @@ git commit -m "Events: 'counts as a visit' switch; membership types: visit limit
 
 ## Nach dem Merge (kein Code, nicht Teil dieses Plans)
 
-- Coppi: Die Mitgliedsart „Probe“ auf `visit_limit` stellen. Klubnächte und Samstage auf `counts_visit = false` setzen, jetzt und künftig. Danach die bisherige Probebesuch-Automation (#16) und das Custom Field abschalten, damit nicht zwei Zähler laufen. Das macht der Nutzer selbst oder es geschieht auf ausdrücklichen Auftrag. Kein Test in Coppi.
+- (Überholt, siehe „Einrichtung in Coppi“ oben: Es gibt in Coppi weder die Automation #16 noch ein Custom Field zum Abschalten, und `counts_visit` gibt es nicht mehr.) Coppi: Die Mitgliedsart „Probe“ auf `visit_limit` stellen. Klubnächte und Samstage auf `counts_visit = false` setzen, jetzt und künftig. Danach die bisherige Probebesuch-Automation (#16) und das Custom Field abschalten, damit nicht zwei Zähler laufen. Das macht der Nutzer selbst oder es geschieht auf ausdrücklichen Auftrag. Kein Test in Coppi.

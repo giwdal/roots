@@ -7,6 +7,8 @@
 > - Die Beschriftung des Schalters wurde später allgemeiner/anders benannt (siehe de.json `eventsPage.countsVisit`).
 > - Der Override zählt als Besuch (z. B. „3 von 2 Besuchen genutzt“).
 
+> **Umsetzungsstand Vorschlag #2 (24.11.2026):** Task 6 (Migration `20261124120000`, Tests in `isolation.sql`), Task 7 (Regel an der Mitgliedsart: App unter Mitglieder → Einstellungen, Key-API, Automations-Katalog), Task 8 (Feld löschen gesperrt über den Trigger `custom_fields_in_use`, Migration `20261124130000`), Task 9 (Event-Formular, Event-Typ, API, Texte ohne `counts_visit`) und Task 10 (Tür unverändert) sind umgesetzt. Offen: Prüfung in Domes (Abschnitt „Prüfung“), PR-Beschreibung (Task 11).
+>
 > **Änderung am 24.11.2026 – gewählt ist Vorschlag #2 (Zählregel über ein Event-Custom-Field).** Der Abschnitt „Vorschlag #2“ direkt darunter ersetzt `events.counts_visit` und `event_types.counts_visit`. Alles weiter unten beschreibt den ersten Stand (Vorschlag #1) und gilt nur noch dort, wo der Abschnitt „Vorschlag #2“ es nicht ändert.
 
 ## Vorschlag #1 und #2: Woher weiß die Tür, ob ein Event zählt?

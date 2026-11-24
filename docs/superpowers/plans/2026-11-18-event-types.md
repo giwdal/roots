@@ -1,5 +1,7 @@
 # Event-Typen mit Voreinstellungen – Implementierungsplan
 
+> **Stand 24.11.2026:** Die Zähllogik ist aus dem Event-Typ entfernt. `events.counts_visit` und `event_types.counts_visit` gibt es nicht mehr (Migration `20261124120000_visit_rule_custom_field.sql`). Welche Events für ein Besuchslimit zählen, steht jetzt an der **Mitgliedsart** als Regel „Event-Feld = Wert“, siehe [2026-11-18-door-visit-limit.md](2026-11-18-door-visit-limit.md), Abschnitt „Vorschlag #2“. Der Event-Typ behält Name, Slug, Farbe, Aktiv und die Standard-Kapazität. Alle Stellen unten, die `counts_visit` nennen, beschreiben den ersten Stand und gelten nicht mehr.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Jede Org verwaltet eigene Event-Typen (Name, Slug, Farbe, Voreinstellungen). Beim Anlegen eines Events ist der Typ das erste Feld und füllt die Einstellungen vor. Der Typ ist am Event gespeichert und in App, Key-API, Kalender, Liste und Tür sichtbar. Damit wird die Zählregel für Besuchslimits (PR 42, Issue #17) eine allgemeine Eigenschaft des Typs und nicht Coppi-Logik.

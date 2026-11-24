@@ -1,24 +1,25 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
-import { CalendarXIcon, FlaskConicalIcon, SendIcon, Trash2Icon } from "lucide-react"
+import { CalendarXIcon, ListIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
+import { DetailList } from "@/components/detail-list"
 import { Notice } from "@/components/notice"
-import { FormCard, PageHeader, RecordLayout } from "@/components/page"
-import { SaveBar } from "@/components/save-bar"
+import { PageHeader, RecordLayout } from "@/components/page"
+import { Section } from "@/components/section"
+import { Stat, Stats } from "@/components/stats"
 import { SubmitButton } from "@/components/submit-button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { EmailBodyField } from "@/components/email-body-field"
-import { TagSelect } from "@/components/tag-select"
-import { BASE_PLACEHOLDERS, type Format } from "@/email/render"
+import { Button } from "@/components/ui/button"
+import { BASE_PLACEHOLDERS, renderMail } from "@/email/render"
 import { resolveAudience, type Audience } from "@/email/server"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { toLocalInput } from "@/lib/time"
 import { param } from "@/lib/url"
-import { saveCampaign, trashCampaign, unscheduleCampaign } from "../actions"
-import { DateInput } from "@/components/date-input"
+import { trashCampaign, unscheduleCampaign } from "../actions"
+import { CampaignBadge } from "../badges"
+import { CampaignForm } from "../campaign-form"
 
+// A campaign opens on its state: drafts on the editor with "Jetzt senden" as the next step (asks first, naming the
+// recipient count), sent ones on their numbers with the way to every single mail (Versand, filtered).
 export default async function CampaignPage({ params, searchParams }: PageProps<"/email/[id]">) {
   const { id } = await params
   const sp = await searchParams
@@ -29,58 +30,66 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
   if (!c) notFound()
   const audience = c.audience as Audience
   const editable = canManage && (c.status === "draft" || c.status === "scheduled")
-  const [reach, stats, { data: tagRows }] = await Promise.all([
-    editable && (audience.tags?.length || audience.members) ? resolveAudience(ctx.supabase, ctx.org.id, audience).then((r) => r.length) : Promise.resolve(null),
+  const tickets = ctx.modules.has("tickets")
+  const [reach, stats, { data: tagRows }, { data: ev }] = await Promise.all([
+    editable && (audience.tags?.length || audience.members || audience.event) ? resolveAudience(ctx.supabase, ctx.org.id, audience).then((r) => r.length) : Promise.resolve(null),
     !editable
       ? ctx.supabase.from("email_sends").select("status, delivery").eq("campaign_id", id).limit(50000).then(({ data }) => data ?? [])
       : Promise.resolve([] as { status: string; delivery: string | null }[]),
     ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }),
+    audience.event ? ctx.supabase.from("events").select("id, title, starts_at").eq("id", audience.event).eq("org_id", ctx.org.id).maybeSingle() : Promise.resolve({ data: null }),
   ])
-  const allTags = (tagRows ?? []) as unknown as string[]
-  const count = (s: string) => stats.filter((x) => x.status === s).length
-  const delivered = (d: string) => stats.filter((x) => x.delivery === d).length
+  const count = (...s: string[]) => stats.filter((x) => s.includes(x.status)).length
+  const delivered = (...d: string[]) => stats.filter((x) => d.includes(x.delivery ?? "")).length
+  const tracked = stats.some((x) => x.delivery)
+  const log = `/email/log?campaign=${c.id}`
+  const problems = count("failed") + delivered("bounced", "complained")
 
-  const statsLine = !editable
-    ? [
-        t("email.stats", { sent: count("sent"), queued: count("queued") + count("sending"), failed: count("failed"), skipped: count("skipped") }),
-        stats.some((x) => x.delivery) ? t("email.deliveryStats", { delivered: delivered("delivered"), bounced: delivered("bounced"), complained: delivered("complained") }) : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : null
+  const sendNow = editable && (
+    <SubmitButton size="sm" form="campaign" name="intent" value="send" data-confirm="email.confirmSend" data-confirm-count={reach ?? 0}>
+      <SendIcon /> {t("email.sendNow")}
+    </SubmitButton>
+  )
 
   return (
     <>
       <PageHeader
-        crumbs={[{ href: "/email", label: t("email.tabs.campaigns") }, { label: c.name }]}
+        crumbs={[{ href: "/email", label: t("nav.emails") }, { label: c.name }]}
         title={c.name}
-        badge={
-          <Badge variant={c.status === "sent" ? "default" : "outline"}>
-            {t.dynamic(`email.statuses.${c.status}`)}
-            {c.status === "scheduled" && c.send_at ? ` · ${t.date(c.send_at, { dateStyle: "short", timeStyle: "short" })}` : ""}
-          </Badge>
+        badge={<CampaignBadge t={t} status={c.status} sendAt={c.send_at} />}
+        meta={
+          c.status === "scheduled" && c.send_at
+            ? t("email.scheduledFor", { date: t.date(c.send_at, { dateStyle: "full", timeStyle: "short" }) })
+            : c.status === "draft"
+              ? t("email.lastSaved", { date: t.date(c.updated_at, { dateStyle: "medium", timeStyle: "short" }) })
+              : t("email.sentTo", { count: c.recipients })
         }
-        meta={statsLine}
+        actions={
+          !editable && (
+            <Button render={<Link href={log} />} nativeButton={false} size="sm" variant="outline">
+              <ListIcon /> {t("email.viewLog")}
+            </Button>
+          )
+        }
         menu={
           canManage &&
-          (c.status === "scheduled" || c.status !== "sending") && (
+          c.status !== "sending" && (
             <ActionsMenu>
               {c.status === "scheduled" && (
-                <MenuSubmit form="unschedule" icon={<CalendarXIcon />}>
-                  {t("email.unschedule")}
-                </MenuSubmit>
-              )}
-              {c.status !== "sending" && (
                 <>
-                  <MenuSeparator />
-                  <MenuSubmit form="trash-campaign" icon={<Trash2Icon />} destructive>
-                    {t("email.toTrash")}
+                  <MenuSubmit form="unschedule" icon={<CalendarXIcon />}>
+                    {t("email.unschedule")}
                   </MenuSubmit>
+                  <MenuSeparator />
                 </>
               )}
+              <MenuSubmit form="trash-campaign" icon={<Trash2Icon />} destructive>
+                {t("email.toTrash")}
+              </MenuSubmit>
             </ActionsMenu>
           )
         }
+        primary={sendNow || undefined}
       />
       {canManage && (
         <>
@@ -93,69 +102,74 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
         </>
       )}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      <form action={saveCampaign}>
-        <input type="hidden" name="id" value={c.id} />
+      {!editable && (c.status === "sending" || c.status === "sent") && (
+        <Stats>
+          <Stat label={t("email.recipients")} value={c.recipients} href={log} />
+          <Stat
+            label={t("email.statsSent")}
+            value={count("sent")}
+            hint={count("queued", "sending") ? t("email.statsQueued", { count: count("queued", "sending") }) : count("skipped") ? t("email.statsSkipped", { count: count("skipped") }) : undefined}
+            href={log}
+          />
+          {tracked && <Stat label={t("email.statsDelivered")} value={delivered("delivered")} href={log} tone="good" />}
+          <Stat
+            label={t("email.statsProblems")}
+            value={problems}
+            hint={
+              problems
+                ? [
+                    count("failed") && t("email.problemFailed", { count: count("failed") }),
+                    delivered("bounced") && t("email.problemBounced", { count: delivered("bounced") }),
+                    delivered("complained") && t("email.problemComplained", { count: delivered("complained") }),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : undefined
+            }
+            href={log}
+            tone={problems ? "warn" : undefined}
+          />
+        </Stats>
+      )}
+      {editable ? (
+        <CampaignForm
+          t={t}
+          c={{ ...c, audience }}
+          editable
+          tags={(tagRows ?? []) as unknown as string[]}
+          members={ctx.modules.has("members")}
+          event={{ on: tickets || !!ev, initial: ev ? { id: ev.id, label: ev.title, detail: t.date(ev.starts_at, { dateStyle: "medium" }) } : null }}
+          reach={reach}
+        />
+      ) : (
+        // Sent (or view-only): what went out to whom, as facts + the mail itself; placeholders stay visible.
         <RecordLayout
           aside={
-            <>
-              <FormCard id="audience" title={t("email.audience")} description={reach == null ? t("email.audienceHint") : t("email.reach", { count: reach })}>
-                <fieldset disabled={!editable} className="grid gap-3">
-                  <div className="grid gap-2">
-                    <Label>{t("email.audienceTags")}</Label>
-                    <TagSelect name="tags" options={allTags} defaultValue={audience.tags ?? []} disabled={!editable} />
-                  </div>
-                  {ctx.modules.has("members") && (
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" name="members" value="active" defaultChecked={audience.members === "active"} className="size-4 accent-primary" />
-                      {t("email.audienceMembers")}
-                    </label>
-                  )}
-                </fieldset>
-              </FormCard>
-              {editable && (
-                <FormCard id="send" title={t("email.sending")}>
-                  <SubmitButton name="intent" value="test" variant="outline" size="sm" className="justify-self-start">
-                    <FlaskConicalIcon /> {t("email.sendTest")}
-                  </SubmitButton>
-                  <div className="grid gap-2">
-                    <Label htmlFor="c-at">{t("email.sendAt")}</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <DateInput id="c-at" name="send_at" type="datetime-local" defaultValue={c.send_at ? toLocalInput(c.send_at) : ""} className="w-auto flex-1" />
-                      <SubmitButton name="intent" value="schedule" variant="outline" size="sm">
-                        {t("email.schedule")}
-                      </SubmitButton>
-                    </div>
-                  </div>
-                  <SubmitButton name="intent" value="send">
-                    <SendIcon /> {t("email.sendNow")}
-                  </SubmitButton>
-                </FormCard>
-              )}
-            </>
+            <Section title={t("email.audience")}>
+              <DetailList
+                items={[
+                  !!audience.tags?.length && { label: t("email.audienceTags"), value: audience.tags.join(", ") },
+                  audience.members === "active" && { label: t("modules.members.name"), value: t("email.audienceMembers") },
+                  ev && { label: t("email.audienceEvent"), value: <Link href={`/events/${ev.id}`} className="link">{ev.title}</Link> },
+                  c.send_at && { label: c.status === "sent" ? t("email.statsSent") : t("email.sendAt"), value: t.date(c.send_at, { dateStyle: "medium", timeStyle: "short" }) },
+                ]}
+              />
+            </Section>
           }
         >
-          <FormCard id="content" title={t("email.content")}>
-            <fieldset disabled={!editable} className="grid gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="c-name" name="name" label={t("email.name")} defaultValue={c.name} required maxLength={200} />
-                <Field id="c-subject" name="subject" label={t("email.subject")} defaultValue={c.subject} maxLength={300} />
-              </div>
-              <EmailBodyField id="c-body" format={c.format as Format} body={c.body} placeholders={BASE_PLACEHOLDERS} disabled={!editable} />
-            </fieldset>
-          </FormCard>
-          {editable && <SaveBar />}
+          <Section title={t("email.content")}>
+            <DetailList items={[{ label: t("email.subject"), value: c.subject || "–" }]} />
+            {/* sandbox without permissions: the mail's HTML can't run scripts or reach the app */}
+            <iframe
+              title={t("email.preview")}
+              sandbox=""
+              srcDoc={`<body style="margin:16px">${renderMail(c, Object.fromEntries(BASE_PLACEHOLDERS.map((k) => [k, `{${k}}`])), { org: ctx.org.name }).html}</body>`}
+              className="h-80 w-full rounded-lg border bg-white sm:h-[28rem]"
+            />
+          </Section>
         </RecordLayout>
-      </form>
+      )}
     </>
-  )
-}
-
-function Field({ id, label, ...props }: { id: string; label: string } & React.ComponentProps<typeof Input>) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} {...props} />
-    </div>
   )
 }
 

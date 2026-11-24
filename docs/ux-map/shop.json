@@ -1,0 +1,1684 @@
+{
+  "area": "shop",
+  "label": "Shop",
+  "module": "shop",
+  "nav": [
+    {
+      "label": "Bestellungen",
+      "key": "store.orders",
+      "href": "/shop/orders"
+    },
+    {
+      "label": "Produkte",
+      "key": "store.products",
+      "href": "/shop",
+      "notes": "segment Bestand = /shop?view=stock (was Lager, /shop/stock redirects)"
+    },
+    {
+      "label": "Einstellungen",
+      "key": "common.settings",
+      "href": "/shop/settings",
+      "permission": "shop.manage",
+      "notes": "gear only (nav child gear: true), listed in Settings › Bereiche"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/shop/orders",
+      "file": "src/app/(app)/shop/orders/page.tsx",
+      "title": "Bestellungen",
+      "purpose": "Work through shop orders (open first), filter by state and payment, record offline orders, issue missing invoices.",
+      "permission": "shop.view",
+      "size": "list",
+      "header": {
+        "area": "shop",
+        "settings": "/shop/settings",
+        "menu": [
+          {
+            "label": "Rechnung(en) für {count} bezahlte Bestellung(en) erstellen",
+            "key": "store.issueMissingInvoices",
+            "target": "issueMissingInvoicesAction via hidden form #issue-invoices",
+            "permission": "shop.manage + invoices module",
+            "notes": "⋯ only rendered when such orders exist; MenuSubmit without confirm"
+          }
+        ],
+        "primary": {
+          "label": "Neue Bestellung",
+          "key": "store.teamOrder.new",
+          "href": "/shop/orders?new=order",
+          "permission": "shop.manage",
+          "notes": "opens a UrlSheet, not a /new page"
+        }
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "open (default: new + ready) | done (shipped + completed) | cancelled | all"
+        },
+        {
+          "param": "pay",
+          "meaning": "open (open/failed/expired) | paid (FilterMenu)"
+        },
+        {
+          "param": "q",
+          "meaning": "digits = order number, else buyer name ilike"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "new",
+          "meaning": "order = Neue Bestellung sheet"
+        },
+        {
+          "param": "item",
+          "meaning": "preselected item in the new-order sheet (from Lager)"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Name oder Bestellnummer",
+              "key": "store.searchOrders",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "view",
+              "label": "Offen · Erledigt · Storniert · Alle",
+              "key": "store.views.*",
+              "type": "segments",
+              "component": "Segments"
+            },
+            {
+              "name": "pay",
+              "label": "Bezahlung",
+              "key": "store.payment",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Noch zu bezahlen / Bezahlt"
+            }
+          ]
+        },
+        {
+          "title": "Bestellungen",
+          "kind": "DataTable",
+          "columns": [
+            "Bestellung (#number + date)",
+            "Artikel (n× item per line)",
+            "Käufer:in (name + email)",
+            "Gesamt",
+            "Lieferung",
+            "Bezahlung (method + pay status, red when unpaid)",
+            "Status (Zu bearbeiten / Abholbereit / Versendet / Erledigt / Storniert)"
+          ],
+          "notes": "Only placed orders (abandoned online checkouts hidden). Row → /shop/orders/<id>."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neue Bestellung",
+          "key": "store.teamOrder.new",
+          "where": "header",
+          "kind": "sheet",
+          "target": "?new=order",
+          "permission": "shop.manage"
+        },
+        {
+          "label": "Rechnungen für n bezahlte Bestellungen erstellen",
+          "key": "store.issueMissingInvoices",
+          "where": "menu",
+          "kind": "serverAction",
+          "target": "issueMissingInvoicesAction (shop/actions.ts)",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'n Rechnungen erstellt.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=order",
+          "component": "UrlSheet",
+          "title": "Neue Bestellung",
+          "key": "store.teamOrder.new",
+          "fields": [
+            {
+              "name": "buyer",
+              "label": "Käufer:in: Ohne Käufer:in · Kontakt aus dem CRM · Neuer Kontakt",
+              "key": "store.teamOrder.buyerNone/buyerCrm/buyerNew",
+              "type": "segments",
+              "component": "SegmentGroup (client)"
+            },
+            {
+              "name": "_contact",
+              "label": "Kontakt aus dem CRM",
+              "key": "store.teamOrder.buyerCrm",
+              "type": "contact",
+              "component": "ContactPicker (noCreate)",
+              "notes": "fills buyer fields via orderBuyer()"
+            },
+            {
+              "name": "first_name / last_name",
+              "label": "Vorname / Nachname",
+              "key": "store.teamOrder.firstName / lastName",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "email",
+              "label": "E-Mail (optional)",
+              "key": "store.teamOrder.email",
+              "type": "email",
+              "component": "Input type=email",
+              "notes": "not TypedInput"
+            },
+            {
+              "name": "phone",
+              "label": "Telefon (optional)",
+              "key": "store.teamOrder.phone",
+              "type": "tel",
+              "component": "Input type=tel"
+            },
+            {
+              "name": "company",
+              "label": "Firma (optional)",
+              "key": "store.teamOrder.company",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "street / postal_code / city / country",
+              "label": "Straße und Hausnummer / PLZ / Ort / Land",
+              "key": "store.teamOrder.street/postalCode/city/country",
+              "type": "text",
+              "component": "Input",
+              "required": false,
+              "notes": "required when delivery = shipping; country 2 letters, default DE"
+            },
+            {
+              "name": "lines[] item",
+              "label": "Artikel wählen …",
+              "key": "store.teamOrder.pickItem",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "all products/variants incl. drafts, limit 500"
+            },
+            {
+              "name": "lines[] q",
+              "label": "(aria) Stückzahl",
+              "key": "store.stock",
+              "type": "number",
+              "component": "Input type=number"
+            },
+            {
+              "name": "lines[] p",
+              "label": "Preis pro Stück",
+              "key": "store.teamOrder.unitPrice",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "delivery",
+              "label": "Lieferung: Abholung · Versand (with buyer) · Digital (Download)",
+              "key": "store.deliveries.*",
+              "type": "segments",
+              "component": "SegmentGroup"
+            },
+            {
+              "name": "shipping",
+              "label": "Versandkosten",
+              "key": "store.teamOrder.shipping",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "delivery = shipping"
+            },
+            {
+              "name": "paid",
+              "label": "Bezahlt (bar) · Bezahlt (Überweisung) · Noch offen",
+              "key": "store.teamOrder.paidCash/paidTransfer/open",
+              "type": "segments",
+              "component": "segments in a radiogroup div"
+            },
+            {
+              "name": "payment",
+              "label": "Wie wird bezahlt?",
+              "key": "store.teamOrder.openHow",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "only when 'Noch offen': Bei Abholung bezahlen / Überweisung"
+            },
+            {
+              "name": "done",
+              "label": "Schon übergeben / erledigt",
+              "key": "store.teamOrder.done",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "default on"
+            },
+            {
+              "name": "invoice",
+              "label": "Rechnung erstellen",
+              "key": "store.teamOrder.invoice",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "default on when buyer has street + city; hint store.teamOrder.invoiceHint"
+            },
+            {
+              "name": "note",
+              "label": "Notiz (intern)",
+              "key": "store.teamOrder.notePlaceholder",
+              "type": "textarea",
+              "component": "Textarea"
+            },
+            {
+              "name": "notify",
+              "label": "Bestätigung per E-Mail an die Person senden",
+              "key": "store.teamOrder.notify",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "disabled without email"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Artikel hinzufügen / Artikel entfernen",
+              "key": "store.teamOrder.addItem / removeItem",
+              "where": "sheet",
+              "kind": "client"
+            },
+            {
+              "label": "Bestellung anlegen",
+              "key": "store.teamOrder.create",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "createTeamOrderAction",
+              "permission": "shop.manage",
+              "confirm": false,
+              "result": "→ /shop/orders/<id>, toast 'Bestellung angelegt.'"
+            }
+          ],
+          "notes": "Description store.teamOrder.hint. Five FormCards (Käufer:in, Artikel, Lieferung, Bezahlung, Notiz & Benachrichtigung)."
+        }
+      ],
+      "links": [
+        "/shop/orders/[id]",
+        "/shop/settings"
+      ],
+      "empty": "Open view: EmptyState 'Nichts zu tun' / 'Neue Bestellungen erscheinen hier, sobald sie bezahlt oder per Überweisung / Abholung aufgegeben sind.' (no button). Other views or search: 'Keine Bestellungen gefunden.'",
+      "phone": "Cards; primary as round + (opens the sheet).",
+      "uxNotes": [
+        "'Neue Bestellung' is a large five-card form in a sheet, while docs/design/app.md says creating records with real content is a /<area>/new page.",
+        "Quantity input of a line is labelled 'Stückzahl' (store.stock) for screen readers – the stock label, not 'Anzahl'.",
+        "Item picker is a NativeSelect of up to 500 products/variants instead of a server-search picker.",
+        "Three different segment implementations in one form (SegmentGroup twice, a hand-made radiogroup div for payment).",
+        "Issuing all missing invoices (money documents, gap-free numbers) runs from the ⋯ menu without a confirm.",
+        "No ExportMenu on orders.",
+        "Nav order puts Bestellungen before Produkte, but the area's root /shop is Produkte."
+      ],
+      "redesign": {
+        "job": "Work through what needs doing (unpaid, to hand over / ship) and find any order fast; record a sale made offline.",
+        "phone": "Top bar: Bestellungen, ⋯ (gear, issue missing invoices, export). Toolbar: search full width, then one scrolling row: Offen · Erledigt · Storniert · Alle segments, Bezahlung filter, contact chip when ?contact=. Cards: '#1001 · Name' + fulfilment badge, line 2 total · date, line 3 payment badge. Round + = Neue Bestellung (/shop/orders/new).",
+        "desktop": "Toolbar: search · Bezahlung filter · contact chip · segments on the right. Table with 5 columns: Bestellung (#number + buyer, muted items summary), Datum, Bezahlung (status badge + method muted), Status (fulfilment badge + delivery muted), Gesamt right-aligned.",
+        "moves": [
+          "q SearchBox → toolbar (unchanged)",
+          "view segments Offen · Erledigt · Storniert · Alle → <Segments> on the right of <ListToolbar> (unchanged values)",
+          "pay FilterMenu → toolbar (unchanged)",
+          "new: ?contact=<id> filter (orders of one CRM contact) with a removable chip; linked from the contact page and the order page",
+          "column Bestellung (#number + date) → #number + buyer name, items summary muted under it; date → own column Datum",
+          "column Artikel → muted line under Bestellung (first item, '+ n more')",
+          "column Käufer:in (name + email) → name in the Bestellung column; email removed from the list (on the order page)",
+          "column Gesamt → last column, right-aligned, tabular-nums",
+          "column Lieferung → muted line under the Status badge",
+          "column Bezahlung (method + red status text) → status badge (success paid, warning open, destructive failed, info refunded) + method muted",
+          "column Status → badge with status variants (warning Zu bearbeiten, info Abholbereit/Versendet, success Erledigt, destructive Storniert)",
+          "primary 'Neue Bestellung' (?new=order sheet) → link to the flow page /shop/orders/new; ?new=order (+ item) redirects there",
+          "⋯ 'Rechnungen für n bezahlte Bestellungen erstellen' → ⋯ (unchanged) with confirm store.confirmIssueMissing + Hint",
+          "new: ⋯ Export (xlsx/csv, entity shop_orders, same filters)",
+          "gear → header settings (unchanged)",
+          "EmptyState 'Nichts zu tun' → EmptyState with action 'Neue Bestellung' (shop.manage); filtered empty text unchanged",
+          "Pager → unchanged",
+          "?new=order sheet fields (buyer segments, CRM ContactPicker, name/email/phone/company/address, items, delivery, shipping, paid, payment, done, invoice, note, notify) → /shop/orders/new (see that page)"
+        ],
+        "built": true,
+        "kept": "uxNote 6 kept: /shop stays the products URL (public links, API docs, bookmarks); the sidebar opens Bestellungen first because that is the daily job.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards were squeezed (date, badges and their sub-lines cut off): phones now get '#1002 · Name', the item summary and one line 'TT.MM. · [Bezahlung] · [Status]' with the total on the right (new DataTable column flag `table: false` for phone-only stand-ins; the table keeps date+time and the badges with their detail)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "route": "/shop/orders/new",
+      "file": "src/app/(app)/shop/orders/new/page.tsx",
+      "title": "Neue Bestellung",
+      "purpose": "Record a sale made outside the online shop (merch table, phone, mail).",
+      "permission": "shop.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Bestellungen",
+          "Neue Bestellung"
+        ]
+      },
+      "redesign": {
+        "job": "Record an offline sale in under a minute: items first, then who, how it's paid, done.",
+        "phone": "One column flow: Artikel (search picker per line, quantity, price, + Artikel), Käufer:in (segments Ohne · Kontakt · Neu, picker / fields), Lieferung, Bezahlung, Notiz & Benachrichtigung; SaveBar 'Bestellung anlegen' with the total.",
+        "desktop": "Same at form width.",
+        "moves": [
+          "sheet ?new=order → own page /shop/orders/new (NewPage); ?new=order&item= redirects",
+          "Artikel NativeSelect (500 items) → RecordPicker with server search (searchOrderItems), price filled from the pick",
+          "quantity aria-label 'Stückzahl' → 'Anzahl' (store.teamOrder.quantity), TypedInput number",
+          "price per piece → TypedInput money (unchanged)",
+          "Artikel card moved first (what was sold), Käufer:in second",
+          "buyer SegmentGroup, ContactPicker, name/email/phone/company/address → unchanged; email/phone via TypedInput email/phone",
+          "delivery SegmentGroup + shipping money → unchanged",
+          "paid hand-made radiogroup → SegmentGroup; 'Wie wird bezahlt?' NativeSelect → SegmentGroup",
+          "done / invoice / notify checkboxes, note → unchanged",
+          "SaveBar 'Bestellung anlegen' → unchanged"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: one form, items first, buyer as Choice, SaveBar 'Bestellung anlegen'. No change."
+        }
+      }
+    },
+    {
+      "route": "/shop/orders/[id]",
+      "file": "src/app/(app)/shop/orders/[id]/page.tsx",
+      "title": "Bestellung #<number>",
+      "purpose": "Handle one order: items and refunds, buyer, payment (mark paid), invoice, fulfilment steps, cancel, refund, resend mails.",
+      "permission": "shop.view",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Bestellungen",
+          "#<number>"
+        ],
+        "badge": "order status + Bezahlt/Unbezahlt",
+        "meta": "placed date · payment method · delivery",
+        "actions": [
+          {
+            "label": "Erstatten",
+            "key": "store.refund",
+            "target": "?refund=1",
+            "permission": "payments.refund",
+            "notes": "only paid, not cancelled, something left"
+          },
+          {
+            "label": "Bestellung stornieren",
+            "key": "store.cancelOrder",
+            "target": "cancelOrderAction via #cancel-order",
+            "permission": "shop.manage + payments.refund",
+            "notes": "outline button with data-confirm store.confirmCancel / store.confirmCancelPaid"
+          }
+        ],
+        "menu": [
+          {
+            "label": "Mail erneut senden › Bestellbestätigung / Zahlung erhalten / Abholbereit / Versendet / Storniert / Erschienen (Downloads frei) / Erstattung",
+            "key": "store.resendMailTitle / store.mailKinds.*",
+            "target": "resendMailAction kind=<k>",
+            "permission": "shop.manage",
+            "notes": "Erstattung only when refunds exist; no confirm"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "refund",
+          "meaning": "1 = refund sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Artikel",
+          "kind": "custom",
+          "notes": "List: n× description (+ badge 'n erstattet'), line total; Gesamt; refund lines 'Erstattet am …' (+ 'ausstehend', reason) −amount; internal note box."
+        },
+        {
+          "title": "<delivery name> (Abholung / Versand / Digital)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "tracking",
+              "label": "Sendungsnummer (optional)",
+              "key": "store.tracking",
+              "type": "text",
+              "component": "Input",
+              "notes": "shipping only"
+            }
+          ],
+          "notes": "Address block; buttons by state: 'Als versendet markieren' / 'Speichern' (tracking), 'Abholbereit', 'Abgeholt' / 'Erledigt', 'Wieder öffnen'."
+        },
+        {
+          "title": "Käufer:in",
+          "kind": "custom",
+          "notes": "aside: name (→ /contacts/<id> if linked), company, tel: link, mailto: link"
+        },
+        {
+          "title": "Bezahlung",
+          "kind": "custom",
+          "notes": "aside: method · pay status, paid date or 'Artikel reserviert bis …'; button 'Überweisung erhalten' / 'Bezahlt (bar)' for unpaid non-online orders; link 'Zur Zahlung' (payments.view)."
+        },
+        {
+          "title": "Rechnung",
+          "kind": "custom",
+          "notes": "aside, invoices module: link '<number> · <status>' → /invoices/<id>; else error text, 'Entwurf öffnen', 'Noch keine Rechnung.' + button 'Rechnung erstellen'."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Überweisung erhalten / Bezahlt (bar)",
+          "key": "store.markTransferReceived / store.markCashReceived",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "markPaidAction",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Als bezahlt markiert.'"
+        },
+        {
+          "label": "Als versendet markieren / Speichern",
+          "key": "store.markShipped / store.saveTracking",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "orderStatusAction status=shipped + tracking",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'; buyer mail if enabled"
+        },
+        {
+          "label": "Abholbereit / Abgeholt / Erledigt / Wieder öffnen",
+          "key": "store.markReady / markPickedUp / markCompleted / reopen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "orderStatusAction",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Rechnung erstellen",
+          "key": "store.issueInvoice",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "invoiceAction",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Rechnung erstellt.'"
+        },
+        {
+          "label": "Bestellung stornieren",
+          "key": "store.cancelOrder",
+          "where": "header",
+          "kind": "confirm",
+          "target": "cancelOrderAction",
+          "permission": "shop.manage + payments.refund",
+          "confirm": true,
+          "result": "toast 'Bestellung storniert.' or 'Erstattung angestoßen …'"
+        },
+        {
+          "label": "Mail erneut senden › <kind>",
+          "where": "menu",
+          "kind": "serverAction",
+          "target": "resendMailAction",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Mail gesendet.' / error store.mailNotSent"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?refund=1",
+          "component": "UrlSheet",
+          "title": "Bestellung #<number> erstatten",
+          "key": "store.refundTitle",
+          "fields": [
+            {
+              "name": "q_<item>",
+              "label": "Was geht zurück? (Anzahl per line, 'n Stück erstattbar')",
+              "key": "store.refundItems",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "link 'Alles' fills all; hint store.refundItemsHint"
+            },
+            {
+              "name": "other",
+              "label": "Anderen Betrag erstatten",
+              "key": "store.refundOther",
+              "type": "checkbox",
+              "component": "checkbox"
+            },
+            {
+              "name": "amount",
+              "label": "Betrag",
+              "key": "store.refundAmount",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "when 'other'; max = left"
+            },
+            {
+              "name": "reason",
+              "label": "Grund (optional)",
+              "key": "store.refundReasonLabel",
+              "type": "textarea",
+              "component": "Textarea"
+            },
+            {
+              "name": "notify",
+              "label": "Kund:in per E-Mail informieren (mit korrigierter Rechnung)",
+              "key": "store.refundNotify",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "default on"
+            }
+          ],
+          "actions": [
+            {
+              "label": "<amount> erstatten / Stücke oder Betrag wählen",
+              "key": "store.refundButton / store.refundChoose",
+              "where": "sheet",
+              "kind": "confirm",
+              "target": "refundOrderAction",
+              "permission": "payments.refund",
+              "confirm": true,
+              "result": "toast 'Erstattet.' / payments.refundPending; confirm store.confirmRefund"
+            }
+          ],
+          "notes": "meta 'Bezahlt … · noch erstattbar …'; hint differs for manual (transfer/cash) vs online."
+        }
+      ],
+      "links": [
+        "/shop/orders",
+        "/contacts/[id]",
+        "/payments?edit=<pay order id>",
+        "/invoices/[id]"
+      ],
+      "phone": "RecordLayout stacks: Artikel, delivery card, then Käufer:in / Bezahlung / Rechnung.",
+      "uxNotes": [
+        "Next step buttons are spread over two cards (Bezahlung aside: mark paid; delivery card: ready/shipped/completed) and the header (refund, cancel); there is no single 'next step' place.",
+        "'Bestellung stornieren' is an outline header button instead of a red ⋯ item; it is hidden for shop.manage users without payments.refund even for unpaid orders.",
+        "Resending buyer mails (incl. 'Storniert', 'Erstattung') from the ⋯ menu sends immediately without confirm or preview.",
+        "'Wieder öffnen' and 'Erledigt' change status without confirm; reopening a completed order has no undo hint.",
+        "Facts are hand-made text blocks in FormCards, not <DetailList> as docs/design/app.md requires.",
+        "The tracking form doubles as the 'mark shipped' action: the same button reads 'Als versendet markieren' or 'Speichern' depending on status."
+      ],
+      "redesign": {
+        "job": "See at a glance whether the order is paid and handed over, then do the next step; reach the buyer, the payment and the invoice.",
+        "phone": "Top bar: back to Bestellungen, ⋯ (refund, resend mails, reopen, cancel). Header: badges payment + fulfilment, meta date · total. Progress steps row (Bestellt → Bezahlt → Abholbereit/Versendet → Erledigt). Round button = next step. Then Artikel (rows, totals, refunds), Lieferung (address, tracking), Notiz, then Käufer:in, Zahlung, Rechnung.",
+        "desktop": "Header with badges, next step as primary, one outline secondary (fulfilment step when the primary is 'mark paid', else Erstatten). Steps row. RecordLayout: left Artikel + Lieferung + Notiz; right Käufer:in, Zahlung, Rechnung (all <DetailList>/rows with links).",
+        "moves": [
+          "badge order status + Bezahlt/Unbezahlt → two badges with status variants (payment, fulfilment)",
+          "meta placed date · payment method · delivery → meta placed date · total; method in Zahlung, delivery in the Lieferung section title",
+          "'Erstatten' outline header button (?refund=1) → outline header action (?new=refund); ?refund=1 redirects",
+          "'Bestellung stornieren' outline button → red ⋯ item last, confirm store.confirmCancel / confirmCancelPaid with Hint; unpaid orders can be cancelled without payments.refund",
+          "⋯ 'Mail erneut senden › …' → ⋯ group, every mail with confirm store.confirmResend (names the mail + recipient)",
+          "'Überweisung erhalten' / 'Bezahlt (bar)' (Bezahlung card) → header primary when unpaid and not online, confirm store.confirmMarkPaid",
+          "'Abholbereit' / 'Abgeholt' / 'Erledigt' (delivery card) → header primary (or the one outline secondary while unpaid)",
+          "'Als versendet markieren' + tracking form → primary opens ?new=shipment sheet (tracking field, 'Als versendet markieren'); after shipping the Lieferung section shows the tracking with 'Ändern' (same sheet, button 'Sendungsnummer speichern')",
+          "'Wieder öffnen' → ⋯ item with confirm store.confirmReopen",
+          "Artikel list (qty × item, refunded badge, total, refund lines) → Section Artikel, money right-aligned; refund lines kept",
+          "internal note box → Section Notiz (only when set)",
+          "address block + shipping rate name → Section <delivery> with <DetailList> (Adresse, Versandart, Sendungsnummer)",
+          "Käufer:in card (name → contact, company, tel:, mailto:) → aside Section Käufer:in, plus link 'Alle Bestellungen' → /shop/orders?contact=<id>",
+          "Bezahlung card (method · status, paid date / held until, 'Zur Zahlung') → aside Section Zahlung as <DetailList>, link to /payments?edit=<pay order>",
+          "Rechnung card (link, error, 'Entwurf öffnen', 'Noch keine Rechnung' + 'Rechnung erstellen') → aside Section Rechnung, status badge; 'Rechnung erstellen' with confirm store.confirmIssueInvoice",
+          "?refund=1 sheet fields (pieces per line, 'Alles', other amount, reason, notify) → ?new=refund sheet (unchanged form; button full width at the bottom, confirm store.confirmRefund)",
+          "tracking read-only line for shop.view → Lieferung DetailList"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "The next step (Überweisung erhalten / Als versendet markieren …) is a form button, so phones only had it in ⋯: now also a full-width button under the progress row on phones; the progress row scrolls in one line instead of wrapping; 'Sendungsnummer (optional)' label shortened in the facts."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "route": "/shop",
+      "file": "src/app/(app)/shop/page.tsx",
+      "title": "Produkte (Papierkorb: \"Produkte · Papierkorb\")",
+      "purpose": "List products with picture, price, stock, sales and status; open, create, view the trash.",
+      "permission": "shop.view",
+      "size": "list",
+      "header": {
+        "area": "shop",
+        "settings": "/shop/settings",
+        "actions": [
+          {
+            "label": "Shop ansehen",
+            "key": "store.openShop",
+            "target": "<site>/shop (new tab)",
+            "notes": "hand-styled <a>, not a Button"
+          }
+        ],
+        "menu": [
+          {
+            "label": "Papierkorb (in trash: Zurück zu den Produkten)",
+            "key": "store.trash / store.backToList",
+            "target": "/shop?status=trash | /shop",
+            "permission": "shop.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neues Produkt",
+          "key": "store.newProduct",
+          "href": "/shop/new",
+          "permission": "shop.manage",
+          "notes": "hidden in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search name + category"
+        },
+        {
+          "param": "status",
+          "meaning": "trash = trash view (shop.manage)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Produkte suchen",
+              "key": "store.search",
+              "type": "search",
+              "component": "SearchBox"
+            }
+          ]
+        },
+        {
+          "title": "Produkte",
+          "kind": "DataTable",
+          "columns": [
+            "Name (thumbnail + name + category)",
+            "Preis",
+            "Stückzahl (sum over active variants or 'unbegrenzt')",
+            "Verkauft (n Stück + revenue)",
+            "Status (Entwurf / Im Shop / Archiviert + 'Digital (Download)')"
+          ],
+          "notes": "Row → /shop/<id>. No tick boxes, no bulk actions."
+        }
+      ],
+      "actions": [],
+      "links": [
+        "/shop/new",
+        "/shop/[id]",
+        "/shop/settings",
+        "<site>/shop"
+      ],
+      "empty": "EmptyState 'Noch keine Produkte' / 'Leg dein erstes Produkt an – Merch, Bücher, Downloads … Es erscheint im Shop, sobald es auf „Im Shop“ steht.' (no action button). Search or trash: 'Keine Produkte gefunden.'",
+      "phone": "Cards; round + for Neues Produkt.",
+      "uxNotes": [
+        "Trash view uses ?status=trash here but ?trash=1 on events and contacts.",
+        "No status filter (Entwurf / Im Shop / Archiviert) even though status is a key column; archived products mix with live ones.",
+        "EmptyState has no action button (contacts/events offer one).",
+        "Empty trash shows 'Keine Produkte gefunden.' instead of 'Der Papierkorb ist leer.'",
+        "No bulk actions and no export, unlike events/contacts lists."
+      ],
+      "redesign": {
+        "job": "Find a product and see how it sells and how much is left; switch to the stock view (Bestand) to count and book stock.",
+        "phone": "Toolbar: search, then a scrolling row Status filter + Produkte · Bestand segments. Cards: picture + name + status badge, line 2 price · stock. Round + = Neues Produkt. Bestand view: cards item + on hand, line 2 reserved · available.",
+        "desktop": "Toolbar: search · Status filter · Produkte | Bestand segments on the right. Produkte table: Produkt (thumb, name, category muted), Status, Bestand, Verkauft (pieces + revenue muted), Preis right-aligned. Bestand table: Artikel, Bestand, Reserviert, Verfügbar, Verkauft, Letzte Bewegung; row → ?edit=<item> booking sheet.",
+        "moves": [
+          "header 'Shop ansehen' hand-styled <a> → outline Button (new tab)",
+          "⋯ Papierkorb (?status=trash) → ⋯ Papierkorb with ?trash=1; ?status=trash redirects",
+          "primary Neues Produkt → unchanged (hidden in trash and stock view)",
+          "q SearchBox → toolbar (searches products, or items in the Bestand view)",
+          "new: Status FilterMenu (Im Shop / Entwurf / Archiviert); archived products hidden unless filtered",
+          "new: Produkte · Bestand segments (?view=stock) = the former Lager page",
+          "columns Name/Preis/Stückzahl/Verkauft/Status → Produkt, Status (success Im Shop, secondary Entwurf, outline Archiviert + Digital), Bestand, Verkauft, Preis (right)",
+          "EmptyState → with action 'Neues Produkt'; empty trash says store.trashEmpty",
+          "gear → unchanged"
+        ],
+        "built": true,
+        "kept": "uxNote 4 kept: no bulk actions / product export yet (few products per org; status changes are on the product).",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards: the sold column (pieces + revenue stacked) squeezed the muted line → phones show '2 verkauft' in the line, the table keeps pieces + revenue."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "route": "/shop/new",
+      "file": "src/app/(app)/shop/new/page.tsx",
+      "title": "Neues Produkt",
+      "purpose": "Create a product (details + product page).",
+      "permission": "shop.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Produkte",
+          "Neues Produkt"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "error",
+          "meaning": "error via NewPage <Notice>"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Produkt",
+          "anchor": "#details",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "store.productName",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "price",
+              "label": "Preis (brutto) | Preis (Kleinunternehmer)",
+              "key": "store.priceGross / store.price",
+              "type": "money",
+              "component": "TypedInput:money",
+              "required": true
+            },
+            {
+              "name": "name_your_price",
+              "label": "Preis selbst wählen",
+              "key": "store.nameYourPrice",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "hint store.nameYourPriceHint"
+            },
+            {
+              "name": "suggested",
+              "label": "Vorschlag (vorausgefüllt, optional)",
+              "key": "store.suggestedPrice",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "always visible, also when name-your-price is off"
+            },
+            {
+              "name": "tax_rate",
+              "label": "MwSt.",
+              "key": "store.taxRate",
+              "type": "select",
+              "component": "Choice",
+              "required": true,
+              "notes": "Kleinunternehmer: text store.smallBusinessNoVat + link 'Ändern' → /invoices/settings"
+            },
+            {
+              "name": "kind",
+              "label": "Art",
+              "key": "store.kind",
+              "type": "select",
+              "component": "Choice",
+              "required": true,
+              "notes": "Ware / Digital (Download)"
+            },
+            {
+              "name": "status",
+              "label": "Status",
+              "key": "store.status",
+              "type": "select",
+              "component": "Choice",
+              "required": true,
+              "notes": "Entwurf / Im Shop / Archiviert; default Entwurf"
+            },
+            {
+              "name": "stock",
+              "label": "Stückzahl",
+              "key": "store.stock",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "empty = unbegrenzt; hint store.stockHint"
+            },
+            {
+              "name": "max_per_order",
+              "label": "Maximal bestellbare Artikel",
+              "key": "store.maxPerOrder",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "default 10"
+            },
+            {
+              "name": "release_on",
+              "label": "Erscheint am (optional)",
+              "key": "store.releaseOn",
+              "type": "date",
+              "component": "TypedInput:date",
+              "notes": "hint store.releaseHint"
+            }
+          ]
+        },
+        {
+          "title": "Produktseite",
+          "anchor": "#page",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "store.description",
+              "type": "richtext",
+              "component": "RichTextEditor"
+            },
+            {
+              "name": "category",
+              "label": "Kategorie",
+              "key": "store.category",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "slug",
+              "label": "Adresse",
+              "key": "store.slug",
+              "type": "text",
+              "component": "Input",
+              "notes": "placeholder 'wird aus dem Namen erzeugt'"
+            },
+            {
+              "name": "video_url",
+              "label": "Video",
+              "key": "store.video",
+              "type": "url",
+              "component": "TypedInput:url",
+              "notes": "hint store.videoHint"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Produkt anlegen",
+          "key": "store.createProduct",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveProduct (shop/actions.ts)",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "→ /shop/<id>#images, toast 'Produkt angelegt. Jetzt Bilder hinzufügen.'"
+        }
+      ],
+      "links": [
+        "/shop",
+        "/invoices/settings"
+      ],
+      "uxNotes": [
+        "Label drift for the address: events call it 'Slug' with a '/e/' prefix, products call it 'Adresse' without showing the path.",
+        "Pictures, variants and music can only be added after creating (second step on the record), signposted only by the success toast.",
+        "Status is a Choice in the form; events use a header publish button instead – two patterns for publishing."
+      ],
+      "redesign": {
+        "job": "Create a product with the few things it needs; pictures, variants and music follow on its page (checklist there).",
+        "phone": "One column: Produkt (name, price, NYP switch → suggested price, VAT, kind), Bestand (stock, max per order, release date), Produktseite (description, category, address with /shop/ prefix, video). SaveBar 'Produkt anlegen'.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "name, price, VAT, kind → Produkt card (unchanged)",
+          "name_your_price checkbox + suggested (always visible) → checkbox; suggested only shown while it is ticked",
+          "status Choice → removed from the form: new products start as Entwurf, the product page header publishes ('Im Shop veröffentlichen'), same pattern as events",
+          "stock, max_per_order, release_on → card 'Bestand & Verkauf'",
+          "description, category, video → Produktseite card (unchanged)",
+          "slug 'Adresse' → label 'Adresse' with the '/shop/' prefix shown before the field",
+          "SaveBar 'Produkt anlegen' → unchanged; lands on the product page whose checklist names the next steps (Bilder, Beschreibung, Veröffentlichen)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Produktseite (description, category, address, video) behind 'Mehr Angaben (optional)'; name, price, VAT, kind, stock stay visible."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "route": "/shop/[id]",
+      "file": "src/app/(app)/shop/[id]/page.tsx",
+      "title": "<Product name>",
+      "purpose": "Edit a product in three tabs: Produkt (form + pictures), Varianten (options, variant table), Musik & Downloads (tracks, files).",
+      "permission": "shop.view",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Produkte",
+          "<Product name>"
+        ],
+        "badge": "status (Entwurf / Im Shop / Archiviert)",
+        "meta": "price · category · 'Erscheint <date>'",
+        "actions": [
+          {
+            "label": "Im Shop ansehen",
+            "key": "store.viewPublic",
+            "target": "<site>/shop/<slug> (new tab)",
+            "notes": "only when published"
+          }
+        ],
+        "menu": [
+          {
+            "label": "In den Papierkorb",
+            "key": "store.toTrash",
+            "target": "trashProduct via #trash-product",
+            "permission": "shop.manage",
+            "notes": "MenuSubmit destructive → confirm"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "tab",
+          "meaning": "(none) = Produkt | variants | digital"
+        },
+        {
+          "param": "#images / #options / #variants / #tracks / #downloads",
+          "meaning": "card anchors"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Tabs",
+          "kind": "custom",
+          "notes": "Link row: Produkt · Varianten (n) · Musik & Downloads (?tab=). Trashed product: only 'Dieses Produkt liegt im Papierkorb.' + 'Wiederherstellen'."
+        },
+        {
+          "title": "Produkt tab: form",
+          "kind": "FormCard",
+          "notes": "Same ProductForm as /shop/new (Produkt, Produktseite) with SaveBar; disabled for shop.view only (description then shows 'Beschreibung vorhanden')."
+        },
+        {
+          "title": "Bilder",
+          "anchor": "#images",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "file",
+              "label": "Bild hinzufügen",
+              "key": "store.addImage",
+              "type": "file",
+              "component": "Input type=file + 'Hochladen' (common.upload)",
+              "notes": "max 12; hint store.imagesHint"
+            }
+          ],
+          "notes": "aside grid of thumbnails, first = 'Titelbild' badge; per picture icon buttons 'Als Titelbild' (star) and 'Bild entfernen' (x)."
+        },
+        {
+          "title": "Optionen",
+          "anchor": "#options",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "option_name",
+              "label": "Option",
+              "key": "store.optionName",
+              "type": "text",
+              "component": "Input",
+              "notes": "up to 3 rows, placeholder 'z. B. Farbe'"
+            },
+            {
+              "name": "option_values",
+              "label": "Werte eingeben, z. B. Schwarz …",
+              "key": "store.optionValuesPlaceholder",
+              "type": "multiselect",
+              "component": "MultiSelect (creatable)"
+            }
+          ],
+          "notes": "Varianten tab; button 'Optionen speichern & Varianten erzeugen' with confirm store.confirmOptions when variants exist."
+        },
+        {
+          "title": "Varianten",
+          "anchor": "#variants",
+          "kind": "custom",
+          "columns": [
+            "Variante (name or option values)",
+            "Preis (TypedInput:money, placeholder = product price)",
+            "Stückzahl (TypedInput:number)",
+            "Frei ('n von m frei')",
+            "Bild (ImagePick, when pictures exist)",
+            "verkaufen (checkbox)",
+            "digital (checkbox)",
+            "Preis selbst wählen (checkbox)",
+            "(delete icon)"
+          ],
+          "notes": "Hand-built <table> inside overflow-x-auto with one SaveBar (saveVariants). Without variants: 'Keine Varianten – das Produkt hat eine Stückzahl (…)'. Without options: dashed add row (name, price, stock, 'Digital (nur Download …)' checkbox, 'Hinzufügen')."
+        },
+        {
+          "title": "Musik",
+          "anchor": "#tracks",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "track_price",
+              "label": "Einzelne Titel kaufbar für",
+              "key": "store.trackPrice",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "empty = album only"
+            },
+            {
+              "name": "position_<id>",
+              "label": "Nr.",
+              "key": "store.trackNumber",
+              "type": "number",
+              "component": "Input type=number"
+            },
+            {
+              "name": "title_<id>",
+              "label": "Titel",
+              "key": "store.trackTitle",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "stream_<id>",
+              "label": "im Shop abspielbar",
+              "key": "store.trackStream",
+              "type": "checkbox",
+              "component": "checkbox"
+            },
+            {
+              "name": "buyable_<id>",
+              "label": "einzeln kaufbar",
+              "key": "store.trackBuyable",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "only with a track price"
+            },
+            {
+              "name": "files",
+              "label": "Master hochladen",
+              "key": "store.audioUpload",
+              "type": "file",
+              "component": "AudioUpload (client, direct to R2)",
+              "notes": "WAV/AIFF/FLAC ≤ 250 MB, several at once; toast on failure"
+            }
+          ],
+          "notes": "Musik & Downloads tab; one SaveBar for price + all tracks; per track status badge, duration, formats, error; 'Nochmal umwandeln' for failed/incomplete; page auto-refreshes while converting; ZIP status line."
+        },
+        {
+          "title": "Downloads",
+          "anchor": "#downloads",
+          "kind": "FileList",
+          "notes": "files for every buyer (hint store.downloadsHint)"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern (product)",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveProduct",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Hochladen (picture) / Als Titelbild / Bild entfernen",
+          "key": "common.upload / store.makeCover / store.removeImage",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "productImage op=add|cover|remove",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "page reload, no toast (back(here, {}))"
+        },
+        {
+          "label": "Optionen speichern & Varianten erzeugen",
+          "key": "store.saveOptions",
+          "where": "section",
+          "kind": "confirm",
+          "target": "saveOptions",
+          "permission": "shop.manage",
+          "confirm": true,
+          "result": "toast 'Gespeichert: n Varianten neu, m entfernt.'"
+        },
+        {
+          "label": "Speichern (variants)",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveVariants",
+          "permission": "shop.manage",
+          "confirm": false
+        },
+        {
+          "label": "Variante löschen",
+          "key": "store.deleteVariant",
+          "where": "row",
+          "kind": "confirm",
+          "target": "saveVariant delete=1",
+          "permission": "shop.manage",
+          "confirm": true,
+          "result": "toast 'Variante gelöscht.'"
+        },
+        {
+          "label": "Hinzufügen (variant)",
+          "key": "store.addVariant",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveVariant",
+          "permission": "shop.manage",
+          "confirm": false
+        },
+        {
+          "label": "Speichern (tracks)",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveTracks",
+          "permission": "shop.manage",
+          "confirm": false
+        },
+        {
+          "label": "Titel entfernen / Nochmal umwandeln",
+          "key": "store.removeTrack / store.trackRetry",
+          "where": "row",
+          "kind": "confirm",
+          "target": "saveTrack delete=1 | retry=1",
+          "permission": "shop.manage",
+          "confirm": true,
+          "notes": "confirm only for remove"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "store.toTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashProduct",
+          "permission": "shop.manage",
+          "confirm": true,
+          "result": "→ /shop, toast 'Produkt in den Papierkorb gelegt.'"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "store.restore",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restoreProduct",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Produkt wiederhergestellt.'"
+        }
+      ],
+      "links": [
+        "/shop",
+        "/invoices/settings",
+        "<site>/shop/<slug>"
+      ],
+      "phone": "Tabs scroll horizontally; variant editor is a wide table that scrolls sideways (not DataTable cards); picture tools are small icon-xs buttons on thumbnails.",
+      "uxNotes": [
+        "Tabs are ?tab= links on one page, while the event record uses path-segment tabs – two tab patterns for records.",
+        "Variant table is a raw <table> with 8–9 inline-edit columns, hard to use on phones (rule: tables become cards on phones).",
+        "Many save paths: product SaveBar, picture forms (no toast), options button, variants SaveBar, single 'Hinzufügen' row, tracks SaveBar, per-track forms, FileList.",
+        "Picture remove has no confirm while variant delete and track remove do.",
+        "Picture actions are icon-xs buttons (smaller than the size-8 touch-target rule).",
+        "'Vorschlag' (suggested price) is always visible even when 'Preis selbst wählen' is off.",
+        "The Lager (stock bookings) is a separate page; the variant table's 'Stückzahl' edits the same stock directly (booked as correction), so there are two ways to change stock."
+      ],
+      "redesign": {
+        "job": "See how the product sells and what's left, then edit it calmly in one place: details, page, variants, music and downloads.",
+        "phone": "Top bar: back to Produkte, ⋯ (view in shop, back to draft, archive, trash). Header: status badge, meta price · category · release. Round button: 'Veröffentlichen' while draft. Stats (Verkauft, Umsatz, Verfügbar). Checklist while draft. Pictures (tap the + tile to upload, ⋯ per picture). One form: Produkt, Bestand & Verkauf, Varianten (each variant a card), Produktseite → SaveBar. Musik (rows → sheet), Downloads.",
+        "desktop": "Stats row, checklist when draft. RecordLayout: left = the one form (Produkt, Bestand & Varianten, Produktseite) + Musik + Downloads; right = Bilder, Links (Im Shop ansehen, Bestand booking, orders).",
+        "moves": [
+          "tab row Produkt · Varianten · Musik & Downloads (?tab=) → removed: one page with sections; ?tab=variants / digital redirect to the page",
+          "badge status → status variants (success Im Shop, secondary Entwurf, outline Archiviert)",
+          "'Im Shop ansehen' → outline header action (unchanged, only when published)",
+          "status Choice in the form → header: primary 'Im Shop veröffentlichen' (draft/archived), ⋯ 'Zurück auf Entwurf' (confirm store.confirmUnpublish), ⋯ 'Archivieren' (confirm store.confirmArchive)",
+          "⋯ In den Papierkorb → ⋯ red, last (unchanged)",
+          "trashed product: notice + 'Wiederherstellen' → notice + primary 'Wiederherstellen'",
+          "new: Stats Verkauft / Umsatz / Verfügbar (link to the booking sheet or the Bestand view)",
+          "new: checklist while draft (Bilder, Beschreibung, Preis/Bestand, Veröffentlichen)",
+          "ProductForm (Produkt, Produktseite) + variants SaveBar + tracks SaveBar → ONE form with ONE SaveBar: product fields, track price, every variant row",
+          "Suggested price → only visible while 'Preis selbst wählen' is ticked",
+          "Bilder upload (file input + Hochladen) → '+' picture tile: tap → picker → uploads at once",
+          "per picture 'Als Titelbild' / 'Bild entfernen' icon-xs buttons → ⋯ per picture (size-8), remove with confirm store.confirmRemoveImage",
+          "Optionen form + 'Optionen speichern & Varianten erzeugen' → section link 'Optionen' → ?edit=options sheet, same form and confirm",
+          "variant table (name, price, stock, frei, Bild, verkaufen, digital, NYP, delete) → rows in the one form: card per variant on phones, grid from md; delete ✕ removes the row, deleted on save (confirm)",
+          "dashed 'Hinzufügen' variant row → '+ Variante hinzufügen' row in the form (only without options), saved with the SaveBar",
+          "'Keine Varianten – das Produkt hat eine Stückzahl' → Bestand row of the product (stock field + frei)",
+          "track price (Einzelne Titel kaufbar für) → Musik section header field inside the one form",
+          "track rows (Nr., Titel, im Shop abspielbar, einzeln kaufbar) → Musik rows; tap → ?edit=<track id> sheet (number, title, switches, SaveBar; ⋯ Nochmal umwandeln / Titel entfernen with confirm)",
+          "'Nochmal umwandeln' → visible on failed rows and in the track sheet",
+          "'Master hochladen' (AudioUpload) → Musik section (outside the form, unchanged behaviour)",
+          "AutoRefresh while converting, ZIP status line → Musik section (unchanged)",
+          "Downloads FileList → Section Downloads (unchanged)",
+          "new: Bestand booking sheet ?edit=<item id> on the product (same as the Bestand view)"
+        ],
+        "built": true,
+        "kept": "uxNote 6 kept: the stock field still sets the total received (a correction is booked by trigger) because it is also how 'unlimited' ↔ counted is switched; every tracked item has a 'Bestand buchen' link next to it.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Variant rows broke on desktop (fixed columns wider than the form column beside the rail: names 0 px wide, headers overlapping) → container query (`@container`, table from @xl), 'Frei' under the variant name instead of an own column, header labels wrap/hyphenate; with variants the rows come before max-per-order/release; pictures first on phones (RecordLayout top). Decision: stays one form + SaveBar (an editor like Shopify's product page: prices, variants and description interplay), not inline fields."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "route": "/shop/stock",
+      "file": "src/app/(app)/shop/stock/page.tsx",
+      "title": "Lager",
+      "purpose": "See stock per physical item (on hand, reserved, available, sold) and book movements with history.",
+      "permission": "shop.view",
+      "size": "list",
+      "header": {
+        "area": "shop",
+        "settings": "/shop/settings",
+        "description": "store.lager.hint"
+      },
+      "urlState": [
+        {
+          "param": "item",
+          "meaning": "<item id> = stock sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Lager",
+          "kind": "DataTable",
+          "columns": [
+            "Artikel",
+            "Bestand ('nicht gezählt' when unlimited, red ≤ 0)",
+            "Reserviert",
+            "Verfügbar",
+            "Verkauft",
+            "Letzte Bewegung"
+          ],
+          "notes": "Row → ?item=<id>. No search, no pager (all items)."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?item=<id>",
+          "component": "UrlSheet",
+          "title": "<item name>",
+          "fields": [
+            {
+              "name": "kind",
+              "label": "Art der Buchung: Zugang · Entnahme · Schwund · Inventur",
+              "key": "store.lager.kind / store.lager.kinds.*",
+              "type": "segments",
+              "component": "SegmentGroup",
+              "notes": "hint per kind store.lager.hints.*"
+            },
+            {
+              "name": "quantity | counted",
+              "label": "Menge | Gezählt",
+              "key": "store.lager.quantity / store.lager.counted",
+              "type": "number",
+              "component": "Input type=number",
+              "required": true
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "store.lager.note",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Zum Produkt",
+              "key": "store.lager.toProduct",
+              "where": "sheet",
+              "kind": "link",
+              "target": "/shop/<product id>"
+            },
+            {
+              "label": "Buchen",
+              "key": "store.lager.book",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "bookStockAction",
+              "permission": "shop.manage",
+              "confirm": false,
+              "result": "toast 'Gebucht.'"
+            },
+            {
+              "label": "Als Bestellung erfassen",
+              "key": "store.lager.saleLink",
+              "where": "sheet",
+              "kind": "link",
+              "target": "/shop/orders?new=order&item=<id>",
+              "notes": "after 'Verkauft (z. B. am Merch-Stand)?'"
+            }
+          ],
+          "notes": "meta 'Bestand … · reserviert … · verfügbar … · verkauft …'; 'Verlauf' list: ±qty, reason badge, order link, note, date; 'Noch keine Bewegungen.'"
+        }
+      ],
+      "links": [
+        "/shop/[id]",
+        "/shop/orders?new=order&item=<id>",
+        "/shop/orders/[id]"
+      ],
+      "empty": "EmptyState 'Noch keine physischen Artikel' / 'Lege im Shop ein physisches Produkt an, dann erscheint es hier.'",
+      "phone": "Cards; sheet full width.",
+      "uxNotes": [
+        "Page shows a header description although docs/design/app.md says area pages show no description.",
+        "No search or pagination: all physical items are loaded (rule: no fixed row limits / lists paginate on the server).",
+        "'Buchen' is a plain SubmitButton, not a SaveBar, unlike other sheet forms.",
+        "Hint text mentions 'Verkauf vor Ort' as something you book here, but sales go to Bestellungen via a link."
+      ],
+      "redesign": {
+        "job": "Replaced by the Bestand view of Produkte (/shop?view=stock): see what's on hand per physical item and book receipts, withdrawals, losses and counts.",
+        "phone": "See /shop Bestand view; booking sheet full width with SaveBar 'Buchen'.",
+        "desktop": "See /shop Bestand view.",
+        "moves": [
+          "page /shop/stock → redirects to /shop?view=stock (?item=<id> → ?edit=<id>)",
+          "sidebar entry Lager → removed (segment 'Bestand' on Produkte, patterns.md §7)",
+          "header description store.lager.hint → removed (area pages show no description); the sheet keeps one hint line",
+          "table columns → unchanged in the Bestand view; search + pager added",
+          "?item=<id> sheet → ?edit=<id> sheet (title, meta unchanged)",
+          "'Zum Produkt' → sheet action (unchanged)",
+          "kind segments, quantity/counted, note → unchanged form, quantity via TypedInput number",
+          "'Buchen' SubmitButton → <SaveBar label='Buchen' always />",
+          "'Verkauft? Als Bestellung erfassen' → link to /shop/orders/new?item=<id>; hint no longer says Verkauf vor Ort is booked here",
+          "Verlauf list → unchanged in the sheet"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect to /shop?view=stock (unchanged). Bestand: numbers right-aligned on desktop; phone cards show the on-hand count in the line and 'Verfügbar' on the right."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "route": "/shop/settings",
+      "file": "src/app/(app)/shop/settings/page.tsx",
+      "title": "Einstellungen",
+      "purpose": "Shop page text, payment methods, pickup and shipping rates, automatic invoices, buyer mails, legal texts.",
+      "permission": "shop.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Shop",
+          "Einstellungen"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Shop-Seite",
+          "anchor": "#page",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "title",
+              "label": "Überschrift",
+              "key": "store.shopPageTitle",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "intro",
+              "label": "Einleitung",
+              "key": "store.intro",
+              "type": "textarea",
+              "component": "native textarea"
+            }
+          ]
+        },
+        {
+          "title": "Bezahlung",
+          "anchor": "#payment",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "pay_online",
+              "label": "Online bezahlen",
+              "key": "store.payments.online",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "hint store.onlineReady or link store.onlineNotReady → /settings/integrations"
+            },
+            {
+              "name": "pay_transfer",
+              "label": "Überweisung",
+              "key": "store.payments.transfer",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "hint or link store.transferNoIban → /invoices/settings"
+            },
+            {
+              "name": "transfer_days",
+              "label": "Reserviert für (Tage)",
+              "key": "store.transferDays",
+              "type": "number",
+              "component": "TypedInput:number"
+            },
+            {
+              "name": "pay_on_pickup",
+              "label": "Bei Abholung bezahlen",
+              "key": "store.payments.pickup",
+              "type": "checkbox",
+              "component": "checkbox"
+            }
+          ]
+        },
+        {
+          "title": "Lieferung",
+          "anchor": "#delivery",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "pickup",
+              "label": "Abholung",
+              "key": "store.deliveries.pickup",
+              "type": "checkbox",
+              "component": "checkbox"
+            },
+            {
+              "name": "pickup_text",
+              "label": "Abholung: wo und wann",
+              "key": "store.pickupText",
+              "type": "textarea",
+              "component": "native textarea"
+            },
+            {
+              "name": "shipping",
+              "label": "Versand",
+              "key": "store.deliveries.shipping",
+              "type": "checkbox",
+              "component": "checkbox"
+            },
+            {
+              "name": "rate_name / rate_price / rate_free / rate_countries",
+              "label": "Versandarten: Name / Preis / Gratis ab / Länder",
+              "key": "store.shippingRates / rateName / price / freeFromLabel / countries",
+              "type": "rows",
+              "component": "Input + TypedInput:money ×2 + MultiSelect",
+              "notes": "existing rates + 2 empty rows; remove = clear the name (store.ratesHint)"
+            }
+          ]
+        },
+        {
+          "title": "Rechnung",
+          "anchor": "#invoices",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "auto_invoice",
+              "label": "Rechnungen automatisch erstellen",
+              "key": "store.autoInvoice",
+              "type": "checkbox",
+              "component": "checkbox",
+              "notes": "without invoices module: text store.invoicesModuleOff"
+            }
+          ]
+        },
+        {
+          "title": "E-Mails an Käufer:innen",
+          "anchor": "#mails",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "mail_<kind>",
+              "label": "per kind: Bestellbestätigung, Zahlung erhalten, Abholbereit, Versendet, Storniert, Erschienen, Erstattung",
+              "key": "store.mailKinds.*",
+              "type": "checkbox",
+              "component": "checkbox (+ store.mailWhen.* hint)"
+            },
+            {
+              "name": "mail_<kind>_message",
+              "label": "Eigener Text",
+              "key": "store.mailText",
+              "type": "textarea",
+              "component": "native textarea"
+            }
+          ],
+          "notes": "ShopMailFields, same component also on E-Mail → Vorlagen (same data)."
+        },
+        {
+          "title": "Rechtliches",
+          "anchor": "#legal",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "terms",
+              "label": "AGB",
+              "key": "store.terms",
+              "type": "textarea",
+              "component": "native textarea (Markdown)"
+            },
+            {
+              "name": "withdrawal",
+              "label": "Widerrufsbelehrung",
+              "key": "store.withdrawal",
+              "type": "textarea",
+              "component": "native textarea (Markdown)"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveShopSettings",
+          "permission": "shop.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        }
+      ],
+      "links": [
+        "/settings/integrations",
+        "/invoices/settings"
+      ],
+      "uxNotes": [
+        "Buyer mail texts are editable in two places (here and E-Mail → Vorlagen via saveShopMails).",
+        "Crumb says 'Shop' but links to /shop (Produkte), while the nav's first entry is Bestellungen.",
+        "Legal texts are Markdown in raw textareas while the product description uses a rich-text editor.",
+        "Payment provider and IBAN are configured elsewhere (Settings → Integrationen, Rechnungen → Einstellungen), only reachable via hint links."
+      ],
+      "redesign": {
+        "job": "Set up once how the shop sells: payment, delivery, invoices, buyer mails, legal texts.",
+        "phone": "Grouped rows (patterns §2). Switches save at once; text values show as a row with 'Ändern' → compact sheet with the field + SaveBar.",
+        "desktop": "Same rows at form width; sheets from the bottom.",
+        "moves": [
+          "crumb 'Shop' → /shop → crumbs Bestellungen › Einstellungen (the area's first page)",
+          "Shop-Seite: Überschrift + Einleitung → row 'Shop-Seite' with the current title, 'Ändern' → ?edit=page sheet",
+          "Online bezahlen checkbox (+ ready hint / link to Integrationen) → Switch row, autosave; link kept as the hint",
+          "Überweisung checkbox (+ IBAN hint/link) → Switch row, autosave",
+          "Reserviert für (Tage) → row under Überweisung with value, 'Ändern' → ?edit=transfer sheet",
+          "Bei Abholung bezahlen → Switch row, autosave",
+          "Abholung checkbox → Switch row; 'Abholung: wo und wann' → row 'Ändern' → ?edit=pickup sheet",
+          "Versand checkbox → Switch row; Versandarten rows → row listing the rates, 'Ändern' → ?edit=shipping sheet (rates rows + countries)",
+          "Rechnungen automatisch erstellen → Switch row, autosave (text when the invoices module is off)",
+          "E-Mails an Käufer:innen (checkbox + textarea per kind) → one row per mail: Switch (autosave) + 'Text' → ?edit=mail-<kind> sheet. This is the only place to edit them; E-Mail › Vorlagen links here",
+          "AGB / Widerrufsbelehrung raw textareas → rows 'Ändern' → ?edit=terms / ?edit=withdrawal sheet (Textarea, Markdown hint)",
+          "Speichern SaveBar → one SaveBar per sheet"
+        ],
+        "built": true,
+        "kept": "uxNote 2 kept: AGB/Widerruf stay Markdown (public pages render Markdown; changing the format would need a migration) – now a Textarea in a sheet with a Markdown hint. uxNote 3 kept: provider and IBAN belong to Integrationen / Rechnungen, linked from the rows' hints.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: grouped rows, switches save on flip, 'Ändern' sheets per text. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ]
+    }
+  ]
+}

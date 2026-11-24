@@ -1,6 +1,5 @@
 "use server"
 
-import { redirect } from "next/navigation"
 import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
 import { dbError } from "@/i18n/translate"
@@ -8,9 +7,9 @@ import { requirePerm } from "@/lib/context"
 import { removeImage, replaceImage } from "@/lib/images"
 import { moneyCents } from "@/lib/inputs"
 import { back } from "@/lib/url"
-import { MAIL_KINDS, readOptions, readProduct, readShippingRates, readStockMove, readTeamOrder, readVariant } from "@/shop/fields"
+import { MAIL_KINDS, PRODUCT_STATUSES, readOptions, readProduct, readShippingRates, readStockMove, readTeamOrder, readVariant } from "@/shop/fields"
 import { bookStock, stockItem } from "@/shop/stock"
-import { applyOptions, cancelOrder, createTeamOrder, ensureInvoice, issueMissingInvoices, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
+import { DEFAULT_SETTINGS, shopSettings, applyOptions, cancelOrder, createTeamOrder, ensureInvoice, issueMissingInvoices, mail, markOrderPaid, refundShopOrder, setOrderStatus } from "@/shop/server"
 import { deleteTrack, finishTrackUpload, startTrackUpload, updateTrack } from "@/shop/audio"
 
 const UUID = /^[0-9a-f-]{36}$/
@@ -31,21 +30,65 @@ async function manager() {
 
 // ---------- products ----------
 
-/** Create (→ its page) or update a product. */
+/**
+ * Create (→ its page) or update a product. The product page's one form also carries the variant rows
+ * (`variant_key` + `<field>_<key>`; ids = existing, others new, missing existing ones deleted) and the single-track price.
+ */
 export async function saveProduct(fd: FormData) {
   const { ctx, t } = await manager()
   const productId = id(fd)
   const here = productId ? `/shop/${productId}` : "/shop/new"
   const r = readProduct(getter(fd))
   if ("error" in r) back(here, { error: msg(t, r.error) })
-  if (productId) {
-    const { error } = await ctx.supabase.from("products").update(r.row).eq("id", productId).eq("org_id", ctx.org.id)
+  if (!productId) {
+    const { data, error } = await ctx.supabase.from("products").insert({ ...r.row, org_id: ctx.org.id }).select("id").single()
     if (error) back(here, { error: error.code === "23505" ? t("store.slugTaken") : dbError(t, error) })
-    back(here, { ok: t("store.saved") })
+    back(`/shop/${data.id}`, { ok: t("store.created") })
   }
-  const { data, error } = await ctx.supabase.from("products").insert({ ...r.row, org_id: ctx.org.id }).select("id").single()
+  // Single tracks: one price for all of them (empty = album only); only sent while the product has tracks.
+  const trackPrice = fd.has("track_price") ? String(fd.get("track_price") ?? "").trim() : null
+  const trackCents = trackPrice ? moneyCents(trackPrice) : null
+  if (trackPrice && (trackCents === null || trackCents > 1_000_000)) back(here, { error: t("store.priceInvalid") })
+  const { error } = await ctx.supabase
+    .from("products")
+    .update({ ...r.row, ...(trackPrice !== null ? { track_price_cents: trackCents } : {}) })
+    .eq("id", productId)
+    .eq("org_id", ctx.org.id)
   if (error) back(here, { error: error.code === "23505" ? t("store.slugTaken") : dbError(t, error) })
-  redirect(`/shop/${data.id}?ok=${encodeURIComponent(t("store.created"))}#images`)
+  if (fd.get("variants_present") === "1") {
+    const { data: p } = await ctx.supabase.from("products").select("images, product_variants(id)").eq("id", productId).eq("org_id", ctx.org.id).maybeSingle()
+    if (!p) back(here, { error: t("errors.not_allowed") })
+    const existing = new Set(p.product_variants.map((v) => v.id))
+    const keys = fd.getAll("variant_key").map(String).slice(0, 200)
+    for (const [position, key] of keys.entries()) {
+      const v = readVariant((k) => String(fd.get(`${k}_${key}`) ?? ""))
+      if ("error" in v) back(here, { error: msg(t, v.error) })
+      const image = String(fd.get(`image_${key}`) ?? "")
+      const row = { ...v.row, position, image_path: p.images.includes(image) ? image : null }
+      const { error } = existing.has(key)
+        ? await ctx.supabase.from("product_variants").update(row).eq("id", key).eq("product_id", productId).eq("org_id", ctx.org.id)
+        : await ctx.supabase.from("product_variants").insert({ ...row, org_id: ctx.org.id, product_id: productId })
+      if (error) back(here, { error: dbError(t, error) })
+    }
+    // Rows removed in the form (orders keep their own copy of name + price).
+    const gone = [...existing].filter((v) => !keys.includes(v))
+    if (gone.length) {
+      const { error } = await ctx.supabase.from("product_variants").delete().in("id", gone).eq("product_id", productId).eq("org_id", ctx.org.id)
+      if (error) back(here, { error: dbError(t, error) })
+    }
+  }
+  back(here, { ok: t("store.saved") })
+}
+
+/** Publish (Im Shop), back to draft or archive: the product page's header buttons. */
+export async function setProductStatus(fd: FormData) {
+  const { ctx, t } = await manager()
+  const productId = id(fd)
+  const status = PRODUCT_STATUSES.find((s) => s === fd.get("status"))
+  if (!productId || !status) back("/shop", { error: t("errors.invalid_input") })
+  const { error } = await ctx.supabase.from("products").update({ status }).eq("id", productId).eq("org_id", ctx.org.id)
+  if (error) back(`/shop/${productId}`, { error: dbError(t, error) })
+  back(`/shop/${productId}`, { ok: t.dynamic(`store.statusDone.${status}`) })
 }
 
 export async function trashProduct(fd: FormData) {
@@ -67,7 +110,7 @@ export async function restoreProduct(fd: FormData) {
 export async function productImage(fd: FormData) {
   const { ctx, t } = await manager()
   const productId = id(fd)
-  const here = `/shop/${productId}#images`
+  const here = `/shop/${productId}`
   const { data: p } = await ctx.supabase.from("products").select("images").eq("id", productId ?? "").eq("org_id", ctx.org.id).maybeSingle()
   if (!p) back("/shop", { error: t("errors.not_allowed") })
   const path = String(fd.get("path") ?? "")
@@ -88,63 +131,18 @@ export async function productImage(fd: FormData) {
   back(here, {})
 }
 
-/** Add (no id) or change a variant; `delete` removes it (orders keep their own copy of name + price). */
-export async function saveVariant(fd: FormData) {
-  const { ctx, t } = await manager()
-  const productId = id(fd, "product_id")
-  const variantId = id(fd)
-  const here = `/shop/${productId}?tab=variants`
-  if (!productId) back("/shop", { error: t("errors.invalid_input") })
-  if (variantId && fd.get("delete")) {
-    const { error } = await ctx.supabase.from("product_variants").delete().eq("id", variantId).eq("org_id", ctx.org.id)
-    if (error) back(here, { error: dbError(t, error) })
-    back(here, { ok: t("store.variantDeleted") })
-  }
-  const r = readVariant(getter(fd))
-  if ("error" in r) back(here, { error: msg(t, r.error) })
-  const { error } = variantId
-    ? await ctx.supabase.from("product_variants").update(r.row).eq("id", variantId).eq("org_id", ctx.org.id)
-    : await ctx.supabase.from("product_variants").insert({ ...r.row, org_id: ctx.org.id, product_id: productId, position: Number(fd.get("position")) || 0 })
-  if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t("store.saved") })
-}
-
-/** All variants of a product in one go (the table): each row's fields come as `<field>_<variant id>`. */
-export async function saveVariants(fd: FormData) {
-  const { ctx, t } = await manager()
-  const productId = id(fd, "product_id")
-  const here = `/shop/${productId}?tab=variants`
-  if (!productId) back("/shop", { error: t("errors.invalid_input") })
-  const { data: p } = await ctx.supabase.from("products").select("images").eq("id", productId).eq("org_id", ctx.org.id).maybeSingle()
-  if (!p) back(here, { error: t("errors.not_allowed") })
-  const ids = fd.getAll("variant").map(String).filter((v) => UUID.test(v))
-  for (const v of ids) {
-    const r = readVariant((k) => String(fd.get(`${k}_${v}`) ?? ""))
-    if ("error" in r) back(here, { error: msg(t, r.error) })
-    const image = String(fd.get(`image_${v}`) ?? "")
-    const { error } = await ctx.supabase
-      .from("product_variants")
-      .update({ ...r.row, image_path: p.images.includes(image) ? image : null })
-      .eq("id", v)
-      .eq("product_id", productId)
-      .eq("org_id", ctx.org.id)
-    if (error) back(here, { error: dbError(t, error) })
-  }
-  back(here, { ok: t("store.saved") })
-}
-
 /** Variant options (Farbe, Größe …): rows `option_name` + `option_values` (comma list) → variants per combination. */
 export async function saveOptions(fd: FormData) {
   const { ctx, t } = await manager()
   const productId = id(fd, "product_id")
-  const here = `/shop/${productId}?tab=variants`
+  const here = `/shop/${productId}?edit=options`
   if (!productId) back("/shop", { error: t("errors.invalid_input") })
   const values = fd.getAll("option_values").map(String)
   const r = readOptions(fd.getAll("option_name").map((name, i) => ({ name: String(name), values: (values[i] ?? "").split(",") })))
   if ("error" in r) back(here, { error: msg(t, r.error) })
   const res = await applyOptions(ctx.supabase, ctx.org.id, productId, r.options)
   if ("error" in res) back(here, { error: res.error === "db" ? dbError(t, res.db!) : msg(t, String(res.error)) })
-  back(here, { ok: t("store.optionsSaved", { created: res.created, removed: res.removed }) })
+  back(`/shop/${productId}`, { ok: t("store.optionsSaved", { created: res.created, removed: res.removed }) })
 }
 
 // ---------- orders ----------
@@ -190,10 +188,12 @@ export async function orderStatusAction(fd: FormData) {
   })
 }
 
-/** Cancel; a paid order is refunded in full, so this needs payments.refund too. */
+/** Cancel; a paid order is refunded in full, so that needs payments.refund too (an unpaid one only shop.manage). */
 export async function cancelOrderAction(fd: FormData) {
   await orderStep(fd, async (ctx, order, t) => {
-    if (!ctx.can("payments.refund")) throw new Error("errors.not_allowed")
+    const { data: o } = await ctx.supabase.from("shop_orders").select("pay_orders!inner(status)").eq("id", order).eq("org_id", ctx.org.id).maybeSingle()
+    if (!o) throw new Error("errors.not_found")
+    if (["paid", "partially_refunded"].includes(o.pay_orders.status) && !ctx.can("payments.refund")) throw new Error("errors.not_allowed")
     const r = await cancelOrder(ctx.org.id, order, String(fd.get("reason") ?? "").slice(0, 500) || undefined)
     return r === "pending" ? t("store.refundPending") : t("store.cancelled")
   })
@@ -241,56 +241,67 @@ export async function resendMailAction(fd: FormData) {
 
 // ---------- settings ----------
 
-const readMails = (fd: FormData) =>
-  Object.fromEntries(MAIL_KINDS.map((k) => [k, { off: fd.get(`mail_${k}`) !== "1", message: String(fd.get(`mail_${k}_message`) ?? "").trim().slice(0, 2000) || undefined }]))
+type ShopPatch = Partial<Omit<typeof DEFAULT_SETTINGS, "shipping_rates" | "mails">> & { shipping_rates?: unknown; mails?: unknown }
 
-/** Only the buyer mails (E-Mail → Vorlagen shows them too). */
-export async function saveShopMails(fd: FormData) {
-  const { ctx, t } = await manager()
-  const here = "/email/templates"
-  const { error } = await ctx.supabase.from("shop_settings").upsert({ org_id: ctx.org.id, mails: readMails(fd) as never }, { onConflict: "org_id" })
-  if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t("store.saved") })
+/** Change some settings; the first change of an org stores the defaults with it. */
+async function patchShop(ctx: Awaited<ReturnType<typeof manager>>["ctx"], patch: ShopPatch) {
+  const { data } = await ctx.supabase.from("shop_settings").select("org_id").eq("org_id", ctx.org.id).maybeSingle()
+  return data
+    ? ctx.supabase.from("shop_settings").update(patch as never).eq("org_id", ctx.org.id)
+    : ctx.supabase.from("shop_settings").insert({ ...DEFAULT_SETTINGS, ...patch, org_id: ctx.org.id } as never)
 }
 
-export async function saveShopSettings(fd: FormData) {
+const SWITCHES = ["pay_online", "pay_transfer", "pay_on_pickup", "pickup", "shipping", "auto_invoice"] as const
+
+/** A settings switch (payment methods, delivery, automatic invoices, one buyer mail on/off): saved as it is flipped. */
+export async function setShopSwitch(key: string, on: boolean): Promise<{ error?: string }> {
   const { ctx, t } = await manager()
-  const here = "/shop/settings"
-  const on = (k: string) => fd.get(k) === "1"
+  const flag = SWITCHES.find((k) => k === key)
+  const mailKind = MAIL_KINDS.find((k) => `mail_${k}` === key)
+  if (!flag && !mailKind) return { error: t("errors.invalid_input") }
+  let patch: ShopPatch
+  if (flag) patch = { [flag]: !!on }
+  else {
+    const mails = ((await shopSettings(ctx.org.id)).mails ?? {}) as Record<string, { off?: boolean; message?: string }>
+    patch = { mails: { ...mails, [mailKind!]: { ...mails[mailKind!], off: !on } } }
+  }
+  const { error } = await patchShop(ctx, patch)
+  return error ? { error: dbError(t, error) } : {}
+}
+
+/** One settings sheet (?edit=<part>): shop page text, reservation days, pickup text, shipping rates, legal texts, one mail's text. */
+export async function saveShopPart(fd: FormData) {
+  const { ctx, t } = await manager()
+  const part = String(fd.get("part") ?? "")
+  const here = `/shop/settings?edit=${encodeURIComponent(part)}`
   const text = (k: string, max: number) => String(fd.get(k) ?? "").trim().slice(0, max) || null
-  // Shipping rates come as parallel lists (one row per rate; empty names are dropped).
-  const list = (k: string) => fd.getAll(k).map(String)
-  const rates = list("rate_name").map((name, i) => ({
-    id: list("rate_id")[i] || crypto.randomUUID().slice(0, 8),
-    name,
-    cents: moneyCents(list("rate_price")[i] || "0"),
-    free_from: list("rate_free")[i]?.trim() ? moneyCents(list("rate_free")[i]) : null,
-    countries: list("rate_countries")[i] || "DE",
-  }))
-  const mails = readMails(fd)
-  const days = Math.floor(Number(fd.get("transfer_days")) || 7)
-  const { error } = await ctx.supabase.from("shop_settings").upsert(
-    {
-      org_id: ctx.org.id,
-      title: text("title", 200),
-      intro: text("intro", 5000),
-      pay_online: on("pay_online"),
-      pay_transfer: on("pay_transfer"),
-      pay_on_pickup: on("pay_on_pickup"),
-      transfer_days: Math.min(60, Math.max(1, days)),
-      pickup: on("pickup"),
-      pickup_text: text("pickup_text", 2000),
-      shipping: on("shipping"),
-      shipping_rates: readShippingRates(rates) as never,
-      auto_invoice: on("auto_invoice"),
-      terms: text("terms", 50000),
-      withdrawal: text("withdrawal", 50000),
-      mails: mails as never,
-    },
-    { onConflict: "org_id" },
-  )
+  let patch: ShopPatch | null = null
+  if (part === "page") patch = { title: text("title", 200), intro: text("intro", 5000) }
+  if (part === "transfer") patch = { transfer_days: Math.min(60, Math.max(1, Math.floor(Number(fd.get("transfer_days")) || 7))) }
+  if (part === "pickup") patch = { pickup_text: text("pickup_text", 2000) }
+  if (part === "terms") patch = { terms: text("terms", 50000) }
+  if (part === "withdrawal") patch = { withdrawal: text("withdrawal", 50000) }
+  if (part === "shipping") {
+    // Shipping rates come as parallel lists (one row per rate; empty names are dropped).
+    const list = (k: string) => fd.getAll(k).map(String)
+    const rates = list("rate_name").map((name, i) => ({
+      id: list("rate_id")[i] || crypto.randomUUID().slice(0, 8),
+      name,
+      cents: moneyCents(list("rate_price")[i] || "0"),
+      free_from: list("rate_free")[i]?.trim() ? moneyCents(list("rate_free")[i]) : null,
+      countries: list("rate_countries")[i] || "DE",
+    }))
+    patch = { shipping_rates: readShippingRates(rates) }
+  }
+  const mailKind = MAIL_KINDS.find((k) => `mail-${k}` === part)
+  if (mailKind) {
+    const mails = ((await shopSettings(ctx.org.id)).mails ?? {}) as Record<string, { off?: boolean; message?: string }>
+    patch = { mails: { ...mails, [mailKind]: { ...mails[mailKind], message: text("message", 2000) ?? undefined } } }
+  }
+  if (!patch) back("/shop/settings", { error: t("errors.invalid_input") })
+  const { error } = await patchShop(ctx, patch)
   if (error) back(here, { error: dbError(t, error) })
-  back(here, { ok: t("store.saved") })
+  back("/shop/settings", { ok: t("store.saved") })
 }
 
 /** Music upload, step 1 (called from the browser): the track row + a link to PUT the master to. */
@@ -308,42 +319,25 @@ export async function finishAudioUpload(trackId: string): Promise<{ error?: stri
   return "error" in r ? { error: r.error === "db" ? dbError(t, r.db!) : t.dynamic(String(r.error)) } : {}
 }
 
-/** Single tracks: one price for all of a product's tracks (empty = album only). */
-/** The music tab in one go: price per single track (empty = album only) + every track's number, title, switches. */
-export async function saveTracks(fd: FormData) {
-  const { ctx, t } = await manager()
-  const productId = id(fd, "product_id")
-  const here = `/shop/${productId}?tab=digital`
-  const raw = String(fd.get("track_price") ?? "").trim()
-  const cents = raw ? moneyCents(raw) : null
-  if (!productId || (raw && (cents === null || cents > 1_000_000))) back(here, { error: t("store.priceInvalid") })
-  const { error, count } = await ctx.supabase.from("products").update({ track_price_cents: cents }, { count: "exact" }).eq("id", productId).eq("org_id", ctx.org.id)
-  if (error || !count) back(here, { error: error ? dbError(t, error) : t("errors.not_allowed") })
-  const buyable = fd.get("has_buyable") === "1"
-  for (const v of fd.getAll("track").map(String).filter((v) => UUID.test(v))) {
-    const r = await updateTrack(ctx.supabase, ctx.org.id, v, {
-      title: String(fd.get(`title_${v}`) ?? ""),
-      position: Number(fd.get(`position_${v}`)) || 0,
-      stream: fd.get(`stream_${v}`) === "1",
-      ...(buyable ? { buyable: fd.get(`buyable_${v}`) === "1" } : {}),
-    })
-    if ("error" in r) back(here, { error: r.error === "db" ? dbError(t, r.db!) : t.dynamic(String(r.error)) })
-  }
-  back(here, { ok: t("store.saved") }) // the catalog is read live, no cache to refresh
-}
-
-/** One track: `delete` removes it with its files, else it is converted again (retry). Edits go through saveTracks. */
+/** One track: `delete` removes it with its files, `retry` converts it again, else its number, title and switches. */
 export async function saveTrack(fd: FormData) {
   const { ctx, t } = await manager()
   const productId = id(fd, "product_id")
   const trackId = id(fd)
-  const here = `/shop/${productId}?tab=digital`
+  const here = `/shop/${productId}`
   if (!productId || !trackId) back("/shop", { error: t("errors.invalid_input") })
   const r = fd.get("delete")
     ? await deleteTrack(ctx.supabase, ctx.org.id, trackId)
-    : await finishTrackUpload(ctx.supabase, ctx.org.id, trackId)
-  if ("error" in r) back(here, { error: r.error === "db" ? dbError(t, r.db!) : t.dynamic(String(r.error)) })
-  back(here, { ok: fd.get("delete") ? t("store.trackRemoved") : t("store.saved") })
+    : fd.get("retry")
+      ? await finishTrackUpload(ctx.supabase, ctx.org.id, trackId)
+      : await updateTrack(ctx.supabase, ctx.org.id, trackId, {
+          title: String(fd.get("title") ?? ""),
+          position: Number(fd.get("position")) || 0,
+          stream: fd.get("stream") === "1",
+          ...(fd.get("has_buyable") === "1" ? { buyable: fd.get("buyable") === "1" } : {}),
+        })
+  if ("error" in r) back(fd.get("delete") || fd.get("retry") ? here : `${here}?edit=${trackId}`, { error: r.error === "db" ? dbError(t, r.db!) : t.dynamic(String(r.error)) })
+  back(here, { ok: fd.get("delete") ? t("store.trackRemoved") : t("store.saved") }) // the catalog is read live, no cache to refresh
 }
 
 // ---------- Lager ----------
@@ -352,9 +346,13 @@ export async function saveTrack(fd: FormData) {
 export async function bookStockAction(fd: FormData) {
   const { ctx, t } = await manager()
   const itemId = id(fd, "item")
-  const here = `/shop/stock?item=${itemId}`
+  // Back to where the sheet was opened (Produkte › Bestand or the product page), the sheet still open.
+  const from = String(fd.get("back") ?? "")
+  const page = /^\/shop(\/[0-9a-f-]{36})?$/.test(from) ? from : "/shop"
+  const list = page === "/shop" ? "/shop?view=stock" : page
+  const here = `${list}${list.includes("?") ? "&" : "?"}edit=${itemId}`
   const item = itemId && (await stockItem(ctx.supabase, ctx.org.id, itemId))
-  if (!item) back("/shop/stock", { error: t("errors.not_found") })
+  if (!item) back(list, { error: t("errors.not_found") })
   const r = readStockMove(getter(fd), item.on_hand ?? 0)
   if ("error" in r) back(here, { error: msg(t, r.error) })
   try {
@@ -378,10 +376,38 @@ export async function orderBuyer(contactId: string) {
   return c && { first_name: c.first_name ?? "", last_name: c.last_name ?? "", email: c.email ?? "", phone: c.phone ?? "", company: c.company ?? "", street: c.street ?? "", postal_code: c.postal_code ?? "", city: c.city ?? "", country: c.country ?? "DE" }
 }
 
+/** Item picker of "Neue Bestellung": products and their variants matching `q` (drafts too), with the price to fill in. */
+export async function searchOrderItems(q: string): Promise<{ id: string; label: string; detail: string; price: number }[]> {
+  const ctx = await requirePerm("shop.manage")
+  const t = await getT()
+  const term = String(q ?? "").replace(/[%,()*]/g, "").trim().slice(0, 100)
+  let query = ctx.supabase
+    .from("products")
+    .select("id, name, price_cents, position, product_variants(id, name, price_cents, position, active)")
+    .eq("org_id", ctx.org.id)
+    .is("deleted_at", null)
+    .neq("status", "archived")
+    .order("position")
+    .limit(20)
+  if (term) query = query.or(`name.ilike.%${term}%,category.ilike.%${term}%`)
+  const { data } = await query
+  return (data ?? [])
+    .flatMap((p) =>
+      p.product_variants.length
+        ? [...p.product_variants]
+            .filter((v) => v.active)
+            .sort((a, b) => a.position - b.position)
+            .map((v) => ({ id: v.id, label: `${p.name} · ${v.name}`, price: v.price_cents ?? p.price_cents }))
+        : [{ id: p.id, label: p.name, price: p.price_cents }],
+    )
+    .slice(0, 20)
+    .map((i) => ({ ...i, detail: t.money(i.price, "eur") }))
+}
+
 /** "Neue Bestellung" (sold offline, by phone …) → the new order's page. */
 export async function createTeamOrderAction(fd: FormData) {
   const { ctx, t } = await manager()
-  const here = "/shop/orders?new=order"
+  const here = "/shop/orders/new"
   const r = readTeamOrder(getter(fd))
   if ("error" in r) back(here, { error: msg(t, r.error) })
   let id = ""

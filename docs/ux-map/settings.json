@@ -1,0 +1,1822 @@
+{
+  "area": "settings",
+  "label": "Einstellungen",
+  "module": null,
+  "nav": [
+    {
+      "label": "Profil",
+      "key": "settings.tabs.profile",
+      "href": "/settings/profile"
+    },
+    {
+      "label": "Allgemein",
+      "key": "settings.tabs.general",
+      "href": "/settings/general"
+    },
+    {
+      "label": "Team",
+      "key": "settings.tabs.team",
+      "href": "/settings/team"
+    },
+    {
+      "label": "Rollen",
+      "key": "settings.tabs.roles",
+      "href": "/settings/roles"
+    },
+    {
+      "label": "Module",
+      "key": "settings.tabs.modules",
+      "href": "/settings/modules"
+    },
+    {
+      "label": "Bereiche",
+      "key": "settings.tabs.areas",
+      "href": "/settings/areas"
+    },
+    {
+      "label": "Felder",
+      "key": "settings.tabs.fields",
+      "href": "/settings/fields"
+    },
+    {
+      "label": "Orte",
+      "key": "settings.tabs.locations",
+      "href": "/settings/locations"
+    },
+    {
+      "label": "Integrationen",
+      "key": "settings.tabs.integrations",
+      "href": "/settings/integrations",
+      "permission": "org.integrations.manage"
+    },
+    {
+      "label": "API",
+      "key": "settings.tabs.api",
+      "href": "/settings/api",
+      "permission": "org.integrations.manage"
+    }
+  ],
+  "navNotes": "Settings is not an entry in src/modules/nav.ts; the App layout adds \"Einstellungen\" as a plain sidebar link (group \"Organisation\", → /settings/profile), and the user menu \"Konto\" also opens /settings/profile. The sections are a <SectionNav> beside the page (src/app/(app)/settings/tabs.ts, layout.tsx), not sidebar sub-pages. The layout renders no <Page>/<PageHeader>: the top bar shows \"Einstellungen › <Section>\" via <SettingsTitle> (TopbarCrumbs) and an sr-only h1. Content column max-w-3xl inside max-w-5xl. ⌘K lists the settings sections from its own copy of the tab list (src/search/actions.ts), which lacks \"Bereiche\".",
+  "redesign": {
+    "research": "Linear (Account: Profile · Preferences · Notifications · Security & access · Connected accounts / Workspace: General · Members · …), Vercel (personal Account vs Team settings, one left nav with two groups), Stripe (Personal details vs Business settings), GitHub (personal settings vs organization settings). All: one left nav grouped by 'you' and 'the workspace', each page a stack of grouped rows, switches save at once, text values inline or in a small dialog, destructive things ask. On phones (Linear / GitHub mobile): the settings index is a list of rows with ›, a row opens the page, back returns to the list.",
+    "decision": "Section nav grouped 'Du' (Profil · Benachrichtigungen · Sicherheit · KI-Assistent) / 'Organisation' (Allgemein · Team · Rollen · Module · Bereiche · Felder · Orte · Integrationen · API), each org item only with the permission that changes it (Allgemein/Module/Felder/Orte org.settings.manage, Team/Rollen org.members.manage, Integrationen/API org.integrations.manage; Bereiche when at least one area settings page is open to the person). Phones: /settings is the index (grouped rows with ›), sub-pages have a back chevron to it; desktop: /settings opens Profil. Sidebar 'Einstellungen' → /settings; user menu 'Konto' → Profil. Area settings stay behind each area's gear (listed in Bereiche); platform admin stays /admin.",
+    "built": true
+  },
+  "pages": [
+    {
+      "route": "/settings",
+      "redesign": {
+        "job": "Find the setting you're after: your own things or the org's.",
+        "phone": "Top bar 'Einstellungen'. Two RowGroups 'Du' and 'Organisation', one row per section (icon · label · ›), only sections the person may change.",
+        "desktop": "Redirects to /settings/profile (the section nav beside every settings page is the index).",
+        "moves": [
+          "redirect → kept on desktop (client replace to /settings/profile from md); phones show the grouped index instead"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Was unreachable: a stale next.config redirect sent /settings to Allgemein, so phones never saw the index (Du · Organisation rows). Redirect removed; desktop still opens Profil via DesktopOpens."
+        }
+      },
+      "file": "src/app/(app)/settings/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Redirects to /settings/profile (the top bar gear / account menu 'Einstellungen' target).",
+      "permission": null,
+      "links": [
+        "/settings/profile"
+      ]
+    },
+    {
+      "route": "/settings/domain",
+      "redesign": {
+        "job": "Old URL.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /website/domain kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect only (→ /website/domain)."
+        }
+      },
+      "file": "src/app/(app)/settings/domain/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Legacy URL, redirects to /website/domain.",
+      "links": [
+        "/website/domain"
+      ]
+    },
+    {
+      "route": "/settings/website",
+      "redesign": {
+        "job": "Old URL.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /website/pages/start kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect only (→ /website/pages/start)."
+        }
+      },
+      "file": "src/app/(app)/settings/website/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Legacy URL, redirects to /website/pages/start.",
+      "links": [
+        "/website/pages/start"
+      ]
+    },
+    {
+      "route": "/settings/profile",
+      "redesign": {
+        "job": "Who I am in roots: picture, name, language, look, and the orgs I belong to.",
+        "phone": "Top bar ‹ Einstellungen · Profil. RowGroup Profil: identity row (picture = tap to upload, name edited in place, email muted), Sprache (select), Darstellung (Hell · Dunkel · System). RowGroup 'Deine Organisationen': one row per org (logo, name, role, 'Aktiv' badge); tapping another org switches to it; the current org's row has ⋯ 'Organisation verlassen' (asks); AddLink 'Neue Organisation'.",
+        "desktop": "Same rows in the settings column (max-w-3xl) beside the grouped section nav.",
+        "moves": [
+          "Profilbild hochladen / entfernen → identity row: the picture is the button (ImageForm labelHidden), Entfernen asks",
+          "Name + Speichern → identity row: InlineField (patchProfile, saves on Enter/blur), no button",
+          "E-Mail (muted) → identity row under the name",
+          "Sprache (LocaleSwitcher) → row 'Sprache', saves on change",
+          "Darstellung (ThemeSwitch) → row 'Darstellung', saves on change",
+          "Benachrichtigungen matrix + Speichern → own page /settings/notifications (switches per channel, save on flip)",
+          "Passwort (two fields + Passwort ändern) → /settings/security row 'Passwort' → 'Ändern' compact sheet ?edit=password with SaveBar",
+          "Deine Organisationen card → RowGroup with clickable rows (switch org), ⋯ Verlassen with confirm on the current org, AddLink 'Neue Organisation' (/onboarding?new=1) for everyone (also single-org people)",
+          "Passkeys card (add / remove) → /settings/security, remove asks (passkeys.confirmRemove)",
+          "KI-Assistent (keys, Prüfen & speichern, Schlüssel entfernen) → /settings/ai",
+          "Mit KI verbinden (copy, Claude / Cursor / VS Code, CLI) → /settings/ai",
+          "Meine Verbindungen + Trennen → /settings/ai, Trennen asks (settings.confirmDisconnect)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Group heading 'Profil' repeated the page title: dropped here (kept on /account). Picture tap, name inline, language + theme switch at once, orgs with switch / leave in ⋯ checked."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "file": "src/app/(app)/settings/profile/page.tsx",
+      "title": "Einstellungen › Profil",
+      "purpose": "Personal settings: picture, name, language, theme, personal notification channels, password, own orgs, passkeys, Sprout AI keys, connecting AI apps (MCP) and own AI connections.",
+      "permission": "any signed-in member",
+      "size": null,
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Profil"
+        ],
+        "actions": [],
+        "menu": []
+      },
+      "urlState": [
+        {
+          "param": "reset",
+          "meaning": "1 = arrived from password reset: toast 'Setze jetzt ein neues Passwort.' (account.resetHint) and focus on new password"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        },
+        {
+          "param": "#profile #language #theme #notifications #password #my-orgs #passkeys #ai #connect-ai #connections",
+          "meaning": "section anchors"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Profil",
+          "key": "account.profile",
+          "anchor": "#profile",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "file",
+              "label": "Profilbild",
+              "key": "account.picture",
+              "type": "image",
+              "component": "ImageForm",
+              "notes": "own form, uploads/removes immediately; hint account.pictureHint"
+            },
+            {
+              "name": "full_name",
+              "label": "Name",
+              "key": "account.name",
+              "type": "text",
+              "component": "Input",
+              "required": false
+            }
+          ],
+          "notes": "Email shown as plain text, not editable anywhere. Name has its own 'Speichern' SubmitButton (no SaveBar)."
+        },
+        {
+          "title": "Sprache",
+          "key": "account.language",
+          "anchor": "#language",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "locale",
+              "label": "Sprache",
+              "type": "select",
+              "component": "LocaleSwitcher",
+              "notes": "applies instantly (cookie)"
+            }
+          ]
+        },
+        {
+          "title": "Darstellung",
+          "key": "account.theme",
+          "anchor": "#theme",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "theme",
+              "label": "Hell / Dunkel / System",
+              "key": "account.themes.*",
+              "type": "segmented",
+              "component": "ThemeSwitch",
+              "notes": "applies instantly"
+            }
+          ]
+        },
+        {
+          "title": "Benachrichtigungen",
+          "key": "prefs.title",
+          "anchor": "#notifications",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "<event>:<channel>",
+              "label": "matrix: Ereignis (prefs.event) × In der App / E-Mail / Push (prefs.in_app/email/push)",
+              "type": "checkbox",
+              "component": "Checkbox in a plain <table>"
+            }
+          ],
+          "notes": "Only event types with an audience (platform ones only for platform admins). Empty: 'Für deine Rollen gibt es noch keine Benachrichtigungen.' (prefs.none). Hint prefs.emailOff when platform email is unset. Own 'Speichern' button."
+        },
+        {
+          "title": "Passwort",
+          "key": "account.password",
+          "anchor": "#password",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "password",
+              "label": "Neues Passwort",
+              "key": "account.newPassword",
+              "type": "password",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "repeat",
+              "label": "Neues Passwort wiederholen",
+              "key": "account.repeatPassword",
+              "type": "password",
+              "component": "Input",
+              "required": true
+            }
+          ]
+        },
+        {
+          "title": "Deine Organisationen",
+          "key": "account.orgs",
+          "anchor": "#my-orgs",
+          "kind": "FormCard",
+          "notes": "List of org names; the active one shows the role name + badge 'Aktiv'. Hint: 'Wechseln über das Menü oben in der Seitenleiste.' (account.orgsHint). Rows are not links, no switch here."
+        },
+        {
+          "title": "Passkeys",
+          "key": "passkeys.title",
+          "anchor": "#passkeys",
+          "kind": "FormCard",
+          "notes": "<Passkeys> client list: name, added/used dates, remove icon button (tooltip); 'Passkey hinzufügen' button (WebAuthn). Unsupported browser hint."
+        },
+        {
+          "title": "KI-Assistent (Sprout)",
+          "key": "sprout.keysTitle",
+          "anchor": "#ai",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "key",
+              "label": "API-Schlüssel hinzufügen",
+              "key": "sprout.addKey",
+              "type": "password",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'sk-ant-… · sk-… · AIza… · xai-…'; provider detected from prefix, checked against provider"
+            }
+          ],
+          "notes": "List of saved keys per provider: logo, label, hint (masked), model count, delete icon."
+        },
+        {
+          "title": "Mit KI verbinden",
+          "key": "settings.connectAi",
+          "anchor": "#connect-ai",
+          "kind": "FormCard",
+          "notes": "MCP URL <APP_URL>/api/mcp with CopyButton; buttons 'In Claude verbinden' (claude.ai/settings/connectors, new tab), 'In Cursor installieren' (cursor:// deeplink), 'In VS Code installieren' (vscode: deeplink); steps text; 'claude mcp add …' CLI command with CopyButton."
+        },
+        {
+          "title": "Meine Verbindungen",
+          "key": "settings.myConnections",
+          "anchor": "#connections",
+          "kind": "FormCard",
+          "notes": "Own MCP connections across all orgs: client name, org name, last used, badge read/me access, 'Trennen'. Empty: 'Keine Verbindungen.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Profilbild hochladen / entfernen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updateAvatar (src/app/account/actions.ts)",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updateName",
+          "confirm": false,
+          "result": "toast 'Gespeichert.' (account.saved)"
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "savePreferences",
+          "confirm": false,
+          "result": "toast 'Einstellungen gespeichert.' (prefs.saved)"
+        },
+        {
+          "label": "Passwort ändern",
+          "key": "account.changePassword",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updatePassword",
+          "confirm": false,
+          "result": "toast 'Passwort geändert.'; errors: too short / don't match"
+        },
+        {
+          "label": "Passkey hinzufügen",
+          "key": "passkeys.add",
+          "where": "section",
+          "kind": "client",
+          "target": "WebAuthn registration (supabase auth)",
+          "result": "toast passkeys.addedOk / passkeys.failed"
+        },
+        {
+          "label": "Passkey entfernen",
+          "key": "passkeys.remove",
+          "where": "row",
+          "kind": "client",
+          "confirm": false,
+          "result": "toast 'Passkey entfernt.'"
+        },
+        {
+          "label": "Prüfen & speichern",
+          "key": "sprout.saveKey",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveAiKeyAction (settings/ai-actions.ts)",
+          "confirm": false,
+          "result": "back to #ai; toast '{provider} verbunden – {count} Modelle verfügbar.' or rejection reason"
+        },
+        {
+          "label": "Schlüssel entfernen",
+          "key": "sprout.deleteKey",
+          "where": "row",
+          "kind": "confirm",
+          "target": "deleteAiKeyAction",
+          "confirm": true,
+          "result": "confirm 'Schlüssel wirklich entfernen?'; toast 'Schlüssel entfernt.'"
+        },
+        {
+          "label": "Kopieren",
+          "key": "common.copy",
+          "where": "section",
+          "kind": "client",
+          "target": "clipboard (MCP URL / CLI command)"
+        },
+        {
+          "label": "In Claude verbinden / In Cursor installieren / In VS Code installieren",
+          "where": "section",
+          "kind": "link",
+          "target": "external"
+        },
+        {
+          "label": "Trennen",
+          "key": "settings.disconnect",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "disconnectApp (settings/connections-actions.ts)",
+          "confirm": false,
+          "result": "deletes the MCP connection + revokes the OAuth grant; toast 'Verbindung getrennt.'"
+        }
+      ],
+      "links": [
+        "/oauth/consent (indirect via AI app)",
+        "https://claude.ai/settings/connectors"
+      ],
+      "phone": "SectionNav sits above the content (md:grid-cols-[auto_1fr]); long single column with many independent forms.",
+      "uxNotes": [
+        "Seven separate save paths on one page (avatar, name, prefs, password, AI key, passkeys, theme/language instant) – none uses <SaveBar>, contrary to the 'no save buttons on edit forms' rule in app.md.",
+        "ProfileForms uses plain <section>+<Separator>, while the rest of the page uses <FormCard>: two card styles on one page.",
+        "Passkey removal has no confirm; AI key removal does (data-confirm); AI disconnect ('Trennen') has none although it cuts an app off at once.",
+        "Same ProfileForms are also rendered on the standalone /account page (two URLs for the same settings).",
+        "Notification preferences matrix is a raw <table>, not <DataTable>; on phones it scrolls horizontally.",
+        "'Deine Organisationen' tells the user to switch via the sidebar menu, but rows are not clickable."
+      ]
+    },
+    {
+      "route": "/settings/general",
+      "redesign": {
+        "job": "The org's identity: logo, name, public address.",
+        "phone": "RowGroup Organisation: logo row (tap the logo to upload, Entfernen asks), Name row (InlineField), Öffentliche Adresse row (slug.domain as text, link 'Domain ändern' → /website/domain when the person has org.site.manage).",
+        "desktop": "Same.",
+        "moves": [
+          "Name + SaveBar → InlineField with patchOrgName (requirePerm org.settings.manage); no SaveBar",
+          "Slug (Webseite) → row 'Öffentliche Adresse' with the full address + link to Website › Domain",
+          "Logo hochladen / entfernen → logo row (ImageForm labelHidden)",
+          "read-only view for people without org.settings.manage → removed: the page is only listed for (and only opens with) org.settings.manage"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: logo tap, name inline, address with 'Eigene Domain einrichten'. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/(app)/settings/general/page.tsx",
+      "title": "Einstellungen › Allgemein",
+      "purpose": "Rename the organisation and set its logo.",
+      "permission": "view: member; edit: org.settings.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Allgemein"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast via <Notice>"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Organisation",
+          "key": "general.org",
+          "anchor": "#org",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "general.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "disabled without org.settings.manage"
+            },
+            {
+              "name": "slug",
+              "label": "Slug (Webseite)",
+              "key": "general.publicAddress",
+              "type": "readonly",
+              "component": "text",
+              "notes": "<slug>.<ROOT_DOMAIN>, not editable"
+            }
+          ]
+        },
+        {
+          "title": "Logo",
+          "key": "general.logo",
+          "anchor": "#logo-card",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "file",
+              "label": "Logo",
+              "key": "general.logo",
+              "type": "image",
+              "component": "ImageForm (square)",
+              "notes": "hint general.logoHint; only with org.settings.manage"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "updateOrg (general/actions.ts)",
+          "permission": "org.settings.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'; refreshes public cache"
+        },
+        {
+          "label": "Logo hochladen / entfernen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "updateLogo",
+          "permission": "org.settings.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        }
+      ],
+      "uxNotes": [
+        "Label 'Slug (Webseite)' shows the full subdomain, not the slug; there is no way to change it and no link to Website › Domain.",
+        "updateOrg uses getContext (no requirePerm) and relies on RLS count to reject; works but differs from updateLogo."
+      ]
+    },
+    {
+      "route": "/settings/team",
+      "redesign": {
+        "job": "Who works in this org with which role; invite someone; open invites.",
+        "phone": "Top bar Team, round + = Einladen. List of people (picture, name, email, role as one muted line); tap → sheet: role as Choice + SaveBar, ⋯ Entfernen (asks). Section 'Offene Einladungen': rows email · role · expires, row ⋯ Link kopieren/erneuern + Zurückziehen (asks).",
+        "desktop": "PageHeader primary 'Einladen' (key N). Table Person · Rolle · Seit. Open invites table below with the link button and a row ⋯.",
+        "moves": [
+          "Einladen (section button) → PageHeader primary → ?new=invite",
+          "Team DataTable → kept; ?role=<id> filter chip (from Rollen) ",
+          "member sheet Rolle NativeSelect → <Choice> (≤5 segments, else select) + SaveBar",
+          "member sheet Entfernen / Verlassen (red button in the body) → sheet ⋯ MenuSubmit destructive with confirm (members.confirmRemove / confirmLeave)",
+          "Offene Einladungen card → Section with DataTable; Link erneuern → kept (InviteLink); Zurückziehen → ghost button with confirm (members.confirmRevoke)",
+          "invite sheet (E-Mail, Rolle, 'Einladungslink erstellen') → kept; button label → 'Einladung senden'",
+          "people without org.members.manage → the page isn't listed; leaving moves to Profil › Deine Organisationen"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: member cards one line (role · since), invite as round +. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "file": "src/app/(app)/settings/team/page.tsx",
+      "title": "Einstellungen › Team",
+      "purpose": "See who is in the org, invite people with a role, change roles, remove/leave, manage open invites.",
+      "permission": "view: member; manage: org.members.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Team"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "edit",
+          "meaning": "member id → member sheet (managers, or own row)"
+        },
+        {
+          "param": "new",
+          "meaning": "invite → invite sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Team",
+          "key": "members.heading",
+          "kind": "DataTable",
+          "columns": [
+            "Person (Bild, Name, E-Mail)",
+            "Rolle",
+            "Beigetreten"
+          ],
+          "notes": "Section title row has an 'Einladen' button on the right (not in the top bar). Row → ?edit=<id> for managers or own row; empty 'Noch keine Mitglieder.'"
+        },
+        {
+          "title": "Offene Einladungen",
+          "key": "members.openInvites",
+          "kind": "FormCard + DataTable",
+          "columns": [
+            "E-Mail",
+            "Rolle (Badge)",
+            "Läuft ab",
+            "(Link erneuern · Zurückziehen)"
+          ],
+          "notes": "Managers only. Empty 'Keine offenen Einladungen.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Einladen",
+          "key": "members.invite",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=invite",
+          "permission": "org.members.manage"
+        },
+        {
+          "label": "Link erneuern",
+          "key": "members.renewLink",
+          "where": "row",
+          "kind": "client",
+          "target": "renewInviteLink (team/actions.ts)",
+          "permission": "org.members.manage",
+          "confirm": false,
+          "result": "old link invalid, +7 days; compact ContentSheet 'Neuer Einladungslink' with link, 'Link kopieren', 'Kopieren & schließen'. No mail is sent."
+        },
+        {
+          "label": "Zurückziehen",
+          "key": "members.revoke",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "revokeInvite",
+          "permission": "org.members.manage",
+          "confirm": false,
+          "result": "toast 'Einladung zurückgezogen.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=<member id>",
+          "component": "UrlSheet",
+          "title": "<Name or E-Mail>",
+          "description": "<E-Mail>",
+          "fields": [
+            {
+              "name": "role_id",
+              "label": "Rolle",
+              "key": "members.role",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "managers only; owner role only assignable by owners"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "changeRole",
+              "result": "toast 'Rolle geändert.'"
+            },
+            {
+              "label": "Entfernen / Verlassen (own row)",
+              "key": "members.remove / members.leave",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "removeMember",
+              "confirm": false,
+              "result": "removed: toast 'Mitglied entfernt.'; leaving: active-org cookie cleared, redirect to App home"
+            }
+          ]
+        },
+        {
+          "param": "?new=invite",
+          "component": "UrlSheet",
+          "title": "Jemanden einladen",
+          "key": "members.dialogTitle",
+          "fields": [
+            {
+              "name": "email",
+              "label": "E-Mail",
+              "key": "members.email",
+              "type": "email",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "role_id",
+              "label": "Rolle",
+              "key": "members.role",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "default = non-owner role with fewest permissions"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Einladungslink erstellen",
+              "key": "members.createLink",
+              "kind": "serverAction",
+              "target": "createInvite (useActionState)",
+              "result": "mails the invite and shows the link with 'Link kopieren'; on mail failure a red hint + 'Schick diesen Link an …'"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/invite/[token] (the link sent)"
+      ],
+      "uxNotes": [
+        "Removing a member or leaving the org has no confirm (destructive, red button inside the sheet) – app.md requires data-confirm.",
+        "Revoking an invite has no confirm.",
+        "Delete/leave is a red button in the sheet body, not a ⋯ menu item as app.md specifies for UrlSheets.",
+        "Primary 'Einladen' sits in the section header instead of PageHeader primary (no round + on phones, no N shortcut).",
+        "Role picker is NativeSelect (app.md: <Choice> for one value from a list).",
+        "Invite button label 'Einladungslink erstellen' although it also sends an email.",
+        "Area name drift: tab 'Team', keys members.*, page function MembersSettings; Members module (Mitglieder) is a different thing."
+      ]
+    },
+    {
+      "route": "/settings/roles",
+      "redesign": {
+        "job": "Understand what each role may do and who has it (roles are defined by the platform).",
+        "phone": "Rows: role name, summary, member count; tap → sheet ?edit=<id> listing permissions per module; 'Personen mit dieser Rolle' link → /settings/team?role=<id>.",
+        "desktop": "Same table.",
+        "moves": [
+          "?view= → ?edit= (old ?view redirects)",
+          "member count → link to Team filtered by role",
+          "intro sentence → kept as the RowGroup description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Member count column was a bare '0'/'1' on phone cards: now '1 Person' / '3 Personen'."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/(app)/settings/roles/page.tsx",
+      "title": "Einstellungen › Rollen",
+      "purpose": "Read-only list of the platform-defined roles and what each may do.",
+      "permission": "member",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Rollen"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "role id → read-only sheet with permissions grouped by module"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Rollen",
+          "kind": "DataTable",
+          "columns": [
+            "Name",
+            "Berechtigungen (summary)",
+            "Mitglieder (count)"
+          ],
+          "notes": "intro roles.intro; empty 'Noch keine Rollen.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?view=<role id>",
+          "component": "UrlSheet",
+          "title": "<Role name>",
+          "description": "Das darf diese Rolle (roles.canDo)",
+          "notes": "Permission labels grouped by active module; 'Nur ansehen' when nothing granted. No actions."
+        }
+      ],
+      "uxNotes": [
+        "Uses ?view= for the sheet while every other settings sheet uses ?edit=/?new= (URL-param drift).",
+        "No link to the Team page to see/assign who has a role; member count is not clickable."
+      ]
+    },
+    {
+      "route": "/settings/modules",
+      "redesign": {
+        "job": "See which modules the org has and open them.",
+        "phone": "RowGroup: one row per module (name, description, badge 'Aktiv' success / 'Aus' secondary), active rows link to the area (›). Hint 'Module schaltet die Plattform frei' as description.",
+        "desktop": "Same rows.",
+        "moves": [
+          "cards → rows",
+          "badge default → success / secondary",
+          "dead end → active rows open the area"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Area tiles came from the first nav area listing the module (Kalender for several): areaOfModule() skips Kalender."
+        }
+      },
+      "uxNotesDone": [
+        0
+      ],
+      "file": "src/app/(app)/settings/modules/page.tsx",
+      "title": "Einstellungen › Module",
+      "purpose": "Read-only overview of all modules and which are on for this org.",
+      "permission": "member",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Module"
+        ]
+      },
+      "sections": [
+        {
+          "title": "Module",
+          "kind": "custom",
+          "notes": "Card grid: name, description, badge 'Aktiv', 'Braucht {list}'. Off modules dimmed. Intro 'Module werden von der Plattform für deine Organisation freigeschaltet.'"
+        }
+      ],
+      "actions": [],
+      "uxNotes": [
+        "Pure information, no actions and no link into a module's area or settings; dead end for 'how do I turn this on'."
+      ]
+    },
+    {
+      "route": "/settings/areas",
+      "redesign": {
+        "job": "All area settings in one place.",
+        "phone": "RowGroup of rows AreaIcon · area (· page) · ›.",
+        "desktop": "Same.",
+        "moves": [
+          "tiles → RowGroup rows with AreaIcon",
+          "intro → RowGroup description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Rows had the area tile inside the title, so the second line ('Team') sat under the tile; LinkRows got a `lead` slot. Schichten appears twice, so both rows name their page (Einstellungen · Team)."
+        }
+      },
+      "file": "src/app/(app)/settings/areas/page.tsx",
+      "title": "Einstellungen › Bereiche",
+      "purpose": "Collects links to each area's own Einstellungen page.",
+      "permission": "member (list filtered by nav visibility)",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Bereiche"
+        ]
+      },
+      "sections": [
+        {
+          "title": "Bereiche",
+          "kind": "custom",
+          "notes": "Link tiles (icon, area name, chevron) for every visible nav child labelled common.settings. Empty: settings.areasNone."
+        }
+      ],
+      "links": [
+        "/members/settings",
+        "/shifts/settings",
+        "/invoices/settings",
+        "/projects/settings",
+        "/shop/settings"
+      ],
+      "uxNotes": [
+        "Only areas whose nav has a 'Einstellungen' child appear; area settings that live elsewhere (e.g. /email templates, /events tickets settings, /files/templates, /website/*) are not listed.",
+        "Website area has no 'Einstellungen' sub-page; its settings are spread over Marke/Seiten/Domain."
+      ]
+    },
+    {
+      "route": "/settings/fields",
+      "redesign": {
+        "job": "Org-defined extra fields per kind of record.",
+        "phone": "One RowGroup per entity (Kontakte, Events …): rows label · type · 'Pflicht' badge, AddLink 'Neues Feld' at the end of each group. Tap → sheet ?edit=<id>: Bezeichnung, Optionen (select only), colours per option, Pflichtfeld, SaveBar; ⋯ 'Feld löschen' (asks).",
+        "desktop": "Same.",
+        "moves": [
+          "DataTable per entity → RowGroup rows",
+          "Neues Feld (section button) → AddLink per group → ?new=<entity>",
+          "Typ NativeSelect → <Choice> (8 options → select); Auswahlmöglichkeiten only visible while Typ = Auswahl (CSS :has)",
+          "Farben NativeSelect per option → kept as Choice per option (6 colours + none)",
+          "Gefahrenzone + Feld löschen → sheet ⋯ MenuSubmit destructive with confirm (fields.confirmDelete + hint)",
+          "Pflichtfeld checkbox → kept (accent-primary)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Group 'Veranstaltungen' → 'Events' (glossary). Otherwise checked: one RowGroup per entity with 'Neues Feld'."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
+      ],
+      "file": "src/app/(app)/settings/fields/page.tsx",
+      "title": "Einstellungen › Felder",
+      "purpose": "Define custom fields per entity (contacts, events, memberships, rental objects, rentals, projects, tasks).",
+      "permission": "view: member; manage: org.settings.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Felder"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "<entity> → create sheet for that entity"
+        },
+        {
+          "param": "edit",
+          "meaning": "field id → edit sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "one section per entity of an active module (Kontakte, Veranstaltungen, Mitgliedschaften, Objekte (Vermietung), Vergaben (Vermietung), Projekte, Aufgaben)",
+          "key": "fields.entities.*",
+          "kind": "DataTable",
+          "columns": [
+            "Bezeichnung",
+            "Typ",
+            "Auswahlmöglichkeiten",
+            "Pflicht"
+          ],
+          "notes": "Each section has its own outline 'Neues Feld' button. Empty: 'Noch keine eigenen Felder.'; no module: fields.noEntities."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neues Feld",
+          "key": "fields.new",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=<entity>",
+          "permission": "org.settings.manage"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=<entity>",
+          "component": "UrlSheet",
+          "title": "Neues Feld · <Entity>",
+          "fields": [
+            {
+              "name": "label",
+              "label": "Bezeichnung",
+              "key": "fields.label",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "type",
+              "label": "Typ",
+              "key": "fields.type",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Text, Zahl, Betrag (€), Datum, Ja/Nein, Auswahl, E-Mail, Link; hint 'Der Typ lässt sich später nicht mehr ändern.'"
+            },
+            {
+              "name": "options",
+              "label": "Auswahlmöglichkeiten",
+              "key": "fields.options",
+              "type": "textarea",
+              "component": "raw <textarea>",
+              "notes": "always shown on create, even for non-select types; one per line or comma"
+            },
+            {
+              "name": "required",
+              "label": "Pflichtfeld",
+              "key": "fields.requiredLabel",
+              "type": "checkbox",
+              "component": "native checkbox"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Neues Feld",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "createField (fields/actions.ts)",
+              "result": "toast 'Feld angelegt.'"
+            }
+          ]
+        },
+        {
+          "param": "?edit=<field id>",
+          "component": "UrlSheet",
+          "title": "<Label>",
+          "description": "<Typ>",
+          "fields": [
+            {
+              "name": "label",
+              "label": "Bezeichnung",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "options",
+              "label": "Auswahlmöglichkeiten",
+              "type": "textarea",
+              "notes": "only for type Auswahl"
+            },
+            {
+              "name": "color_<i>",
+              "label": "Farben › Farbe für {option}",
+              "key": "fields.colors / fields.colorFor",
+              "type": "select",
+              "component": "NativeSelect per option",
+              "notes": "only for saved options of a select field"
+            },
+            {
+              "name": "required",
+              "label": "Pflichtfeld",
+              "type": "checkbox"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "updateField",
+              "result": "toast 'Gespeichert.'"
+            },
+            {
+              "label": "Feld löschen",
+              "key": "fields.delete",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteField",
+              "confirm": false,
+              "result": "hard delete of the definition (values stay in jsonb); toast 'Feld gelöscht.'"
+            }
+          ]
+        }
+      ],
+      "uxNotes": [
+        "Delete sits in a 'danger zone' box (admin.dangerZone) – app.md says no danger-zone boxes, delete = red ⋯ item with confirm. No confirm here.",
+        "Options textarea shows on create for every type although it only applies to 'Auswahl'.",
+        "Colours for new options can only be set after saving once (second round trip).",
+        "Type picker and colour pickers are NativeSelect, not <Choice>.",
+        "Custom fields for an entity are only managed here; entity pages don't link to it."
+      ]
+    },
+    {
+      "route": "/settings/locations",
+      "redesign": {
+        "job": "Places used by events and shifts.",
+        "phone": "Inline rows (Name, Adresse, Speichern) — the inline-list exception; ✕ with tooltip and confirm; last row adds.",
+        "desktop": "Same.",
+        "moves": [
+          "delete icon → confirm (locations.confirmDelete) + tooltip",
+          "rows → kept",
+          "actions in shifts/actions.ts → kept (noted in backlog)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked, no change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        2
+      ],
+      "file": "src/app/(app)/settings/locations/page.tsx",
+      "title": "Einstellungen › Orte",
+      "purpose": "Manage the org's places (used by events and shifts).",
+      "permission": "view: member; manage: org.settings.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Orte"
+        ]
+      },
+      "sections": [
+        {
+          "title": "Orte",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "locations.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Club, Café, Halle 3'"
+            },
+            {
+              "name": "address",
+              "label": "Adresse",
+              "key": "locations.address",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "Inline-editable rows plus an empty last row to add (manager only). Intro locations.intro."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern / Ort hinzufügen",
+          "key": "common.save / locations.add",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "saveLocation (src/app/(app)/shifts/actions.ts)",
+          "permission": "org.settings.manage",
+          "confirm": false
+        },
+        {
+          "label": "(Papierkorb-Icon) Entfernen",
+          "key": "shifts.remove",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "deleteLocation (shifts/actions.ts)",
+          "permission": "org.settings.manage",
+          "confirm": false
+        }
+      ],
+      "uxNotes": [
+        "Delete icon has no confirm and no tooltip (only aria-label 'shifts.remove').",
+        "Actions live in the shifts module's actions.ts although locations are core.",
+        "Inline rows with a button each match the app.md exception for inline-editable lists."
+      ]
+    },
+    {
+      "route": "/settings/integrations",
+      "redesign": {
+        "job": "Connect payment, email and chat providers; send org events to own tools.",
+        "phone": "Cards stay (one per provider, status badge success/warning/destructive). Trennen asks. Section 'Webhooks & Telegram' (renamed, not a second 'Benachrichtigungen'): rows, '+ Webhook' / '+ Telegram-Chat'; sheet: form + SaveBar, ⋯ Testereignis senden / Neues Secret (asks) / Löschen (asks).",
+        "desktop": "Same, two card columns.",
+        "moves": [
+          "visible h2 Integrationen → removed (top bar says it)",
+          "status badge default → success / warning / destructive",
+          "Trennen → confirm (integrations.confirmDisconnect, hint per provider kind)",
+          "Kosten weitergeben, Kartenterminals → kept (<details>), terminal remove keeps its confirm",
+          "connect sheet fields → kept; explicit Speichern → SaveBar always",
+          "Benachrichtigungen FormCard → Section 'Webhooks & Telegram' (notifications.targets)",
+          "sub sheet Löschen (red button) → UrlSheet menu MenuSubmit destructive with confirm",
+          "Neues Secret erzeugen → confirm (notifications.confirmRotate)",
+          "Testereignis senden → UrlSheet menu item",
+          "chat NativeSelect → <Choice>"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone: provider cards stack their buttons; several filled buttons per page remain (one per card) — see Y3."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        6
+      ],
+      "file": "src/app/(app)/settings/integrations/page.tsx",
+      "title": "Einstellungen › Integrationen",
+      "purpose": "Connect payment (Stripe, SumUp), messaging (Telegram) and email providers (Resend, Brevo); pass payment costs on; pair SumUp terminals; manage webhook/Telegram notification targets.",
+      "permission": "org.integrations.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "Integrationen"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "connect",
+          "meaning": "<provider key> → API-key connect sheet"
+        },
+        {
+          "param": "new",
+          "meaning": "webhook | telegram → new notification target sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "subscription id → notification target sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast; suppressed in some sheet states"
+        },
+        {
+          "param": "#notifications",
+          "meaning": "anchor of the notifications card"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Integrationen (visible h2)",
+          "kind": "custom",
+          "notes": "Card grid, one card per provider in registry order: Stripe, SumUp, Telegram, Resend, Brevo. Each card: name, description (integrations.<key>.description), status badge (verbunden / Fehler / widerrufen / Einrichtung offen), last_error in red."
+        },
+        {
+          "title": "Stripe card",
+          "kind": "custom",
+          "notes": "Not connected: buttons 'Bestehendes Stripe-Konto verbinden' (primary, /api/integrations/stripe/connect?mode=existing, OAuth), 'Neues Stripe-Konto einrichten' (outline, mode=new, hosted onboarding), 'Mit API-Schlüssel verbinden' (?connect=stripe). Pending: 'Einrichtung fortsetzen' (onboarding link or dashboard.stripe.com in new tab) + 'Status prüfen'. Connected: info line 'Verbunden über Stripe-Login / Über roots eingerichtetes Konto / Verbunden per API-Schlüssel · <accountId> · Testmodus', costs panel, 'Trennen'."
+        },
+        {
+          "title": "SumUp card",
+          "kind": "custom",
+          "notes": "Not connected: 'Verbinden' (OAuth) + 'Mit API-Schlüssel verbinden'. Connected: via line + 'Händler {name} ({code})', warning integrations.sumup.noPayments when it can't take payments, costs panel, Kartenterminals panel, 'Trennen'."
+        },
+        {
+          "title": "Kosten für Ticketverkauf weitergeben (Stripe/SumUp, collapsible <details>)",
+          "key": "integrations.costs.title",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "pass_fees",
+              "label": "Servicegebühr auf jede bezahlte Online-Ticketbestellung aufschlagen",
+              "key": "integrations.costs.passOn",
+              "type": "checkbox",
+              "component": "native checkbox"
+            },
+            {
+              "name": "fee_percent",
+              "label": "Prozent",
+              "key": "integrations.costs.percent",
+              "type": "decimal",
+              "component": "Input inputMode=decimal",
+              "notes": "default from DEFAULT_COSTS"
+            },
+            {
+              "name": "fee_fixed",
+              "label": "Fix je Bestellung",
+              "key": "integrations.costs.fixed",
+              "type": "money",
+              "component": "TypedInput:money"
+            }
+          ],
+          "notes": "Only when connected and the tickets module is on; open when pass_fees is on. Hint text per provider (§ 270a BGB)."
+        },
+        {
+          "title": "Kartenterminals (SumUp, collapsible)",
+          "key": "integrations.sumup.readers.title",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "code",
+              "label": "Kopplungscode",
+              "key": "integrations.sumup.readers.code",
+              "type": "text",
+              "component": "Input (8–9 chars, uppercase)",
+              "required": true
+            },
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "integrations.sumup.readers.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Tür'"
+            }
+          ],
+          "notes": "Lists paired readers (name, model · status) with 'Entfernen'. 'SumUp hat nicht geantwortet.' when the API fails. Hint how to get the code on the Solo."
+        },
+        {
+          "title": "Telegram card",
+          "kind": "custom",
+          "notes": "Not connected: 'Verbinden' (?connect=telegram). Connected: 'Bot @{name} · {count} Chats', 'Bearbeiten', 'Trennen'."
+        },
+        {
+          "title": "Resend / Brevo cards",
+          "kind": "custom",
+          "notes": "'Verbinden' / 'Bearbeiten' → ?connect=<key>; 'Trennen' when connected."
+        },
+        {
+          "title": "Benachrichtigungen",
+          "key": "settings.tabs.notifications",
+          "anchor": "#notifications",
+          "kind": "FormCard + DataTable",
+          "columns": [
+            "Name",
+            "Kanal",
+            "Ereignisse",
+            "Status (Aktiv/Pausiert)"
+          ],
+          "notes": "Intro notifications.intro; buttons 'Neuer Webhook' (primary) and 'Neuer Telegram-Chat' (outline). Row → ?edit=<id>. Empty 'Noch keine Benachrichtigungen.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Bestehendes Stripe-Konto verbinden / Neues Stripe-Konto einrichten / Verbinden (SumUp)",
+          "where": "section",
+          "kind": "link",
+          "target": "/api/integrations/<key>/connect?mode=<mode> (redirect to provider)",
+          "result": "provider flow, back to this page"
+        },
+        {
+          "label": "Mit API-Schlüssel verbinden / Verbinden / Bearbeiten",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?connect=<key>"
+        },
+        {
+          "label": "Einrichtung fortsetzen",
+          "key": "integrations.continueSetup",
+          "where": "section",
+          "kind": "link",
+          "target": "/api/integrations/<key>/connect?mode=new or https://dashboard.stripe.com/account/onboarding (new tab)"
+        },
+        {
+          "label": "Status prüfen",
+          "key": "integrations.checkStatus",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "checkStripe (integrations/actions.ts)",
+          "result": "toast '{name} verbunden.' or 'pendingHint'"
+        },
+        {
+          "label": "Trennen",
+          "key": "integrations.disconnect",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "disconnectIntegration",
+          "confirm": false,
+          "result": "removes the connection (and revokes at provider); toast '{name} getrennt.'"
+        },
+        {
+          "label": "Speichern (Kosten)",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "savePaymentCosts",
+          "confirm": false,
+          "result": "toast 'Gespeichert.' / costs.invalid"
+        },
+        {
+          "label": "Koppeln",
+          "key": "integrations.sumup.readers.pair",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "pairReader",
+          "result": "toast '{name} ist gekoppelt.' / pairFailed"
+        },
+        {
+          "label": "Entfernen (Terminal)",
+          "key": "integrations.sumup.readers.remove",
+          "where": "row",
+          "kind": "confirm",
+          "target": "removeReader",
+          "confirm": true,
+          "result": "confirm 'Terminal entkoppeln?'; toast reminds to also disconnect on the device"
+        },
+        {
+          "label": "Neuer Webhook",
+          "key": "notifications.newWebhook",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=webhook"
+        },
+        {
+          "label": "Neuer Telegram-Chat",
+          "key": "notifications.newTelegram",
+          "where": "section",
+          "kind": "sheet",
+          "target": "?new=telegram"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?connect=<stripe|sumup|telegram|resend|brevo>",
+          "component": "UrlSheet",
+          "title": "{name} verbinden",
+          "key": "integrations.connectTitle",
+          "fields": [
+            {
+              "name": "secretKey",
+              "label": "Secret Key oder Restricted Key (Stripe)",
+              "type": "text",
+              "component": "Input",
+              "required": "when no secret saved",
+              "notes": "placeholder rk_live_…"
+            },
+            {
+              "name": "apiKey",
+              "label": "API-Schlüssel (SumUp, Resend, Brevo)",
+              "type": "text",
+              "component": "Input",
+              "notes": "placeholders sup_sk_…, re_…, xkeysib-…; saved secret → placeholder 'Gespeichert. Leer lassen, um es zu behalten.'"
+            },
+            {
+              "name": "botToken",
+              "label": "Bot-Token (Telegram)",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "from_name",
+              "label": "Absendername (Resend, Brevo)",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "from_email",
+              "label": "Absender-E-Mail (Resend, Brevo)",
+              "type": "text",
+              "component": "Input",
+              "notes": "validated server side (integrations.senderInvalid)"
+            },
+            {
+              "name": "segment",
+              "label": "Segment-ID (optional) (Resend)",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "Collapsible 'So richtet ihr {name} ein' steps (open when not connected yet) and per-field help texts. Secrets are type=text (deliberately, no password autofill).",
+          "actions": [
+            {
+              "label": "Speichern",
+              "kind": "serverAction",
+              "target": "connectIntegration",
+              "result": "credentials tested; toast '{name} verbunden.' or credentialsFailed / connectFailed (sheet stays open)"
+            }
+          ]
+        },
+        {
+          "param": "?new=webhook | ?new=telegram",
+          "component": "UrlSheet",
+          "title": "Neuer Webhook / Neuer Telegram-Chat",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "notifications.name",
+              "type": "text",
+              "component": "Input",
+              "notes": "optional, placeholder = channel name"
+            },
+            {
+              "name": "url",
+              "label": "Ziel-URL",
+              "key": "notifications.url",
+              "type": "url",
+              "component": "Input",
+              "required": true,
+              "notes": "webhook only; 'Muss mit https:// beginnen.'"
+            },
+            {
+              "name": "chat_id",
+              "label": "Chat",
+              "key": "notifications.telegram.chat",
+              "type": "select",
+              "component": "NativeSelect",
+              "required": true,
+              "notes": "telegram only"
+            }
+          ],
+          "notes": "Telegram without connected bot: text + link 'payments.toIntegrations' to ?connect=telegram; without chats: notifications.telegram.noChats. After create: webhook secret shown once + 'Weiter' → ?edit=<id>.",
+          "actions": [
+            {
+              "label": "Neuer Webhook / Neuer Telegram-Chat",
+              "kind": "serverAction",
+              "target": "createSubscription (useActionState)"
+            }
+          ]
+        },
+        {
+          "param": "?edit=<subscription id>",
+          "component": "UrlSheet",
+          "title": "<Name>",
+          "description": "<Kanal>",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "url",
+              "label": "Ziel-URL",
+              "type": "url",
+              "component": "Input",
+              "notes": "webhook"
+            },
+            {
+              "name": "chat_id",
+              "label": "Chat",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "telegram"
+            },
+            {
+              "name": "active",
+              "label": "Aktiv",
+              "type": "checkbox",
+              "component": "Checkbox"
+            },
+            {
+              "name": "events",
+              "label": "Ereignisse: 'Alle Ereignisse' + one checkbox per event type of active modules",
+              "type": "checkbox[]",
+              "component": "Checkbox"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "updateSubscription",
+              "result": "stays in sheet, toast 'Gespeichert.'"
+            },
+            {
+              "label": "Neues Secret erzeugen",
+              "key": "notifications.rotate",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "rotateSecret",
+              "confirm": false,
+              "result": "new secret shown once; old one stops working"
+            },
+            {
+              "label": "Testereignis senden",
+              "key": "notifications.test",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "sendTest",
+              "result": "toast 'Testereignis ist unterwegs.'"
+            },
+            {
+              "label": "Löschen",
+              "key": "notifications.delete",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteSubscription",
+              "confirm": false,
+              "result": "toast 'Gelöscht.'"
+            }
+          ],
+          "notes": "Also lists 'Letzte Zustellungen' (20): event type, status badge, date, attempts, last error."
+        }
+      ],
+      "links": [
+        "/api/integrations/[provider]/connect",
+        "https://dashboard.stripe.com/account/onboarding"
+      ],
+      "phone": "Card grid stacks to one column; sheets full width.",
+      "uxNotes": [
+        "'Trennen' of a payment provider (Stripe/SumUp) has no confirm although it stops online sales/door terminals at once.",
+        "Deleting a notification target and rotating its webhook secret have no confirm; delete is a red button in the sheet body, not a ⋯ item.",
+        "Webhook/Telegram notifications live inside Integrationen (settings.tabs.notifications key still exists, no own tab); personal notification preferences are under Profil – two different 'Benachrichtigungen'.",
+        "Costs panel only shows when the tickets module is on, but applies only to ticket orders – shop sales never get it (by design, § 270a), not explained on the card.",
+        "Card states mix links, sheet links and server-action buttons; Telegram/Resend/Brevo say 'Bearbeiten' when connected, Stripe/SumUp show nothing to edit.",
+        "Chat picker and connect fields are NativeSelect/plain Inputs; secrets are visible text fields.",
+        "Page renders its own visible h2 'Integrationen' in addition to the top bar crumb – the only settings page doing so."
+      ]
+    },
+    {
+      "route": "/settings/api",
+      "redesign": {
+        "job": "API keys for own tools and whether AI apps may connect.",
+        "phone": "Header: 'API-Dokumentation' action, primary 'Neuer Schlüssel' (?new=key sheet: Name, Läuft ab as segments, Rechte grouped, SaveBar; afterwards the key once with Kopieren). Keys list: name, prefix, 'n Rechte', last used, expires; Widerrufen asks; Segments Aktiv · Alle. RowGroup 'KI-Apps erlauben' switch (turning off asks). Connected apps rows, Trennen asks.",
+        "desktop": "Same.",
+        "moves": [
+          "inline Neuer Schlüssel form → ?new=key sheet",
+          "Läuft ab raw select → Choice (4 segments)",
+          "Rechte column raw keys → 'n Rechte' with the translated list in title",
+          "Widerrufen → confirm (api.confirmRevoke)",
+          "revoked/expired forever → Segments Aktiv (default) · Alle",
+          "KI-Apps checkbox + Speichern → switch that saves on flip, asks when turning off",
+          "Verbundene Apps Trennen → confirm",
+          "API-Dokumentation link → header action"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Badges 'widerrufen'/'abgelaufen' capitalised. Checked: keys table, KI-Apps switch with confirm, connections."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "src/app/(app)/settings/api/page.tsx",
+      "title": "Einstellungen › API",
+      "purpose": "Create and revoke API keys, decide whether AI apps may connect, and see/cut the org's AI app connections.",
+      "permission": "org.integrations.manage",
+      "header": {
+        "crumbs": [
+          "Einstellungen",
+          "API"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Neuer Schlüssel (inline form card)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "api.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Website-Sync, Zapier'"
+            },
+            {
+              "name": "expires",
+              "label": "Läuft ab",
+              "key": "api.expires",
+              "type": "select",
+              "component": "raw <select>",
+              "notes": "in 30 Tagen / in 90 Tagen / in einem Jahr (default) / nie"
+            },
+            {
+              "name": "permissions",
+              "label": "Rechte",
+              "key": "api.permissions",
+              "type": "checkbox[]",
+              "component": "native checkboxes grouped by module (Allgemein + active modules), each with the raw permission key",
+              "notes": "only permissions the creator has"
+            }
+          ],
+          "notes": "After create the card is replaced by 'Dein neuer API-Schlüssel' with the key once + 'Kopieren'."
+        },
+        {
+          "title": "API-Schlüssel",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ prefix…)",
+            "Rechte (raw keys)",
+            "Zuletzt genutzt",
+            "Läuft ab",
+            "(Widerrufen / Badge widerrufen / abgelaufen)"
+          ],
+          "notes": "Empty 'Noch keine API-Schlüssel.'"
+        },
+        {
+          "title": "KI-Apps",
+          "key": "settings.allowAi",
+          "anchor": "#ai",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "allow_ai",
+              "label": "KI-Apps erlauben",
+              "key": "settings.allowAiLabel",
+              "type": "checkbox",
+              "component": "native checkbox"
+            }
+          ]
+        },
+        {
+          "title": "Verbundene Apps",
+          "key": "settings.connections",
+          "anchor": "#connections",
+          "kind": "FormCard",
+          "notes": "All MCP connections in the org: app, person, last used, access badge, 'Trennen'."
+        }
+      ],
+      "actions": [
+        {
+          "label": "API-Dokumentation",
+          "key": "api.docs",
+          "where": "section",
+          "kind": "link",
+          "target": "/api/docs (new tab)"
+        },
+        {
+          "label": "Schlüssel erstellen",
+          "key": "api.create",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "createApiKey (api/actions.ts, useActionState)",
+          "result": "key shown once"
+        },
+        {
+          "label": "Widerrufen",
+          "key": "api.revoke",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "revokeApiKey",
+          "confirm": false,
+          "result": "toast 'Schlüssel widerrufen.'"
+        },
+        {
+          "label": "Speichern (KI-Apps)",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "setAllowAi",
+          "confirm": false,
+          "result": "toast aiOn / 'KI-Apps sind ausgeschaltet – bestehende Verbindungen funktionieren nicht mehr.'"
+        },
+        {
+          "label": "Trennen",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "disconnectApp",
+          "confirm": false
+        }
+      ],
+      "links": [
+        "/api/docs"
+      ],
+      "uxNotes": [
+        "Revoking a key (irreversible) and switching off AI apps (cuts all connections) have no confirm.",
+        "Create form is always open inline above the list instead of a ?new= sheet like other settings lists.",
+        "Expiry uses a raw <select> (not NativeSelect or Choice) – a third select style in settings.",
+        "Rechte column shows raw permission keys (comma list) instead of the translated labels used in the form.",
+        "Revoked/expired keys stay in the list forever, no filter."
+      ]
+    },
+    {
+      "route": "/settings/notifications",
+      "title": "/settings/notifications",
+      "purpose": "Decide per kind of event how roots tells me (in the app, by email, push).",
+      "redesign": {
+        "job": "Decide per kind of event how roots tells me (in the app, by email, push).",
+        "phone": "Top bar ‹ Einstellungen · Benachrichtigungen. One RowGroup per area (module name), a row per event: label left, under it (wrapping) one small labelled switch per channel; each switch saves on flip. Link 'Zum Posteingang' at the top. Hint when email isn't configured.",
+        "desktop": "Same, channel switches on the right of each row (columns aligned).",
+        "moves": [
+          "new page (was the matrix on Profil) → switches per event × channel, setPreference saves one cell, toast + flip back on error",
+          "prefs.emailOff hint → kept under the groups",
+          "link to /notifications → 'Posteingang öffnen' AddLink-style link in the description"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Was unreachable: a stale next.config redirect sent it to Integrationen. Removed; switches save on flip, grouped by module."
+        }
+      }
+    },
+    {
+      "route": "/settings/security",
+      "title": "/settings/security",
+      "purpose": "Keep my account safe: password and passkeys.",
+      "redesign": {
+        "job": "Keep my account safe: password and passkeys.",
+        "phone": "RowGroup Anmeldung: Passwort row (hint 'Mit E-Mail und Passwort anmelden', 'Ändern' → compact sheet), Passkeys section (existing component; remove asks).",
+        "desktop": "Same in the settings column.",
+        "moves": [
+          "Passwort form → ?edit=password compact sheet (new password + repeat, SaveBar 'Passwort ändern')",
+          "Passkeys → kept here (remove confirm added)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Duplicate 'Passwort' heading + row label: heading dropped. Passkeys: the auth server answers 404 for /auth/v1/passkeys (switched off in Supabase), so the list now says 'noch nicht freigeschaltet' and disables the button (§Z). Password sheet: SaveBar full width on phones."
+        }
+      }
+    },
+    {
+      "route": "/settings/ai",
+      "title": "/settings/ai",
+      "purpose": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.",
+      "redesign": {
+        "job": "Use AI with roots: my own model keys for Sprout, connect Claude / Cursor / VS Code, see and cut my connections.",
+        "phone": "RowGroup 'KI-Assistent (Sprout)': one row per key (logo, provider, hint, model count, ✕ asks) + AddLink 'Schlüssel hinzufügen' → compact sheet ?new=key. 'Mit KI verbinden' card as before. RowGroup 'Meine Verbindungen': rows with 'Trennen' (asks).",
+        "desktop": "Same.",
+        "moves": [
+          "AiKeys → rows + ?new=key sheet (Prüfen & speichern = the sheet's SaveBar)",
+          "ConnectAi → kept",
+          "Connections (mine) → rows, Trennen asks"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Ran off the right edge on phones (the long 'claude mcp add' row stretched the grid; the keys' delete buttons and 'Trennen' were off screen): RowGroup and the settings column are minmax(0,1fr) grids now."
+        }
+      }
+    }
+  ]
+}

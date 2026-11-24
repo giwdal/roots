@@ -1,0 +1,398 @@
+{
+  "area": "wiki",
+  "label": "Wissen",
+  "module": "wiki",
+  "nav": [
+    {
+      "label": "Wissen",
+      "key": "wiki.nav",
+      "href": "/wiki"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/wiki",
+      "redesign": {
+        "research": "Notion (sidebar page tree, 'Move to…' command with a page search, trash with restore, new page = an empty editor that exists on first edit), Linear docs. Phones: the tree opens as a full sheet.",
+        "job": "Find a page (tree, search, recently changed) or start a new one.",
+        "phone": "Toolbar: search + 'Seiten' button (tree in a sheet). Recently changed rows; EmptyState 'Erste Seite anlegen' for a fresh wiki. Round + Neue Seite. ⋯ Papierkorb.",
+        "desktop": "Tree left, search + recent right.",
+        "moves": [
+          "trash text link + ?status=trash → ⋯ menu item, ?trash=1 (old param redirects)",
+          "hand-made lists → kept as rows (title + snippet + date)",
+          "empty wiki → EmptyState with Neue Seite",
+          "tree hidden on phones → 'Seiten' sheet"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: opens the last/first page, tree as sheet on phones."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        2
+      ],
+      "file": "src/app/(app)/wiki/page.tsx",
+      "title": "Wissen (Papierkorb view: list heading 'Papierkorb')",
+      "purpose": "Browse the page tree, search titles and texts, see recently changed pages, open the trash.",
+      "permission": "wiki.view",
+      "size": "custom (max-w-6xl div, no <Page>)",
+      "header": {
+        "area": "wiki",
+        "title": "Wissen",
+        "actions": [],
+        "menu": [],
+        "primary": {
+          "label": "Neue Seite",
+          "key": "wiki.newPage",
+          "href": "/wiki/new",
+          "permission": "wiki.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search title + body (ilike), up to 50 results"
+        },
+        {
+          "param": "status",
+          "meaning": "trash = trash view (wiki.manage)"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Seiten (tree)",
+          "key": "wiki.tree",
+          "kind": "custom",
+          "notes": "<TreeNav> in a left aside (16rem, sticky on lg; above the list on phones). Visibility icons (lock/member card/globe). Not draggable here. Empty 'Noch keine Seiten.'"
+        },
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Wiki durchsuchen",
+              "key": "wiki.search",
+              "type": "search",
+              "component": "SearchBox"
+            }
+          ],
+          "notes": "Text link 'Papierkorb' / 'Zurück zu den Seiten' next to the search (wiki.manage)."
+        },
+        {
+          "title": "Zuletzt geändert / Treffer / Papierkorb",
+          "kind": "custom",
+          "columns": [
+            "Icon + Titel",
+            "Snippet",
+            "Datum"
+          ],
+          "notes": "Hand-made list of 15 (50 with q) pages; trash rows have 'Wiederherstellen'. Empty texts: wiki.noMatch / wiki.trashEmpty / wiki.empty."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neue Seite",
+          "where": "header",
+          "kind": "link",
+          "target": "/wiki/new",
+          "permission": "wiki.manage",
+          "result": "page created immediately, editor opens"
+        },
+        {
+          "label": "Papierkorb",
+          "key": "wiki.trash",
+          "where": "toolbar",
+          "kind": "link",
+          "target": "/wiki?status=trash",
+          "permission": "wiki.manage"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "wiki.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restorePageAction (wiki/actions.ts)",
+          "permission": "wiki.manage",
+          "confirm": false,
+          "result": "goes to /wiki/<id>, toast 'Seite wiederhergestellt.'"
+        }
+      ],
+      "links": [
+        "/wiki/[id]",
+        "/wiki/new"
+      ],
+      "empty": "Noch keine Seiten. (wiki.empty) – plain text, no <EmptyState>",
+      "phone": "Tree aside stacks above the list (all pages expanded); round + creates a page.",
+      "uxNotes": [
+        "Trash is a text link in the toolbar, not a ⋯ menu item as app.md specifies; param is status=trash while contacts uses trash=1 (URL-param drift).",
+        "Lists are hand-made <ul>s, not <DataTable>; no pagination for 'recent' (fixed 15).",
+        "No <EmptyState> for a fresh wiki.",
+        "Tree loads up to 2000 pages on every page view."
+      ]
+    },
+    {
+      "route": "/wiki/new",
+      "redesign": {
+        "job": "Start a page without creating anything until it's saved.",
+        "phone": "Form: title (+ parent hint) and SaveBar 'Seite anlegen'; the page is created on submit and opens in the editor.",
+        "desktop": "Same.",
+        "moves": [
+          "create on GET (spinner) → form POST newPageAction (title, parent_id)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked (title form). No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/(app)/wiki/new/page.tsx",
+      "title": "Seite wird angelegt …",
+      "purpose": "Creates an untitled page (optionally under ?parent=) on mount and redirects to it.",
+      "permission": "wiki.manage",
+      "urlState": [
+        {
+          "param": "parent",
+          "meaning": "uuid of the parent page"
+        }
+      ],
+      "sections": [
+        {
+          "title": "spinner 'Seite wird angelegt …'",
+          "kind": "custom"
+        }
+      ],
+      "actions": [
+        {
+          "label": "(auto)",
+          "kind": "client",
+          "target": "newPageAction on mount",
+          "result": "redirect /wiki/<new id>"
+        }
+      ],
+      "links": [
+        "/wiki/[id]"
+      ],
+      "uxNotes": [
+        "A GET that creates data: reloading, back-button or prefetch-like revisits create extra 'Neue Seite' pages.",
+        "Empty pages are never cleaned up if the user leaves without typing."
+      ]
+    },
+    {
+      "route": "/wiki/[id]",
+      "redesign": {
+        "job": "Read or edit one page; move it; share it.",
+        "phone": "PageHeader with crumbs (back = parent page). Header actions: Teilen; ⋯ Unterseite, Verschieben nach…, Verlauf, In den Papierkorb (asks). Tree as a sheet from 'Seiten'.",
+        "desktop": "Tree left (drag & drop stays), page right; same header.",
+        "moves": [
+          "hand-built header row → PageHeader (crumbs, actions, menu)",
+          "Unterseite (form button) → ⋯ link /wiki/new?parent=<id>",
+          "Teilen → header action (popover kept)",
+          "new: ⋯ Verschieben nach… → sheet ?edit=move with a page picker (top level or under a page) → movePageAction",
+          "drag & drop → kept on desktop",
+          "Verlauf sheet → kept",
+          "trash state + Wiederherstellen → kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "The title textarea was forced to 16 px on phones by the global iOS zoom rule (looked like body text next to a big icon): fields can opt out with data-keep-size; title 3xl on phones, 4xl from md. The editor's keyboard hint ('/', ⌘S) is desktop only now."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        3,
+        4
+      ],
+      "file": "src/app/(app)/wiki/[id]/page.tsx",
+      "title": "<Page title>",
+      "purpose": "Read or edit a wiki page in place (rich text, autosave), manage sub-pages, sharing/visibility, icon, history and trash.",
+      "permission": "wiki.view (edit: wiki.manage); no access → redirect /api/public/wiki-link/<id>",
+      "size": "custom (max-w-6xl)",
+      "header": {
+        "crumbs": [
+          "Wissen",
+          "<ancestors…>",
+          "<Title>"
+        ],
+        "actions": [
+          "Unterseite (wiki.manage)",
+          "Teilen (popover)"
+        ],
+        "menu": [
+          {
+            "label": "Verlauf",
+            "key": "wiki.history",
+            "target": "?history=1"
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "wiki.toTrash",
+            "target": "trashPageAction via MenuSubmit form=trash-page",
+            "permission": "wiki.manage",
+            "notes": "destructive, MenuSubmit confirms by default"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "history",
+          "meaning": "1 = history sheet"
+        },
+        {
+          "param": "version",
+          "meaning": "version id inside the history sheet"
+        },
+        {
+          "param": "r",
+          "meaning": "remount key after restoring a version"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Seiten (tree)",
+          "kind": "custom",
+          "notes": "Left aside, lg only (hidden on phones). Drag & drop for wiki.manage: on a page = inside, upper edge = before, drop zone 'Hier ablegen = oberste Ebene'."
+        },
+        {
+          "title": "Editor (wiki.manage)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "icon",
+              "label": "Icon hinzufügen / ändern / entfernen",
+              "key": "wiki.icon.*",
+              "type": "emoji",
+              "component": "IconPicker (popover EmojiPicker)",
+              "notes": "saves at once"
+            },
+            {
+              "name": "title",
+              "label": "Neue Seite (placeholder) / aria 'wiki.pageTitle'",
+              "type": "text",
+              "component": "auto-sizing textarea (4xl)"
+            },
+            {
+              "name": "body",
+              "label": "aria wiki.body",
+              "type": "richtext",
+              "component": "WikiEditor (Tiptap): '/' block menu (Text, Überschrift 1–3, Liste, Nummerierte Liste, Aufgabenliste, Zitat, Code-Block, Tabelle, Trennlinie, Bild oder Datei), bubble menu (fett, kursiv, durchgestrichen, Code, Link via window.prompt; images: klein/mittel/groß/voll, öffnen, entfernen), drag/paste upload"
+            }
+          ],
+          "notes": "Status line Gespeichert / Ungespeichert … / Speichert … / Nicht gespeichert, upload counter; hint wiki.editorHint; autosave while typing, ⌘S saves at once."
+        },
+        {
+          "title": "Read view (wiki.view only)",
+          "kind": "custom",
+          "notes": "h1 with icon, 'Zuletzt geändert {date}', Markdown body or 'Diese Seite ist noch leer.'"
+        },
+        {
+          "title": "Unterseiten",
+          "key": "wiki.subPages",
+          "kind": "custom",
+          "notes": "link tiles to child pages"
+        },
+        {
+          "title": "In trash",
+          "kind": "custom",
+          "notes": "'Diese Seite liegt im Papierkorb.' + 'Wiederherstellen'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Unterseite",
+          "key": "wiki.subPage",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "newPageAction (parent_id)",
+          "permission": "wiki.manage",
+          "result": "redirect to new child page"
+        },
+        {
+          "label": "Teilen",
+          "key": "wiki.share.button",
+          "where": "header",
+          "kind": "client",
+          "target": "Popover: radio 'Wie die übergeordnete Seite' / Team / Nur bestimmte Rollen (+ role checkboxes) / Vereinsmitglieder / Öffentlich; 'Speichern' → setVisibilityAction; 'Link kopieren'",
+          "permission": "view for all, change: wiki.manage",
+          "confirm": false,
+          "result": "toast 'Sichtbarkeit gespeichert.'"
+        },
+        {
+          "label": "In den Papierkorb",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashPageAction",
+          "permission": "wiki.manage",
+          "confirm": true,
+          "result": "back to /wiki, toast 'Seite liegt im Papierkorb (30 Tage wiederherstellbar).'"
+        },
+        {
+          "label": "Wiederherstellen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "restorePageAction",
+          "permission": "wiki.manage"
+        },
+        {
+          "label": "Verschieben (drag & drop)",
+          "where": "section",
+          "kind": "client",
+          "target": "movePageAction",
+          "permission": "wiki.manage",
+          "result": "toast on error, refresh"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?history=1[&version=<id>]",
+          "component": "UrlSheet",
+          "title": "Verlauf",
+          "description": "<page title>",
+          "notes": "List of up to 100 versions (title, date) → ?version=<id> shows the version rendered + '← Alle Versionen'.",
+          "actions": [
+            {
+              "label": "Diese Version wiederherstellen",
+              "key": "wiki.restoreVersion",
+              "kind": "serverAction",
+              "target": "restoreVersionAction",
+              "permission": "wiki.manage",
+              "confirm": false,
+              "result": "toast 'Version wiederhergestellt – der vorherige Stand ist im Verlauf.'"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/wiki",
+        "/wiki/[id]",
+        "/api/public/wiki-link/[id]"
+      ],
+      "phone": "Tree hidden (lg only) – navigation only through crumbs and sub-page tiles; no way to reach sibling pages except going back to /wiki.",
+      "uxNotes": [
+        "No <PageHeader>: the header row is hand-built; 'Unterseite' and 'Teilen' are next to ⋯ inside the page, not portalled to the top bar like other record pages.",
+        "Visibility uses a popover with a form + Save button (app.md allows popovers for 'share settings'), but radio inputs are native, not <Choice>.",
+        "Link insertion uses window.prompt (listed as a known exception in app.md).",
+        "Drag & drop in the tree is the only way to move pages; no touch alternative and the tree is hidden on phones.",
+        "Two creation paths: /wiki/new link (GET creates) and the 'Unterseite' form post."
+      ]
+    }
+  ]
+}

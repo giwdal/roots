@@ -3,6 +3,15 @@
     "description": "Verein, Betrieb oder Events an einem Ort organisieren."
   },
   "common": {
+    "moreInfo": "Mehr erfahren",
+    "showMore": "{count} weitere anzeigen",
+    "moreDetails": "Mehr Angaben (optional)",
+    "properties": "Eigenschaften",
+    "editAll": "Alle Angaben bearbeiten",
+    "emptyValue": "Leer",
+    "changeImage": "Bild ändern",
+    "confirmRemoveImage": "Bild entfernen?",
+    "editField": "{field} bearbeiten",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "close": "Schließen",
@@ -49,7 +58,15 @@
     },
     "confirmTrashManyHint": "Aus dem Papierkorb lassen sie sich 30 Tage lang wiederherstellen.",
     "confirmDelete": "Wirklich löschen?",
-    "confirmDeleteHint": "Das lässt sich nicht rückgängig machen."
+    "confirmDeleteHint": "Das lässt sich nicht rückgängig machen.",
+    "edit": "Bearbeiten",
+    "showAll": "Alle anzeigen",
+    "bulkRestored": {
+      "one": "1 Eintrag wiederhergestellt.",
+      "other": "{count} Einträge wiederhergestellt."
+    },
+    "yes": "ja",
+    "no": "nein"
   },
   "auth": {
     "title": "Bei roots anmelden",
@@ -79,13 +96,13 @@
     "subtitle": "Dein Verein, dein Betrieb oder deine Eventreihe. Danach kannst du andere einladen.",
     "name": "Name",
     "namePlaceholder": "Kulturverein Musterstadt",
-    "address": "Slug",
+    "address": "Adresse",
     "addressPlaceholder": "kulturverein",
     "addressHelp": "Für deine öffentlichen Seiten. Kleinbuchstaben, Zahlen und Bindestriche.",
     "submit": "Organisation anlegen",
     "nameRequired": "Gib deiner Organisation einen Namen.",
-    "addressInvalid": "Der Slug braucht 3–40 Zeichen: Kleinbuchstaben, Zahlen und Bindestriche.",
-    "addressTaken": "Dieser Slug ist schon vergeben.",
+    "addressInvalid": "Die Adresse braucht 3–40 Zeichen: Kleinbuchstaben, Zahlen und Bindestriche.",
+    "addressTaken": "Diese Adresse ist schon vergeben.",
     "invites": "Du wurdest eingeladen",
     "join": "Beitreten",
     "orCreate": "Oder gründe eine eigene Organisation:"
@@ -195,29 +212,59 @@
     "mainNav": "Hauptnavigation",
     "search": "Suche",
     "menu": "Menü",
-    "tabs": "Navigation"
+    "tabs": "Navigation",
+    "back": "Zurück",
+    "backTo": "Zurück zu {label}",
+    "menuUnread": "Menü, ungelesene Benachrichtigungen"
   },
   "home": {
-    "role": "Du bist angemeldet als {role}.",
+    "hello": "Hallo {name}, was steht an?",
+    "helloPlain": "Was steht an?",
     "modules": "Module",
-    "noModules": "Noch keine Module aktiv. Module werden von der Plattform freigeschaltet.",
     "today": "Heute",
     "myTasks": "Meine Aufgaben",
     "myShifts": "Meine nächsten Schichten",
-    "nextEvents": "Nächste Veranstaltungen",
-    "overdueDues": "Überfällige Beiträge",
+    "nextEvents": "Events",
     "all": "Alle",
     "noTasks": "Keine offenen Aufgaben für dich.",
     "noShifts": "Keine Schichten geplant.",
-    "noEvents": "Keine Veranstaltungen geplant.",
-    "noOverdue": "Nichts überfällig.",
-    "overdueCount": {
-      "one": "{count} Beitrag",
-      "other": "{count} Beiträge"
-    },
-    "inboxEmpty": "Alles gelesen."
+    "noEvents": "Keine Events geplant.",
+    "waitingTitle": "Wartet auf dich",
+    "allClear": "Nichts wartet auf dich.",
+    "todayAt": "heute {time}",
+    "waiting": {
+      "tasks": {
+        "one": "{count} Aufgabe fällig",
+        "other": "{count} Aufgaben fällig"
+      },
+      "hours": {
+        "one": "{count} Zeiteintrag freigeben",
+        "other": "{count} Zeiteinträge freigeben"
+      },
+      "submissions": {
+        "one": "{count} neue Einsendung",
+        "other": "{count} neue Einsendungen"
+      },
+      "orders": {
+        "one": "{count} Bestellung zu erledigen",
+        "other": "{count} Bestellungen zu erledigen"
+      },
+      "invoices": {
+        "one": "{count} Rechnung überfällig",
+        "other": "{count} Rechnungen überfällig"
+      },
+      "dues": {
+        "one": "{count} Beitrag überfällig",
+        "other": "{count} Beiträge überfällig"
+      },
+      "unread": {
+        "one": "{count} ungelesene Benachrichtigung",
+        "other": "{count} ungelesene Benachrichtigungen"
+      }
+    }
   },
   "settings": {
+    "allowAiShort": "Teammitglieder dürfen KI-Apps wie Claude mit dieser Organisation verbinden.",
     "title": "Einstellungen",
     "nav": "Einstellungen",
     "tabs": {
@@ -233,9 +280,11 @@
       "team": "Team",
       "areas": "Bereiche",
       "domain": "Domain",
-      "website": "Website"
+      "website": "Website",
+      "security": "Sicherheit",
+      "ai": "KI-Assistent"
     },
-    "areasIntro": "Einstellungen, die nur einen Bereich betreffen, findest du dort als letzten Punkt „Einstellungen“ in der Seitenleiste – oder hier gesammelt.",
+    "areasIntro": "Einstellungen, die nur einen Bereich betreffen, öffnest du dort über das Zahnrad oben – oder hier gesammelt.",
     "areasNone": "Für deine Bereiche gibt es keine eigenen Einstellungen, die du ändern darfst.",
     "connections": "Verbundene Apps",
     "connectionsHint": "KI-Apps wie Claude, die mit einem Konto dieser Organisation verbunden sind.",
@@ -253,19 +302,26 @@
     "claudeSteps": "Claude (claude.ai und Desktop): Einstellungen → Connectors → „Add custom connector“ → Adresse oben einfügen → anmelden, Organisation und Zugriff wählen.",
     "claudeCodeHint": "Claude Code im Terminal: Befehl kopieren und ausführen, beim ersten Aufruf meldest du dich an.",
     "allowAi": "KI-Apps",
-    "allowAiHint": "Dürfen Mitglieder des Teams KI-Apps wie Claude mit dieser Organisation verbinden? Ausgeschaltet funktionieren auch bestehende Verbindungen sofort nicht mehr. API-Schlüssel sind davon nicht betroffen.",
+    "allowAiHint": "Ausgeschaltet funktionieren auch bestehende Verbindungen sofort nicht mehr. API-Schlüssel sind davon nicht betroffen.",
     "allowAiLabel": "KI-Apps erlauben",
-    "aiOn": "KI-Apps sind erlaubt.",
-    "aiOff": "KI-Apps sind ausgeschaltet – bestehende Verbindungen funktionieren nicht mehr."
+    "groups": {
+      "me": "Du",
+      "org": "Organisation"
+    },
+    "confirmDisconnect": "App trennen?",
+    "confirmDisconnectHint": "Sie verliert sofort den Zugriff und muss neu verbunden werden.",
+    "confirmAiOff": "KI-Apps ausschalten?",
+    "confirmAiOffHint": "Alle verbundenen KI-Apps dieser Organisation werden sofort getrennt."
   },
   "general": {
     "name": "Name",
-    "publicAddress": "Slug (Webseite)",
+    "publicAddress": "Öffentliche Adresse",
     "saved": "Gespeichert.",
     "nameRequired": "Der Name darf nicht leer sein.",
     "logo": "Logo",
     "logoHint": "PNG, JPG, WebP oder GIF, max. 2 MB. Erscheint in der App und auf öffentlichen Seiten.",
-    "org": "Organisation"
+    "org": "Organisation",
+    "changeDomain": "Eigene Domain einrichten"
   },
   "members": {
     "heading": "Team",
@@ -283,7 +339,6 @@
     "removed": "Mitglied entfernt.",
     "inviteRevoked": "Einladung zurückgezogen.",
     "email": "E-Mail",
-    "createLink": "Einladungslink erstellen",
     "sendLink": "Schick diesen Link an {email}. Er funktioniert einmal und läuft in 7 Tagen ab.",
     "renewLink": "Link erneuern",
     "renewTitle": "Neuer Einladungslink",
@@ -295,12 +350,20 @@
     "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
     "cantInviteRole": "Mit dieser Rolle kannst du nicht einladen.",
     "joined": "Beigetreten",
-    "editTitle": "Mitglied",
     "invitesEmpty": "Keine offenen Einladungen.",
     "emptyMembers": "Noch keine Mitglieder.",
     "expiresHeader": "Läuft ab",
     "inviteMailFailed": "Die Einladung konnte nicht per E-Mail verschickt werden. Schick den Link unten selbst weiter.",
-    "inviteSent": "Einladung an {email} verschickt. Du kannst den Link auch selbst weitergeben – er funktioniert einmal und läuft in 7 Tagen ab."
+    "inviteSent": "Einladung an {email} verschickt. Du kannst den Link auch selbst weitergeben – er funktioniert einmal und läuft in 7 Tagen ab.",
+    "confirmLeave": "Organisation verlassen?",
+    "confirmLeaveHint": "Du verlierst sofort den Zugriff. Zurück kommst du nur mit einer neuen Einladung.",
+    "confirmRemove": "Aus dem Team entfernen?",
+    "confirmRemoveHint": "Die Person verliert sofort den Zugriff auf diese Organisation.",
+    "confirmRevoke": "Einladung zurückziehen?",
+    "confirmRevokeHint": "Der Einladungslink funktioniert danach nicht mehr.",
+    "confirmRenew": "Neuen Einladungslink erzeugen?",
+    "confirmRenewHint": "Der bisherige Link funktioniert danach nicht mehr.",
+    "sendInvite": "Einladung senden"
   },
   "roles": {
     "intro": "Rollen werden von der Plattform festgelegt. Hier siehst du, was jede Rolle darf.",
@@ -314,6 +377,10 @@
     "permissionCount": {
       "one": "{count} Berechtigung",
       "other": "{count} Berechtigungen"
+    },
+    "people": {
+      "one": "{count} Person",
+      "other": "{count} Personen"
     },
     "memberCount": {
       "one": "{count} Mitglied",
@@ -332,7 +399,11 @@
     "permissions": "Berechtigungen",
     "members": "Mitglieder",
     "empty": "Noch keine Rollen.",
-    "canDo": "Das darf diese Rolle"
+    "canDo": "Das darf diese Rolle",
+    "whoHasIt": {
+      "one": "{count} Person hat diese Rolle",
+      "other": "{count} Personen haben diese Rolle"
+    }
   },
   "modules": {
     "on": "Aktiv",
@@ -426,7 +497,8 @@
     "shop": {
       "name": "Onlineshop",
       "description": "Merch, Bücher, Downloads und mehr verkaufen: Katalog, Produktseiten, Warenkorb, Online-Zahlung, Überweisung oder Abholung, Versand, automatische Rechnungen."
-    }
+    },
+    "off": "Aus"
   },
   "permissions": {
     "org.settings.manage": "Organisationseinstellungen bearbeiten",
@@ -606,6 +678,7 @@
     },
     "setupTitle": "So richtet ihr {name} ein",
     "costs": {
+      "onlyTickets": "Gilt nur für Tickets. Im Shop gibt es keine Servicegebühr: dort kann auch per Überweisung bezahlt werden, und ein Aufschlag nur für die Online-Zahlung wäre nicht erlaubt (§ 270a BGB).",
       "title": "Kosten für Ticketverkauf weitergeben",
       "passOn": "Servicegebühr auf jede bezahlte Online-Ticketbestellung aufschlagen",
       "percent": "Prozent",
@@ -617,9 +690,15 @@
         "sumup": "SumUp nimmt für Online-Zahlungen meist rund 2,5 % – prüft euren Vertrag. Die Gebühr wird so berechnet, dass euch der volle Ticketpreis bleibt, und vor dem Kauf angezeigt. Rechtlich: als Servicegebühr für jede Zahlungsart, nicht als Kartenaufschlag (§ 270a BGB)."
       }
     },
-    "senderInvalid": "Bitte eine gültige Absender-E-Mail eintragen, z. B. tickets@euerverein.de."
+    "senderInvalid": "Bitte eine gültige Absender-E-Mail eintragen, z. B. tickets@euerverein.de.",
+    "confirmDisconnect": "Verbindung trennen?",
+    "confirmDisconnectHint": "roots nutzt diesen Dienst danach nicht mehr, bis du ihn wieder verbindest.",
+    "confirmDisconnectPay": "Zahlungsanbieter trennen?",
+    "confirmDisconnectPayHint": "Online-Zahlungen und Kartenterminals funktionieren danach nicht mehr, bis du wieder verbindest."
   },
   "activity": {
+    "createdEntity": {"projects": "Projekt angelegt", "tasks": "Aufgabe angelegt"},
+    "trashedEntity": {"projects": "Projekt in den Papierkorb gelegt", "tasks": "Aufgabe in den Papierkorb gelegt"},
     "filter": "Nach Bereich filtern",
     "all": "Alle",
     "empty": "Noch nichts passiert.",
@@ -829,7 +908,6 @@
     "nav": "Plattform-Navigation",
     "backToApp": "Zur App",
     "roleName": "Plattform-Admin",
-    "banner": "Du bist in {org} als Plattform-Admin.",
     "link": "Plattform",
     "orgs": {
       "title": "Organisationen",
@@ -846,7 +924,6 @@
       "open": "Organisation öffnen",
       "details": "Details",
       "delete": "Organisation löschen",
-      "deleteConfirm": "Ich verstehe, dass alle Daten dieser Organisation gelöscht werden.",
       "deleted": "Endgültig gelöscht.",
       "addMember": "Mitglied hinzufügen",
       "add": "Hinzufügen",
@@ -863,7 +940,13 @@
       "ownerInviteNoMail": "Organisation angelegt, aber die Einladung konnte nicht gemailt werden. Link: {link}",
       "ownerInviteFailed": "Organisation angelegt, aber die Einladung als Inhaber ging nicht. Lade unter Mitglieder ein.",
       "invited": "Einladung an {email} geschickt.",
-      "inviteNoMail": "Einladung angelegt, aber nicht gemailt. Link: {link}"
+      "inviteNoMail": "Einladung angelegt, aber nicht gemailt. Link: {link}",
+      "confirmDelete": "Organisation endgültig löschen?",
+      "confirmDeleteHint": "Alle Daten dieser Organisation sind dann weg. Das lässt sich nicht rückgängig machen.",
+      "confirmTrash": "Organisation in den Papierkorb?",
+      "confirmTrashHint": "Niemand kommt mehr hinein; nach 30 Tagen wird sie endgültig gelöscht.",
+      "confirmModuleOff": "Modul ausschalten?",
+      "confirmModuleOffHint": "Die Organisation sieht den Bereich nicht mehr; die Daten bleiben erhalten."
     },
     "users": {
       "title": "Benutzer",
@@ -886,11 +969,14 @@
       "memberships": "Mitgliedschaften",
       "noMemberships": "Keine Mitgliedschaften.",
       "delete": "Benutzer löschen",
-      "deleteConfirm": "Ich verstehe, dass dieses Konto endgültig gelöscht wird.",
       "deleted": "Benutzer gelöscht.",
-      "you": "Du"
+      "you": "Du",
+      "confirmDelete": "Benutzer löschen?",
+      "confirmDeleteHint": "Das Konto und seine Mitgliedschaften sind dann weg. Das lässt sich nicht rückgängig machen.",
+      "confirmGrant": "Superadmin-Rechte geben?",
+      "confirmGrantHint": "Die Person kann dann jede Organisation öffnen und alles ändern.",
+      "confirmRevoke": "Superadmin-Rechte entziehen?"
     },
-    "dangerZone": "Gefahrenzone",
     "roles": {
       "title": "Rollen",
       "new": "Neue Rolle",
@@ -898,7 +984,15 @@
       "nameEn": "Name (Englisch)",
       "intro": "Rollen gelten für alle Organisationen. Organisationen weisen sie nur zu.",
       "inOrgs": "Vergeben",
-      "ownerBadge": "Inhaber-Rolle"
+      "ownerBadge": "Inhaber-Rolle",
+      "usedIn": {
+        "one": "In {count} Organisation vergeben",
+        "other": "In {count} Organisationen vergeben"
+      },
+      "confirmSave": "Rolle speichern?",
+      "confirmSaveHint": "Die Rechte ändern sich sofort in jeder Organisation, die diese Rolle vergibt.",
+      "confirmDelete": "Rolle löschen?",
+      "confirmDeleteHint": "Sie verschwindet für alle Organisationen. Eine Rolle, die noch vergeben ist, lässt sich nicht löschen."
     },
     "activity": {
       "title": "Aktivität",
@@ -1011,7 +1105,9 @@
     "memberArea": "Mein Mitgliederbereich",
     "orgs": "Deine Organisationen",
     "currentOrg": "Aktiv",
-    "orgsHint": "Wechseln über das Menü oben in der Seitenleiste."
+    "leaveOrg": "Organisation verlassen",
+    "switchOrg": "Wechseln",
+    "passwordHint": "Anmelden mit E-Mail und Passwort."
   },
   "payments": {
     "nav": "Zahlungen",
@@ -1020,22 +1116,22 @@
     "notReady": "Ein Zahlungsanbieter ist verbunden, aber noch nicht bereit für Zahlungen (Einrichtung nicht abgeschlossen oder fehlende Berechtigung).",
     "toIntegrations": "Zu den Integrationen",
     "date": "Datum",
-    "customer": "Kunde",
+    "customer": "Kund:in",
     "what": "Wofür",
     "amount": "Betrag",
     "status": "Status",
     "all": "Alle",
-    "empty": "Noch keine Bestellungen.",
+    "empty": "Noch keine Zahlungen.",
     "statuses": {
-      "open": "offen",
-      "paid": "bezahlt",
-      "failed": "fehlgeschlagen",
-      "expired": "abgelaufen",
-      "cancelled": "storniert",
-      "refunded": "erstattet",
-      "partially_refunded": "teilweise erstattet",
-      "pending": "ausstehend",
-      "succeeded": "erfolgreich"
+      "open": "Offen",
+      "paid": "Bezahlt",
+      "failed": "Fehlgeschlagen",
+      "expired": "Abgelaufen",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet",
+      "partially_refunded": "Teilweise erstattet",
+      "pending": "Ausstehend",
+      "succeeded": "Erfolgreich"
     },
     "sources": {
       "test": "Testzahlung",
@@ -1056,7 +1152,7 @@
     "cancelTicket": "Stornieren",
     "confirmCancelTicket": "Ticket stornieren? Der Ticketpreis wird erstattet und der QR-Code ist ungültig.",
     "ticketCancelled": "Ticket storniert.",
-    "refundPending": "Erstattung angefragt. Stripe bestätigt sie gleich.",
+    "refundPending": "Erstattung angefragt. Der Zahlungsanbieter bestätigt sie gleich.",
     "refunded": "Erstattet.",
     "testPayment": "Testzahlung",
     "testHelp": "Erzeugt eine Bestellung über den Betrag und öffnet den Stripe-Checkout. Nur für Plattform-Admins.",
@@ -1070,7 +1166,29 @@
     "refundLeft": "Leer lassen = alles Erstattbare: {amount}.",
     "feeKept": "Die Servicegebühr ({amount}) wird nicht erstattet.",
     "noTerminal": "Kein Kartenterminal eingerichtet.",
-    "refundInShop": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)"
+    "refundInShop": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)",
+    "forEvent": "Event: {title}",
+    "search": "Name oder E-Mail suchen…",
+    "emptyFiltered": "Keine Zahlungen für diese Auswahl.",
+    "emptyTitle": "Noch keine Zahlungen",
+    "emptyText": "Hier landet jede Zahlung: Ticketverkäufe, Shop-Bestellungen und Verkäufe an der Abendkasse.",
+    "payment": "Zahlung",
+    "attempts": "Vorgänge",
+    "links": "Verknüpft",
+    "link": {
+      "event": "Event",
+      "shopOrder": "Bestellung im Shop",
+      "contact": "Kontakt"
+    },
+    "provider": "Anbieter",
+    "providers": {
+      "stripe": "Stripe",
+      "sumup": "SumUp",
+      "cash": "Bar",
+      "transfer": "Überweisung"
+    },
+    "confirmRefund": "Geld erstatten?",
+    "confirmRefundHint": "Der Betrag geht über den Zahlungsanbieter an die Kund:in zurück. Das lässt sich nicht rückgängig machen."
   },
   "checkout": {
     "title": "Bestellung",
@@ -1132,7 +1250,12 @@
       "chat": "Chat",
       "noChats": "Noch keine Chats. Füge deinen Bot zu einer Gruppe hinzu oder schreib ihm /start, dann erscheint der Chat hier (kann bis zu einer Minute dauern).",
       "notConnected": "Verbinde zuerst deinen Telegram-Bot unter Integrationen."
-    }
+    },
+    "targets": "Webhooks & Telegram",
+    "confirmRotate": "Neues Secret erzeugen?",
+    "confirmRotateHint": "Das bisherige Secret ist sofort ungültig; trage das neue in deinem Tool ein.",
+    "confirmDelete": "Ziel löschen?",
+    "confirmDeleteHint": "Es bekommt danach keine Ereignisse mehr."
   },
   "events": {
     "types": {
@@ -1144,9 +1267,9 @@
       "order.failed": "Zahlung fehlgeschlagen",
       "test.ping": "Testereignis",
       "org.created": "Neue Organisation",
-      "event.published": "Veranstaltung veröffentlicht",
-      "event.updated": "Veranstaltung geändert (Zeit/Ort)",
-      "event.cancelled": "Veranstaltung abgesagt",
+      "event.published": "Event veröffentlicht",
+      "event.updated": "Event geändert (Zeit/Ort)",
+      "event.cancelled": "Event abgesagt",
       "contact.created": "Kontakt angelegt",
       "contacts.imported": "Kontakte importiert",
       "tickets.sold": "Tickets verkauft (Bestellung bezahlt)",
@@ -1165,7 +1288,7 @@
       "course.enrolled": "Kurs: Anmeldung",
       "course.moved_up": "Kurs: von der Warteliste nachgerückt",
       "workflow.notified": "Nachricht aus einer Automation",
-      "membership.checked_in": "Mitglied beim Einlass einer Veranstaltung eingecheckt",
+      "membership.checked_in": "Mitglied beim Einlass eines Events eingecheckt",
       "shift.assigned": "Schicht zugeteilt (direkt oder Bewerbung bestätigt)",
       "task.assigned": "Aufgabe zugewiesen",
       "task.completed": "Aufgabe erledigt",
@@ -1230,9 +1353,9 @@
       "order.paid": "Eine Bestellung (Tickets oder anderes) wurde bezahlt.",
       "order.refunded": "Eine Bestellung wurde (teilweise) erstattet.",
       "order.failed": "Eine Zahlung ist fehlgeschlagen.",
-      "event.published": "Eine Veranstaltung wurde veröffentlicht und ist öffentlich sichtbar.",
-      "event.updated": "Zeit oder Ort einer veröffentlichten Veranstaltung haben sich geändert.",
-      "event.cancelled": "Eine Veranstaltung wurde abgesagt.",
+      "event.published": "Ein Event wurde veröffentlicht und ist öffentlich sichtbar.",
+      "event.updated": "Zeit oder Ort eines veröffentlichten Events haben sich geändert.",
+      "event.cancelled": "Ein Event wurde abgesagt.",
       "contact.created": "Ein Kontakt wurde angelegt – von Hand, per Formular, API oder beim Ticketkauf.",
       "contacts.imported": "Kontakte wurden per CSV importiert (ein Durchlauf pro Import, nicht pro Kontakt).",
       "tickets.sold": "Eine Ticketbestellung wurde bezahlt (einmal pro Bestellung, auch bei mehreren Tickets).",
@@ -1248,7 +1371,7 @@
       "membership.ended": "Für eine Mitgliedschaft wurde ein Enddatum gesetzt (Kündigung/Austritt).",
       "memberships.imported": "Mitglieder wurden per CSV importiert (ein Durchlauf pro Import).",
       "membership.self_updated": "Ein Mitglied hat im Mitgliederbereich Adresse, Bankdaten o. Ä. geändert.",
-      "membership.checked_in": "Ein Vereinsmitglied wurde am Einlass einer Veranstaltung eingelassen (Mitgliedskarte gescannt oder per Suche). Einmal pro Person und Veranstaltung.",
+      "membership.checked_in": "Ein Vereinsmitglied wurde am Einlass eines Events eingelassen (Mitgliedskarte gescannt oder per Suche). Einmal pro Person und Event.",
       "form.submitted": "Jemand hat ein Formular abgeschickt.",
       "course.enrolled": "Jemand wurde zu einem Kurs angemeldet (mit Platz, nicht auf der Warteliste).",
       "course.moved_up": "Jemand ist von der Warteliste eines Kurses nachgerückt.",
@@ -1261,25 +1384,35 @@
     }
   },
   "inbox": {
+    "markRead": "Als gelesen markieren",
+    "markUnread": "Als ungelesen markieren",
+    "markedRead": "Als gelesen markiert.",
+    "markedUnread": "Als ungelesen markiert.",
     "title": "Benachrichtigungen",
     "empty": "Keine Benachrichtigungen.",
     "markAllRead": "Alle als gelesen markieren",
     "all": "Alle",
     "unread": "Ungelesen",
-    "when": "Wann",
-    "what": "Was",
-    "org": "Organisation"
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "settings": "Benachrichtigungen einstellen",
+    "area": "Bereich",
+    "allAreas": "Alle Bereiche",
+    "inOrg": "in {org}",
+    "allRead": "Alles gelesen.",
+    "emptyText": "Hier landet, was roots dir meldet: Verkäufe, Anmeldungen, Fristen.",
+    "allMarked": "Alle als gelesen markiert.",
+    "switched": "Gewechselt zu {org}."
   },
   "prefs": {
     "title": "Benachrichtigungen",
     "intro": "Wähle, worüber und auf welchem Weg du benachrichtigt wirst.",
-    "event": "Ereignis",
     "in_app": "In der App",
     "email": "E-Mail",
     "push": "Push",
     "emailOff": "E-Mail-Versand ist auf der Plattform noch nicht eingerichtet.",
-    "saved": "Einstellungen gespeichert.",
-    "none": "Für deine Rollen gibt es noch keine Benachrichtigungen."
+    "none": "Für deine Rollen gibt es noch keine Benachrichtigungen.",
+    "openInbox": "Zu den Benachrichtigungen"
   },
   "eventTypes": {
     "title": "Event-Typen",
@@ -1308,6 +1441,8 @@
     "deleted": "Typ gelöscht."
   },
   "eventsPage": {
+    "venueNameShort": "Ort",
+    "venueAddressShort": "Adresse",
     "nav": "Events",
     "title": "Events",
     "new": "Neues Event",
@@ -1322,7 +1457,7 @@
     "slug": "Slug",
     "startsAt": "Beginn",
     "endsAt": "Ende (optional)",
-    "venueName": "Ort",
+    "venueName": "Name des Orts",
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
@@ -1338,7 +1473,8 @@
     "statuses": {
       "draft": "Entwurf",
       "published": "Veröffentlicht",
-      "cancelled": "Abgesagt"
+      "cancelled": "Abgesagt",
+      "trashed": "Im Papierkorb"
     },
     "publish": "Veröffentlichen",
     "unpublish": "Zurück zu Entwurf",
@@ -1356,10 +1492,10 @@
     "restored": "Wiederhergestellt.",
     "deletedOn": "Gelöscht am {date}, wird am {purge} endgültig entfernt.",
     "readOnly": "Du kannst Events ansehen, aber nicht bearbeiten.",
-    "emptyText": "Lege eine Veranstaltung an, verkaufe Tickets oder sammle Anmeldungen und plane Schichten und Gästeliste dazu.",
+    "emptyText": "Lege ein Event an, verkaufe Tickets oder sammle Anmeldungen und plane Schichten und Gästeliste dazu.",
     "basics": "Titel & Zeit",
     "publicPage": "Öffentliche Seite",
-    "create": "Veranstaltung anlegen",
+    "create": "Event anlegen",
     "emails": "E-Mails",
     "emailsHint": "Ticket-, Gästelisten- und Wartelisten-Mails dieses Events. Ohne Auswahl: {fallback}.",
     "emailTemplate": "Vorlage",
@@ -1367,9 +1503,58 @@
     "links": "Links",
     "linksHint": "Bis zu 3 Links mit Titel, z. B. Telegram-Gruppe, Instagram, Resident Advisor – als Buttons auf der Eventseite.",
     "linkTitle": "Titel",
-    "linkUrl": "Link (https://…)"
+    "linkUrl": "Link (https://…)",
+    "views": {
+      "lineup": "Lineup"
+    },
+    "uncancel": "Absage zurücknehmen",
+    "confirmUnpublish": "Zurück zu Entwurf?",
+    "confirmUnpublishHint": "Die öffentliche Seite und der Ticketshop sind dann nicht mehr erreichbar. Verkaufte Tickets bleiben gültig.",
+    "confirmCancel": "Event absagen?",
+    "confirmCancelHint": "Die öffentliche Seite zeigt es als abgesagt, und wer es abonniert hat (Webhooks, Telegram), wird informiert. Tickets werden dabei nicht erstattet.",
+    "noMatch": "Keine Events gefunden.",
+    "event": "Event",
+    "savedPlace": "Gespeicherter Ort",
+    "stats": {
+      "sold": "Verkauft",
+      "left": {
+        "one": "noch 1 Platz frei",
+        "other": "noch {count} Plätze frei"
+      },
+      "revenue": "Umsatz",
+      "revenueHint": "Ohne Gästeliste",
+      "checkedIn": "Eingecheckt",
+      "checkedInHint": "Inkl. Gästeliste",
+      "waitlist": "Warteliste"
+    },
+    "steps": {
+      "title": "Vor dem Veröffentlichen",
+      "text": "Noch ein Entwurf: nur dein Team sieht dieses Event.",
+      "place": "Ort eintragen",
+      "description": "Beschreibung schreiben",
+      "image": "Bild hochladen",
+      "tickets": "Ticketart anlegen"
+    },
+    "details": "Details",
+    "startsAtShort": "Beginn",
+    "endsAtShort": "Ende",
+    "capacityShort": "Kapazität",
+    "unlimited": "unbegrenzt",
+    "notLiveYet": "{path} – erst nach dem Veröffentlichen erreichbar",
+    "programme": "Programm",
+    "editTitle": "Event bearbeiten",
+    "guestlistsEmptyText": "Gästelisten für dieses Event, z. B. für Artists, Crew oder Freunde – mit eigenem Link zum Eintragen.",
+    "linked": {
+      "title": "Verknüpft",
+      "orders": "Bestellungen",
+      "planShifts": "Schichten planen",
+      "cashbook": "Kassenbuch (Abendkasse)",
+      "campaigns": "E-Mail-Kampagnen",
+      "campaignToBuyers": "Kampagne an Käufer:innen"
+    }
   },
   "contacts": {
+    "editAll": "Alle Angaben bearbeiten",
     "nav": "Kontakte",
     "title": "Kontakte",
     "new": "Neuer Kontakt",
@@ -1431,7 +1616,9 @@
       "linked": "Mit dem Teamzugang verknüpft.",
       "unlinked": "Verknüpfung gelöst.",
       "taken": "Dieser Teamzugang ist schon mit einem anderen Kontakt verknüpft.",
-      "badge": "Team"
+      "badge": "Team",
+      "confirmUnlink": "Verknüpfung mit dem Teamzugang lösen?",
+      "confirmUnlinkHint": "Die Person kann ihren Mitgliederbereich dann nicht mehr direkt aus der App öffnen."
     },
     "quickCreate": "Neuen Kontakt anlegen",
     "quickCreateNamed": "„{name}“ als neuen Kontakt anlegen",
@@ -1446,6 +1633,29 @@
     "create": "Kontakt anlegen",
     "viaApi": "über API",
     "viaAi": "über KI-App",
+    "hub": {
+      "details": "Kontaktdaten",
+      "call": "Anrufen",
+      "newInvoice": "Neue Rechnung",
+      "member": "Mitglied",
+      "formerMember": "Ehemaliges Mitglied",
+      "unsubscribed": "Abgemeldet",
+      "membership": "Mitgliedschaft",
+      "openTotal": "{amount} offen",
+      "openDues": "Offene Beiträge: {amount}",
+      "openDuesDetail": {
+        "one": "{count} Beitrag offen",
+        "other": "{count} Beiträge offen"
+      },
+      "tickets": "Tickets & Gästelisten",
+      "guestOn": "Gästeliste {list}",
+      "work": "Schichten & Personal",
+      "shiftProfile": "Schichtprofil",
+      "employee": "Personalakte",
+      "inactive": "Inaktiv"
+    },
+    "confirmDeleteNote": "Notiz löschen?",
+    "confirmDeleteNoteHint": "Die Notiz verschwindet aus dem Verlauf.",
     "merge": {
       "title": "Zusammenführen",
       "action": "Mit anderem Kontakt zusammenführen",
@@ -1490,12 +1700,9 @@
       }
     },
     "duplicates": {
-      "nav": "Duplikate",
-      "a": "Kontakt",
-      "b": "Gleicher Name",
-      "merge": "Zusammenführen",
-      "empty": "Keine möglichen Duplikate",
-      "emptyText": "Hier erscheinen Kontakte mit gleichem Vor- und Nachnamen."
+      "filter": "Anzeigen",
+      "only": "Nur mögliche Duplikate",
+      "merge": "Zusammenführen"
     }
   },
   "fields": {
@@ -1515,10 +1722,9 @@
     "saved": "Gespeichert.",
     "deleted": "Feld gelöscht.",
     "delete": "Feld löschen",
-    "deleteHint": "Das Feld verschwindet aus Formularen. Gespeicherte Werte bleiben erhalten und sind wieder da, wenn du ein Feld mit derselben Bezeichnung anlegst.",
     "entities": {
       "contacts": "Kontakte",
-      "events": "Veranstaltungen",
+      "events": "Events",
       "memberships": "Mitgliedschaften",
       "rental_objects": "Objekte (Vermietung)",
       "rentals": "Vergaben (Vermietung)",
@@ -1537,7 +1743,9 @@
     },
     "colors": "Farben",
     "colorFor": "Farbe für {option}",
-    "noColor": "Keine Farbe"
+    "noColor": "Keine Farbe",
+    "confirmDelete": "Feld löschen?",
+    "confirmDeleteHint": "Das Feld verschwindet aus Formularen. Gespeicherte Werte bleiben erhalten und sind wieder da, wenn du ein Feld mit derselben Bezeichnung anlegst."
   },
   "import": {
     "file": "CSV-Datei",
@@ -1575,6 +1783,9 @@
     "mapFirst": "Ordne mindestens eine Spalte zu, dann siehst du hier die Vorschau."
   },
   "tickets": {
+    "codeTypesInfo": "Mit Auswahl zeigt der Code (und sein Link) nur diese Arten – gut für eigene Kontingente, z. B. ein Friends-Link mit einer versteckten Ticketart. Versteckte Arten gibt es nur mit einem Code, der sie hier auswählt.",
+    "quotaHint": "Wie viele Tickets dieser Art es gibt. Leer = unbegrenzt (bis die Kapazität des Events erreicht ist).",
+    "priceHint": "0 € = kostenlos: Besucher:innen melden sich an, statt ein Ticket zu kaufen.",
     "title": "Tickets",
     "manage": "Tickets verwalten",
     "scan": "Scannen",
@@ -1584,18 +1795,18 @@
     "notPublished": "Das Event ist noch nicht veröffentlicht – der Ticketshop erscheint erst danach auf der öffentlichen Seite.",
     "types": "Ticketarten",
     "newType": "Neue Ticketart",
-    "noTypes": "Noch keine Ticketarten. Lege z. B. „Normal“ und „Ermäßigt“ an.",
+    "noTypes": "Lege z. B. „Normal“ und „Ermäßigt“ an – danach kann der Verkauf starten.",
     "typeName": "Ticketart",
     "typeNamePlaceholder": "z. B. Normal, Ermäßigt, VIP",
-    "typeDescription": "Beschreibung (optional)",
+    "typeDescription": "Beschreibung",
     "price": "Preis",
-    "priceEur": "Preis in € (0 = kostenlos)",
-    "quota": "Kontingent (leer = unbegrenzt)",
+    "priceEur": "Preis",
+    "quota": "Kontingent",
     "sold": "Verkauft",
     "left": "Frei",
     "window": "Verkaufszeitraum",
-    "salesStart": "Verkauf ab (optional)",
-    "salesEnd": "Verkauf bis (optional)",
+    "salesStart": "Verkauf ab",
+    "salesEnd": "Verkauf bis",
     "activeLabel": "Im Shop anbieten",
     "inactive": "Pausiert",
     "invalidPrice": "Bitte einen gültigen Preis angeben, z. B. 12,50.",
@@ -1636,7 +1847,8 @@
     "codePlaceholder": "Code eingeben",
     "checkIn": "Einchecken",
     "scanResult": {
-      "ok": "✓ Gültig – Einlass",
+      "valid": "✓ Gültig",
+      "ok": "✓ Gültig – eingecheckt",
       "used": "Schon eingecheckt",
       "invalid": "✗ Ungültig",
       "error": "Fehler"
@@ -1647,7 +1859,7 @@
     "hiddenLabel": "Versteckt",
     "hiddenHint": "Nur mit einem Code erhältlich, der diese Ticketart freischaltet (z. B. Crew-Link).",
     "tiers": "Preisstufen",
-    "tiersHint": "Optional. Die erste Stufe, die nicht ausverkauft und nicht abgelaufen ist, gilt (z. B. Early Bird → Regulär → Abendkasse). Ohne Stufen gilt der Preis oben.",
+    "tiersHint": "Die erste Stufe, die nicht ausverkauft und nicht abgelaufen ist, gilt (z. B. Early Bird → Regulär → Abendkasse). Ohne Stufen gilt der Preis oben.",
     "tierName": "Name der Stufe",
     "tierNamePlaceholder": "z. B. Early Bird",
     "tierQuota": "Kontingent der Stufe",
@@ -1679,7 +1891,7 @@
     "validFrom": "Gültig ab",
     "validUntil": "Gültig bis",
     "codeTypes": "Gilt für",
-    "codeTypesHint": "Nichts ausgewählt = alle sichtbaren Ticketarten. Mit Auswahl zeigt der Code (und sein Link) nur diese Arten – gut für eigene Kontingente, z. B. ein Friends-Link mit einer versteckten Ticketart. Versteckte Arten gibt es nur mit einem Code, der sie hier auswählt.",
+    "codeTypesHint": "Nichts ausgewählt = alle sichtbaren Ticketarten.",
     "codeActive": "Aktiv",
     "codeFormat": "Code: 3–40 Zeichen, Buchstaben, Zahlen und Bindestriche.",
     "codeValue": "Bitte einen gültigen Rabatt angeben (1–100 % oder einen Betrag).",
@@ -1714,13 +1926,44 @@
       "other": "{count} Mitglieder eingelassen"
     },
     "shopSettings": "Shop-Einstellungen",
+    "waitlistOn": "Warteliste bei Ausverkauf",
+    "waitlistOnHint": "Aus = der Shop zeigt nur „ausverkauft“. Wer schon auf der Liste steht, behält seinen Platz.",
     "showCodeField": "Feld für Rabattcodes im Shop anzeigen",
     "showCodeFieldHint": "Aus = kein Eingabefeld; Rabatt-Links (…?code=) funktionieren trotzdem.",
     "unlockedBy": "Freigeschaltet durch",
     "noUnlockCode": "Noch kein Code schaltet diese Ticketart frei – so kann sie niemand kaufen.",
     "maxUsesHint": "Leer = unbegrenzt (bis das Kontingent der Ticketart erreicht ist). Z. B. 30 = nur die ersten 30 bekommen den Rabatt.",
     "allVisibleTypes": "alle sichtbaren",
-    "unlockLimitHint": "Schaltet nur frei: Wie viele Tickets es gibt, steht im Kontingent der ausgewählten Ticketart."
+    "unlockLimitHint": "Schaltet nur frei: Wie viele Tickets es gibt, steht im Kontingent der ausgewählten Ticketart.",
+    "settings": "Ticket-Einstellungen",
+    "unlimited": "unbegrenzt",
+    "leftCount": {
+      "one": "noch 1 frei",
+      "other": "noch {count} frei"
+    },
+    "noTypesTitle": "Noch keine Ticketarten",
+    "noMatch": "Keine Tickets gefunden.",
+    "typeMeta": {
+      "one": "1 verkauft",
+      "other": "{count} verkauft"
+    },
+    "confirmDeleteType": "Ticketart löschen?",
+    "confirmDeleteTypeHint": "Sie verschwindet aus dem Shop. Sind schon Tickets verkauft, geht das nicht – pausiere den Verkauf stattdessen.",
+    "confirmDeleteCode": "Code löschen?",
+    "confirmDeleteCodeHint": "Sein Link funktioniert dann nicht mehr. Wurde der Code schon genutzt, geht das nicht – setze ihn stattdessen inaktiv.",
+    "confirmDeleteTier": "Preisstufe entfernen?",
+    "confirmDeleteTierHint": "Sie wird beim Speichern gelöscht. Wurden in ihr schon Tickets verkauft, geht das nicht.",
+    "onSale": "Im Verkauf",
+    "moreOptions": "Mehr Optionen: Verkaufszeitraum, Beschreibung, versteckt, Preisstufen",
+    "createType": "Ticketart anlegen",
+    "createCode": "Code anlegen",
+    "codeAmount": "Rabatt in €",
+    "codePercent": "Rabatt in %",
+    "typeCreated": "Ticketart angelegt.",
+    "typeDeleted": "Ticketart gelöscht.",
+    "codeCreated": "Code angelegt.",
+    "codeDeleted": "Code gelöscht.",
+    "settingsSaved": "Ticket-Einstellungen gespeichert."
   },
   "shop": {
     "title": "Tickets",
@@ -1799,23 +2042,33 @@
     "never": "nie",
     "revoke": "Widerrufen",
     "revoked": "Schlüssel widerrufen.",
-    "revokedBadge": "widerrufen",
+    "revokedBadge": "Widerrufen",
     "nameMissing": "Bitte gib dem Schlüssel einen Namen.",
     "permsMissing": "Bitte wähle mindestens ein Recht.",
     "noModules": "Für die API muss mindestens ein Modul aktiv sein.",
     "corePermissions": "Allgemein",
     "expires": "Läuft ab",
-    "expiredBadge": "abgelaufen",
+    "expiredBadge": "Abgelaufen",
     "expiresIn": {
       "0": "nie",
       "30": "in 30 Tagen",
       "90": "in 90 Tagen",
       "365": "in einem Jahr"
-    }
+    },
+    "newKey": "Neuer Schlüssel",
+    "keys": "Schlüssel",
+    "activeKeys": "Aktiv",
+    "allKeys": "Alle",
+    "permCount": {
+      "one": "{count} Recht",
+      "other": "{count} Rechte"
+    },
+    "confirmRevoke": "Schlüssel widerrufen?",
+    "confirmRevokeHint": "Tools, die ihn nutzen, verlieren sofort den Zugriff. Das lässt sich nicht rückgängig machen."
   },
   "invoices": {
     "nav": "Rechnungen",
-    "title": "Angebote & Rechnungen",
+    "title": "Rechnungen",
     "settings": "Einstellungen",
     "newInvoice": "Neue Rechnung",
     "newQuote": "Neues Angebot",
@@ -1835,7 +2088,8 @@
       "overdue": "Überfällig",
       "paid": "Bezahlt",
       "accepted": "Angenommen",
-      "cancelled": "Storniert"
+      "cancelled": "Storniert",
+      "declined": "Abgelehnt"
     },
     "statuses": {
       "invoice": {
@@ -2025,15 +2279,61 @@
     "fromShopOrder": "Shop-Bestellung #{number}",
     "confirmCancel": "Stornorechnung erstellen? Sie bekommt eine eigene Nummer und negative Beträge, diese Rechnung gilt dann als storniert. Für eine Korrektur danach eine neue Rechnung ausstellen.",
     "creatingInvoice": "Rechnung wird angelegt …",
-    "creatingQuote": "Angebot wird angelegt …"
+    "creatingQuote": "Angebot wird angelegt …",
+    "clearContact": "Filter {name} entfernen",
+    "kindsPlural": {
+      "invoice": "Rechnungen",
+      "quote": "Angebote",
+      "cancellation": "Storno"
+    },
+    "emptyFiltered": "Keine Dokumente für diese Auswahl.",
+    "emptyTitle": "Noch keine Rechnungen",
+    "emptyText": "Schreib deine erste Rechnung oder ein Angebot. Shop-Bestellungen bekommen ihre Rechnungen automatisch, wenn du das in den Shop-Einstellungen einschaltest.",
+    "document": "Dokument",
+    "dueColumn": "Fällig / gültig bis",
+    "taxTotal": "USt.",
+    "bankShopHint": "Diese Bankverbindung steht auch bei Shop-Bestellungen mit Überweisung.",
+    "iban": "IBAN",
+    "bic": "BIC",
+    "texts": "Texte",
+    "textsHint": "Vorgaben für neue Dokumente; im Entwurf änderbar.",
+    "contact": "Kontakt",
+    "unitPriceGross": "Einzelpreis brutto",
+    "itemTitleN": "Bezeichnung Position {n}",
+    "vatIncluded": "darin {rate} % USt.",
+    "createDraft": "Entwurf anlegen",
+    "confirmIssue": "Rechnung ausstellen?",
+    "confirmIssueHint": "Sie bekommt ihre Nummer und lässt sich danach nicht mehr ändern (GoBD). Korrekturen gehen nur über Stornieren und eine neue Rechnung.",
+    "confirmIssueQuote": "Angebot ausstellen?",
+    "confirmIssueQuoteHint": "Es bekommt seine Nummer und lässt sich danach nicht mehr ändern. Für Änderungen duplizierst du es.",
+    "confirmPaid": "Als bezahlt markieren?",
+    "confirmPaidHint": "Nur wenn das Geld wirklich eingegangen ist. Bar bezahlt? Dann besser im Kassenbuch buchen und die Rechnung dort auswählen.",
+    "confirmUnpaid": "Wieder auf offen setzen?",
+    "confirmUnpaidHint": "Die Rechnung gilt dann wieder als unbezahlt und zählt zu den offenen Beträgen.",
+    "confirmDeclined": "Angebot als abgelehnt markieren?",
+    "confirmDeclinedHint": "Danach lässt es sich nicht mehr in eine Rechnung umwandeln, nur noch duplizieren.",
+    "link": {
+      "cancels": "storniert durch dieses Dokument",
+      "source": "erstellt aus",
+      "cancelledBy": "Stornorechnung",
+      "derived": "daraus erstellt",
+      "shopOrder": "Bestellung im Shop",
+      "payment": "Zahlung",
+      "paymentDetail": "der Shop-Bestellung"
+    },
+    "allOfContact": "Alle Rechnungen dieses Kontakts",
+    "links": "Verknüpft",
+    "notesTitle": "Interne Notiz"
   },
   "guestlists": {
+    "artist": "Artist",
+    "closesAtShort": "Link schließt",
+    "notesShort": "Notiz",
     "nav": "Gästelisten",
     "title": "Gästelisten",
     "new": "Neue Gästeliste",
     "empty": "Noch keine Gästelisten.",
     "event": "Event",
-    "allUpcoming": "Dauerhafte + kommende Events",
     "filter": "Anzeigen",
     "name": "Name",
     "namePlaceholder": "z. B. Allgemein, DJ Foo +, Crew",
@@ -2042,12 +2342,10 @@
     "permanentHint": "Dauerhafte Liste – gilt bei jedem Event",
     "entries": "Einträge",
     "doorPrice": "Abendkasse",
-    "doorPriceEur": "Preis an der Tür in € (0 = frei)",
     "free": "frei",
     "atDoor": "{price} an der Tür",
     "quota": "Max. Einträge",
     "perSubmission": "Namen pro Link-Eintrag",
-    "artist": "Artist",
     "closesAt": "Link schließt am (optional)",
     "notes": "Notiz (intern)",
     "link": "Link",
@@ -2056,7 +2354,6 @@
     "saved": "Gespeichert.",
     "trashed": "In den Papierkorb verschoben.",
     "trash": "Liste in den Papierkorb",
-    "settings": "Einstellungen",
     "withTickets": "mit Tickets",
     "publicLink": "Öffentlicher Link",
     "linkHint": {
@@ -2111,9 +2408,48 @@
       "one": "Danke! 1 Name steht auf der Liste.",
       "other": "Danke! {count} Namen stehen auf der Liste."
     },
-    "linkNeedsPublished": "Der Link öffnet sich erst, wenn die Veranstaltung veröffentlicht ist – bis dahin sehen Gäste „geschlossen“.",
-    "toEvent": "Zur Veranstaltung",
-    "autoTickets": "Jeder Eintrag bekommt automatisch ein Ticket mit QR-Code (per E-Mail, wenn eine Adresse angegeben ist) – zusätzlich zur Kapazität der Veranstaltung (Gästeliste zählt nicht zu den Shop-Plätzen)."
+    "linkNeedsPublished": "Der Link öffnet sich erst, wenn das Event veröffentlicht ist – bis dahin sehen Gäste „geschlossen“.",
+    "toEvent": "Zum Event",
+    "autoTickets": "Jeder Eintrag bekommt automatisch ein Ticket mit QR-Code (per E-Mail, wenn eine Adresse angegeben ist) – zusätzlich zur Kapazität des Events (Gästeliste zählt nicht zu den Shop-Plätzen).",
+    "addGuests": "Gäste hinzufügen",
+    "statsGuests": "Gäste",
+    "statsIn": "Drin",
+    "statsViaLink": "Per Link",
+    "copyLink": "Link kopieren",
+    "openLink": "Link öffnen",
+    "addTicketsHint": "Jeder Name bekommt ein Ticket mit QR-Code (per E-Mail, wenn eine Adresse dabei ist).",
+    "renameHint": "Kommt jemand anderes? Neuer Name, gleiches Ticket.",
+    "restored": "Gästeliste wiederhergestellt.",
+    "restore": "Wiederherstellen",
+    "trashView": "Papierkorb",
+    "trashHint": "Gästelisten im Papierkorb werden nach {days} Tagen endgültig gelöscht. Wiederhergestellte Listen bekommen neue Tickets.",
+    "emptyTrash": "Der Papierkorb ist leer.",
+    "noMatch": "Keine Gästeliste passt dazu.",
+    "emptyText": "Eine Gästeliste sammelt Namen für ein Event – von Hand oder per Link, den du z. B. Artists gibst. Dauerhafte Listen gelten bei jedem Event.",
+    "views": {
+      "upcoming": "Kommend",
+      "past": "Vergangen",
+      "all": "Alle"
+    },
+    "confirmTrash": "Gästeliste in den Papierkorb?",
+    "confirmTrashHint": "Die Tickets aller Gäste werden ungültig und der Link funktioniert nicht mehr.",
+    "confirmRenew": "Neuen Link erzeugen?",
+    "confirmRenewHint": "Der bisherige Link funktioniert danach nicht mehr – wer ihn hat, braucht den neuen.",
+    "confirmOff": "Link deaktivieren?",
+    "confirmOffHint": "Bis du ihn wieder aktivierst, kann sich niemand mehr eintragen.",
+    "confirmRemove": "Gast entfernen?",
+    "confirmRemoveHint": "Das Ticket dieses Gasts wird ungültig.",
+    "nameRequired": "Bitte einen Namen eintragen.",
+    "priceInvalid": "Der Preis an der Tür ist keine gültige Zahl.",
+    "quotaInvalid": "Max. Einträge muss eine ganze Zahl über 0 sein.",
+    "perInvalid": "Namen pro Link-Eintrag: 1 bis 50.",
+    "listCard": "Liste",
+    "signupCard": "Eintragen",
+    "eventHint": "Leer lassen für eine dauerhafte Liste, die bei jedem Event gilt. Event-Listen geben jedem Gast ein Ticket.",
+    "artistOptional": "Artist (optional)",
+    "doorPriceLabel": "Preis an der Tür",
+    "doorPriceHint": "0 = frei",
+    "create": "Gästeliste anlegen"
   },
   "lineup": {
     "title": "Lineup & Timetable",
@@ -2142,17 +2478,40 @@
     "saved": "Gespeichert.",
     "deleted": "Slot gelöscht.",
     "needArtistOrTitle": "Bitte einen Artist wählen oder einen Titel eingeben.",
-    "timetable": "Timetable"
+    "timetable": "Timetable",
+    "created": "Slot angelegt.",
+    "artistSaved": "Artist gespeichert.",
+    "newArtistBadge": "neu",
+    "searchArtist": "Artist suchen…",
+    "createArtist": "„{name}“ als neuen Artist anlegen",
+    "typeNewArtist": "Namen tippen, um einen neuen Artist anzulegen",
+    "count": {
+      "one": "1 Slot",
+      "other": "{count} Slots"
+    },
+    "emptyText": "Plane den Ablauf: wer wann auf welcher Bühne spielt. Öffentliche Slots erscheinen als Timetable auf der Eventseite.",
+    "confirmDeleteSlot": "Slot löschen?",
+    "confirmDeleteSlotHint": "Er verschwindet aus dem Timetable. Der Artist selbst bleibt erhalten.",
+    "createSlot": "Slot anlegen",
+    "artistHint": "Gilt für alle Events, in denen der Artist spielt.",
+    "linksHint": "Nur vollständige Links (https://…) werden gespeichert, höchstens 10."
   },
   "door": {
     "tabs": "Einlass-Ansichten",
     "tab": {
+      "all": "Alle",
+      "list": "Liste",
       "scan": "Scannen",
       "guests": "Gäste",
       "tickets": "Tickets",
       "members": "Mitglieder",
       "sale": "Verkauf"
     },
+    "kind": {
+      "member": "Mitglied"
+    },
+    "searchAllMembers": "Name, Code oder Mitglied suchen…",
+    "noOne": "Niemand gefunden",
     "searchGuests": "Name suchen…",
     "searchTickets": "Name oder Code suchen…",
     "guestCount": "{in} von {total} drin",
@@ -2161,19 +2520,29 @@
     "list": "Liste",
     "noGuests": "Keine Gäste gefunden.",
     "noTickets": "Keine Tickets gefunden.",
-    "checkIn": "Einlass",
-    "checkedIn": "{name} ist drin.",
+    "checkIn": "Einchecken",
+    "checkedIn": "{name} ist eingecheckt.",
     "already": "Schon eingecheckt.",
     "undo": "Rückgängig",
     "undone": "Check-in zurückgenommen.",
-    "inSince": "drin seit {time}",
+    "inSince": "Check-in: {time}",
+    "onList": "GL: {list}",
+    "checkOut": "Auschecken",
+    "cancel": "Stornieren",
+    "cancelTitle": "Ticket stornieren",
+    "refund": "Geld zurück?",
+    "refundYes": "Erstatten",
+    "refundNo": "Nicht erstatten",
+    "cancelNote": "Notiz zur Erstattung (optional)",
+    "confirmCancel": "Ticket stornieren? Es ist danach ungültig.",
     "searchMembers": "Mitglied suchen (Name, Nr., E-Mail)",
     "inside": "Drin: {count}",
     "member": {
+      "open": "Öffnen",
       "member": "Mitglied",
-      "ok": "Eingelassen",
-      "already": "Schon drin",
-      "full": "Veranstaltung ist voll",
+      "ok": "Eingecheckt",
+      "already": "Schon eingecheckt",
+      "full": "Event ist voll",
       "not_member": "Kein Mitglied",
       "invalid": "Unbekannte Karte",
       "state": {
@@ -2190,8 +2559,8 @@
         "other": "{count} Besuche"
       },
       "lastVisit": "Zuletzt da: {date}",
-      "admit": "Einlassen",
-      "admitting": "Einlassen …",
+      "admit": "Einchecken",
+      "admitting": "Checkt ein …",
       "noneFound": "Kein Mitglied gefunden.",
       "limit": "Besuchslimit erreicht",
       "limitHint": "Alle Besuche dieser Mitgliedsart sind aufgebraucht.",
@@ -2237,7 +2606,7 @@
       "overCapacity": "Über der Kapazität (noch {left} frei) – Verkauf ist trotzdem möglich.",
       "seatsLeft": "Noch {left} Plätze frei",
       "total": "Summe",
-      "noMethods": "Für diese Veranstaltung ist keine Zahlungsart an der Tür aktiv (Tickets → Abendkasse).",
+      "noMethods": "Für dieses Event ist keine Zahlungsart an der Tür aktiv.",
       "summary": "Abendkasse heute",
       "summaryMeta": "{sales} Verkäufe · {tickets} Tickets",
       "savedOffline": "Ohne Verbindung gespeichert – wird übertragen, sobald das Gerät wieder online ist.",
@@ -2251,11 +2620,12 @@
       "via": {
         "qr": "{provider}-Bezahlcode",
         "terminal": "{provider}-Terminal"
-      }
+      },
+      "toSettings": "Abendkasse einrichten"
     },
     "settings": {
       "title": "Abendkasse",
-      "description": "Verkauf an der Tür (Einlass → Verkauf): Tickets zu jedem Preis und freie Beträge. Verkaufte Tickets gelten sofort als eingelassen.",
+      "description": "Verkauf an der Tür (Einlass → Verkauf): Tickets zu jedem Preis und freie Beträge. Verkaufte Tickets gelten sofort als eingelassen. Ohne angehakte Zahlungsart gibt es keinen Verkauf an der Tür.",
       "methods": "Zahlungsarten",
       "unavailable": {
         "cash": "",
@@ -2269,7 +2639,8 @@
       "toIntegrations": "Zu den Integrationen",
       "cashAccount": "Kassenbuch-Konto für Barzahlungen",
       "noCashAccount": "Nicht ins Kassenbuch buchen",
-      "cashAccountHint": "Jeder Barverkauf wird dort als Einnahme gebucht."
+      "cashAccountHint": "Jeder Barverkauf wird dort als Einnahme gebucht.",
+      "noCashAccounts": "Noch kein aktives Bargeld-Konto im Kassenbuch."
     },
     "stats": {
       "checkedIn": "Eingelassen",
@@ -2282,7 +2653,9 @@
       "members": "Mitglieder",
       "atDoor": "davon Abendkasse",
       "leftOnline": "online noch frei"
-    }
+    },
+    "settingsLink": "Abendkasse-Einstellungen dieses Events",
+    "lookup": "Nachschlagen"
   },
   "shifts": {
     "nav": "Schichten",
@@ -2291,9 +2664,9 @@
     "tabs": {
       "plan": "Plan",
       "team": "Team",
-      "setup": "Einrichtung",
       "hours": "Stunden",
-      "me": "Meine Schichten"
+      "me": "Meine Schichten",
+      "mine": "Meine"
     },
     "newShift": "Neue Schicht",
     "prevWeek": "Vorherige Woche",
@@ -2301,7 +2674,6 @@
     "prevMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "event": "Event",
-    "allWeek": "Ganze Woche (alle)",
     "location": "Ort",
     "allLocations": "Alle Orte",
     "anyLocation": "Jeder Ort",
@@ -2325,24 +2697,23 @@
     "saved": "Gespeichert.",
     "deleted": "Gelöscht.",
     "people": "Besetzung {count} / {needed}",
-    "applied": "beworben",
+    "applied": "Beworben",
     "approve": "Annehmen",
-    "checkIn": "Einchecken",
-    "checkOut": "Auschecken",
+    "checkIn": "Einstempeln",
+    "checkOut": "Ausstempeln",
     "remove": "Entfernen",
     "addPerson": "Person einteilen",
-    "notQualified": "nicht eingetragen für diese Position",
+    "notQualified": "nicht für diese Position eingetragen",
     "done": {
       "assign": "Eingeteilt.",
       "remove": "Entfernt.",
-      "check_in": "Eingecheckt.",
-      "check_out": "Ausgecheckt."
+      "check_in": "Eingestempelt.",
+      "check_out": "Ausgestempelt."
     },
-    "newStaff": "Neue Person",
     "noStaff": "Noch niemand im Team.",
     "name": "Name",
-    "inactive": "inaktiv",
-    "roleLabel": "Art",
+    "inactive": "Inaktiv",
+    "roleLabel": "Beschäftigung",
     "rolePlaceholder": "z. B. Minijob, Aushilfe, Ehrenamt",
     "positions": "Positionen",
     "anyPosition": "alle",
@@ -2356,7 +2727,7 @@
     "positionsHint": "Stationen wie Bar 1, Tür, Garderobe – mit der üblichen Anzahl Leute.",
     "positionPlaceholder": "z. B. Bar 1",
     "addPosition": "Position hinzufügen",
-    "locationsHint": "Orte (Club, Café, externe Locations) legst du in den Einstellungen an.",
+    "locationsHint": "Club, Café, externe Locations – für Schichten, Positionen und Events.",
     "locationsLink": "Orte verwalten",
     "seriesTitle": "Wiederkehrende Schichten",
     "newSeries": "Neue wiederkehrende Schicht",
@@ -2373,12 +2744,10 @@
     "weekdays": "Wochentage",
     "every": "Wiederholung",
     "from": "Von",
-    "until": "Bis (früher = am nächsten Tag)",
     "startDate": "Ab",
     "endDate": "Bis (optional)",
     "fixedHint": "Werden in jede Schicht dieser Serie eingeteilt.",
-    "generateHint": "Beim Speichern werden zukünftige Schichten dieser Serie neu angelegt.",
-    "deleteSeries": "Serie und zukünftige Schichten löschen",
+    "deleteSeries": "Serie löschen",
     "generated": {
       "one": "Gespeichert, 1 Schicht angelegt.",
       "other": "Gespeichert, {count} Schichten angelegt."
@@ -2398,30 +2767,96 @@
     },
     "apply": "Bewerben",
     "withdraw": "Zurückziehen",
-    "confirmed": "eingeteilt",
-    "selfHours": "Diesen Monat gearbeitet: {hours} h",
+    "confirmed": "Eingeteilt",
     "selfTarget": "Soll: {hours} h",
     "notInTeam": "Du bist noch nicht im Team dieses Schichtplans.",
     "self": {
       "apply": "Beworben – du wirst benachrichtigt, wenn du eingeteilt bist.",
       "withdraw": "Bewerbung zurückgezogen.",
-      "check_in": "Eingecheckt. Gute Schicht!",
-      "check_out": "Ausgecheckt. Danke!"
+      "check_in": "Eingestempelt. Gute Schicht!",
+      "check_out": "Ausgestempelt. Danke!"
     },
     "pickMember": "Mitglied wählen…",
-    "memberHint": "Im Team ist, wer Mitglied der Organisation ist (Name und E-Mail aus dem Profil). Neue Leute vorher unter Einstellungen → Mitglieder einladen.",
+    "memberHint": "Im Team ist, wer Mitglied der Organisation ist (Name und E-Mail aus dem Profil).",
     "assignOnCreate": "Wird {name} zugeteilt.",
-    "setupTitle": "Schichten einrichten"
+    "setupTitle": "Schichten einrichten",
+    "coverageWeek": "Woche ab {date}: {filled} von {needed} Plätzen besetzt",
+    "coverageEvent": "{event}: {filled} von {needed} Plätzen besetzt",
+    "allEvents": "Alle Events",
+    "details": "Schicht",
+    "createShift": "Schicht anlegen",
+    "noEvent": "Kein Event",
+    "missing": {
+      "one": "1 fehlt",
+      "other": "{count} fehlen"
+    },
+    "since": "seit {time}",
+    "searchPerson": "Person suchen…",
+    "assignButton": "Einteilen",
+    "confirmDeleteShift": "Schicht löschen?",
+    "confirmDeleteShiftHint": "Wer eingeteilt ist, verliert die Schicht. Erfasste Zeiten bleiben.",
+    "confirmRemovePerson": "Person aus der Schicht nehmen?",
+    "confirmRemovePersonHint": "Eine Bewerbung wird damit abgelehnt.",
+    "notInTeamText": "Wer Schichten plant, nimmt dich unter Schichten › Einstellungen › Team auf. Danach siehst du hier deine Schichten und kannst einstempeln.",
+    "addMe": "Mich zum Team hinzufügen",
+    "withoutShift": "Ohne Schicht",
+    "nextShift": "Nächste Schicht: {when}",
+    "noShiftNow": "Gerade keine Schicht",
+    "clockInFree": "Ohne Schicht einstempeln",
+    "workedIn": "Gearbeitet im {month}",
+    "balanceHint": "Saldo {hours}",
+    "finished": "Fertig",
+    "workedHint": "Ohne Pausen",
+    "noStaffText": "Ins Team kommen Mitglieder eurer Organisation, die Schichten übernehmen.",
+    "addStaff": "Person hinzufügen",
+    "shiftCountShort": {
+      "one": "1 Schicht",
+      "other": "{count} Schichten"
+    },
+    "hrRecord": "Personalakte",
+    "teamProfile": "Im Team bearbeiten",
+    "thisMonth": "Dieser Monat",
+    "contact": "Kontakt",
+    "inviteLink": "Mitglieder einladen",
+    "activeHint": "Inaktive werden nicht mehr eingeplant, bleiben aber in Stunden und Export.",
+    "linked": "Verknüpft",
+    "teamHint": "Wer eingeplant werden kann, mit Beschäftigung, Soll-Stunden und Positionen.",
+    "teamCount": {
+      "one": "1 Person aktiv",
+      "other": "{count} Personen aktiv"
+    },
+    "removePosition": "Position entfernen",
+    "confirmDeletePosition": "Position entfernen?",
+    "confirmDeletePositionHint": "Wird beim Speichern gelöscht. Bestehende Schichten behalten ihre Zeiten, nur ohne Position.",
+    "locationsTitle": "Orte",
+    "createSeries": "Serie anlegen",
+    "confirmDeleteSeries": {
+      "one": "Serie und 1 zukünftige Schicht löschen?",
+      "other": "Serie und {count} zukünftige Schichten löschen?"
+    },
+    "confirmDeleteSeriesHint": "Vergangene Schichten und erfasste Zeiten bleiben.",
+    "confirmSeriesSave": "Serie speichern und zukünftige Schichten neu anlegen?",
+    "confirmSeriesSaveHint": "Zukünftige Schichten dieser Serie, in denen noch niemand eingestempelt hat, werden gelöscht und nach dem neuen Rhythmus angelegt. Einteilungen darin gehen verloren; feste Personen werden neu eingeteilt.",
+    "timeOfDay": "Uhrzeit",
+    "untilShort": "Bis",
+    "overnightHint": "Ein Ende vor dem Beginn geht bis zum nächsten Tag."
   },
   "locations": {
+    "saved": "Ort gespeichert.",
+    "deleted": "Ort gelöscht.",
     "title": "Ort",
     "intro": "Orte deiner Organisation – eigener Club, Café, externe Locations. Events und Schichten können einem Ort zugeordnet werden.",
     "name": "Name",
     "namePlaceholder": "z. B. Club, Café, Halle 3",
     "address": "Adresse",
-    "add": "Ort hinzufügen"
+    "add": "Ort hinzufügen",
+    "delete": "Ort löschen",
+    "confirmDelete": "Ort löschen?"
   },
   "files": {
+    "noFolder": "Kein Ordner",
+    "newFolder": "Neuer Ordner …",
+    "newFolderName": "Name des neuen Ordners",
     "title": "Dateien",
     "upload": "Hochladen",
     "uploading": "Lädt hoch…",
@@ -2439,14 +2874,12 @@
     "trashed": "Datei in den Papierkorb verschoben.",
     "restore": "Wiederherstellen",
     "restored": "Datei wiederhergestellt.",
-    "save": "Speichern",
     "saved": "Gespeichert.",
     "nameRequired": "Der Name darf nicht leer sein.",
     "name": "Name",
     "folder": "Ordner",
     "size": "Größe",
     "added": "Hinzugefügt",
-    "all": "Alle",
     "trash": "Papierkorb",
     "trashHint": "Dateien im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
     "empty": "Noch keine Dateien. Lade welche hoch oder hänge sie an Kontakte an.",
@@ -2454,13 +2887,37 @@
     "noMatch": "Keine Dateien gefunden.",
     "entities": {
       "contacts": "Kontakt",
-      "events": "Veranstaltung",
+      "events": "Event",
       "invoices": "Beleg",
-      "memberships": "Mitgliedschaft"
-    }
+      "memberships": "Mitgliedschaft",
+      "courses": "Kurs",
+      "employees": "Person",
+      "products": "Produkt",
+      "projects": "Projekt",
+      "tasks": "Aufgabe",
+      "rentals": "Vergabe",
+      "rental_objects": "Objekt",
+      "cash_entries": "Kassenbuch",
+      "documents": "Beleg",
+      "wiki_pages": "Wiki-Seite"
+    },
+    "emptyText": "Lade Dokumente hoch oder hänge sie an Kontakte, Events und andere Einträge an.",
+    "allFolders": "Alle Ordner",
+    "view": "Ansicht",
+    "list": "Liste",
+    "grid": "Kacheln",
+    "deleted": "Gelöscht",
+    "backToFiles": "Zurück zu den Dateien",
+    "intoFolder": "In den Ordner „{folder}“",
+    "type": "Dateityp",
+    "folderHint": "Ein neuer Name legt einen neuen Ordner an.",
+    "pick": "Dateien auswählen",
+    "orDrop": "oder hierher ziehen",
+    "dropInto": "In „{folder}“ ablegen",
+    "dropHere": "Zum Hochladen loslassen"
   },
   "membership": {
-    "nav": "Mitgliedschaften",
+    "nav": "Mitglieder",
     "title": "Mitgliedschaften",
     "newType": "Neue Mitgliedsart",
     "typesMeta": "{active} aktiv · {total} gesamt",
@@ -2510,7 +2967,6 @@
     "newContact": "– Neue Person anlegen –",
     "newContactHint": "Oder neue Person: Name und/oder E-Mail eintragen, sie wird als Kontakt angelegt.",
     "mandate": "SEPA-Lastschriftmandat",
-    "mandateHint": "Optional. Mit IBAN und Mandatsdatum können Beiträge per Lastschrift eingezogen werden.",
     "accountHolder": "Kontoinhaber:in (falls abweichend)",
     "bicOptional": "BIC (optional)",
     "mandateRef": "Mandatsreferenz",
@@ -2522,6 +2978,7 @@
     "cancelHint": "Frühestes Ende bei Kündigung heute: {date} ({months} Monate Frist, zum Ende des Beitragszeitraums). Oder ein anderes Datum wählen.",
     "cancelOtherDate": "Anderes Enddatum (optional)",
     "noDues": "Keine Beiträge.",
+    "noDuesYet": "Noch keine Beiträge – sie entstehen, wenn du die Beiträge für einen Zeitraum erzeugst.",
     "markPaid": "Bezahlt",
     "toTrash": "In den Papierkorb",
     "dueStatus": {
@@ -2593,7 +3050,7 @@
     "collectionOn": "Einzug am",
     "createRun": "Lastschriftdatei erstellen",
     "collectionDateInvalid": "Das Einzugsdatum muss in der Zukunft liegen.",
-    "creditorMissing": "Trage zuerst Name, Gläubiger-ID und IBAN unter Einrichtung ein.",
+    "creditorMissing": "Trage zuerst Name, Gläubiger-ID und IBAN unter Mitglieder › Einstellungen ein.",
     "nothingToCollect": "Keine fälligen Beiträge mit Lastschriftmandat.",
     "runCreated": {
       "one": "Lastschriftdatei mit {count} Einzug erstellt.",
@@ -2601,6 +3058,8 @@
     },
     "runs": "Lastschriftdateien",
     "runLine": "Einzug am {date} · {count} Posten · {total}",
+    "runTitle": "Einzug am {date}",
+    "runDetail": "{count} Posten · {total}",
     "runStatus": {
       "exported": "Erstellt",
       "collected": "Eingezogen",
@@ -2728,13 +3187,71 @@
     "markReturned": "Rücklastschrift",
     "confirmReturned": "Zahlung als fehlgeschlagen markieren?",
     "confirmReturnedHint": "Der Beitrag ist dann wieder offen (z. B. Rücklastschrift) und zählt als überfällig.",
-    "paidUntilCol": "Bezahlt bis"
+    "paidUntilCol": "Bezahlt bis",
+    "noTypesTitle": "Noch keine Mitgliedsarten",
+    "emptyText": "Nimm das erste Mitglied auf oder importiere eure Liste (⋯ › Importieren).",
+    "importNeedsCrm": "Für den Import brauchst du zusätzlich das Recht, Kontakte zu bearbeiten: jede Zeile legt einen Kontakt an oder aktualisiert ihn.",
+    "paymentAutoShort": "Automatisch",
+    "optionalSection": "Beitrag, Lastschrift und Notiz (optional)",
+    "newPerson": "Neue Person anlegen",
+    "collectSepa": "Lastschrift",
+    "markDuePaid": "{amount} bezahlt",
+    "confirmPaid": "Beitrag über {amount} als bezahlt markieren?",
+    "confirmPaidHint": "Erst markieren, wenn das Geld da ist (Überweisung, bar). Lässt sich mit „Wieder offen“ zurücknehmen.",
+    "remindMember": "An offene Beiträge erinnern",
+    "confirmRemindMember": "Erinnerung an die überfälligen Beiträge schicken?",
+    "confirmRemindMemberHint": "Das Mitglied bekommt sofort eine E-Mail mit allen überfälligen Beiträgen.",
+    "confirmRemindOne": "An diesen Beitrag erinnern?",
+    "confirmRemindOneHint": "Das Mitglied bekommt sofort eine E-Mail.",
+    "confirmCardReset": "Neue Mitgliedskarte erstellen?",
+    "confirmCardResetHint": "Die alte Karte (QR-Code) gilt danach nicht mehr, auch nicht am Einlass.",
+    "confirmCancel": "Mitgliedschaft kündigen?",
+    "confirmCancelHint": "Sie endet zum gewählten Datum (ohne Datum: frühestmöglich laut Frist). Danach entstehen keine neuen Beiträge.",
+    "cancelDue": "Stornieren",
+    "confirmCancelDue": "Beitrag stornieren?",
+    "confirmCancelDueHint": "Er gilt dann nicht mehr als offen. Beiträge werden nie gelöscht.",
+    "statNext": "Nächster Beitrag",
+    "statOpen": "Offen",
+    "statOverdue": {
+      "one": "{count} überfällig",
+      "other": "{count} überfällig"
+    },
+    "statOpenCount": {
+      "one": "{count} Beitrag",
+      "other": "{count} Beiträge"
+    },
+    "otherMemberships": "Weitere Mitgliedschaften",
+    "details": "Angaben",
+    "dueOnShort": "fällig {date}",
+    "remindAllShort": "Erinnern",
+    "runStep1": "Datei herunterladen",
+    "runStep2": "Im Online-Banking hochladen (Einzug am {date})",
+    "runStep3": "Nach dem Einzug als eingezogen markieren",
+    "confirmCancelRun": "Lastschriftdatei verwerfen?",
+    "confirmCancelRunHint": "Nur verwerfen, wenn die Datei nicht bei der Bank eingereicht wurde. Die Beiträge sind dann wieder offen.",
+    "searchDues": "Mitglied suchen…",
+    "duesEmpty": "Noch keine Beiträge",
+    "duesEmptyText": "Beiträge entstehen aus den Mitgliedsarten: einmal pro Zeitraum erzeugen, dann kassieren oder per Lastschrift einziehen.",
+    "entryFeeShort": "Aufnahme {fee}",
+    "noticeShortValue": "{n} Monate Frist",
+    "typeCount": {
+      "one": "{count} Mitglied",
+      "other": "{count} Mitglieder"
+    },
+    "confirmDeleteType": "Mitgliedsart löschen?",
+    "confirmDeleteTypeHint": "Geht nur, solange keine Mitgliedschaft sie nutzt; sonst auf inaktiv setzen.",
+    "createType": "Mitgliedsart anlegen"
   },
   "forms": {
+    "closeForm": "Schließen",
+    "reopenForm": "Wieder öffnen",
+    "formClosed": "Formular geschlossen.",
+    "formReopened": "Formular wieder geöffnet.",
+    "confirmClose": "Formular schließen?",
+    "confirmCloseHint": "Die öffentliche Seite nimmt dann keine Einsendungen mehr an. Du kannst es jederzeit wieder öffnen.",
     "nav": "Formulare",
     "title": "Formulare",
     "new": "Neues Formular",
-    "create": "Anlegen",
     "empty": "Noch keine Formulare.",
     "formTitle": "Titel",
     "titlePlaceholder": "z. B. Mitgliedsantrag",
@@ -2762,9 +3279,12 @@
     "defaultSuccessMembership": "Danke für deinen Antrag! Wir melden uns, sobald der Vorstand ihn bearbeitet hat.",
     "tabs": {
       "builder": "Aufbau",
-      "submissions": "Einsendungen"
+      "submissions": "Einsendungen",
+      "submissionsNew": {
+        "one": "Einsendungen · {count} neu",
+        "other": "Einsendungen · {count} neu"
+      }
     },
-    "openPublic": "Öffentliche Seite",
     "settings": "Einstellungen",
     "slug": "Slug",
     "intro": "Einleitung",
@@ -2784,13 +3304,12 @@
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
     "remove": "Entfernen",
-    "label": "Beschriftung (optional)",
-    "help": "Hinweis (optional)",
+    "label": "Beschriftung",
+    "help": "Hinweis",
     "consentText": "Text der Einwilligung",
     "textBody": "Text",
     "required": "Pflichtfeld",
-    "addElement": "Hinzufügen",
-    "add": "Hinzufügen",
+    "addElement": "Element hinzufügen",
     "consent": "Ich stimme zu.",
     "toTrash": "Formular in den Papierkorb",
     "fields": {
@@ -2827,7 +3346,30 @@
     "emptyTrash": "Der Papierkorb ist leer.",
     "restore": "Wiederherstellen",
     "restored": "Formular wiederhergestellt.",
-    "confirmFailed": "Deine Angaben sind angekommen – die Bestätigungs-E-Mail konnte aber nicht verschickt werden."
+    "confirmFailed": "Deine Angaben sind angekommen – die Bestätigungs-E-Mail konnte aber nicht verschickt werden.",
+    "elementsInvalid": "Die Felder passen nicht: jedes Feld nur einmal, Einwilligungen brauchen einen Text.",
+    "published": "Formular veröffentlicht.",
+    "publish": "Veröffentlichen",
+    "copyLink": "Link kopieren",
+    "exportSubmissions": "Einsendungen exportieren",
+    "confirmTrash": "Formular in den Papierkorb?",
+    "confirmTrashHint": "Die öffentliche Seite ist dann nicht mehr erreichbar. Einsendungen bleiben; wiederherstellen geht 30 Tage lang.",
+    "mandateHint": "Kontoinhaber:in, IBAN, BIC und der Mandatstext mit eurer Gläubiger-ID.",
+    "confirmRemoveElement": "Element entfernen?",
+    "confirmRemoveElementHint": "Wird beim Speichern aus dem Formular genommen. Bisherige Einsendungen behalten ihre Antworten.",
+    "noNewSubmissions": "Keine neuen Einsendungen.",
+    "confirmAccept": "Einsendung annehmen?",
+    "confirmAcceptMember": "Als Mitglied aufnehmen?",
+    "confirmAcceptMemberHint": "Legt Kontakt und Mitgliedschaft an (mit Lastschriftmandat, falls angegeben).",
+    "confirmReject": "Einsendung ablehnen?",
+    "confirmRejectHint": "Es wird nichts angelegt; die Person bekommt keine Nachricht.",
+    "noMatch": "Kein Formular passt dazu.",
+    "emptyText": "Ein Formular ist eine öffentliche Seite, z. B. Kontaktformular oder Mitgliedsantrag; Einsendungen landen hier.",
+    "newCount": {
+      "one": "{count} neu",
+      "other": "{count} neu"
+    },
+    "createForm": "Formular anlegen"
   },
   "export": {
     "button": "Exportieren",
@@ -2835,6 +3377,27 @@
     "csv": "CSV"
   },
   "email": {
+    "after": {
+      "minutes": {
+        "one": "nach {count} Minute",
+        "other": "nach {count} Minuten"
+      },
+      "hours": {
+        "one": "nach {count} Stunde",
+        "other": "nach {count} Stunden"
+      },
+      "days": {
+        "one": "nach {count} Tag",
+        "other": "nach {count} Tagen"
+      }
+    },
+    "problemComplained": "{count} Spam",
+    "problemBounced": "{count} unzustellbar",
+    "problemFailed": "{count} fehlgeschlagen",
+    "recipientCount": {
+      "one": "{count} Person",
+      "other": "{count} Personen"
+    },
     "nav": "E-Mail",
     "title": "E-Mail",
     "tabs": {
@@ -2843,7 +3406,6 @@
       "log": "Versand"
     },
     "newCampaign": "Neue Kampagne",
-    "create": "Anlegen",
     "name": "Name",
     "namePlaceholder": "z. B. Newsletter Oktober",
     "nameRequired": "Der Name darf nicht leer sein.",
@@ -2862,7 +3424,7 @@
     "audience": "Empfänger:innen",
     "audienceTags": "Kontakte mit einem dieser Tags",
     "audienceMembers": "Alle aktiven Mitglieder",
-    "audienceHint": "Wähle Tags und/oder aktive Mitglieder. Abgemeldete Kontakte werden nie angeschrieben.",
+    "audienceHint": "Wähle Tags, aktive Mitglieder und/oder die Käufer:innen eines Events – gewählte Bedingungen gelten zusammen. Abgemeldete Kontakte werden nie angeschrieben.",
     "reach": {
       "one": "Geht an {count} Person.",
       "other": "Geht an {count} Personen."
@@ -2878,7 +3440,7 @@
     "testSent": "Test an {email} verschickt.",
     "noProvider": "Kein E-Mail-Versand eingerichtet (Einstellungen → Integrationen).",
     "subjectBodyRequired": "Betreff und Text sind nötig.",
-    "audienceRequired": "Wähle Empfänger:innen (Tags oder Mitglieder).",
+    "audienceRequired": "Wähle Empfänger:innen (Tags, Mitglieder oder ein Event).",
     "scheduleInvalid": "Der Zeitpunkt muss in der Zukunft liegen.",
     "scheduled": "Kampagne geplant.",
     "unscheduled": "Planung aufgehoben.",
@@ -2901,7 +3463,7 @@
       "hours": "Stunden",
       "days": "Tage"
     },
-    "active": "aktiv",
+    "active": "Aktiv",
     "delete": "Löschen",
     "deleted": "Gelöscht.",
     "automationInvalid": "Name, Auslöser, Betreff und Text sind nötig.",
@@ -2945,13 +3507,13 @@
     "sending": "Versand",
     "content": "Inhalt",
     "immediately": "sofort",
-    "paused": "pausiert",
+    "paused": "Pausiert",
     "noAutomations": "Noch keine Automationen.",
-    "emptyCampaignsText": "Eine Kampagne ist eine E-Mail an viele: an Tags oder alle aktiven Mitglieder, sofort oder geplant.",
+    "emptyCampaignsText": "Eine Kampagne ist ein Newsletter an viele: an Tags, aktive Mitglieder oder die Käufer:innen eines Events – sofort oder geplant.",
     "templates": {
-      "title": "Vorlagen",
+      "title": "E-Mail-Vorlagen",
       "hint": "Wie Ticket-, Gästelisten- und Wartelisten-Mails aussehen. Eine Vorlage passt für alle drei; die Standardvorlage gilt für jedes Event, das keine eigene wählt.",
-      "new": "Neue Vorlage",
+      "new": "Neue E-Mail-Vorlage",
       "default": "Standard",
       "makeDefault": "Standardvorlage für alle Events",
       "namePlaceholder": "z. B. Sommer-Look",
@@ -2965,7 +3527,9 @@
       "placeholders": "Platzhalter",
       "copyName": "Meine Event-Mail",
       "shopMails": "Shop-Mails",
-      "shopMailsHint": "Was Käufer:innen nach einer Bestellung bekommen – im Design der Standard-Vorlage oben. Dieselben Einstellungen wie unter Shop → Einstellungen."
+      "shopMailsHint": "Was Käufer:innen nach einer Bestellung bekommen – im Design der Standardvorlage oben. Welche Mails rausgehen und ihre Texte stellst du im Shop ein.",
+      "shopMailsLink": "Shop-Mails in den Shop-Einstellungen",
+      "create": "E-Mail-Vorlage anlegen"
     },
     "eventMail": {
       "greeting": "Hallo {name},",
@@ -3035,7 +3599,56 @@
       "all": "Alle",
       "system": "System-Mails",
       "bulk": "Kampagnen & Automationen"
-    }
+    },
+    "settings": {
+      "title": "E-Mail-Einstellungen",
+      "provider": "Versand",
+      "providerHint": "Über welchen Anbieter eure E-Mails rausgehen.",
+      "providerLink": "E-Mail-Anbieter in den Integrationen"
+    },
+    "audienceEvent": "Käufer:innen eines Events",
+    "audienceEventPlaceholder": "Event suchen …",
+    "audienceEventHint": "Alle mit einem gültigen oder genutzten Ticket für dieses Event.",
+    "sendingHint": "Erst an dich testen, dann planen – oder oben „Jetzt senden“.",
+    "confirmSend": {
+      "one": "An {count} Person senden?",
+      "other": "An {count} Personen senden?"
+    },
+    "confirmSendHint": "Die E-Mail geht sofort raus und lässt sich nicht zurückholen. Geänderte Empfänger:innen werden vorher gespeichert und neu gezählt.",
+    "confirmSchedule": {
+      "one": "Für {count} Person planen?",
+      "other": "Für {count} Personen planen?"
+    },
+    "confirmScheduleHint": "Zum gewählten Zeitpunkt geht die E-Mail an alle, die dann zu den Empfänger:innen gehören.",
+    "createCampaign": "Kampagne anlegen",
+    "created": "Kampagne angelegt.",
+    "scheduledFor": "Geht am {date} raus",
+    "lastSaved": "Zuletzt gespeichert {date}",
+    "sentTo": {
+      "one": "An {count} Person versendet",
+      "other": "An {count} Personen versendet"
+    },
+    "viewLog": "Versand ansehen",
+    "statsSent": "Versendet",
+    "statsQueued": {
+      "one": "{count} wartet",
+      "other": "{count} wartend"
+    },
+    "statsSkipped": "{count} übersprungen",
+    "statsDelivered": "Zugestellt",
+    "statsProblems": "Probleme",
+    "buyersName": "Käufer:innen: {event}",
+    "buyersOf": "Käufer:innen: {event}",
+    "trash": "Papierkorb",
+    "trashHint": "Kampagnen im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "emptyTrash": "Der Papierkorb ist leer.",
+    "noMatch": "Keine Kampagne passt dazu.",
+    "restore": "Wiederherstellen",
+    "restored": "Kampagne wiederhergestellt.",
+    "changed": "Geändert",
+    "createAutomation": "Automation anlegen",
+    "confirmDeleteAutomation": "Automation löschen?",
+    "confirmDeleteAutomationHint": "Mails dieser Automation, die noch warten, gehen nicht mehr raus."
   },
   "editor": {
     "toolbar": "Formatierung",
@@ -3532,7 +4145,6 @@
       "templates": "Vorlagen"
     },
     "title": "Vorlagen",
-    "intro": "Briefe und Bescheinigungen mit Platzhaltern: Kontakt wählen, Felder ausfüllen, als PDF herunterladen, ablegen oder per E-Mail senden.",
     "new": "Neue Vorlage",
     "create": "Anlegen",
     "name": "Name",
@@ -3561,7 +4173,6 @@
     "copied": "Kopie erstellt – jetzt anpassen.",
     "copySuffix": "(Kopie)",
     "edit": "Vorlage bearbeiten",
-    "save": "Speichern",
     "saved": "Vorlage gespeichert.",
     "nameRequired": "Bitte gib einen Namen ein.",
     "toTrash": "In den Papierkorb",
@@ -3572,7 +4183,6 @@
     "emptyTrash": "Der Papierkorb ist leer.",
     "trashHint": "Gelöschte Vorlagen werden nach {days} Tagen endgültig entfernt.",
     "empty": "Noch keine Vorlagen.",
-    "all": "Alle",
     "recipient": "Empfänger:in",
     "recipientPlaceholder": "Kontakt suchen …",
     "noRecipient": "Ohne Kontakt bleiben Anschrift und Kontakt-Platzhalter leer.",
@@ -3600,17 +4210,29 @@
       "fixed": "Es ist befristet und endet am {end}.",
       "open": "Es läuft auf unbestimmte Zeit und kann mit einer Frist von {notice} schriftlich gekündigt werden.",
       "openNoNotice": "Es läuft auf unbestimmte Zeit."
-    }
+    },
+    "duplicate": "Duplizieren",
+    "backToTemplates": "Zurück zu den Vorlagen",
+    "confirmSend": "Brief per E-Mail senden?",
+    "confirmSendHint": "Er geht als PDF an die E-Mail-Adresse der Empfängerin oder des Empfängers."
   },
   "search": {
+    "askSprout": "Sprout fragen: „{q}“",
+    "quick": "Schnellaktionen",
+    "actions": {"newContact": "Neuer Kontakt", "newEvent": "Neues Event", "scan": "Einlass öffnen", "newMembership": "Neue Mitgliedschaft", "newInvoice": "Neue Rechnung", "newOrder": "Neue Bestellung", "newProject": "Neues Projekt", "newCampaign": "Neue Kampagne"},
+    "goTo": "Gehe zu",
+    "keysMove": "auswählen",
+    "keysOpen": "öffnen",
     "open": "Suchen",
-    "placeholder": "Kontakte, Events, Rechnungen, Seiten …",
+    "placeholder": "Kontakte, Events, Seiten …",
     "pages": "Seiten",
     "empty": "Nichts gefunden.",
     "hint": "Tippe, um Kontakte, Mitglieder, Events, Rechnungen, Formulare, Dateien und Seiten zu finden.",
-    "loading": "Suche …"
+    "loading": "Suche …",
+    "recent": "Zuletzt geöffnet"
   },
   "waitlist": {
+    "off": "Für dieses Event gibt es keine Warteliste.",
     "title": "Ausgebucht – Warteliste",
     "text": "Trag dich ein: Wird ein Platz frei, bekommst du eine E-Mail und kannst ihn 24 Stunden lang sichern.",
     "name": "Dein Name",
@@ -3646,7 +4268,10 @@
     "offeredUntil": "bis {date}",
     "remove": "Entfernen",
     "removed": "Von der Warteliste entfernt.",
-    "hint": "Wird ein Platz frei, bekommt der oder die Nächste automatisch eine E-Mail und kann ihn 24 Stunden lang sichern."
+    "hint": "Wird ein Platz frei, bekommt der oder die Nächste automatisch eine E-Mail und kann ihn 24 Stunden lang sichern.",
+    "person": "Person",
+    "confirmRemove": "Von der Warteliste nehmen?",
+    "confirmRemoveHint": "Ein für die Person reservierter Platz geht an den oder die Nächste. Die Person wird nicht benachrichtigt."
   },
   "time": {
     "title": "Zeiterfassung",
@@ -3655,7 +4280,6 @@
     "clockedIn": "Eingestempelt.",
     "clockedOut": "Ausgestempelt.",
     "since": "Eingestempelt seit {time}",
-    "clockHint": "Ohne Schicht einstempeln (Schichten stempelst du unten bei der Schicht).",
     "add": "Zeit nachtragen",
     "edit": "Zeiteintrag bearbeiten",
     "save": "Speichern",
@@ -3670,9 +4294,9 @@
     "net": "Arbeitszeit",
     "what": "Schicht / Notiz",
     "status": "Status",
-    "running": "läuft",
-    "approvedBadge": "freigegeben",
-    "openBadge": "offen",
+    "running": "Läuft",
+    "approvedBadge": "Freigegeben",
+    "openBadge": "Offen",
     "start": "Beginn",
     "end": "Ende",
     "breakMinutes": "Pause (Minuten)",
@@ -3680,12 +4304,15 @@
     "breakHint": "Leer lassen = gesetzliche Pause (über 6 h: 30 min, über 9 h: 45 min).",
     "note": "Notiz",
     "monthTotal": "Arbeitszeit diesen Monat: {hours}",
-    "approveMonth": "{count} Einträge freigeben",
+    "approveMonth": "Monat freigeben",
     "reopen": "Freigabe aufheben",
     "approved": "Monat freigegeben.",
     "reopened": "Freigabe aufgehoben.",
     "toApprove": "{count} offen",
-    "warningCount": "{count} Hinweise",
+    "warningCount": {
+      "one": "{count} Hinweis",
+      "other": "{count} Hinweise"
+    },
     "exportOnlyApproved": "{count} Einträge sind noch nicht freigegeben und fehlen im Export.",
     "exportTotals": "Summen pro Person",
     "exportEntries": "Alle Einträge",
@@ -3722,19 +4349,48 @@
     "clockInProject": "Auf Projekt einstempeln",
     "runningOn": "Läuft gerade auf {project} seit {time} – Ausstempeln beendet das.",
     "clockHintProject": "Einstempeln startet die Zeit auf diesem Projekt.",
-    "projectTotal": "Zeit auf dem Projekt"
+    "projectTotal": "Zeit auf dem Projekt",
+    "create": "Zeit eintragen",
+    "confirmDelete": "Zeiteintrag löschen?",
+    "confirmDeleteHint": "Das lässt sich nicht rückgängig machen.",
+    "approveAll": "Alle freigeben",
+    "approvedAll": "Alle offenen Einträge freigegeben.",
+    "confirmApproveAll": {
+      "one": "1 Eintrag freigeben?",
+      "other": "{count} Einträge freigeben?"
+    },
+    "confirmApproveAllHint": "Alle abgeschlossenen, offenen Einträge dieses Monats, für alle Personen. Danach können sie sie nicht mehr ändern.",
+    "openToApprove": "Offen zur Freigabe",
+    "missingInExport": "Fehlen noch im Export",
+    "allApproved": "Alles freigegeben",
+    "notices": "Hinweise",
+    "noticesHint": "Pausen, Ruhezeit, 10 h",
+    "approveNext": {
+      "one": "1 Eintrag im {month} ist noch nicht freigegeben.",
+      "other": "{count} Einträge im {month} sind noch nicht freigegeben."
+    },
+    "confirmApprove": {
+      "one": "1 Eintrag freigeben?",
+      "other": "{count} Einträge freigeben?"
+    },
+    "confirmApproveHint": "Danach kann die Person diese Einträge nicht mehr ändern. Erst freigegebene Zeiten kommen in den Export.",
+    "confirmReopen": "Freigabe aufheben?",
+    "confirmReopenHint": "Die Einträge des Monats sind dann wieder offen: die Person kann sie ändern, und sie fehlen im Export.",
+    "entries": "Zeiten",
+    "projectOptional": "Projekt (optional)"
   },
   "hr": {
+    "privateEmpty": "Noch nichts eingetragen.",
     "nav": "Personal",
     "title": "Personal",
     "tabs": {
-      "people": "Mitarbeitende",
+      "people": "Personen",
       "absences": "Abwesenheiten",
       "chart": "Organigramm",
-      "payroll": "Lohnvorbereitung"
+      "payroll": "Lohn"
     },
     "new": "Neue Person",
-    "create": "Anlegen",
+    "create": "Person anlegen",
     "created": "Person angelegt.",
     "saved": "Gespeichert.",
     "search": "Name, Funktion oder Abteilung suchen…",
@@ -3779,7 +4435,7 @@
     "vacationDays": "Urlaubstage pro Jahr",
     "notes": "Notizen",
     "since": "Seit",
-    "left": "ausgeschieden",
+    "left": "Ausgeschieden",
     "details": "Daten & Vertrag",
     "private": "Persönliche Daten",
     "privateHint": "Nur für Personal-Verwaltende sichtbar.",
@@ -3796,7 +4452,7 @@
     "healthInsurance": "Krankenkasse",
     "addAbsence": "Abwesenheit eintragen",
     "editAbsence": "Abwesenheit bearbeiten",
-    "deleteAbsence": "Löschen",
+    "deleteAbsence": "Abwesenheit löschen",
     "absenceSaved": "Abwesenheit gespeichert.",
     "absenceDeleted": "Abwesenheit gelöscht.",
     "employee": "Person",
@@ -3824,7 +4480,7 @@
     "approvedHours": "{hours} h freigegeben",
     "gross": "brutto ca. {amount}",
     "grossShort": "Brutto (ca.)",
-    "noHours": "Keine Stunden – mit dem Schicht-Team verknüpfen, um Zeiten zu übernehmen.",
+    "noHours": "Keine Stunden – nicht mit dem Schicht-Team verknüpft.",
     "toHours": "Zu den Zeiten",
     "unapproved": {
       "one": "{count} Zeiteintrag ist noch nicht freigegeben und zählt noch nicht.",
@@ -3849,12 +4505,92 @@
     "account": "Konto",
     "member": "Mitglied der Organisation",
     "pickMember": "Mitglied wählen…",
-    "memberHint": "Mitarbeitende sind Mitglieder eurer Organisation (Einstellungen → Team). Name und E-Mail kommen aus ihrem Konto.",
+    "memberHint": "Name und E-Mail kommen aus dem Konto des Mitglieds.",
     "memberTaken": "Dieses Mitglied ist schon als Mitarbeiter:in angelegt.",
     "bankTax": "Bank, Steuer & Sozialversicherung",
-    "roleCard": "Person & Rolle"
+    "roleCard": "Person & Rolle",
+    "views": {
+      "list": "Liste",
+      "chart": "Organigramm"
+    },
+    "allTypes": "Alle Beschäftigungen",
+    "trashHint": "Personen im Papierkorb werden nach 30 Tagen endgültig gelöscht.",
+    "emptyTrash": "Der Papierkorb ist leer.",
+    "emptyText": "Lege für Mitglieder eurer Organisation Vertrag, Lohn, Urlaub und Dokumente an.",
+    "inviteLink": "Mitglieder einladen",
+    "noManager": "Niemand",
+    "shiftTeam": "Schicht-Team",
+    "noShiftTeam": "Nicht verknüpft",
+    "shiftTeamHint": "Freigegebene Stunden dieses Team-Mitglieds zählen für den Lohn.",
+    "staffTaken": "Dieses Team-Mitglied ist schon mit einer anderen Person verknüpft.",
+    "noStaffRow": "Diese Person ist nicht im Schicht-Team.",
+    "staffLinked": "Mit dem Schicht-Team verknüpft.",
+    "linkStaff": "Mit {name} im Schicht-Team verknüpfen",
+    "addToTeam": "Zum Schicht-Team hinzufügen",
+    "toPerson": "Zur Person",
+    "confirmDeleteAbsence": "Abwesenheit löschen?",
+    "confirmDeleteAbsenceHint": "Urlaubs- und Krankentage werden neu gezählt. Das lässt sich nicht rückgängig machen.",
+    "awayToday": "Heute abwesend: {names}",
+    "nobodyAway": "Heute ist niemand abwesend",
+    "allKinds": "Alle Arten",
+    "grossTotal": "Brutto ca. gesamt",
+    "approvedHoursStat": "Freigegebene Stunden",
+    "openHint": "Zu den Stunden",
+    "contactRecord": "Kontakt",
+    "hoursPay": "Stunden & Lohn",
+    "startsAt": "ab {date}",
+    "active": "Aktiv",
+    "editPrivate": "Persönliche Daten bearbeiten",
+    "vacationLeftStat": "Urlaub übrig {year}",
+    "ofDays": "von {total} Tagen",
+    "sickStat": "Krank {year}",
+    "hoursStat": "Stunden {month}",
+    "grossStat": "Brutto ca. diesen Monat",
+    "absencesYear": "Abwesenheiten {year}",
+    "inCalendar": "Im Kalender",
+    "address": "Adresse",
+    "iban": "IBAN",
+    "bic": "BIC",
+    "properties": "Eigenschaften",
+    "assignment": "Zuordnung",
+    "change": "Ändern",
+    "linkedHidden": "verknüpft"
   },
   "courses": {
+    "allPresent": "Alle da",
+    "attendanceStat": "Anwesenheit Ø",
+    "backToCourses": "Zurück zu den Kursen",
+    "createDate": "Termin anlegen",
+    "createdWithDate": "Kurs mit dem ersten Termin angelegt.",
+    "dateCancelledOk": "Der Termin fällt aus.",
+    "dateResumedOk": "Der Termin findet statt.",
+    "earlierCount": {"one": "{count} früherer Termin", "other": "{count} frühere Termine"},
+    "emptyText": "Lege einen Kurs an, trag die Termine ein und melde Leute an – voll? Dann kommt die Warteliste, und wer abspringt, macht den Platz frei.",
+    "emptyTrash": "Der Papierkorb ist leer.",
+    "everyN": {"one": "jede Woche", "other": "alle {count} Wochen"},
+    "firstDate": "Erster Termin (optional)",
+    "firstDateHint": "Weitere und regelmäßige Termine legst du danach im Kurs an.",
+    "fullHint": "Der Kurs ist voll – die Person kommt auf die Warteliste.",
+    "heldCount": {"one": "über {count} Termin", "other": "über {count} Termine"},
+    "linked": "Verknüpft",
+    "noteOptional": "Notiz (optional)",
+    "noUpcoming": "Keine kommenden Termine.",
+    "person": "Person",
+    "properties": "Eigenschaften",
+    "resumeDate": "Findet statt",
+    "rhythm": "Rhythmus",
+    "takeAttendance": "Anwesenheit",
+    "timeOfDay": "Uhrzeit",
+    "today": "Heute",
+    "trashHint": "Gelöschtes wird nach {days} Tagen endgültig entfernt.",
+    "waitingHint": "Wird ein Platz frei, rückt die oberste Person nach.",
+    "weekly": "jede Woche",
+    "confirmRemove": "Abmelden?",
+    "confirmRemoveHint": "Wer auf der Warteliste steht, rückt nach.",
+    "confirmCancelDate": "Termin fällt aus?",
+    "confirmCancelDateHint": "Er bleibt in der Liste, durchgestrichen; die Anwesenheit zählt nicht.",
+    "confirmDeleteDate": "Termin löschen?",
+    "confirmDeleteDateHint": "Die Anwesenheit dieses Termins wird mit gelöscht.",
     "nav": "Kurse",
     "title": "Kurse",
     "new": "Neuer Kurs",
@@ -3865,7 +4601,6 @@
     "empty": "Noch keine Kurse.",
     "noMatch": "Kein Kurs gefunden.",
     "trash": "Papierkorb",
-    "backToList": "Zurück zur Liste",
     "toTrash": "In den Papierkorb",
     "trashed": "Kurs in den Papierkorb gelegt.",
     "inTrash": "Dieser Kurs liegt im Papierkorb und wird nach 30 Tagen endgültig gelöscht.",
@@ -3882,12 +4617,10 @@
     "details": "Kursdaten",
     "nextDate": "Nächster Termin",
     "places": "Belegt",
-    "full": "voll",
-    "waitingCount": "{count} warten",
-    "placesOf": "{taken} von {total} Plätzen belegt",
-    "participantsCount": {
-      "one": "{count} Teilnehmer:in",
-      "other": "{count} Teilnehmende"
+    "full": "Voll",
+    "waitingCount": {
+      "one": "{count} wartet",
+      "other": "{count} warten"
     },
     "participants": "Teilnehmende",
     "addPerson": "Person hinzufügen",
@@ -3910,9 +4643,9 @@
     "rate": "{rate} % da",
     "status": "Status",
     "statuses": {
-      "enrolled": "angemeldet",
+      "enrolled": "Angemeldet",
       "waiting": "Warteliste",
-      "cancelled": "abgemeldet"
+      "cancelled": "Abgemeldet"
     },
     "dates": "Termine",
     "noDates": "Noch keine Termine.",
@@ -3923,9 +4656,6 @@
     "endTime": "Ende",
     "from": "Ab",
     "to": "Bis",
-    "every": "Alle",
-    "weeks": "Woche(n)",
-    "everyWeeks": "Rhythmus in Wochen",
     "createDates": "Termine anlegen",
     "datesAdded": {
       "one": "{count} Termin angelegt.",
@@ -3935,9 +4665,6 @@
     "end": "Ende",
     "cancelledDate": "fällt aus",
     "presentOf": "{present} von {total} da",
-    "attendance": "Anwesenheit",
-    "saveAttendance": "Anwesenheit speichern",
-    "attendanceSaved": "Anwesenheit gespeichert.",
     "editDate": "Termin ändern",
     "dateNotePlaceholder": "z. B. Raum 2 oder Ersatz-Leitung",
     "cancelDate": "Termin fällt aus",
@@ -3954,6 +4681,8 @@
     "tooManyDates": "Das wären über 200 Termine – bitte den Zeitraum verkürzen."
   },
   "automations": {
+    "deleteShort": "Kommt in den Papierkorb; Geld wird nie gelöscht.",
+    "valuesShort": "Werte können rechnen, z. B. {x}+1 oder today+6m.",
     "nav": "Automationen",
     "title": "Automationen",
     "intro": "Wenn etwas passiert, erledigt roots den Rest: Bedingungen prüfen, warten, E-Mails senden, Tags setzen, das Team informieren.",
@@ -3964,8 +4693,22 @@
     "untitled": "Neue Automation",
     "when": "Auslöser",
     "status": "Status",
-    "on": "aktiv",
-    "off": "aus",
+    "duration": {
+      "minutes": {
+        "one": "{count} Minute",
+        "other": "{count} Minuten"
+      },
+      "hours": {
+        "one": "{count} Stunde",
+        "other": "{count} Stunden"
+      },
+      "days": {
+        "one": "{count} Tag",
+        "other": "{count} Tage"
+      }
+    },
+    "on": "Aktiv",
+    "off": "Pausiert",
     "runs": "Durchläufe",
     "waitingCount": "{count} wartend",
     "failedCount": "{count} Fehler",
@@ -3978,8 +4721,6 @@
     "importFile": "JSON-Datei",
     "importButton": "Importieren",
     "importInvalid": "Das ist keine gültige exportierte Automation.",
-    "activate": "Aktivieren",
-    "deactivate": "Deaktivieren",
     "activated": "Automation ist aktiv.",
     "deactivated": "Automation ist aus.",
     "activeHint": "Aktiv: Änderungen gelten für neue Schritte, auch bei Durchläufen, die gerade warten.",
@@ -3995,8 +4736,28 @@
     "savedDraft": "Als Entwurf gespeichert – vor dem Aktivieren die Hinweise beheben.",
     "descriptionPlaceholder": "Wofür ist diese Automation? (optional)",
     "addStep": "Schritt hinzufügen",
+    "insertStep": "Schritt hier einfügen",
+    "searchStep": "Schritt suchen …",
+    "needsSetup": "Noch einrichten",
+    "description": "Beschreibung",
+    "offHint": "Pausiert: Es starten keine neuen Durchläufe. Einschalten speichert zuerst, was du siehst.",
+    "savedShort": "Gespeichert",
+    "issuesTitle": "Was noch fehlt",
+    "issuesCount": { "one": "{count} offen", "other": "{count} offen" },
+    "issues": {
+      "noTrigger": "Es fehlt ein Auslöser.",
+      "oneTrigger": "Nur ein Auslöser pro Automation.",
+      "incomplete": "Ein Schritt ist noch nicht fertig eingestellt.",
+      "branches": "Eine Bedingung braucht beschriftete Ausgänge (ja/nein).",
+      "oneNext": "Ein Schritt kann nur einen nächsten Schritt haben – für Verzweigungen eine Bedingung nutzen.",
+      "intoTrigger": "In den Auslöser kann nichts hineinführen.",
+      "danglingEdge": "Eine Verbindung führt ins Leere.",
+      "unreachable": "Ein Schritt ist mit nichts verbunden.",
+      "cycle": "Die Automation darf sich nicht im Kreis drehen.",
+      "nothingAfterTrigger": "Nach dem Auslöser passiert noch nichts.",
+      "duplicateIds": "Doppelte Schritte."
+    },
     "settings": "Einstellungen",
-    "selectHint": "Wähle einen Schritt auf der Fläche, um ihn einzustellen. Verbinde Schritte, indem du vom unteren Punkt zum nächsten Schritt ziehst.",
     "removeStep": "Schritt entfernen",
     "yes": "ja",
     "no": "nein",
@@ -4029,12 +4790,12 @@
     "runCancelled": "Durchlauf abgebrochen.",
     "all": "Alle",
     "runStatus": {
-      "queued": "wartet auf Start",
-      "running": "läuft",
-      "waiting": "wartet",
-      "done": "fertig",
+      "queued": "Wartet auf Start",
+      "running": "Läuft",
+      "waiting": "Wartet",
+      "done": "Fertig",
       "failed": "Fehler",
-      "cancelled": "abgebrochen"
+      "cancelled": "Abgebrochen"
     },
     "units": {
       "minutes": "Minuten",
@@ -4092,19 +4853,7 @@
       "date_lt": "vor",
       "date_lte": "am oder vor"
     },
-    "problems": {
-      "noTrigger": "Es fehlt ein Auslöser.",
-      "oneTrigger": "Nur ein Auslöser pro Automation.",
-      "incomplete": "Ein Schritt ist noch nicht fertig eingestellt.",
-      "branches": "Eine Bedingung braucht beschriftete Ausgänge (ja/nein).",
-      "oneNext": "Ein Schritt kann nur einen nächsten Schritt haben – für Verzweigungen eine Bedingung nutzen.",
-      "intoTrigger": "In den Auslöser kann nichts hineinführen.",
-      "danglingEdge": "Eine Verbindung führt ins Leere.",
-      "unreachable": "Ein Schritt ist mit nichts verbunden.",
-      "cycle": "Die Automation darf sich nicht im Kreis drehen.",
-      "nothingAfterTrigger": "Nach dem Auslöser passiert noch nichts.",
-      "duplicateIds": "Doppelte Schritte."
-    },
+    "problems": "Offen",
     "templates": {
       "welcomeContact": {
         "name": "Willkommens-E-Mail",
@@ -4663,7 +5412,7 @@
     "testOwn": "Eigene Testdaten wählen …",
     "testNone": "– keine –",
     "noSamplesOwn": "Für diesen Auslöser ist noch nichts passiert – wähl einfach Datensätze, mit denen du testen willst.",
-    "defaultGuestList": "Leer lassen = Standard-Gästeliste der Veranstaltung dieses Ablaufs (wird bei Bedarf angelegt).",
+    "defaultGuestList": "Leer lassen = Standard-Gästeliste des Events dieses Ablaufs (wird bei Bedarf angelegt).",
     "dateReached": "Datum erreicht",
     "dateReachedHint": "Jeden Tag einmal pro Datensatz, dessen Datum heute dran ist – z. B. 28 Tage vor Vertragsende, am Geburtstag oder 3 Tage nach einem Termin.",
     "dateRecord": "Für jede(n)",
@@ -4671,7 +5420,32 @@
     "eachOf": "Jeweils",
     "eachLimit": "Höchstens",
     "eachHint": "Startet für jeden Treffer einen eigenen Ablauf ab dem nächsten Schritt – der Treffer steht dort als Ergebnis bereit (z. B. für eine E-Mail an jede Person). Höchstens 200 pro Durchlauf; in einem solchen Ablauf ist kein weiteres „Für jeden“ möglich.",
-    "valuesHint": "Rechnen: Zahlen {x}+1, {x}*3, floor({x}/100) · Daten today+6m, {x}+2q (Quartale), quarterend(today), max({x}, today)+6m"
+    "valuesHint": "Rechnen: Zahlen {x}+1, {x}*3, floor({x}/100) · Daten today+6m, {x}+2q (Quartale), quarterend(today), max({x}, today)+6m",
+    "activeSwitch": "Automation ein- oder ausschalten",
+    "backToList": "Zurück zu den Automationen",
+    "error": "Fehler",
+    "lastRun": "Letzter Lauf",
+    "neverRan": "noch nie gelaufen",
+    "noSteps": "Noch keine Schritte.",
+    "restore": "Wiederherstellen",
+    "restored": "Automation wiederhergestellt.",
+    "runOf": "Durchlauf vom {when}",
+    "stepFailed": "fehlgeschlagen",
+    "stepOk": "erledigt",
+    "trash": "Papierkorb",
+    "trashEmpty": "Der Papierkorb ist leer.",
+    "trashHint": "Automationen im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "waitsUntil": "Wartet bis",
+    "confirmActivate": "Automation einschalten?",
+    "confirmActivateHint": "Ab jetzt läuft sie bei jedem passenden Ereignis und verschickt, ändert und legt an, was sie vorsieht. Ungespeicherte Änderungen werden vorher gespeichert.",
+    "confirmCancel": "Durchlauf abbrechen?",
+    "confirmCancelHint": "Die restlichen Schritte werden nicht mehr ausgeführt.",
+    "runFilter": {
+      "waiting": "Wartet",
+      "failed": "Fehler",
+      "done": "Erledigt",
+      "cancelled": "Abgebrochen"
+    }
   },
   "numbers": {
     "next": "Nächste Nummer",
@@ -4716,8 +5490,8 @@
       "perMonth": "Eintritte und Austritte pro Monat"
     },
     "events": {
-      "title": "Veranstaltungen & Einlass",
-      "count": "Veranstaltungen",
+      "title": "Events & Einlass",
+      "count": "Events",
       "sold": "Tickets verkauft",
       "revenue": "Ticketumsatz",
       "admitted": "Eingelassen",
@@ -4725,10 +5499,10 @@
       "membersIn": "Mitglieder",
       "guestsIn": "Gäste",
       "membersByType": "Eingelassene Mitglieder nach Mitgliedsart",
-      "event": "Veranstaltung",
+      "event": "Event",
       "occupancy": "Auslastung",
-      "none": "Keine Veranstaltungen in diesem Zeitraum.",
-      "perEvent": "Eingelassen pro Veranstaltung"
+      "none": "Keine Events in diesem Zeitraum.",
+      "perEvent": "Eingelassen pro Event"
     },
     "payments": {
       "title": "Umsatz",
@@ -4739,7 +5513,9 @@
       "tickets": "davon Tickets",
       "members": "davon Mitglieder",
       "invoices": "davon Rechnungen",
-      "guestlists": "davon Gästelisten"
+      "guestlists": "davon Gästelisten",
+      "shop": "davon Shop",
+      "test": "davon Testzahlungen"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -4783,16 +5559,17 @@
       "bySphere": "Nach Bereich",
       "balances": "Bestände zum Ende des Zeitraums",
       "noSphere": "ohne Bereich"
-    }
+    },
+    "custom": "Eigener Zeitraum"
   },
   "cashbook": {
     "nav": "Kassenbuch",
     "title": "Kassenbuch",
     "accounts": "Kassen & Konten",
-    "newAccount": "Kasse / Konto",
-    "editAccount": "Konto bearbeiten",
+    "newAccount": "Neue Kasse",
+    "editAccount": "Kasse bearbeiten",
     "inactive": "inaktiv",
-    "noAccounts": "Noch keine Kasse – leg zuerst eine Kasse oder ein Konto an (z. B. „Barkasse“ oder „Abendkasse“).",
+    "noAccounts": "Leg zuerst eine Kasse oder ein Konto an, z. B. „Barkasse“ oder „Abendkasse“.",
     "prevMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "monthClosed": "Abgeschlossen",
@@ -4800,7 +5577,7 @@
     "income": "Einnahmen",
     "expenses": "Ausgaben",
     "closingBalance": "Endbestand",
-    "newEntry": "Buchung",
+    "newEntry": "Neue Buchung",
     "entry": "Buchung",
     "number": "Nummer",
     "date": "Datum",
@@ -4836,7 +5613,7 @@
     "accountName": "Name",
     "accountPlaceholder": "z. B. Barkasse, Abendkasse, Girokonto",
     "accountKind": "Art",
-    "opening": "Anfangsbestand (€)",
+    "opening": "Anfangsbestand",
     "openingOn": "Stand vom",
     "accountActive": "Aktiv",
     "accountSaved": "Gespeichert.",
@@ -4850,7 +5627,7 @@
     "closing": "Monatsabschluss",
     "closeLater": "Abschließen geht, sobald der Monat vorbei ist.",
     "closeHint": "Endbestand laut Buchungen: {balance}. Nach dem Abschluss nimmt der Monat keine Buchungen mehr an.",
-    "counted": "Gezählter Bestand (Kassensturz, €)",
+    "counted": "Gezählter Bestand (Kassensturz)",
     "note": "Notiz",
     "closeMonth": "Monat abschließen",
     "closed": "Monat abgeschlossen.",
@@ -4861,7 +5638,21 @@
     "descriptionRequired": "Bitte eine Beschreibung angeben.",
     "invoiceNotOpen": "Nur offene Rechnungen lassen sich mit einer Einnahme bezahlen.",
     "cantReverseReversal": "Ein Storno lässt sich nicht stornieren.",
-    "alreadyReversed": "Diese Buchung ist schon storniert."
+    "alreadyReversed": "Diese Buchung ist schon storniert.",
+    "createAccount": "Kasse anlegen",
+    "noAccountsTitle": "Noch keine Kasse",
+    "categoryOptional": "Kategorie (optional)",
+    "counterpartyOptional": "Von / an (optional)",
+    "invoiceSearch": "Offene Rechnung suchen…",
+    "closeDue": "{month} ist vorbei. Endbestand laut Buchungen: {balance}.",
+    "closeTitle": "{month} abschließen",
+    "countedHint": "Optional: Was in der Kasse liegt. Die Differenz zum Endbestand wird festgehalten.",
+    "confirmBook": "Buchung speichern?",
+    "confirmBookHint": "Sie bekommt eine Nummer und lässt sich danach nicht mehr ändern – Fehler werden storniert.",
+    "confirmReverse": "Buchung stornieren?",
+    "confirmReverseHint": "Es wird eine Gegenbuchung mit heutigem Datum angelegt; die Buchung selbst bleibt sichtbar.",
+    "confirmClose": "Monat abschließen?",
+    "confirmCloseHint": "Danach nimmt der Monat keine Buchungen mehr an. Das lässt sich nicht rückgängig machen."
   },
   "wiki": {
     "nav": "Wissen",
@@ -4977,7 +5768,15 @@
       "remove": "Icon entfernen"
     },
     "iconInvalid": "Bitte ein Emoji wählen.",
-    "creating": "Seite wird angelegt …"
+    "moveTo": "Verschieben nach …",
+    "move": "Verschieben",
+    "moved": "Seite verschoben.",
+    "topLevel": "Oberste Ebene",
+    "emptyTitle": "Noch keine Seiten",
+    "emptyText": "Sammelt Wissen, Abläufe und Anleitungen eures Teams an einem Ort.",
+    "trashHint": "Seiten im Papierkorb werden nach {days} Tagen endgültig gelöscht.",
+    "below": "Unter „{title}“",
+    "create": "Seite anlegen"
   },
   "emoji": {
     "search": "Emoji suchen …",
@@ -4987,15 +5786,62 @@
   "nav": {
     "overview": "Übersicht",
     "import": "Import",
-    "events": "Veranstaltungen",
+    "events": "Events",
     "finance": "Finanzen",
     "communication": "Kommunikation",
-    "campaigns": "E-Mail-Kampagnen",
-    "emailAutomations": "E-Mail-Automationen",
-    "emailLog": "E-Mail-Versand",
-    "emailTemplates": "E-Mail-Vorlagen"
+    "emails": "E-Mails"
   },
   "projects": {
+    "descriptionPlaceholder": "Beschreibung hinzufügen …",
+    "tasks": "Aufgaben",
+    "task": "Aufgabe",
+    "newTask": "Neue Aufgabe",
+    "createTask": "Aufgabe anlegen",
+    "whose": "Wessen Aufgaben",
+    "mineShort": "Meine",
+    "showAll": "Alle Aufgaben anzeigen",
+    "emptyMine": "Keine Aufgaben für dich",
+    "emptyMineText": "Aufgaben, bei denen du zuständig bist, erscheinen hier – nach Fälligkeit sortiert.",
+    "emptyTasks": "Noch keine Aufgaben",
+    "emptyTasksText": "Tippe oben eine Aufgabe ein und drücke Enter, oder lege sie mit Details an.",
+    "groupBy": "Gruppieren",
+    "groups": {
+      "status": "nach Status",
+      "due": "nach Fälligkeit"
+    },
+    "buckets": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "week": "Nächste 7 Tage",
+      "later": "Später",
+      "none": "Ohne Datum"
+    },
+    "taskRestored": "Aufgabe wiederhergestellt.",
+    "backToTasks": "Zurück zu den Aufgaben",
+    "taskTrashHint": "Gelöschte Aufgaben bleiben {days} Tage hier und lassen sich wiederherstellen.",
+    "columnsNav": "Spalten",
+    "descriptionAdd": "Beschreibung hinzufügen …",
+    "properties": "Eigenschaften",
+    "openProject": "Zum Projekt",
+    "open": "Offen",
+    "overdue": "Überfällig",
+    "hours": "Stunden",
+    "openTasks": {
+      "one": "Offene Aufgabe",
+      "other": "Offene Aufgaben ({count})"
+    },
+    "showAllTasks": "Alle anzeigen",
+    "allDone": "Alle Aufgaben sind erledigt.",
+    "noTasksYet": "Noch keine Aufgaben.",
+    "linkAction": "Verknüpfen",
+    "trashedTasks": "Gelöschte Aufgaben",
+    "confirmUnlink": "Verknüpfung entfernen?",
+    "confirmUnlinkHint": "Der verknüpfte Eintrag selbst bleibt erhalten.",
+    "descriptionOptional": "Beschreibung (optional)",
+    "isDoneShort": "erledigt",
+    "addColumn": "Spalte hinzufügen",
+    "confirmDeleteStatus": "Spalte löschen?",
+    "confirmDeleteStatusHint": "Eine Spalte, die noch Einträge enthält, lässt sich nicht löschen.",
     "nav": "Projekte",
     "title": "Projekte",
     "setup": "Einrichtung",
@@ -5013,7 +5859,6 @@
     "assignee": "Zuständig",
     "assignees": "Zuständig",
     "everyone": "Alle",
-    "mine": "Meine Aufgaben",
     "due": "Fällig",
     "anyDue": "Jede Fälligkeit",
     "dues": {
@@ -5069,7 +5914,6 @@
     "columns": "Spalten des Boards",
     "moveTo": "Verschieben",
     "allProjects": "Alle Projekte",
-    "allTasks": "Alle Aufgaben",
     "backToProjects": "Zurück zu den Projekten",
     "createProject": "Projekt anlegen",
     "deletedAt": "Gelöscht am",
@@ -5082,14 +5926,13 @@
     "leadBy": "Verantwortlich: {name}",
     "noLead": "Niemand",
     "links": "Verknüpft",
-    "linksHint": "Wiki-Seiten, Veranstaltungen, Kontakte … die zum Projekt gehören.",
+    "linksHint": "Wiki-Seiten, Events, Kontakte … die zum Projekt gehören.",
     "linkSearch": "Suchen und verknüpfen …",
     "unlink": "Verknüpfung entfernen",
     "name": "Name",
     "newProject": "Neues Projekt",
     "noProject": "Ohne Projekt",
     "noProjects": "Keine Projekte gefunden.",
-    "openBoard": "Zum Board",
     "overdueCount": {
       "one": "{count} Aufgabe überfällig",
       "other": "{count} Aufgaben überfällig"
@@ -5118,7 +5961,7 @@
     "commentEmpty": "Bitte einen Kommentar schreiben oder eine Datei anhängen.",
     "linkKinds": {
       "wiki_pages": "Wiki",
-      "events": "Veranstaltung",
+      "events": "Event",
       "contacts": "Kontakt",
       "courses": "Kurs",
       "rentals": "Vergabe",
@@ -5153,6 +5996,62 @@
     "time": "Uhrzeit"
   },
   "rentals": {
+    "properties": "Eigenschaften",
+    "topLevel": "Oberste Ebene",
+    "change": "Ändern",
+    "rentableShort": "Vermietbar",
+    "lendableShort": "Wird ausgegeben",
+    "includedLabel": "Gehört fest dazu",
+    "takeBack": "Zurücknehmen",
+    "confirmReturn": "Zurücknehmen?",
+    "confirmReturnHint": "Die Vergabe endet jetzt.",
+    "nowStat": "Jetzt",
+    "nextStat": "Nächste Vergabe",
+    "rentStat": "Miete",
+    "outCount": {"one": "{count} ausgegeben", "other": "{count} ausgegeben"},
+    "addChildrenLink": "Hinzufügen",
+    "addChildrenTitle": "Zum Objekt hinzufügen",
+    "addOneFull": "Einzeln mit allen Angaben anlegen",
+    "linked": "Verknüpft",
+    "noteOptional": "Notiz (optional)",
+    "noParentPick": "Oberste Ebene",
+    "parentHint": "Leer lassen für die oberste Ebene.",
+    "personAdded": "Person hinzugefügt.",
+    "personRemoved": "Person entfernt.",
+    "cancelledOk": "Storniert.",
+    "confirmedOk": "Bestätigt.",
+    "backToRentals": "Zurück zu den Vergaben",
+    "backToObjects": "Zurück zu den Objekten",
+    "noRentalsHere": "Keine Vergaben in dieser Ansicht.",
+    "listEmptyText": "Mietverträge, Buchungen, Ausleihen und Schlüsselausgaben stehen hier – angelegt am Objekt oder mit „Neue Vergabe“.",
+    "moreFields": "Weitere Angaben",
+    "viewList": "Liste",
+    "viewCalendar": "Kalender",
+    "confirmDeleteRate": "Tarif löschen?",
+    "confirmDeleteRateHint": "Bestehende Vergaben behalten ihren Preis und ihre Bedingungen.",
+    "noRentable": "Noch nichts zu vermieten.",
+    "noRentableText": "Lege zuerst ein Objekt an, das vermietbar ist.",
+    "endsStat": "Ende",
+    "deadlineStat": "Kündigen bis",
+    "earliestStat": "Frühestes Ende",
+    "sinceStat": "Läuft seit",
+    "startsStat": "Beginnt",
+    "ofMainTenant": "der Hauptmieter:in",
+    "confirm": "Bestätigen",
+    "confirmAgain": "Wieder bestätigen",
+    "cancel": "Stornieren",
+    "confirmCancel": "Vergabe stornieren?",
+    "confirmCancelHint": "Das Objekt ist für diesen Zeitraum dann wieder frei.",
+    "termTitle": "Laufzeit",
+    "firstTermEnd": "Ende der ersten Laufzeit",
+    "renewLabel": "Verlängert sich um",
+    "noticeAt": "Gekündigt am",
+    "confirmRemovePerson": "Person entfernen?",
+    "confirmRemovePersonHint": "Sie bleibt als Kontakt erhalten.",
+    "person": "Person",
+    "role": "Rolle",
+    "confirmNotice": "Kündigung eintragen?",
+    "confirmNoticeHint": "Das Enddatum wird gesetzt, eine automatische Verlängerung entfällt.",
     "nav": "Vermietung",
     "title": "Vermietung",
     "tabs": {
@@ -5169,18 +6068,12 @@
     "kind": "Art",
     "family": "Kategorie",
     "parent": "Gehört zu",
-    "noParent": "– oberste Ebene –",
     "status": "Status",
     "capacity": "Gleichzeitig vergebbar",
-    "capacityHint": "Wie viele Vergaben sich überschneiden dürfen (z. B. Arbeitsplätze in einem Raum).",
     "deposit": "Kaution",
     "location": "Ort",
     "description": "Beschreibung",
-    "rentable": "Vermietbar (mit Tarifen)",
-    "lendable": "Wird ausgegeben (z. B. Schlüssel, Gerät)",
-    "included": "Gehört fest zum übergeordneten Objekt (wird nur mit ihm vergeben)",
     "basics": "Objekt",
-    "options": "Vergabe",
     "families": {
       "place": "Orte & Räume",
       "vehicle": "Fahrzeuge",
@@ -5263,14 +6156,11 @@
       "ended": "Beendet"
     },
     "free": "Frei",
-    "busyWith": "Vergeben an {who}",
     "busy": "Vergeben",
     "handedTo": "bei {who} seit {date}",
     "inOffice": "da",
     "lostShort": "verloren",
     "children": "Gehört dazu",
-    "addChild": "+ {kind}",
-    "addSeveral": "+ mehrere…",
     "howMany": "Wie viele?",
     "prefix": "Name/Nummer davor",
     "addChildren": "Anlegen",
@@ -5293,8 +6183,6 @@
     "deleteRate": "Tarif löschen",
     "rateSaved": "Tarif gespeichert.",
     "rateDeleted": "Tarif gelöscht.",
-    "current": "Aktuell",
-    "upcoming": "Geplant",
     "history": "Frühere",
     "noRentals": "Noch keine Vergaben.",
     "rental": "Vergabe",
@@ -5322,7 +6210,6 @@
     "noticeOtherDate": "Anderes Enddatum (optional)",
     "noticeGiven": "Kündigung eingetragen – endet am {date}.",
     "noticeReceived": "Gekündigt am {date}",
-    "giveBack": "Zurück",
     "depositBack": "Kaution zurückgegeben",
     "returned": "Zurückgenommen.",
     "handOut": "Ausgeben",
@@ -5340,7 +6227,6 @@
     "filterFamily": "Kategorie",
     "onlyFree": "Frei",
     "onlyBusy": "Vergeben",
-    "calendarHint": "Belegung der vermietbaren Objekte. Klick auf eine Vergabe öffnet sie, Klick auf einen freien Platz legt eine Buchung an.",
     "listEmpty": "Noch keine Vergaben.",
     "whoCol": "Personen",
     "whenCol": "Zeitraum",
@@ -5356,7 +6242,6 @@
       "other": "{count} (vergeben: {out})"
     },
     "includedShort": "gehört fest dazu",
-    "addSub": "Unterobjekt anlegen",
     "noChildren": "Nichts – z. B. Schlüssel, Räume oder feste Einrichtung hier anlegen.",
     "termShort": "{months} Mon. fest",
     "renewShort": "verlängert um {months} Mon.",
@@ -5399,6 +6284,7 @@
     "portalNone": "Gerade läuft bei dir nichts.",
     "portalRole": "Du bist",
     "portalDocs": "Dokumente",
+    "nextShort": "ab {date}",
     "nextFrom": "ab {date}: {who}",
     "rentCol": "Miete",
     "depositShort": "Kaution {amount}",
@@ -5459,7 +6345,10 @@
     "unnamed": "Passkey",
     "added": "hinzugefügt am {date}",
     "used": "zuletzt genutzt {date}",
-    "unsupported": "Dieser Browser unterstützt keine Passkeys."
+    "unsupported": "Dieser Browser unterstützt keine Passkeys.",
+    "notOffered": "Passkeys sind auf dieser Plattform noch nicht freigeschaltet.",
+    "confirmRemove": "Passkey entfernen?",
+    "confirmRemoveHint": "Mit diesem Passkey meldest du dich danach nicht mehr an."
   },
   "upload": {
     "titleImage": "Bild hochladen",
@@ -5567,7 +6456,8 @@
       "searching": "Sprout schaut nach …",
       "thinking": "Sprout denkt nach …",
       "waiting": "Sprout wartet auf dich …"
-    }
+    },
+    "key": "API-Schlüssel"
   },
   "domains": {
     "intro": "Zeigt eure öffentlichen Seiten – Events, Ticketshop, Formulare, Mitgliederportal – unter eurer eigenen Adresse. Bis dahin sind sie hier erreichbar: {url}",
@@ -5789,6 +6679,14 @@
     }
   },
   "store": {
+    "autoInvoiceShort": "Jede bezahlte Bestellung bekommt ihre Rechnung.",
+    "tracksInfo": "roots macht daraus die Player-Version für den Shop (MP3 128) und für Käufer:innen MP3 320 + WAV – einzeln und als ein Album-ZIP. Nummer = Reihenfolge. Ohne Häkchen „im Shop abspielbar“ steht der Titel im Player, spielt aber nicht (nur nach dem Kauf).",
+    "moreTitle": "Weitere Angaben",
+    "stockTitle": "Bestand",
+    "suggestedPriceHint": "Steht im Shop schon im Preisfeld. Leer = der Mindestpreis.",
+    "noVat": "Keine",
+    "soldShort": {"one": "1 verkauft", "other": "{count} verkauft"},
+    "trackingShort": "Sendungsnummer",
     "nav": "Shop",
     "products": "Produkte",
     "orders": "Bestellungen",
@@ -5973,9 +6871,9 @@
       "archived": "Archiviert"
     },
     "stock": "Stückzahl",
-    "stockHint": "Wie viele insgesamt verkauft werden können. Leer = unbegrenzt. Bei Varianten zählt die Stückzahl der Variante.",
+    "stockHint": "Wie viele insgesamt verkauft werden können. Leer = unbegrenzt.",
     "unlimited": "unbegrenzt",
-    "maxPerOrder": "Maximal bestellbare Artikel",
+    "maxPerOrder": "Höchstens pro Bestellung",
     "productPage": "Produktseite",
     "description": "Beschreibung",
     "descriptionSet": "Beschreibung vorhanden",
@@ -6068,6 +6966,7 @@
     "intro": "Einleitung",
     "onlineReady": "Über euren verbundenen Zahlungsanbieter.",
     "onlineNotReady": "Noch kein Zahlungsanbieter verbunden – unter Einstellungen → Integrationen.",
+    "onlinePending": "Zahlungsanbieter verbunden, kann aber noch keine Zahlungen annehmen – Einrichtung beim Anbieter abschließen (Einstellungen → Integrationen).",
     "transferHint": "Bankverbindung aus den Rechnungseinstellungen.",
     "transferNoIban": "Bitte hinterlegt eine IBAN in den Rechnungseinstellungen.",
     "transferDays": "Reserviert für (Tage)",
@@ -6094,7 +6993,7 @@
     "next": "Nächster Titel",
     "buyersOnly": "nach dem Kauf",
     "tracks": "Musik",
-    "tracksHint": "Pro Titel das Master hochladen (WAV, AIFF oder FLAC). roots macht daraus die Player-Version für den Shop (MP3 128) und für Käufer:innen MP3 320 + WAV – einzeln und als ein Album-ZIP. Nummer = Reihenfolge. Ohne Häkchen steht der Titel im Player, spielt aber nicht (nur nach dem Kauf).",
+    "tracksHint": "Pro Titel das Master hochladen (WAV, AIFF oder FLAC).",
     "trackNumber": "Nr.",
     "trackTitle": "Titel",
     "trackStream": "im Shop abspielbar",
@@ -6103,10 +7002,6 @@
     "trackRemoved": "Titel entfernt.",
     "variantDigital": "digital",
     "variantDigitalHint": "Digital (nur Download, kein Versand, kein Bestand nötig)",
-    "productTabs": "Produktbereiche",
-    "tabProduct": "Produkt",
-    "tabVariants": "Varianten ({count})",
-    "tabDigital": "Musik & Downloads",
     "allEu": "EU (alle 27 Länder)",
     "audioUpload": "Master hochladen",
     "audioUploadHint": "WAV, AIFF oder FLAC, bis 250 MB pro Titel. Mehrere Dateien auf einmal möglich.",
@@ -6132,7 +7027,7 @@
     "zipsPreparing": "Album-ZIP wird erstellt …",
     "albumZip": "Ganzes Album",
     "albumZipButton": "Album als ZIP (WAV + MP3 320)",
-    "releaseOn": "Erscheint am (optional)",
+    "releaseOn": "Erscheint am",
     "releaseHint": "Für Vorbestellungen: bis dahin normal kaufbar, Downloads und Musik werden an dem Tag freigeschaltet – Käufer:innen bekommen dann eine Mail.",
     "releaseInvalid": "Das Erscheinungsdatum ist ungültig.",
     "releaseShort": "Erscheint {date}",
@@ -6146,9 +7041,9 @@
     "belowMinError": "Ein Preis liegt unter dem Mindestpreis – bitte im Warenkorb anpassen.",
     "nameYourPrice": "Preis selbst wählen",
     "nameYourPriceHint": "Der Preis oben ist dann der Mindestpreis („12,00 € oder mehr“), Käufer:innen wählen ihren Betrag. 0 € = kostenlos (z. B. Download gegen E-Mail).",
-    "suggestedPrice": "Vorschlag (vorausgefüllt, optional)",
+    "suggestedPrice": "Vorschlag",
     "variantNyp": "Preis selbst wählen",
-    "trackPrice": "Einzelne Titel kaufbar für",
+    "trackPrice": "Einzelne Titel",
     "trackPriceHint": "Leer = nur als Album. Ein Preis für alle Titel; bei „Preis selbst wählen“ ist er der Mindestpreis. Käufer:innen eines Titels bekommen nur diesen (WAV + MP3 320).",
     "trackBuyable": "einzeln kaufbar",
     "options": "Optionen",
@@ -6165,7 +7060,6 @@
     "variantImage": "Bild",
     "noVariantImage": "Kein eigenes Bild",
     "combinationUnavailable": "Diese Kombination ist nicht verfügbar.",
-    "leftColumn": "Frei",
     "vatRate": "inkl. {rate} % MwSt.",
     "vatNone": "ohne MwSt.",
     "plusShipping": "zzgl. Versand",
@@ -6207,7 +7101,7 @@
     },
     "refundedOn": "Erstattet am {date}",
     "refundPendingShort": "ausstehend",
-    "smallBusinessNoVat": "Keine – ihr seid Kleinunternehmer (§ 19 UStG), Preise sind Endpreise ohne USt.",
+    "smallBusinessNoVat": "Ihr seid Kleinunternehmer (§ 19 UStG): Preise sind Endpreise ohne Umsatzsteuer, im Shop und auf Rechnungen steht der Hinweis nach § 19. Ändern in den Rechnungseinstellungen.",
     "smallBusinessChange": "Ändern",
     "invoicesIssued": {
       "one": "{count} Rechnung erstellt.",
@@ -6235,8 +7129,7 @@
       "card": "Bereits mit Karte bezahlt am {date} – vielen Dank."
     },
     "lager": {
-      "title": "Lager",
-      "hint": "Bestand je Artikel. Shop-Verkäufe zählen automatisch, alles andere buchst du hier: Zugang, Entnahme, Schwund, Inventur oder Verkauf vor Ort.",
+      "title": "Bestand",
       "item": "Artikel",
       "onHand": "Bestand",
       "reserved": "Reserviert",
@@ -6286,7 +7179,10 @@
       "quantityInvalid": "Bitte eine gültige Menge eingeben.",
       "noChange": "Der gezählte Bestand stimmt schon – nichts zu buchen.",
       "saleHint": "Verkauft (z. B. am Merch-Stand)?",
-      "saleLink": "Als Bestellung erfassen"
+      "saleLink": "Als Bestellung erfassen",
+      "bookItem": "Bestand buchen: {item}",
+      "bookShort": "Bestand buchen",
+      "search": "Artikel suchen"
     },
     "teamOrder": {
       "new": "Neue Bestellung",
@@ -6333,29 +7229,169 @@
       "pickContact": "Bitte einen Kontakt aus dem CRM wählen.",
       "contactExists": "Diese E-Mail gehört schon zu einem Kontakt – bitte „Kontakt aus dem CRM“ wählen.",
       "invoice": "Rechnung erstellen",
-      "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse."
+      "invoiceHint": "An Privatpersonen musst du keine Rechnung ausstellen – erfasst ist der Verkauf so oder so. Bis 250 € geht auch eine Kleinbetragsrechnung ohne Adresse.",
+      "quantity": "Anzahl",
+      "doneOpen": "Eine offene Bestellung kann noch nicht erledigt sein – erst nach dem Zahlungseingang.",
+      "doneOpenHint": "Erst wenn bezahlt ist: Die Bestellung bleibt offen, bis das Geld da ist. Danach auf der Bestellung als erledigt markieren.",
+      "invoiceFree": "Kostenlose Bestellungen bekommen keine Rechnung."
     },
     "payFilter": {
       "open": "Noch zu bezahlen",
       "paid": "Bezahlt"
+    },
+    "itemsMore": "{first} + {count} weitere",
+    "date": "Datum",
+    "clearContact": "Filter {name} entfernen",
+    "confirmIssueMissing": "Rechnungen für alle bezahlten Bestellungen ohne Rechnung ausstellen?",
+    "confirmIssueMissingHint": "Jede bekommt eine fortlaufende Nummer und lässt sich danach nur noch stornieren, nicht ändern.",
+    "payStatus": {
+      "open": "Offen",
+      "paid": "Bezahlt",
+      "failed": "Fehlgeschlagen",
+      "expired": "Abgelaufen",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet",
+      "partially_refunded": "Teilweise erstattet",
+      "pending": "Ausstehend",
+      "succeeded": "Bezahlt"
+    },
+    "confirmTransferReceived": "Überweisung als eingegangen markieren?",
+    "confirmTransferReceivedHint": "Die Bestellung gilt dann als bezahlt; je nach Einstellung gehen Bestätigung und Rechnung an die Käufer:in.",
+    "confirmCashReceived": "Barzahlung als erhalten markieren?",
+    "confirmCashReceivedHint": "Die Bestellung gilt dann als bezahlt; je nach Einstellung gehen Bestätigung und Rechnung an die Käufer:in.",
+    "steps": {
+      "label": "Fortschritt der Bestellung",
+      "placed": "Bestellt",
+      "paid": "Bezahlt",
+      "title": "Vor dem Veröffentlichen",
+      "text": "Was eine gute Produktseite hat.",
+      "image": "Bild hinzufügen",
+      "description": "Beschreibung schreiben",
+      "content": "Musik oder Downloads hochladen"
+    },
+    "allOrdersOf": "Alle Bestellungen dieser Person",
+    "paymentMethod": "Zahlungsart",
+    "paidAt": "Bezahlt am",
+    "heldUntilLabel": "Reserviert bis",
+    "confirmIssueInvoice": "Rechnung jetzt ausstellen?",
+    "confirmIssueInvoiceHint": "Sie bekommt eine fortlaufende Nummer und lässt sich danach nur noch stornieren, nicht ändern.",
+    "perPiece": "je {amount}",
+    "changeTracking": "Sendungsnummer ändern",
+    "shippingMethod": "Versandart",
+    "noteInternal": "Notiz (intern)",
+    "shipHint": "Die Käufer:in bekommt die Versandmail, mit Sendungsnummer, wenn du eine einträgst.",
+    "confirmResend": "Diese Mail jetzt erneut an die Käufer:in senden?",
+    "confirmResendHint": "Sie geht sofort raus, mit dem Text aus den Shop-Einstellungen.",
+    "confirmReopen": "Bestellung wieder öffnen?",
+    "confirmReopenHint": "Sie steht dann wieder auf „Zu bearbeiten“. Bezahlung und Rechnung bleiben, wie sie sind.",
+    "confirmCancelHint": "Die Käufer:in bekommt die Storno-Mail, wenn sie eingeschaltet ist.",
+    "confirmCancelPaidHint": "Das Geld geht über den Zahlungsweg zurück (bei Überweisung/Bar zahlst du selbst zurück). Das lässt sich nicht rückgängig machen.",
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "company": "Firma",
+      "phone": "Telefon"
+    },
+    "orderNumber": "Nummer",
+    "saleCard": "Bestand & Verkauf",
+    "statusDone": {
+      "draft": "Zurück auf Entwurf – nicht mehr im Shop.",
+      "published": "Veröffentlicht – das Produkt ist im Shop.",
+      "archived": "Archiviert."
+    },
+    "trashEmpty": "Der Papierkorb ist leer.",
+    "inTrashBadge": "Im Papierkorb",
+    "recordSale": "Verkauf erfassen",
+    "publish": "Im Shop veröffentlichen",
+    "unpublish": "Zurück auf Entwurf",
+    "confirmUnpublish": "Produkt aus dem Shop nehmen?",
+    "confirmUnpublishHint": "Es steht dann wieder auf Entwurf; die Produktseite ist nicht mehr erreichbar. Bestehende Bestellungen bleiben.",
+    "archive": "Archivieren",
+    "confirmArchive": "Produkt archivieren?",
+    "confirmArchiveHint": "Es verschwindet aus dem Shop und aus der Produktliste (Filter „Archiviert“ zeigt es). Bestellungen und Downloads bleiben.",
+    "stats": {
+      "soldHint": "Stück, bezahlt",
+      "revenue": "Umsatz",
+      "freeHint": "Stück noch frei"
+    },
+    "imageActions": "Bild {n}",
+    "confirmRemoveImage": "Dieses Bild entfernen?",
+    "confirmRemoveImageHint": "Varianten, die es zeigen, haben danach kein eigenes Bild mehr.",
+    "settings": {
+      "change": "Ändern",
+      "notSet": "Nicht festgelegt",
+      "set": "Festgelegt",
+      "days": {
+        "one": "{count} Tag",
+        "other": "{count} Tage"
+      },
+      "text": "Text",
+      "ownText": "Eigener Text",
+      "markdownHint": "Markdown: **fett**, *kursiv*, # Überschrift, - Liste. So steht es auf der Seite im Shop."
     }
   },
   "calendar": {
+    "entries": {
+      "one": "{count} Eintrag",
+      "other": "{count} Einträge"
+    },
+    "allDay": "Ganztägig",
+    "prevWeek": "Vorige Woche",
+    "nextWeek": "Nächste Woche",
+    "prevMonth": "Voriger Monat",
+    "nextMonth": "Nächster Monat",
+    "today": "Heute",
+    "viewLabel": "Ansicht",
+    "week": "Woche",
+    "month": "Monat",
+    "new": "Neu",
+    "noEntries": "Keine Einträge an diesem Tag.",
+    "newOn": "Neu am {date}",
+    "newHint": "Was möchtest du anlegen?",
+    "sourcesLabel": "Bereiche",
+    "create": {
+      "events": "Event",
+      "shifts": "Schicht",
+      "absences": "Abwesenheit",
+      "tasks": "Aufgabe",
+      "projects": "Projekt",
+      "rentals": "Vergabe",
+      "courses": "Kurs"
+    },
     "nav": "Kalender",
     "title": "Kalender",
     "source": "Bereich",
     "sources": {
-      "events": "Veranstaltungen",
+      "events": "Events",
+      "absences": "Abwesenheiten",
       "shifts": "Schichten",
       "tasks": "Aufgaben",
       "projects": "Projekte",
       "rentals": "Vermietung",
       "courses": "Kurse"
     },
+    "projectMarks": {
+      "start": "Start",
+      "end": "Ende"
+    },
     "rentalMarks": {
       "start": "Mietbeginn",
       "deadline": "letzter Tag für Kündigung",
       "end": "Vertragsende"
     }
+  },
+  "pwa": {
+    "offlineTitle": "Keine Verbindung",
+    "offlineText": "roots braucht Internet. Sobald du wieder online bist, lade die Seite neu.",
+    "reload": "Neu laden"
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "search": "Suche öffnen",
+    "sidebar": "Seitenleiste ein- oder ausklappen",
+    "new": "Neu anlegen (Hauptaktion der Seite)",
+    "listSearch": "In der Liste suchen",
+    "close": "Fenster schließen",
+    "help": "Diese Übersicht"
   }
 }

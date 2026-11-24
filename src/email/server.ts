@@ -7,28 +7,32 @@ import { APP_URL } from "@/lib/url"
 import { contactVars, renderMail } from "./render"
 
 type Db = SupabaseClient<Database>
-export type Audience = { tags?: string[]; members?: "active" | null }
+/** Who a campaign goes to; every condition that is set must hold (tags AND active members AND event buyers). */
+export type Audience = { tags?: string[]; members?: "active" | null; event?: string | null }
 
 /** Why a campaign can't go out yet (App + API): an email.* message key, or null. */
 export function sendProblem(c: { subject: string; body: string; audience: Audience }) {
   if (!c.subject || !c.body.replace(/<[^>]+>/g, "").trim()) return "email.subjectBodyRequired" as const
-  if (!c.audience.tags?.length && !c.audience.members) return "email.audienceRequired" as const
+  if (!c.audience.tags?.length && !c.audience.members && !c.audience.event) return "email.audienceRequired" as const
   return null
 }
 
-/** Who a campaign goes to: live contacts with an email, not unsubscribed, with any of the tags and/or an active membership. */
+/**
+ * Who a campaign goes to: live contacts with an email, not unsubscribed, with any of the tags, an active membership
+ * and/or a valid (or used) ticket of the event.
+ */
 export async function resolveAudience(db: Db, orgId: string, audience: Audience) {
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
   const out = new Map<string, string>() // email → contact id
+  const select = ["id, email", audience.members === "active" && "memberships!inner(id)", audience.event && "tickets!inner(id)"].filter(Boolean).join(", ")
   for (let from = 0; from < 50_000; from += 1000) {
-    let q = audience.members === "active"
-      ? db
-          .from("contacts")
-          .select("id, email, memberships!inner(id)")
-          .is("memberships.deleted_at", null)
-          .lte("memberships.starts_on", today)
-          .or(`ends_on.is.null,ends_on.gte.${today}`, { referencedTable: "memberships" })
-      : db.from("contacts").select("id, email")
+    let q = db.from("contacts").select(select as "id, email")
+    if (audience.members === "active")
+      q = q
+        .is("memberships.deleted_at", null)
+        .lte("memberships.starts_on", today)
+        .or(`ends_on.is.null,ends_on.gte.${today}`, { referencedTable: "memberships" })
+    if (audience.event) q = q.eq("tickets.event_id", audience.event).in("tickets.status", ["valid", "used"])
     q = q.eq("org_id", orgId).is("deleted_at", null).is("unsubscribed_at", null).not("email", "is", null).order("id").range(from, from + 999)
     if (audience.tags?.length) q = q.overlaps("tags", audience.tags)
     const { data } = await q

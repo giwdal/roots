@@ -1,11 +1,14 @@
 import { APP_HOME } from "@/lib/url"
-import { FolderIcon, HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
+import { RefreshOnReturn } from "@/components/refresh-on-return"
+import { HouseIcon, InboxIcon, SettingsIcon, ShieldIcon } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
+import { AreaIcon } from "@/components/area-icon"
 import type { SidebarLink } from "@/components/app-sidebar"
 import { OrgSwitcher } from "@/components/org-switcher"
 import { getT } from "@/i18n/server"
 import { getContext, getSession } from "@/lib/context"
 import { visibleNav } from "@/modules/nav"
+import { quickActions } from "@/lib/quick-actions"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getContext()
@@ -22,9 +25,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const moduleLinks: SidebarLink[] = visibleNav((m) => ctx.modules.has(m), ctx.can).map((a) => ({
     href: a.children[0].href,
     label: t.dynamic(a.label),
-    icon: <a.icon />,
-    children: a.children.map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
+    icon: <AreaIcon area={a.key} icon={a.icon} />,
+    children: a.children.filter((c) => !c.gear).map((c) => ({ href: c.href, label: t.dynamic(c.label) })),
   }))
+  // Quick actions in the search (before typing): create the common things, open the door — only what this org and person can.
+  const quick = quickActions((m) => ctx.modules.has(m), ctx.can, t).map(({ href, label }) => ({ href, label }))
   const groups = [
     {
       items: [
@@ -34,11 +39,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     },
     ...(moduleLinks.length ? [{ label: t("home.modules"), items: moduleLinks }] : []),
     {
-      // Files and settings have their sub-pages in a section nav beside the page, so plain links here.
+      // Settings have their sections in a nav beside the page (grouped Du / Organisation), so a plain link here.
       label: t("general.org"),
       items: [
-        ...(ctx.can("org.files.view") ? [{ href: "/files", label: t("files.title"), icon: <FolderIcon /> }] : []),
-        { href: "/settings/profile", label: t("shell.settings"), icon: <SettingsIcon /> },
+        { href: "/settings", label: t("shell.settings"), icon: <SettingsIcon /> },
         ...(ctx.isPlatformAdmin ? [{ href: "/admin", label: t("admin.link"), icon: <ShieldIcon /> }] : []),
       ],
     },
@@ -51,12 +55,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       header={<OrgSwitcher orgs={allOrgs ?? ctx.orgs} current={ctx.org} />}
       switchOrgs={(allOrgs ?? ctx.orgs).length > 1}
       groups={groups}
+      quick={quick}
       me={{ name: me?.full_name || ctx.email, email: ctx.email, avatar: me?.avatar_path ?? null, memberArea: !!myContact }}
       title={ctx.org.name}
     >
-      {ctx.viaPlatform && (
-        <p className="mb-6 max-w-4xl rounded-lg border bg-muted px-3 py-2 text-sm">{t("admin.banner", { org: ctx.org.name })}</p>
-      )}
+      <RefreshOnReturn />
       {children}
     </AppShell>
   )

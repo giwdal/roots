@@ -1,0 +1,566 @@
+{
+  "area": "files",
+  "label": "Dateien",
+  "module": null,
+  "permission": "org.files.view / org.files.manage (core)",
+  "nav": [
+    {
+      "label": "Übersicht",
+      "key": "nav.overview",
+      "href": "/files"
+    },
+    {
+      "label": "Vorlagen",
+      "key": "letters.tabs.templates",
+      "href": "/files/templates"
+    }
+  ],
+  "navNotes": "Files is not part of src/modules/nav.ts; the App layout adds it as a plain sidebar link \"Dateien\" in the group \"Organisation\" (with Einstellungen, Plattform), shown with org.files.view. Its two sub-pages are a <SectionNav> beside the page (files/layout.tsx), like Settings.",
+  "pages": [
+    {
+      "route": "/files",
+      "redesign": {
+        "research": "Google Drive / Dropbox: folders first, then files; list or grid toggle; drop anywhere to upload into the open folder; a file opens a preview with download / rename / move / trash in a menu; trash restores. Phones: list with big rows, + uploads.",
+        "job": "Find, upload and open the org's documents.",
+        "phone": "Top bar Dateien (⋯ Papierkorb, Vorlagen). Toolbar: search, folder filter, Segments Liste · Kacheln. Folder chips row when no folder is open; inside a folder a '‹ Alle Dateien' chip. Rows: icon/thumbnail · name · folder or record · size. Round + uploads. Tap → sheet: preview (image) or file icon, Öffnen/Herunterladen, 'Zu <Record>' for every record type, Name + Ordner + SaveBar, ⋯ In den Papierkorb (asks).",
+        "desktop": "Same; Kacheln = image thumbnails grid; drop zone over the list uploads into the open folder.",
+        "moves": [
+          "SectionNav Übersicht · Vorlagen → removed: Dateien in nav.ts as an area with children Dateien · Vorlagen (sidebar tree, top bar area › page)",
+          "header icon → area 'files'",
+          "Hochladen (FileUpload primary) → kept as primary",
+          "⋯ Papierkorb / Alle → kept",
+          "Suchen…, Ordner FilterMenu → <ListToolbar>",
+          "new: Segments Liste · Kacheln (?view=grid)",
+          "edit sheet Speichern → SaveBar",
+          "edit sheet In den Papierkorb (outline) → sheet ⋯ MenuSubmit destructive (asks)",
+          "Zu {record} (contacts only) → every entity with a record page (contacts, rentals, rental objects, projects, products, events, employees, invoices)",
+          "Wiederherstellen → kept in the trash sheet as the action",
+          "bulk In den Papierkorb → kept",
+          "new: image preview in the sheet"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked with demo files: cards name · folder · date · size, Ordner filter + Liste · Kacheln, round + upload. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ],
+      "file": "src/app/(app)/files/page.tsx",
+      "title": "Dateien (Papierkorb: 'Dateien · Papierkorb')",
+      "purpose": "Upload, find, rename, file into folders, open/download and trash the org's files (loose and attached to records).",
+      "permission": "org.files.view (manage: org.files.manage)",
+      "size": "list",
+      "header": {
+        "icon": "FolderIcon",
+        "title": "Dateien",
+        "menu": [
+          {
+            "label": "Papierkorb / Alle",
+            "key": "files.trash / files.all",
+            "target": "/files?trash=1 | /files",
+            "permission": "org.files.manage"
+          }
+        ],
+        "primary": {
+          "label": "Hochladen",
+          "key": "files.upload",
+          "component": "<FileUpload> (file picker, compresses photos, registerFiles)",
+          "permission": "org.files.manage",
+          "notes": "uploads into the current ?folder; hidden in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "name search"
+        },
+        {
+          "param": "folder",
+          "meaning": "folder filter (FilterMenu)"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        },
+        {
+          "param": "edit",
+          "meaning": "file id → file sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "key": "common.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "folder",
+              "label": "Ordner",
+              "key": "files.folder",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "folders from first 2000 files; hidden in trash"
+            }
+          ]
+        },
+        {
+          "title": "Dateien",
+          "kind": "DataTable",
+          "columns": [
+            "Name",
+            "Ordner (or attached record type)",
+            "Größe",
+            "Hinzugefügt"
+          ],
+          "notes": "Row → ?edit=<id>; tick boxes for managers (not trash). Trash hint files.trashHint."
+        }
+      ],
+      "actions": [
+        {
+          "label": "In den Papierkorb",
+          "key": "common.toTrash",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkTrashFiles (files/actions.ts)",
+          "permission": "org.files.manage",
+          "confirm": true,
+          "result": "toast common.bulkTrashed"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=<file id>",
+          "component": "UrlSheet",
+          "title": "<file name>",
+          "description": "<size> · <date>",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "files.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "folder",
+              "label": "Ordner",
+              "key": "files.folder",
+              "type": "text",
+              "component": "Input + datalist",
+              "notes": "only loose files (no entity)"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Öffnen",
+              "key": "files.open",
+              "kind": "link",
+              "target": "/files/<id> (new tab, signed URL)"
+            },
+            {
+              "label": "Herunterladen",
+              "key": "files.download",
+              "kind": "download",
+              "target": "/files/<id>?download=1"
+            },
+            {
+              "label": "Zu {record}",
+              "key": "files.openRecord",
+              "kind": "link",
+              "target": "/contacts/<id>",
+              "notes": "only for contacts (RECORD_LINKS)"
+            },
+            {
+              "label": "Speichern",
+              "key": "files.save",
+              "kind": "serverAction",
+              "target": "updateFile",
+              "permission": "org.files.manage",
+              "result": "toast 'Gespeichert.'"
+            },
+            {
+              "label": "In den Papierkorb",
+              "key": "files.remove",
+              "kind": "serverAction",
+              "target": "trashFile",
+              "permission": "org.files.manage",
+              "confirm": false,
+              "result": "toast 'Datei in den Papierkorb verschoben.'"
+            },
+            {
+              "label": "Wiederherstellen",
+              "key": "files.restore",
+              "kind": "serverAction",
+              "target": "restoreFile",
+              "notes": "trashed files"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/files/[id]",
+        "/contacts/[id]",
+        "/files/templates"
+      ],
+      "empty": "Noch keine Dateien. Lade welche hoch oder hänge sie an Kontakte an. (files.empty) – DataTable empty text, no <EmptyState>",
+      "phone": "DataTable cards, no bulk; upload is the round + button.",
+      "uxNotes": [
+        "Files is a plain sidebar link (group Organisation) with its own SectionNav instead of nav.ts sub-pages: the top bar shows no area › page title for it (PageHeader title only), unlike module areas.",
+        "Edit sheet has an explicit 'Speichern' button instead of <SaveBar>, and 'In den Papierkorb' next to it as an outline button without confirm (bulk trash does confirm).",
+        "'Zu {record}' only works for contacts; files attached to rentals, projects, products, employees, wiki pages have no way back to their record.",
+        "Folder is free text with datalist: typos create new folders; folder list is capped at 2000 files."
+      ]
+    },
+    {
+      "route": "/files/templates",
+      "redesign": {
+        "job": "Pick a letter template to fill, or make an own one.",
+        "phone": "Top bar Dateien › Vorlagen; rows name + Eigene/Standard badge; round + Neue Vorlage (sheet with Name, SaveBar 'Vorlage anlegen'). ⋯ Papierkorb.",
+        "desktop": "Same table.",
+        "moves": [
+          "create SubmitButton → SaveBar label always",
+          "letters.intro → removed (area page; badge explains)",
+          "Wiederherstellen → kept in trash",
+          "Own badge default → secondary/outline"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: default and own templates, Kopieren & anpassen. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/(app)/files/templates/page.tsx",
+      "title": "Vorlagen (Papierkorb: 'Vorlagen · Papierkorb')",
+      "purpose": "List roots' default and the org's own letter templates; create a template; trash view.",
+      "permission": "org.files.view (manage: org.files.manage)",
+      "header": {
+        "icon": "FileTextIcon",
+        "title": "Vorlagen",
+        "description": "letters.intro",
+        "menu": [
+          {
+            "label": "Papierkorb / Alle",
+            "target": "/files/templates?trash=1 | /files/templates",
+            "permission": "org.files.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neue Vorlage",
+          "key": "letters.new",
+          "href": "?new=template",
+          "permission": "org.files.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "template → create sheet"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view"
+        },
+        {
+          "param": "contact / rental",
+          "meaning": "carried over from a contact's/rental's 'Brief erstellen' into the picked template's URL"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Vorlagen",
+          "kind": "DataTable",
+          "columns": [
+            "Name",
+            "Art (Eigene / Standard badge)",
+            "Geändert (own only) / Wiederherstellen in trash"
+          ],
+          "notes": "Own first, then defaults. Row → /files/templates/<id>[?contact=&rental=]."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Wiederherstellen",
+          "key": "letters.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restoreTemplate",
+          "permission": "org.files.manage"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=template",
+          "component": "UrlSheet",
+          "title": "Neue Vorlage",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "letters.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen",
+              "key": "letters.create",
+              "kind": "serverAction",
+              "target": "createTemplate",
+              "result": "→ /files/templates/<id>?edit=1"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/files/templates/[id]"
+      ],
+      "uxNotes": [
+        "Create sheet uses a plain SubmitButton 'Anlegen' instead of <SaveBar label always> as for other create sheets.",
+        "letters.intro („Briefe und Bescheinigungen mit Platzhaltern …“) is passed as description but PageHeader hides descriptions on icon/area pages, so it never shows."
+      ]
+    },
+    {
+      "route": "/files/templates/[id]",
+      "redesign": {
+        "job": "Write a letter from a template: recipient, fields, date → PDF, file it or send it.",
+        "phone": "Header: name + badge, primary 'PDF herunterladen'; ⋯ Vorlage bearbeiten, Kopieren & anpassen, In den Papierkorb (asks). Composer form, then the preview. Buttons under the form: In Dateien ablegen, Per E-Mail senden (asks).",
+        "desktop": "Composer left, live preview right.",
+        "moves": [
+          "Vorlage bearbeiten (?edit=1 sheet) → kept as a wide sheet (the editor needs the preview page underneath), SaveBar instead of Speichern",
+          "sheet In den Papierkorb (outline) → header ⋯ MenuSubmit destructive (asks)",
+          "Kopieren & anpassen → header action (default templates: primary)",
+          "date fields native input → <DateInput>",
+          "Per E-Mail senden → confirm (letters.confirmSend)",
+          "PDF herunterladen / In Dateien ablegen → kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked composer on phone: fields, PDF / ablegen / senden stacked one per row, live paper preview. No change."
+        }
+      },
+      "uxNotesDone": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "src/app/(app)/files/templates/[id]/page.tsx",
+      "title": "<Template name>",
+      "purpose": "Fill a letter template for a contact (and optionally a rental), preview it on paper, download as PDF, store it in files or send it by email; edit/copy/trash the template.",
+      "permission": "org.files.view (contact picker: crm.view; save/send/edit: org.files.manage)",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Dateien",
+          "Vorlagen",
+          "<Name>"
+        ],
+        "badge": "Eigene / Standard",
+        "description": "letters.defaultHint (defaults only)",
+        "actions": [
+          "Vorlage bearbeiten (own, → ?edit=1)",
+          "Kopieren & anpassen (copyTemplate; primary-styled for defaults)"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "contact",
+          "meaning": "preselected recipient"
+        },
+        {
+          "param": "rental",
+          "meaning": "rental whose data fills {rental_*}; saving/sending also stores the PDF on the rental"
+        },
+        {
+          "param": "edit",
+          "meaning": "1 = template edit sheet (own templates)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Composer (left column, 22rem)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "contact",
+              "label": "Empfänger:in",
+              "key": "letters.recipient",
+              "type": "contact",
+              "component": "ContactPicker",
+              "notes": "hint 'Ohne Kontakt bleiben Anschrift und Kontakt-Platzhalter leer.'"
+            },
+            {
+              "name": "date",
+              "label": "Datum",
+              "key": "letters.date",
+              "type": "date",
+              "component": "DateInput",
+              "required": true
+            },
+            {
+              "name": "f.<key>",
+              "label": "<template field label>",
+              "type": "text | date | textarea",
+              "component": "Input / native <input type=date> / Textarea",
+              "notes": "the template's own fields"
+            }
+          ]
+        },
+        {
+          "title": "Vorschau",
+          "key": "letters.preview",
+          "kind": "custom",
+          "notes": "<PaperPreview> with <DocumentPage> classic template, live"
+        }
+      ],
+      "actions": [
+        {
+          "label": "PDF herunterladen",
+          "key": "letters.download",
+          "where": "section",
+          "kind": "download",
+          "target": "POST /files/templates/<id>/pdf"
+        },
+        {
+          "label": "In Dateien ablegen",
+          "key": "letters.saveFile",
+          "where": "section",
+          "kind": "client",
+          "target": "saveLetter (templates/actions.ts)",
+          "permission": "org.files.manage",
+          "result": "toast 'Als PDF in den Dateien abgelegt.' with 'Öffnen' action"
+        },
+        {
+          "label": "Per E-Mail senden",
+          "key": "letters.send",
+          "where": "section",
+          "kind": "client",
+          "target": "sendLetter",
+          "permission": "org.files.manage",
+          "confirm": false,
+          "result": "toast 'E-Mail mit PDF versendet.'; disabled without contact email"
+        },
+        {
+          "label": "Rechnungseinstellungen (link)",
+          "key": "invoices.settings",
+          "where": "section",
+          "kind": "link",
+          "target": "/invoices/settings",
+          "notes": "shown when letterhead is on but no sender address"
+        },
+        {
+          "label": "Kopieren & anpassen",
+          "key": "letters.copy",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "copyTemplate",
+          "result": "→ copy with ?edit=1, toast 'Kopie erstellt – jetzt anpassen.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=1",
+          "component": "UrlSheet",
+          "title": "Vorlage bearbeiten",
+          "description": "<name>",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "title",
+              "label": "Überschrift",
+              "key": "letters.heading",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "body",
+              "label": "Text",
+              "key": "letters.body",
+              "type": "richtext",
+              "component": "RichTextEditor (placeholders)"
+            },
+            {
+              "name": "fields",
+              "label": "Eigene Felder: Bezeichnung + Typ (+ Feld hinzufügen / Feld entfernen)",
+              "key": "letters.fields",
+              "type": "list",
+              "component": "FieldsEditor (Input + NativeSelect per row)"
+            },
+            {
+              "name": "letterhead",
+              "label": "Briefkopf anzeigen",
+              "key": "letters.letterhead",
+              "type": "checkbox",
+              "component": "Checkbox"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "key": "letters.save",
+              "kind": "serverAction",
+              "target": "saveTemplate",
+              "result": "toast 'Vorlage gespeichert.'"
+            },
+            {
+              "label": "In den Papierkorb",
+              "key": "letters.toTrash",
+              "kind": "serverAction",
+              "target": "trashTemplate",
+              "confirm": false,
+              "result": "→ /files/templates, toast 'Vorlage in den Papierkorb gelegt.'"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/files/templates",
+        "/files/[id]",
+        "/invoices/settings"
+      ],
+      "phone": "Composer form above the preview; paper preview scales in its box.",
+      "uxNotes": [
+        "A template with real content is edited in a sheet (?edit=1) on the record page – app.md puts big content on pages, sheets for small edits.",
+        "Template trash is an outline button next to Save without confirm (not a red ⋯ item).",
+        "Template fields of type date render a native <input type=date> (app.md: always <DateInput>), while the letter date next to it uses DateInput.",
+        "Sending an email with attachment has no confirm.",
+        "Sheet uses explicit Speichern instead of <SaveBar>."
+      ]
+    }
+  ]
+}

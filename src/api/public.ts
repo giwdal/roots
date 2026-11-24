@@ -241,7 +241,7 @@ export const publicEndpoints: PublicEndpoint[] = [
       const now = new Date().toISOString()
       const { data } = await createPublicClient()
         .from("events")
-        .select("id, slug, title, status, starts_at, ends_at, venue_name, venue_address, image_path, max_tickets_per_order, links, show_code_field")
+        .select("id, slug, title, status, starts_at, ends_at, venue_name, venue_address, image_path, max_tickets_per_order, links, show_code_field, waitlist")
         .eq("org_id", org.id)
         .or(`ends_at.gte.${now},and(ends_at.is.null,starts_at.gte.${now})`)
         .order("starts_at")
@@ -270,7 +270,7 @@ export const publicEndpoints: PublicEndpoint[] = [
     tag: "Tickets",
     summary: "Ticket types on offer, with prices and what's left",
     description:
-      "Live (not cached). `code` applies a promo/unlock code (unlocks hidden types). `waitlist` = claim token from a waiting-list email (`?w=` in the link): the seats held for it count as available. `free` = everything costs 0 (show \"sign up\" instead of \"buy\"). `sold_out` = nothing visible left → offer the waiting list.",
+      "Live (not cached). `code` applies a promo/unlock code (unlocks hidden types). `waitlist` = claim token from a waiting-list email (`?w=` in the link): the seats held for it count as available. `free` = everything costs 0 (show \"sign up\" instead of \"buy\"). `sold_out` = nothing visible left → offer the waiting list if `waitlist_open`.",
     query: z.object({ code: z.string().trim().toUpperCase().max(40).optional(), waitlist: z.string().max(64).optional() }),
     response: z.object({
       types: z.array(Offer),
@@ -278,6 +278,7 @@ export const publicEndpoints: PublicEndpoint[] = [
       sold_out: z.boolean(),
       code_valid: z.boolean().nullable().describe("null = no code sent"),
       waitlist_claim: z.object({ quantity: z.number().int(), offered_until: ts }).nullable(),
+      waitlist_open: z.boolean().describe("The event offers a waiting list when sold out"),
       service_fee: z
         .object({ percent: z.number(), fixed_cents: z.number().int() })
         .nullable()
@@ -285,7 +286,7 @@ export const publicEndpoints: PublicEndpoint[] = [
     }),
     async handler({ org, params, query }) {
       const e = await publishedEvent(org, params.slug)
-      if (e.status !== "published") return { types: [], free: false, sold_out: false, code_valid: null, waitlist_claim: null, service_fee: null }
+      if (e.status !== "published") return { types: [], free: false, sold_out: false, code_valid: null, waitlist_claim: null, waitlist_open: false, service_fee: null }
       const [{ data: offer }, claim, fee] = await Promise.all([
         createPublicClient().rpc("ticket_offer", { p_event: e.id, p_code: query.code || undefined, p_waitlist: query.waitlist || undefined }),
         waitlistClaim(e.id, query.waitlist ?? null),
@@ -312,6 +313,7 @@ export const publicEndpoints: PublicEndpoint[] = [
         sold_out: !claim && types.length > 0 && (offer ?? []).filter((o) => !o.hidden).every((o) => o.remaining === 0),
         code_valid: query.code ? types.some((x) => x.code_applies) : null,
         waitlist_claim: claim ? { quantity: claim.quantity, offered_until: claim.offered_until! } : null,
+        waitlist_open: e.waitlist,
         service_fee: fee ? { percent: fee.percent, fixed_cents: fee.fixedCents } : null,
       }
     },
@@ -583,7 +585,7 @@ export const publicEndpoints: PublicEndpoint[] = [
     path: "/{org}/events/{slug}/waitlist",
     tag: "Tickets",
     summary: "Join the waiting list of a sold-out event",
-    description: "Only while nothing is on sale. When seats free up, people are offered them in order by email (24 h to claim, link with `?w=<token>`).",
+    description: "Only while nothing is on sale and the event has its waiting list on (`waitlist_open`). When seats free up, people are offered them in order by email (24 h to claim, link with `?w=<token>`).",
     body: z.object({ email, name, quantity: z.number().int().min(1).max(20).default(1) }).strict(),
     response: z.object({ ok: z.literal(true) }),
     status: 201,

@@ -1,36 +1,54 @@
+import Link from "next/link"
+import { ChevronRightIcon } from "lucide-react"
+import { AreaIcon } from "@/components/area-icon"
+import { RowGroup } from "@/components/section"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
-import { getContext } from "@/lib/context"
+import { requirePerm } from "@/lib/context"
+import { areaOfModule, NAV, visibleNav } from "@/modules/nav"
 import { getModule, modules } from "@/modules/registry"
 
-// Read-only: platform admins switch modules on per org (/admin/orgs → drawer).
+// Organisation › Module: what this org has (switched on by the platform, /admin/orgs); an active module opens its area.
 export default async function ModulesSettings() {
-  const ctx = await getContext()
+  const ctx = await requirePerm("org.settings.manage")
   const t = await getT()
   const name = (k: string) => t.dynamic(`modules.${k}.name`)
+  const nav = visibleNav((m) => ctx.modules.has(m), ctx.can)
+  // The area a module's pages live in (Gästelisten → Events), when this person may open it.
+  const areaOf = (key: string) => areaOfModule(key, nav)
+  const sorted = [...modules].sort((a, b) => Number(ctx.modules.has(b.key)) - Number(ctx.modules.has(a.key)))
 
   return (
-    <div className="grid gap-4">
-      <p className="text-sm text-muted-foreground">{t("modules.managedByPlatform")}</p>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {modules.map((m) => {
-          const on = ctx.modules.has(m.key)
-          const needs = (m.requires?.modules ?? []).map((k) => name(getModule(k)?.key ?? k))
-          return (
-            <li key={m.key} className="flex flex-col gap-2 rounded-lg border p-4 data-[off=true]:opacity-60" data-off={!on}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium">{name(m.key)}</p>
-                  <p className="text-sm text-muted-foreground">{t.dynamic(`modules.${m.key}.description`)}</p>
-                </div>
-                {on && <Badge>{t("modules.on")}</Badge>}
-              </div>
-              {needs.length > 0 && <p className="text-xs text-muted-foreground">{t("modules.needs", { list: t.list(needs) })}</p>}
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+    <RowGroup title={t("settings.tabs.modules")} description={t("modules.managedByPlatform")}>
+      {sorted.map((m) => {
+        const on = ctx.modules.has(m.key)
+        const area = on ? areaOf(m.key) : undefined
+        const icon = NAV.find((a) => a.key === area?.key)?.icon
+        const needs = (m.requires?.modules ?? []).map((k) => name(getModule(k)?.key ?? k))
+        const body = (
+          <>
+            {area && icon ? <AreaIcon area={area.key} icon={icon} className="size-8" /> : <span className="size-8 shrink-0" aria-hidden />}
+            <span className="grid min-w-0 flex-1 gap-0.5">
+              <span className="font-medium">{name(m.key)}</span>
+              <span className="text-xs text-muted-foreground">{t.dynamic(`modules.${m.key}.description`)}</span>
+              {needs.length > 0 && <span className="text-xs text-muted-foreground">{t("modules.needs", { list: t.list(needs) })}</span>}
+            </span>
+            <Badge variant={on ? "success" : "secondary"}>{on ? t("modules.on") : t("modules.off")}</Badge>
+          </>
+        )
+        return area ? (
+          <Link key={m.key} href={area.children[0].href} className="flex min-h-12 items-center gap-3 px-4 py-3 text-sm hover:bg-muted active:bg-muted">
+            {body}
+            <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          </Link>
+        ) : (
+          <div key={m.key} className="flex min-h-12 items-center gap-3 px-4 py-3 text-sm data-[off=true]:opacity-70" data-off={!on}>
+            {body}
+            <span className="size-4 shrink-0" aria-hidden />
+          </div>
+        )
+      })}
+    </RowGroup>
   )
 }
 

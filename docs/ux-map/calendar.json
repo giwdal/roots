@@ -1,0 +1,149 @@
+{
+  "area": "calendar",
+  "label": "Kalender",
+  "module": null,
+  "research": "iOS Calendar / Google Calendar / Fantastical on phones: a week strip (Mo–So, dots on days with entries, swipe for the next week, today highlighted) above the selected day's agenda; month = compact grid with dots, the selected day's list below; '+' creates on the selected day; filters (calendars) as a list of toggles with colours that double as the legend. Desktop keeps week/month grids. Notion Calendar / Cron: click an empty slot → create there. Taken: the phone pattern inside the shared <CalendarView> (so Schichten, Abwesenheiten, Vermietung, Aufgaben get it too), sources as a chip row with colour dots (several at once), a 'Neu am …' sheet that picks the module and passes the day. Detail views and empty days: iOS / Fantastical open an entry's details on tap (we open the record itself), an empty day says so in one line; Google Calendar's '+' on phones pre-fills the selected day; Notion Calendar / Cron show calendars as coloured toggles in a list that double as the legend.",
+  "moduleNote": "Shown when any of events, shifts, projects, rentals, courses is on and the person has its .view permission (nav entry + sourcesFor()).",
+  "nav": [
+    {
+      "label": "Kalender",
+      "key": "calendar.nav",
+      "href": "/calendar",
+      "permission": "events.view | shifts.view | projects.view | rentals.view | courses.view"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/calendar",
+      "redesign": {
+        "job": "What is happening when, across everything the person may see; open it; add something on a day.",
+        "phone": "Top bar 'Kalender' (round + = Neu → ?new=entry for the selected day). Chip row of sources (colour dot = legend, tap toggles). Month title with ‹ › and Heute, Woche · Monat switch. Week strip Mo–So (dots, today ring, selected filled; swipe or arrows = next week) or the month grid with dots. Below: the selected day's entries (colour bar, title, time or 'Ganztägig', › opens the record) and '+ Neu am Fr, 20. Nov.'",
+        "desktop": "Header: primary 'Neu' (?new=entry). Source chips in the toolbar. CalendarView month/week/day/list grids; an empty slot opens ?new=entry for that day.",
+        "moves": [
+          "FilterMenu Bereich (one source) → chip row of toggles (?src=events,shifts …), colour dot per source as the legend",
+          "primary 'Neues Event' + more (Schicht, Projekt, Kurs, Vergabe) → primary 'Neu' → ?new=entry sheet: one row per module the person may create in, each carrying the selected day (Event ?start=, Schicht ?start/&end, Aufgabe ?due=, Projekt ?start=, Vergabe ?start/&end, Kurs without date)",
+          "CalendarView month/week/day/agenda (read-only) → kept on desktop; phones get the week strip / month dots + day list (shared CalendarView)",
+          "empty slot click (none) → ?new=entry for that day",
+          "entry click → the record (kept: events, shifts, tasks, projects, rentals, courses)",
+          "new source: Abwesenheiten (hr module, hr.view) → /hr/absences?edit=<id>"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Projects lasting months were bars across every week of the month grid and put a dot on every day of the phone strip, so the dots no longer said anything: projects longer than two weeks now show only 'Name · Start' and 'Name · Ende' (like long-term rentals; calendar.projectMarks). The phone calendar dots long entries (> 7 days) only on their first and last day (shared, every CalendarView), and multi-day entries across years show '3.5.2026 – 3.5.2027' instead of '3.5. 01:00 – 3.5. 01:00'. Checked the source chips, Neu am … sheet, desktop month."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "file": "src/app/(app)/calendar/page.tsx",
+      "title": "Kalender",
+      "purpose": "One read-only calendar over everything dated the person may see (events, shifts, tasks, projects, rentals, courses), coloured by source; a click opens the record.",
+      "permission": "any source's module + .view permission (none → 404)",
+      "size": "list",
+      "header": {
+        "area": "calendar",
+        "primary": {
+          "label": "Neues Event (first creatable item)",
+          "key": "eventsPage.new",
+          "href": "/events/new",
+          "more": [
+            {
+              "label": "Neue Schicht",
+              "key": "shifts.newShift",
+              "href": "/shifts?new=shift",
+              "permission": "shifts.manage"
+            },
+            {
+              "label": "Neues Projekt",
+              "key": "projects.newProject",
+              "href": "/projects/new",
+              "permission": "projects.manage"
+            },
+            {
+              "label": "Neuer Kurs",
+              "key": "courses.new",
+              "href": "/courses/new",
+              "permission": "courses.manage"
+            },
+            {
+              "label": "Neue Vergabe",
+              "key": "rentals.newRentalAny",
+              "href": "/rentals/r/new",
+              "permission": "rentals.manage"
+            }
+          ],
+          "notes": "List built from modules on + .manage permissions (events.manage first); the first one becomes the button, the rest 'more'. Hidden when the person can create nothing."
+        }
+      },
+      "urlState": [
+        {
+          "param": "src",
+          "meaning": "FilterMenu Bereich: events | shifts | tasks | projects | rentals | courses (one source)"
+        },
+        {
+          "param": "view",
+          "meaning": "month (default) | week | day | agenda"
+        },
+        {
+          "param": "date",
+          "meaning": "focused day; loads 42 days before to 70 days after"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "src",
+              "label": "Bereich",
+              "key": "calendar.source",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "options calendar.sources.*: Veranstaltungen, Schichten, Aufgaben, Projekte, Vermietung, Kurse"
+            }
+          ]
+        },
+        {
+          "title": "Kalender",
+          "kind": "Calendar",
+          "notes": "CalendarView month/week/day/agenda, all entries readOnly (no drag, no slot click). Click targets: events → /events/<id>; shifts → /shifts?shift=<id>; tasks (all-day, '✓' when done) → /projects/tasks?task=<id>; projects (all-day bar start–end, project colour) → /projects/<id>; rentals → /rentals/r/<id> (short rentals as time span, long ones as all-day marks 'Mietbeginn' / 'letzter Tag für Kündigung' / 'Vertragsende'); courses (each session) → /courses/<id>. Cancelled events prefixed '✕'. Events coloured by the first select custom field with option colours."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neu … (primary + more)",
+          "where": "header",
+          "kind": "link",
+          "target": "/events/new | /shifts?new=shift | /projects/new | /courses/new | /rentals/r/new",
+          "confirm": false
+        }
+      ],
+      "links": [
+        "/events/[id]",
+        "/shifts",
+        "/projects/tasks",
+        "/projects/[id]",
+        "/rentals/r/[id]",
+        "/courses/[id]",
+        "/events/new",
+        "/projects/new",
+        "/courses/new",
+        "/rentals/r/new"
+      ],
+      "phone": "Primary as round + with a glass menu of all create choices; CalendarView on phones.",
+      "uxNotes": [
+        "Calendar is read-only: no drag and no click-to-create on an empty day, although the module calendars (shifts, absences, tasks) support both; the '+' menu ignores the clicked date.",
+        "Only one source can be filtered at a time (FilterMenu single value), no multi-select of sources; no legend for source colours (events can use their own custom colours too, so colours are ambiguous).",
+        "Clicking an entry leaves the calendar (navigates to the module page / opens its drawer there) instead of a preview in place.",
+        "HR absences are not a source (CALENDAR_SOURCES has no hr), so who is away doesn't show next to shifts.",
+        "'Neue Schicht' from here opens /shifts?new=shift with the default date (today 18:00), not the calendar's focused date."
+      ]
+    }
+  ]
+}

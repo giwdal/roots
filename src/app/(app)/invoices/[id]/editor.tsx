@@ -1,21 +1,24 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from "lucide-react"
-import { SubmitButton } from "@/components/submit-button"
+import { useRef, useState } from "react"
+import { ArrowDownIcon, ArrowUpIcon, ChevronRightIcon, PlusCircleIcon, XIcon } from "lucide-react"
+import { ContactPicker } from "@/components/contact-picker"
+import { DateInput } from "@/components/date-input"
+import { FormCard } from "@/components/page"
+import { SaveBar } from "@/components/save-bar"
+import { TypedInput } from "@/components/typed-input"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Textarea } from "@/components/ui/textarea"
 import { useT } from "@/i18n/client"
 import { TAX_RATES, totals, UNITS } from "@/documents/calc"
 import { parsePrice, priceInput } from "@/tickets/price"
-import { issueDocument, saveDocument } from "../actions"
-import { DateInput } from "@/components/date-input"
+import { recipientFor, saveDocument } from "../actions"
 
 export type EditorDoc = {
-  id: string
+  id: string | null // null = not created yet (/invoices/new): the first save creates the draft
   kind: "quote" | "invoice"
   title: string | null
   contact_id: string | null
@@ -35,27 +38,36 @@ export type EditorDoc = {
   currency: string
   prices_gross?: boolean
 }
-type Row = { key: number; title: string; description: string; quantity: string; unit: string; unit_price: string; tax_rate: number }
-export type EditorContact = { id: string; name: string; address: string; email: string | null }
+type Row = {
+  key: number
+  title: string
+  description: string
+  quantity: string
+  unit: string
+  unit_price: string
+  tax_rate: number
+}
+type Item = {
+  title: string
+  description: string | null
+  quantity: number
+  unit: string
+  unit_price: number
+  tax_rate: number
+}
 
-const textarea =
-  "rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
 let seq = 0
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", ".")) || Number(s) || 0
 
-// Quote / invoice builder: header fields are plain form fields, rows live in state and go up as JSON.
-export function DocumentEditor({
-  doc,
-  items,
-  contacts,
-  defaultTax,
-}: {
-  doc: EditorDoc
-  items: { title: string; description: string | null; quantity: number; unit: string; unit_price: number; tax_rate: number }[]
-  contacts: EditorContact[]
-  defaultTax: number
-}) {
+/**
+ * The quote / invoice draft as one form (id `doc-form`) with one SaveBar: recipient (ContactPicker fills name, address,
+ * email), positions as inline rows (card on phones, one grid row from md; they go up as JSON in `items`), details and
+ * texts. "Ausstellen" lives in the page header and submits this form with `formAction`.
+ * `contact`: the picker's start value; undefined = the person can't see contacts (no picker).
+ */
+export function DocumentEditor({ doc, items, contact, defaultTax }: { doc: EditorDoc; items: Item[]; contact?: { id: string; label: string; detail: string } | null; defaultTax: number }) {
   const t = useT()
+  const box = useRef<HTMLFormElement>(null)
   const [rows, setRows] = useState<Row[]>(() =>
     items.map((i) => ({
       key: ++seq,
@@ -68,175 +80,160 @@ export function DocumentEditor({
     })),
   )
   const [small, setSmall] = useState(doc.tax_mode === "small_business")
-  const [recipient, setRecipient] = useState({ contact_id: doc.contact_id ?? "", name: doc.recipient_name ?? "", address: doc.recipient_address ?? "", email: doc.recipient_email ?? "" })
+  const [recipient, setRecipient] = useState({
+    name: doc.recipient_name ?? "",
+    address: doc.recipient_address ?? "",
+    email: doc.recipient_email ?? "",
+  })
+  // The SaveBar listens for change events: adding, moving or removing a row and picking a contact are changes too.
+  const changed = () => requestAnimationFrame(() => box.current?.dispatchEvent(new Event("change", { bubbles: true })))
 
   const update = (key: number, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
-  const move = (i: number, d: number) =>
+  const move = (i: number, d: number) => {
     setRows((rs) => {
       const next = [...rs]
       const [r] = next.splice(i, 1)
       next.splice(i + d, 0, r)
       return next
     })
-  const add = () => setRows((rs) => [...rs, { key: ++seq, title: "", description: "", quantity: "1", unit: "flat", unit_price: "", tax_rate: small ? 0 : defaultTax }])
-  const sum = totals(rows.map((r) => ({ quantity: num(r.quantity), unit_price: parsePrice(r.unit_price) ?? 0, tax_rate: r.tax_rate })), small, !!doc.prices_gross)
+    changed()
+  }
+  const add = () => {
+    setRows((rs) => [
+      ...rs,
+      {
+        key: ++seq,
+        title: "",
+        description: "",
+        quantity: "1",
+        unit: "flat",
+        unit_price: "",
+        tax_rate: small ? 0 : defaultTax,
+      },
+    ])
+    changed()
+  }
+  const sum = totals(
+    rows.map((r) => ({
+      quantity: num(r.quantity),
+      unit_price: parsePrice(r.unit_price) ?? 0,
+      tax_rate: r.tax_rate,
+    })),
+    small,
+    !!doc.prices_gross,
+  )
   const money = (c: number) => t.money(c, doc.currency)
   const payload = JSON.stringify(
-    rows.map((r) => ({ title: r.title, description: r.description, quantity: r.quantity, unit: r.unit, unit_price: r.unit_price, tax_rate: small ? 0 : r.tax_rate })),
+    rows.map((r) => ({
+      title: r.title,
+      description: r.description,
+      quantity: r.quantity,
+      unit: r.unit,
+      unit_price: r.unit_price,
+      tax_rate: small ? 0 : r.tax_rate,
+    })),
   )
+  const priceLabel = t(doc.prices_gross ? "invoices.unitPriceGross" : "invoices.unitPriceNet")
+  const quote = doc.kind === "quote"
 
   return (
-    <form action={saveDocument} className="grid gap-6">
-      <input type="hidden" name="id" value={doc.id} />
+    <form ref={box} id="doc-form" action={saveDocument} className="grid gap-6">
+      {doc.id && <input type="hidden" name="id" value={doc.id} />}
+      <input type="hidden" name="kind" value={doc.kind} />
       <input type="hidden" name="items" value={payload} />
-      <input type="hidden" name="contact_id" value={recipient.contact_id} />
 
-      <section className="grid gap-4 md:grid-cols-2" aria-label={t("invoices.recipient")}>
-        <div className="grid content-start gap-3">
-          <h2 className="font-medium">{t("invoices.recipient")}</h2>
-          {contacts.length > 0 && (
-            <NativeSelect
-              aria-label={t("invoices.pickContact")}
-              value={recipient.contact_id}
-              onChange={(e) => {
-                const c = contacts.find((x) => x.id === e.target.value)
-                setRecipient(c ? { contact_id: c.id, name: c.name, address: c.address, email: c.email ?? "" } : { ...recipient, contact_id: "" })
-              }}
-              className="w-full"
-            >
-              <NativeSelectOption value="">{t("invoices.pickContact")}</NativeSelectOption>
-              {contacts.map((c) => (
-                <NativeSelectOption key={c.id} value={c.id}>
-                  {c.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="d-rname">{t("invoices.recipientName")}</Label>
-            <Input id="d-rname" name="recipient_name" value={recipient.name} onChange={(e) => setRecipient({ ...recipient, name: e.target.value })} maxLength={200} />
+      <FormCard id="recipient" title={t("invoices.recipient")}>
+        {contact !== undefined ? (
+          <ContactPicker
+            name="contact_id"
+            label={t("invoices.contact")}
+            initial={contact}
+            placeholder={t("invoices.pickContact")}
+            onChange={async (o) => {
+              changed()
+              const r = o ? await recipientFor(o.id) : null
+              if (r) setRecipient(r)
+            }}
+          />
+        ) : (
+          <input type="hidden" name="contact_id" value={doc.contact_id ?? ""} />
+        )}
+        <div className="grid gap-2">
+          <Label htmlFor="d-rname">{t("invoices.recipientName")}</Label>
+          <Input id="d-rname" name="recipient_name" value={recipient.name} onChange={(e) => setRecipient({ ...recipient, name: e.target.value })} maxLength={200} autoComplete="off" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="d-raddr">{t("invoices.recipientAddress")}</Label>
+          <Textarea
+            id="d-raddr"
+            name="recipient_address"
+            rows={3}
+            value={recipient.address}
+            onChange={(e) => setRecipient({ ...recipient, address: e.target.value })}
+            maxLength={500}
+            placeholder={t("invoices.addressPlaceholder")}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid content-start gap-2">
+            <Label htmlFor="d-remail">{t("invoices.recipientEmail")}</Label>
+            {/* key: the picked contact's email replaces the typed one (TypedInput keeps its own value). */}
+            <TypedInput key={recipient.email} kind="email" id="d-remail" name="recipient_email" defaultValue={recipient.email} autoComplete="off" />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="d-raddr">{t("invoices.recipientAddress")}</Label>
-            <textarea
-              id="d-raddr"
-              name="recipient_address"
-              rows={3}
-              value={recipient.address}
-              onChange={(e) => setRecipient({ ...recipient, address: e.target.value })}
-              maxLength={500}
-              placeholder={t("invoices.addressPlaceholder")}
-              className={textarea}
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="d-remail">{t("invoices.recipientEmail")}</Label>
-              <Input id="d-remail" name="recipient_email" type="email" value={recipient.email} onChange={(e) => setRecipient({ ...recipient, email: e.target.value })} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="d-rvat">{t("invoices.recipientVat")}</Label>
-              <Input id="d-rvat" name="recipient_vat_id" defaultValue={doc.recipient_vat_id ?? ""} maxLength={20} placeholder="DE123456789" />
-            </div>
+          <div className="grid content-start gap-2">
+            <Label htmlFor="d-rvat">{t("invoices.recipientVat")}</Label>
+            <Input id="d-rvat" name="recipient_vat_id" defaultValue={doc.recipient_vat_id ?? ""} maxLength={20} placeholder="DE123456789" autoComplete="off" />
           </div>
         </div>
+      </FormCard>
 
-        <div className="grid content-start gap-3">
-          <h2 className="font-medium">{t("invoices.details")}</h2>
-          <div className="grid gap-2">
-            <Label htmlFor="d-title">{t("invoices.titleLabel")}</Label>
-            <Input
-              id="d-title"
-              name="title"
-              defaultValue={doc.title ?? ""}
-              maxLength={200}
-              placeholder={t(doc.kind === "quote" ? "invoices.quoteTitle" : "invoices.invoiceTitle")}
-            />
+      <FormCard id="items" title={t("invoices.items")}>
+        {rows.length > 0 && (
+          <div className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7.5rem_8.5rem_5.5rem_6.5rem_5.5rem] gap-2 text-xs text-muted-foreground md:grid">
+            <span>{t("invoices.itemTitle")}</span>
+            <span>{t("invoices.quantity")}</span>
+            <span>{t("invoices.unit")}</span>
+            <span>{priceLabel}</span>
+            <span>{t("invoices.taxRate")}</span>
+            <span className="text-right">{t("invoices.lineTotal")}</span>
+            <span />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="d-issue">{t("invoices.issueDate")}</Label>
-              <DateInput id="d-issue" name="issue_date" type="date" defaultValue={doc.issue_date ?? ""} />
-            </div>
-            {doc.kind === "invoice" ? (
-              <div className="grid gap-2">
-                <Label htmlFor="d-due">{t("invoices.dueDate")}</Label>
-                <DateInput id="d-due" name="due_date" type="date" defaultValue={doc.due_date ?? ""} />
-              </div>
-            ) : (
-              <div className="grid gap-2">
-                <Label htmlFor="d-valid">{t("invoices.validUntil")}</Label>
-                <DateInput id="d-valid" name="valid_until" type="date" defaultValue={doc.valid_until ?? ""} />
-              </div>
-            )}
-          </div>
-          {doc.kind === "invoice" && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="d-sfrom">{t("invoices.serviceFrom")}</Label>
-                <DateInput id="d-sfrom" name="service_from" type="date" defaultValue={doc.service_from ?? ""} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="d-sto">{t("invoices.serviceTo")}</Label>
-                <DateInput id="d-sto" name="service_to" type="date" defaultValue={doc.service_to ?? ""} />
-              </div>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">{t("invoices.datesHint")}</p>
-          <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" name="tax_mode" value="small_business" checked={small} onChange={(e) => setSmall(e.target.checked)} className="mt-0.5 size-4" />
-            <span>
-              {t("invoices.smallBusiness")}
-              <span className="block text-xs text-muted-foreground">{t("invoices.smallBusinessHint")}</span>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <div className="grid gap-2">
-        <Label htmlFor="d-intro">{t("invoices.intro")}</Label>
-        <textarea id="d-intro" name="intro" rows={3} defaultValue={doc.intro ?? ""} maxLength={5000} className={textarea} />
-      </div>
-
-      <section className="grid gap-3" aria-labelledby="items">
-        <h2 id="items" className="font-medium">
-          {t("invoices.items")}
-        </h2>
-        <ol className="grid gap-3">
+        )}
+        <ol className="grid gap-3 md:gap-0">
           {rows.map((r, i) => (
-            <li key={r.key} className="grid gap-2 rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                <span className="w-6 text-sm text-muted-foreground tabular-nums">{i + 1}.</span>
+            <li
+              key={r.key}
+              className="grid gap-2 rounded-lg border p-3 md:grid-cols-[minmax(0,1fr)_4.5rem_7.5rem_8.5rem_5.5rem_6.5rem_5.5rem] md:items-start md:rounded-none md:border-0 md:border-t md:px-0 md:py-3"
+            >
+              <div className="grid gap-2">
                 <Input
                   value={r.title}
                   onChange={(e) => update(r.key, { title: e.target.value })}
                   placeholder={t("invoices.itemTitle")}
-                  aria-label={t("invoices.itemTitle")}
+                  aria-label={t("invoices.itemTitleN", { n: i + 1 })}
                   required
                   maxLength={300}
-                  className="flex-1 font-medium"
+                  className="font-medium"
                 />
-                <RowButton label={t("invoices.up")} disabled={i === 0} onClick={() => move(i, -1)}>
-                  <ArrowUpIcon />
-                </RowButton>
-                <RowButton label={t("invoices.down")} disabled={i === rows.length - 1} onClick={() => move(i, 1)}>
-                  <ArrowDownIcon />
-                </RowButton>
-                <RowButton label={t("invoices.removeItem")} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
-                  <Trash2Icon />
-                </RowButton>
+                <Textarea
+                  value={r.description}
+                  onChange={(e) => update(r.key, { description: e.target.value })}
+                  placeholder={t("invoices.itemDescription")}
+                  aria-label={t("invoices.itemDescription")}
+                  rows={1}
+                  maxLength={5000}
+                  className="min-h-9 text-sm"
+                />
               </div>
-              <textarea
-                value={r.description}
-                onChange={(e) => update(r.key, { description: e.target.value })}
-                placeholder={t("invoices.itemDescription")}
-                aria-label={t("invoices.itemDescription")}
-                rows={2}
-                maxLength={5000}
-                className={textarea}
-              />
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[6rem_9rem_8rem_6rem_1fr] sm:items-center">
-                <Input value={r.quantity} onChange={(e) => update(r.key, { quantity: e.target.value })} inputMode="decimal" aria-label={t("invoices.quantity")} />
+              <div className="grid grid-cols-2 gap-2 md:contents">
+                <Input
+                  value={r.quantity}
+                  onChange={(e) => update(r.key, { quantity: e.target.value })}
+                  inputMode="decimal"
+                  aria-label={t("invoices.quantity")}
+                  required
+                  className="text-right tabular-nums"
+                />
                 <NativeSelect value={r.unit} onChange={(e) => update(r.key, { unit: e.target.value })} aria-label={t("invoices.unit")} className="w-full">
                   {UNITS.map((u) => (
                     <NativeSelectOption key={u} value={u}>
@@ -244,13 +241,7 @@ export function DocumentEditor({
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
-                <Input
-                  value={r.unit_price}
-                  onChange={(e) => update(r.key, { unit_price: e.target.value })}
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  aria-label={t("invoices.unitPriceNet")}
-                />
+                <TypedInput kind="money" defaultValue={r.unit_price} onChange={(e) => update(r.key, { unit_price: e.target.value })} aria-label={priceLabel} required className="w-full max-w-none" />
                 <NativeSelect
                   value={small ? 0 : r.tax_rate}
                   disabled={small}
@@ -264,24 +255,45 @@ export function DocumentEditor({
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
-                <span className="col-span-2 text-right text-sm font-medium tabular-nums sm:col-span-1">
-                  {money(Math.round(num(r.quantity) * (parsePrice(r.unit_price) ?? 0)))}
+              </div>
+              <div className="flex items-center justify-between gap-2 md:contents">
+                <span className="text-sm font-medium tabular-nums md:pt-2 md:text-right">{money(Math.round(num(r.quantity) * (parsePrice(r.unit_price) ?? 0)))}</span>
+                <span className="flex items-center justify-end gap-0.5">
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={t("invoices.up")} title={t("invoices.up")} disabled={i === 0} onClick={() => move(i, -1)}>
+                    <ArrowUpIcon />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={t("invoices.down")} title={t("invoices.down")} disabled={i === rows.length - 1} onClick={() => move(i, 1)}>
+                    <ArrowDownIcon />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t("invoices.removeItem")}
+                    title={t("invoices.removeItem")}
+                    onClick={() => {
+                      setRows((rs) => rs.filter((x) => x.key !== r.key))
+                      changed()
+                    }}
+                  >
+                    <XIcon />
+                  </Button>
                 </span>
               </div>
             </li>
           ))}
         </ol>
-        <Button type="button" variant="outline" size="sm" onClick={add} className="justify-self-start">
-          <PlusIcon /> {t("invoices.addItem")}
-        </Button>
-        <dl className="ml-auto grid min-w-64 grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm">
+        <button type="button" onClick={add} className="link inline-flex min-h-8 w-fit items-center gap-1.5 text-sm">
+          <PlusCircleIcon className="size-4" /> {t("invoices.addItem")}
+        </button>
+        <dl className="grid w-full grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm sm:ml-auto sm:w-auto sm:min-w-64">
           {!small && (
             <>
               <dt className="text-muted-foreground">{t("invoices.net")}</dt>
               <dd className="text-right tabular-nums">{money(sum.net)}</dd>
               {sum.taxes.map((x) => (
                 <div key={x.rate} className="contents">
-                  <dt className="text-muted-foreground">{t("invoices.vat", { rate: String(x.rate) })}</dt>
+                  <dt className="text-muted-foreground">{t(doc.prices_gross ? "invoices.vatIncluded" : "invoices.vat", { rate: String(x.rate) })}</dt>
                   <dd className="text-right tabular-nums">{money(x.tax)}</dd>
                 </div>
               ))}
@@ -290,31 +302,73 @@ export function DocumentEditor({
           <dt className="border-t pt-1 font-semibold">{t(small ? "invoices.total" : "invoices.gross")}</dt>
           <dd className="border-t pt-1 text-right font-semibold tabular-nums">{money(sum.gross)}</dd>
         </dl>
-      </section>
+      </FormCard>
 
-      <div className="grid gap-2">
-        <Label htmlFor="d-outro">{t("invoices.outro")}</Label>
-        <textarea id="d-outro" name="outro" rows={3} defaultValue={doc.outro ?? ""} maxLength={5000} className={textarea} />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="d-notes">{t("invoices.notes")}</Label>
-        <textarea id="d-notes" name="notes" rows={2} defaultValue={doc.notes ?? ""} maxLength={5000} className={textarea} />
-      </div>
+      <FormCard id="details" title={t("invoices.details")} description={t("invoices.datesHint")}>
+        <div className="grid gap-2">
+          <Label htmlFor="d-title">{t("invoices.titleLabel")}</Label>
+          <Input id="d-title" name="title" defaultValue={doc.title ?? ""} maxLength={200} placeholder={t(quote ? "invoices.quoteTitle" : "invoices.invoiceTitle")} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid content-start gap-2">
+            <Label htmlFor="d-issue">{t("invoices.issueDate")}</Label>
+            <DateInput id="d-issue" name="issue_date" type="date" defaultValue={doc.issue_date ?? ""} />
+          </div>
+          {quote ? (
+            <div className="grid content-start gap-2">
+              <Label htmlFor="d-valid">{t("invoices.validUntil")}</Label>
+              <DateInput id="d-valid" name="valid_until" type="date" defaultValue={doc.valid_until ?? ""} />
+            </div>
+          ) : (
+            <div className="grid content-start gap-2">
+              <Label htmlFor="d-due">{t("invoices.dueDate")}</Label>
+              <DateInput id="d-due" name="due_date" type="date" defaultValue={doc.due_date ?? ""} />
+            </div>
+          )}
+        </div>
+        {!quote && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid content-start gap-2">
+              <Label htmlFor="d-sfrom">{t("invoices.serviceFrom")}</Label>
+              <DateInput id="d-sfrom" name="service_from" type="date" defaultValue={doc.service_from ?? ""} />
+            </div>
+            <div className="grid content-start gap-2">
+              <Label htmlFor="d-sto">{t("invoices.serviceTo")}</Label>
+              <DateInput id="d-sto" name="service_to" type="date" defaultValue={doc.service_to ?? ""} />
+            </div>
+          </div>
+        )}
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="tax_mode" value="small_business" checked={small} onChange={(e) => setSmall(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
+          <span>
+            {t("invoices.smallBusiness")}
+            <span className="block text-xs text-muted-foreground">{t("invoices.smallBusinessHint")}</span>
+          </span>
+        </label>
+      </FormCard>
 
-      <div className="flex flex-wrap gap-2">
-        <SubmitButton variant="outline">{t("common.save")}</SubmitButton>
-        <SubmitButton formAction={issueDocument}>{t(doc.kind === "quote" ? "invoices.issueQuote" : "invoices.issueInvoice")}</SubmitButton>
-      </div>
-      <p className="text-xs text-muted-foreground">{t("invoices.issueHint")}</p>
+      {/* Texts come from the invoice settings; changing them per document is rare. */}
+      <details className="group grid gap-6" open={!!(doc.notes || doc.intro || doc.outro)}>
+        <summary className="link inline-flex min-h-8 w-fit cursor-pointer list-none items-center gap-1.5 text-sm select-none [&::-webkit-details-marker]:hidden">
+          <ChevronRightIcon className="size-4 transition-transform group-open:rotate-90" aria-hidden /> {t("common.moreDetails")}
+        </summary>
+      <FormCard id="texts" title={t("invoices.texts")} className="mt-6">
+        <div className="grid gap-2">
+          <Label htmlFor="d-intro">{t("invoices.intro")}</Label>
+          <Textarea id="d-intro" name="intro" rows={3} defaultValue={doc.intro ?? ""} maxLength={5000} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="d-outro">{t("invoices.outro")}</Label>
+          <Textarea id="d-outro" name="outro" rows={3} defaultValue={doc.outro ?? ""} maxLength={5000} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="d-notes">{t("invoices.notes")}</Label>
+          <Textarea id="d-notes" name="notes" rows={2} defaultValue={doc.notes ?? ""} maxLength={5000} />
+        </div>
+      </FormCard>
+      </details>
+
+      {doc.id ? <SaveBar /> : <SaveBar label={t("invoices.createDraft")} always />}
     </form>
-  )
-}
-
-function RowButton({ label, children, ...props }: { label: string; children: React.ReactNode } & React.ComponentProps<typeof Button>) {
-  return (
-    <Tooltip>
-      <TooltipTrigger render={<Button type="button" variant="ghost" size="icon-sm" aria-label={label} {...props} />}>{children}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
   )
 }

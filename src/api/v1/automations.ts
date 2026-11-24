@@ -47,7 +47,7 @@ async function workflowOf(db: Db, orgId: string, id: string) {
 const Input = z.object({ name: z.string().trim().min(1).max(200), description: z.string().max(2000).nullable(), graph: GraphInput.describe("Node positions are optional (laid out automatically)") }).partial().strict()
 const en = createT("en", messages.en)
 // Problems with a readable message (keys stay for programs).
-const explain = (problems: { key: string; node?: string }[]) => problems.map((p) => ({ ...p, message: en.has(`automations.problems.${p.key}`) ? en.dynamic(`automations.problems.${p.key}`) : p.key }))
+const explain = (problems: { key: string; node?: string }[]) => problems.map((p) => ({ ...p, message: en.has(`automations.issues.${p.key}`) ? en.dynamic(`automations.issues.${p.key}`) : p.key }))
 async function modulesOf(db: Db, orgId: string) {
   const { data } = await db.from("org_modules").select("module_key").eq("org_id", orgId)
   return new Set((data ?? []).map((m) => m.module_key))

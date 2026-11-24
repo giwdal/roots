@@ -4,8 +4,9 @@ import { deliverSoon } from "@/events/worker"
 import { getT } from "@/i18n/server"
 import { dbError, type T } from "@/i18n/translate"
 import { requirePerm } from "@/lib/context"
+import { moneyCents } from "@/lib/inputs"
 import { back } from "@/lib/url"
-import { ACCOUNT_KINDS, cents, readEntry } from "@/cashbook/fields"
+import { ACCOUNT_KINDS, readEntry } from "@/cashbook/fields"
 import { bookEntry, closeMonth, reverseEntry, type CashFail } from "@/cashbook/server"
 
 const PATH = "/cashbook"
@@ -28,7 +29,7 @@ export async function saveAccount(fd: FormData) {
   const accountId = id(fd, "id")
   const here = accountId ? `${PATH}?edit_account=${accountId}` : `${PATH}?new=account`
   const name = str(fd, "name").slice(0, 100)
-  const opening = str(fd, "opening") ? cents(str(fd, "opening").replace(/^-/, "")) : 0
+  const opening = str(fd, "opening") ? moneyCents(str(fd, "opening").replace(/^-/, "")) : 0
   if (!name || opening === null) back(here, { error: t("errors.invalid_input") })
   const row = {
     name,
@@ -69,8 +70,20 @@ export async function closeCashMonth(fd: FormData) {
   const { ctx, t } = await manager()
   const account = id(fd, "account_id") ?? ""
   const month = str(fd, "month")
-  const counted = str(fd, "counted") ? cents(str(fd, "counted")) : null
+  const counted = str(fd, "counted") ? moneyCents(str(fd, "counted")) : null
   if (str(fd, "counted") && counted === null) back(at(account, month), { error: t("cashbook.amountInvalid") })
   const res = await closeMonth(ctx.supabase, ctx.org.id, account, month, counted, str(fd, "note").slice(0, 1000) || null)
-  back(at(account, month), "error" in res ? { error: message(t, res) } : { ok: t("cashbook.closed") })
+  back("error" in res ? `${at(account, month)}&new=closing` : at(account, month), "error" in res ? { error: message(t, res) } : { ok: t("cashbook.closed") })
+}
+
+/** Open invoices for the booking sheet's picker ("Bezahlt Rechnung"): number or recipient, newest first, 20 at most. */
+export async function searchOpenInvoices(q: string) {
+  const ctx = await requirePerm("cashbook.manage")
+  if (!ctx.modules.has("invoices") || !ctx.can("invoices.view")) return []
+  const t = await getT()
+  const term = String(q ?? "").replace(/[%,()*]/g, "").trim().slice(0, 100)
+  let query = ctx.supabase.from("documents").select("id, number, recipient_name, gross_total, currency").eq("org_id", ctx.org.id).eq("kind", "invoice").eq("status", "sent").order("issue_date", { ascending: false }).limit(20)
+  if (term) query = query.or(`number.ilike.%${term}%,recipient_name.ilike.%${term}%`)
+  const { data } = await query
+  return (data ?? []).map((d) => ({ id: d.id, label: [d.number, d.recipient_name].filter(Boolean).join(" · "), detail: t.money(d.gross_total, d.currency) }))
 }

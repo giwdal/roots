@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
 import { fieldValues, keepSent, restoreFields, toRestore, type Field, type Sent } from "@/lib/form-snapshot"
 import { appRoute } from "@/lib/url"
+import { useBodyFlag } from "@/lib/body-flag"
+import { cn } from "@/lib/utils"
 
 const SENT_KEY = "roots-form-sent"
 
@@ -17,10 +19,13 @@ const SENT_KEY = "roots-form-sent"
  * Abbrechen · Speichern"), and leaving the page (links in the App, reload, closing the tab) asks first.
  * Create forms pass `always` + their label ("Kontakt anlegen"): the bar is there from the start.
  * In a drawer it sticks to the drawer's bottom instead of the page's.
+ * `confirm` (a message key): saving asks first through <ConfirmHost> (money: book, close a month), via a hidden submit
+ * button that carries data-confirm.
  */
-export function SaveBar({ label, always }: { label?: string; always?: boolean }) {
+export function SaveBar({ label, always, confirm }: { label?: string; always?: boolean; confirm?: string }) {
   const t = useT()
   const ref = useRef<HTMLSpanElement>(null)
+  const asker = useRef<HTMLButtonElement>(null)
   const [target, setTarget] = useState<Element | null>(null)
   const [dirty, setDirty] = useState(false)
   // The form is looked up when needed, never remembered: React may swap the <form> element after the first render
@@ -88,8 +93,53 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
   }, [dirty])
 
   // Unsaved changes: ask before reload/close and before following links inside the App.
+  useLeaveGuard(dirty && !always)
+
+  const show = always || dirty
+  // The phone tab bar steps aside (and the menu button shows) only while this page's bar is really on screen.
+  useBodyFlag("save-bar", !!(target && show))
+  const bar = show && (
+    <div
+      role="region"
+      aria-label={t("common.unsaved")}
+      data-slot={target ? "save-bar" : "sheet-save-bar"}
+      className={
+        target
+          ? "sticky bottom-0 max-md:bottom-(--keyboard) z-20 mt-auto border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          : "sticky bottom-0 z-20 -mx-6 mt-2 border-t bg-popover/95 backdrop-blur"
+      }
+    >
+      {/* In a sheet on phones the buttons stack full width, the action at the bottom (closest to the thumb). */}
+      {/* Phones: one row, Abbrechen beside a wide Speichern (page) or stacked full width (sheet); both full height. */}
+      <div className={cn("flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8 max-md:[&>button]:h-(--control)", target ? "max-md:flex-nowrap max-md:[&>button:last-child]:flex-1" : "max-md:flex-col-reverse max-md:items-stretch")}>
+        {dirty && !always && <span className="mr-auto text-sm text-muted-foreground max-md:hidden">{t("common.unsaved")}</span>}
+        {dirty && (
+          // ponytail: reload instead of form.reset(), chips/pickers keep React state that reset() can't reach.
+          <Button type="button" variant="ghost" size="sm" onClick={() => window.location.reload()}>
+            {t("common.cancel")}
+          </Button>
+        )}
+        <Save submit={() => (confirm && asker.current ? form()?.requestSubmit(asker.current) : form()?.requestSubmit())} label={label ?? t("common.save")} onDone={() => (setDirty(false), tryRestore(search))} />
+      </div>
+    </div>
+  )
+  return (
+    <span ref={ref} className="contents">
+      {confirm && (
+        <button ref={asker} type="submit" data-confirm={confirm} hidden>
+          {label ?? t("common.save")}
+        </button>
+      )}
+      {target && bar ? createPortal(bar, target) : bar}
+    </span>
+  )
+}
+
+/** While `dirty`: ask before reload/close and before following a link inside the App (forms, the workflow canvas). */
+export function useLeaveGuard(dirty: boolean) {
+  const t = useT()
   useEffect(() => {
-    if (!dirty || always) return
+    if (!dirty) return
     const unload = (e: BeforeUnloadEvent) => e.preventDefault()
     const click = (e: MouseEvent) => {
       const a = (e.target as Element).closest?.("a[href]") as HTMLAnchorElement | null
@@ -105,37 +155,7 @@ export function SaveBar({ label, always }: { label?: string; always?: boolean })
       window.removeEventListener("beforeunload", unload)
       document.removeEventListener("click", click, true)
     }
-  }, [dirty, always, t])
-
-  const show = always || dirty
-  const bar = show && (
-    <div
-      role="region"
-      aria-label={t("common.unsaved")}
-      data-slot={target ? "save-bar" : undefined}
-      className={
-        target
-          ? "sticky bottom-0 z-20 mt-auto border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_-6px] shadow-foreground/10 backdrop-blur supports-[backdrop-filter]:bg-background/80"
-          : "sticky bottom-0 z-20 -mx-6 mt-2 border-t bg-popover/95 backdrop-blur"
-      }
-    >
-      <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-8">
-        {dirty && !always && <span className="mr-auto text-sm text-muted-foreground">{t("common.unsaved")}</span>}
-        {dirty && (
-          // ponytail: reload instead of form.reset(), chips/pickers keep React state that reset() can't reach.
-          <Button type="button" variant="ghost" size="sm" onClick={() => window.location.reload()}>
-            {t("common.cancel")}
-          </Button>
-        )}
-        <Save submit={() => form()?.requestSubmit()} label={label ?? t("common.save")} onDone={() => (setDirty(false), tryRestore(search))} />
-      </div>
-    </div>
-  )
-  return (
-    <span ref={ref} className="contents">
-      {target && bar ? createPortal(bar, target) : bar}
-    </span>
-  )
+  }, [dirty, t])
 }
 
 /** Before a drawer/dialog closes: true when no form inside `root` has unsaved changes, or the person agrees to drop them. */

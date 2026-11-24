@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { BanknoteIcon, CheckCircle2Icon, CloudOffIcon, CreditCardIcon, MinusIcon, PlusIcon, QrCodeIcon, XCircleIcon } from "lucide-react"
@@ -46,7 +47,7 @@ const subscribe = (cb: () => void) => {
 // Door sale, made for a phone/tablet at the door: tap ticket types (or a free amount), pick how they pay, done.
 // Cash asks what was given (change); QR shows the online checkout for the buyer's phone; terminal sends the amount
 // to the card reader. Both card ways poll until the provider confirms; paid tickets are let in at once.
-export function DoorSale({ eventId, types, methods, provider, left, currency }: { eventId: string; types: Type[]; methods: DoorMethod[]; provider: string | null; left: number | null; currency: string }) {
+export function DoorSale({ eventId, types, methods, provider, left, currency, settingsHref }: { eventId: string; types: Type[]; methods: DoorMethod[]; provider: string | null; left: number | null; currency: string; settingsHref?: string }) {
   const t = useT()
   // "SumUp-Bezahlcode", "Stripe-Bezahlcode", "SumUp-Terminal": staff see which account takes the money.
   const providerName = provider === "sumup" ? "SumUp" : provider === "stripe" ? "Stripe" : ""
@@ -74,7 +75,10 @@ export function DoorSale({ eventId, types, methods, provider, left, currency }: 
       const i = cur.findIndex((x) => x.typeId === l.typeId && x.label === l.label && x.price === l.price)
       return i < 0 ? [...cur, l] : cur.map((x, j) => (j === i ? { ...x, quantity: Math.min(100, x.quantity + l.quantity) } : x))
     })
-  const change = (i: number, d: number) => setLines((cur) => cur.map((x, j) => (j === i ? { ...x, quantity: x.quantity + d } : x)).filter((x) => x.quantity > 0))
+  const change = (i: number, d: number) => {
+    if (lines[i] && lines[i].quantity + d <= 0) setEditing(null) // rows shift: the price being edited would jump to the next line
+    setLines((cur) => cur.map((x, j) => (j === i ? { ...x, quantity: x.quantity + d } : x)).filter((x) => x.quantity > 0))
+  }
   const reset = () => {
     setLines([])
     setBuyer({ name: "", email: "" })
@@ -415,7 +419,14 @@ export function DoorSale({ eventId, types, methods, provider, left, currency }: 
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("door.sale.noMethods")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("door.sale.noMethods")}{" "}
+              {settingsHref && (
+                <Link href={settingsHref} className="text-[var(--link)] hover:underline">
+                  {t("door.sale.toSettings")}
+                </Link>
+              )}
+            </p>
           )}
         </>
       )}

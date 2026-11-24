@@ -16,6 +16,10 @@ export function DoorStats({ eventId, initial }: { eventId: string; initial: Stat
   const t = useT()
   const [s, setS] = useState(initial)
   const [open, setOpen] = useState(false)
+  // Desktop (door dashboard): the rows per ticket type are open from the start.
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 768px)").matches) Promise.resolve().then(() => setOpen(true))
+  }, [])
 
   useEffect(() => {
     const load = () => navigator.onLine && doorStatsAction(eventId).then((x) => x && setS(x)).catch(() => null)

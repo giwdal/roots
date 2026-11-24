@@ -1,83 +1,62 @@
+import { Choice } from "@/components/choice"
 import { CustomFieldInputs } from "@/components/custom-field-inputs"
+import { DateInput } from "@/components/date-input"
 import { FormCard } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import type { T } from "@/i18n/translate"
-import type { CustomValues, FieldDef } from "@/lib/custom-fields"
+import type { FieldDef } from "@/lib/custom-fields"
 import { DOT, PICKABLE_COLORS } from "@/projects/fields"
-import { DateInput } from "@/components/date-input"
-
-export type ProjectValues = { name: string; description: string; color: string; status_id: string; lead_id: string | null; start_on: string | null; end_on: string | null; custom: unknown }
 
 /**
- * The project's fields in two cards: /projects/new (name + description, details) and the project page's side column
- * (`sidebar`: the name is edited in the title, description and details stacked narrow; inside its form).
+ * The project's fields for /projects/new: Projekt (name, description), Details (status, lead, dates, colour) and the
+ * org's custom fields. On the project page every value is edited in place instead. `start` pre-fills the start date.
  */
-export function ProjectFields({ t, p, statuses, team, defs, disabled, sidebar }: { t: T; p?: ProjectValues; statuses: { id: string; name: string }[]; team: { id: string; name: string }[]; defs: FieldDef[]; disabled?: boolean; sidebar?: boolean }) {
+export function ProjectFields({ t, statuses, team, defs, start }: { t: T; statuses: { id: string; name: string }[]; team: { id: string; name: string }[]; defs: FieldDef[]; start?: string }) {
   return (
     <>
-      <FormCard id={sidebar ? "description" : "project"} title={t(sidebar ? "projects.description" : "projects.project")}>
-        <fieldset disabled={disabled} className="grid gap-4">
-          {!sidebar && (
-          <div className="grid gap-2">
-            <Label htmlFor="pj-name">{t("projects.name")}</Label>
-            <Input id="pj-name" name="name" defaultValue={p?.name} maxLength={200} required autoFocus={!p} className="text-base font-medium" />
-          </div>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="pj-desc" className={sidebar ? "sr-only" : undefined}>{t("projects.description")}</Label>
-            <RichTextEditor id="pj-desc" name="description" defaultValue={p?.description ?? ""} disabled={disabled} />
-          </div>
-        </fieldset>
+      <FormCard id="project" title={t("projects.project")}>
+        <div className="grid gap-2">
+          <Label htmlFor="pj-name">{t("projects.name")}</Label>
+          <Input id="pj-name" name="name" maxLength={200} required autoFocus className="text-base font-medium" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="pj-desc">{t("projects.descriptionOptional")}</Label>
+          <RichTextEditor id="pj-desc" name="description" />
+        </div>
       </FormCard>
       <FormCard id="details" title={t("projects.details")}>
-        <fieldset disabled={disabled} className={sidebar ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}>
-          <div className="grid gap-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid content-start gap-2 sm:col-span-2">
             <Label htmlFor="pj-status">{t("projects.status")}</Label>
-            <NativeSelect id="pj-status" name="status_id" defaultValue={p?.status_id ?? statuses[0]?.id} className="w-full">
-              {statuses.map((s) => (
-                <NativeSelectOption key={s.id} value={s.id}>
-                  {s.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Choice id="pj-status" name="status_id" label={t("projects.status")} required defaultValue={statuses[0]?.id} options={statuses.map((s) => ({ value: s.id, label: s.name }))} />
           </div>
-          <div className="grid gap-2">
+          <div className="grid content-start gap-2 sm:col-span-2">
             <Label htmlFor="pj-lead">{t("projects.lead")}</Label>
-            <NativeSelect id="pj-lead" name="lead_id" defaultValue={p?.lead_id ?? ""} className="w-full">
-              <NativeSelectOption value="">{t("projects.noLead")}</NativeSelectOption>
-              {team.map((m) => (
-                <NativeSelectOption key={m.id} value={m.id}>
-                  {m.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Choice id="pj-lead" name="lead_id" label={t("projects.lead")} emptyLabel={t("projects.noLead")} options={team.map((m) => ({ value: m.id, label: m.name }))} />
           </div>
-          <div className="grid gap-2">
+          <div className="grid content-start gap-2">
             <Label htmlFor="pj-start">{t("projects.start")}</Label>
-            <DateInput id="pj-start" name="start_on" type="date" defaultValue={p?.start_on ?? ""} />
+            <DateInput id="pj-start" name="start_on" type="date" defaultValue={start ?? ""} />
           </div>
-          <div className="grid gap-2">
+          <div className="grid content-start gap-2">
             <Label htmlFor="pj-end">{t("projects.end")}</Label>
-            <DateInput id="pj-end" name="end_on" type="date" defaultValue={p?.end_on ?? ""} />
+            <DateInput id="pj-end" name="end_on" type="date" />
           </div>
-          <fieldset className={sidebar ? "grid gap-2" : "grid gap-2 sm:col-span-2"}>
+          <fieldset className="grid gap-2 sm:col-span-2">
             <legend className="mb-2 text-sm font-medium">{t("projects.color")}</legend>
             <div className="flex gap-1">
               {PICKABLE_COLORS.map((c) => (
-                <label key={c} className="grid size-8 cursor-pointer place-items-center rounded-full has-checked:ring-2 has-checked:ring-ring">
-                  <input type="radio" name="color" value={c} defaultChecked={(p?.color ?? "blue") === c} className="sr-only" aria-label={t.dynamic(`projects.colors.${c}`)} />
+                <label key={c} className="grid size-9 cursor-pointer place-items-center rounded-full has-checked:ring-2 has-checked:ring-ring">
+                  <input type="radio" name="color" value={c} defaultChecked={c === "blue"} className="sr-only" aria-label={t.dynamic(`projects.colors.${c}`)} />
                   <span className="size-4 rounded-full" style={{ background: DOT[c] }} aria-hidden />
                 </label>
               ))}
             </div>
           </fieldset>
-        </fieldset>
-        <fieldset disabled={disabled}>
-          <CustomFieldInputs defs={defs} values={(p?.custom ?? {}) as CustomValues} idPrefix="pj-custom" single={sidebar} />
-        </fieldset>
+        </div>
+        {defs.length > 0 && <CustomFieldInputs defs={defs} idPrefix="pj-custom" />}
       </FormCard>
     </>
   )

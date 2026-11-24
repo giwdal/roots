@@ -34,6 +34,15 @@ export async function doorOffer(orgId: string, eventId: string) {
   }
 }
 
+/** Whether the door sells at all: at least one ticked payment method that works (none ticked = no Verkauf tab). */
+export async function doorSells(orgId: string, door: unknown) {
+  const s = readDoor(door)
+  if (s.methods.includes("cash")) return true
+  if (!s.methods.length) return false
+  const can = await posMethods(orgId)
+  return s.methods.some((m) => can[m] && (m !== "terminal" || !!s.reader_id))
+}
+
 export type DoorSale = { orgId: string; eventId: string; lines: DoorLine[]; name?: string | null; email?: string | null; soldBy: string | null; clientId?: string | null; soldAt?: string | null }
 
 /**

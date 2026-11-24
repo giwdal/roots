@@ -34,10 +34,10 @@ export async function removeMembership(userId: string, memberId: string) {
   back(`${PATH}?edit=${userId}`, { ok: t("admin.orgs.memberRemoved") })
 }
 
-export async function deleteUser(userId: string, formData: FormData) {
+// The ⋯ item asks first through ConfirmHost.
+export async function deleteUser(userId: string) {
   const { supabase } = await requirePlatformAdmin()
   const t = await getT()
-  if (formData.get("confirm") !== "yes") back(`${PATH}?edit=${userId}`, { error: t("admin.users.deleteConfirm") })
   const { error } = await supabase.rpc("admin_delete_user", { p_user: userId })
   if (error) back(`${PATH}?edit=${userId}`, { error: dbError(t, error) })
   back(PATH, { ok: t("admin.users.deleted") })

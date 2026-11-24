@@ -118,14 +118,10 @@ export function Composer({
             <Label htmlFor={`l-${f.key}`}>{f.label}</Label>
             {f.type === "textarea" ? (
               <Textarea id={`l-${f.key}`} name={`f.${f.key}`} rows={6} value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
+            ) : f.type === "date" ? (
+              <DateInput id={`l-${f.key}`} name={`f.${f.key}`} defaultValue={values[f.key] ?? ""} onValueChange={(v) => setValues({ ...values, [f.key]: v })} />
             ) : (
-              <Input
-                id={`l-${f.key}`}
-                name={`f.${f.key}`}
-                type={f.type === "date" ? "date" : "text"}
-                value={values[f.key] ?? ""}
-                onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-              />
+              <Input id={`l-${f.key}`} name={`f.${f.key}`} value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
             )}
           </div>
         ))}
@@ -138,7 +134,7 @@ export function Composer({
               <Button type="button" variant="outline" disabled={!!busy} onClick={() => run("save")}>
                 {busy === "save" ? <Loader2Icon className="animate-spin" /> : <FolderInputIcon />} {t("letters.saveFile")}
               </Button>
-              <Button type="button" variant="outline" disabled={!!busy || !filled?.vars.email} onClick={() => run("send")}>
+              <Button type="button" variant="outline" disabled={!!busy || !filled?.vars.email} onClick={() => run("send")} data-confirm="letters.confirmSend">
                 {busy === "send" ? <Loader2Icon className="animate-spin" /> : <SendIcon />} {t("letters.send")}
               </Button>
             </>
@@ -146,7 +142,7 @@ export function Composer({
         </div>
         {!template.letterhead || seller.street ? null : (
           <p className="text-xs text-muted-foreground">
-            <Link href="/invoices/settings" className="underline underline-offset-2">
+            <Link href="/invoices/settings" className="link">
               {t("invoices.settings")}
             </Link>
           </p>

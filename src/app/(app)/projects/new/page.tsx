@@ -17,7 +17,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
     <NewPage list={{ href: "/projects", label: t("projects.title") }} title={t("projects.newProject")} error={param(sp, "error")}>
       <form action={createProjectAction} className="grid gap-6">
         <input type="hidden" name="back" value="/projects/new" />
-        <ProjectFields t={t} statuses={basics.projectStatuses} team={basics.team} defs={defs} />
+        <ProjectFields t={t} statuses={basics.projectStatuses.filter((s) => !s.is_done)} team={basics.team} defs={defs} start={/^\d{4}-\d{2}-\d{2}$/.test(param(sp, "start") ?? "") ? param(sp, "start") : undefined} />
         <SaveBar label={t("projects.createProject")} always />
       </form>
     </NewPage>

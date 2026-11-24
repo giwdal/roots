@@ -1,19 +1,19 @@
 import Link from "next/link"
-import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { ArrowLeftIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuExport, MenuLink, MenuSeparator } from "@/components/actions-menu"
 import { SubmitButton } from "@/components/submit-button"
 import { restoreObjectAction } from "./actions"
-import { DataTable, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, SearchBox } from "@/components/data-table"
 import { FilterMenu } from "@/components/filter-menu"
 import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
 import { Segments } from "@/components/segments"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
 import { FAMILIES, notOver } from "@/rentals/fields"
+import { ObjectBadge } from "./badges"
 import { kindLabel, peopleLine } from "./parts"
 
 const VIEWS = ["all", "free", "busy"] as const
@@ -81,7 +81,7 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
     <Page>
       <PageHeader
         area="rentals"
-        title={trash ? `${t("rentals.title")} · ${t("rentals.trash")}` : t("rentals.title")}
+        title={trash ? `${t("rentals.objects")} · ${t("rentals.trash")}` : t("rentals.objects")}
         meta={!trash && rentable.length ? [t("rentals.rentedOf", { count: rentedNow, total: rentable.length }), monthly ? t("rentals.monthlyRent", { amount: t.money(monthly) }) : null].filter(Boolean).join(" · ") : undefined}
         menu={
           <ActionsMenu>
@@ -89,8 +89,8 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
             {canManage && (
               <>
                 <MenuSeparator />
-                <MenuLink href={trash ? "/rentals" : "/rentals?trash=1"} icon={trash ? <KeyRoundIcon /> : <Trash2Icon />}>
-                  {trash ? t("rentals.all") : t("rentals.trash")}
+                <MenuLink href={trash ? "/rentals" : "/rentals?trash=1"} icon={trash ? <ArrowLeftIcon /> : <Trash2Icon />}>
+                  {trash ? t("rentals.backToObjects") : t("rentals.trash")}
                 </MenuLink>
               </>
             )}
@@ -101,14 +101,14 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
       {trash && <p className="text-sm text-muted-foreground">{t("rentals.trashHint", { days: 30 })}</p>}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       {all.length > 0 && !trash && (
-        <div className="flex flex-wrap items-center gap-2">
-          <SearchBox q={q} label={t("rentals.search")} />
+        <ListToolbar search={<SearchBox q={q} label={t("rentals.search")} />}>
           <FilterMenu param="family" label={t("rentals.filterFamily")} options={FAMILIES.map((f) => ({ value: f, label: t.dynamic(`rentals.families.${f}`) }))} />
           <Segments
             label={t("rentals.status")}
+            className="md:ml-auto"
             items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "all" ? undefined : v }), current: v === view, label: v === "all" ? t("rentals.all") : v === "free" ? t("rentals.onlyFree") : t("rentals.onlyBusy") }))}
           />
-        </div>
+        </ListToolbar>
       )}
       <DataTable
         rows={rows}
@@ -140,7 +140,8 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
             cell: (o) => (
               <span className="grid">
                 <span className="font-medium">{o.name}</span>
-                <span className="text-xs text-muted-foreground">
+                {/* Phones: the name only — status, who and price carry the row there. */}
+                <span className="text-xs text-muted-foreground max-md:hidden">
                   {kindLabel(t, o.kind)}
                   {o.parent_id && nameOf(o.parent_id) && ` · ${nameOf(o.parent_id)}`}
                 </span>
@@ -149,6 +150,7 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
           },
           {
             header: t("rentals.status"),
+            phone: trash ? undefined : (false as const),
             cell: (o) => {
               if (o.deleted_at)
                 return (
@@ -160,23 +162,35 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
                   </form>
                 )
               const b = busy(o.id)
-              if (o.status !== "active") return <Badge variant="outline">{t.dynamic(`rentals.statuses.${o.status}`)}</Badge>
-              if (o.included) return <span className="text-muted-foreground">{t("rentals.includedShort")}</span>
-              if (!b.length) {
-                const n = next(o.id)
-                return (
-                  <span className="grid justify-items-start gap-0.5">
-                    <Badge variant="secondary">{t("rentals.free")}</Badge>
-                    {n && <span className="text-xs text-muted-foreground">{t("rentals.nextFrom", { date: day(n.starts_at), who: peopleLine(n.rental_contacts) || "–" })}</span>}
-                  </span>
-                )
-              }
+              if (o.included && o.status === "active") return <span className="text-muted-foreground">{t("rentals.includedShort")}</span>
+              const n = !b.length && o.status === "active" ? next(o.id) : undefined
               return (
-                <span className="grid">
-                  <Link href={`/rentals/r/${b[0].id}`} className="relative z-10 font-medium underline-offset-4 hover:underline">
-                    {b.map((r) => peopleLine(r.rental_contacts)).filter(Boolean).join(" · ") || "–"}
-                  </Link>
-                  <span className="text-xs text-muted-foreground">{b[0].ends_at ? `${day(b[0].starts_at)} – ${day(b[0].ends_at)}` : t("rentals.since", { date: day(b[0].starts_at) })}</span>
+                <span className="grid justify-items-start gap-0.5">
+                  <ObjectBadge t={t} status={o.status} busy={!!b.length} />
+                  {b.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {b.map((r) => peopleLine(r.rental_contacts)).filter(Boolean).join(" · ") || "–"} · {b[0].ends_at ? `${day(b[0].starts_at)} – ${day(b[0].ends_at)}` : t("rentals.since", { date: day(b[0].starts_at) })}
+                    </span>
+                  )}
+                  {n && <span className="text-xs text-muted-foreground">{t("rentals.nextFrom", { date: day(n.starts_at), who: peopleLine(n.rental_contacts) || "–" })}</span>}
+                </span>
+              )
+            },
+          },
+          {
+            // Phones: one badge and who has it (or when it is next taken), the period stays in the table and the object.
+            header: t("rentals.status"),
+            table: false as const,
+            phone: trash ? (false as const) : undefined,
+            cell: (o) => {
+              if (o.deleted_at || (o.included && o.status === "active")) return null
+              const b = busy(o.id)
+              const n = !b.length && o.status === "active" ? next(o.id) : undefined
+              const who = b.length ? peopleLine(b[0].rental_contacts, 1) : n ? t("rentals.nextShort", { date: t.date(n.starts_at, { day: "numeric", month: "short" }) }) : ""
+              return (
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <ObjectBadge t={t} status={o.status} busy={!!b.length} />
+                  {who && <span className="truncate">{who}</span>}
                 </span>
               )
             },
@@ -189,15 +203,25 @@ export default async function RentalsPage({ searchParams }: PageProps<"/rentals"
               const b = busy(o.id)[0]
               if (b?.price_cents != null)
                 return (
-                  <span className="grid">
-                    <span>{`${t.money(b.price_cents)}${b.unit ? ` ${t.dynamic(`rentals.units.${b.unit}`)}` : ""}`}</span>
-                    {b.deposit_cents ? <span className="text-xs text-muted-foreground">{t("rentals.depositShort", { amount: t.money(b.deposit_cents) })}</span> : null}
+                  <span className="grid justify-items-end">
+                    <span>
+                      {t.money(b.price_cents)}
+                      {b.unit && <span className="max-md:block max-md:text-xs max-md:text-muted-foreground"> {t.dynamic(`rentals.units.${b.unit}`)}</span>}
+                    </span>
+                    {b.deposit_cents ? <span className="text-xs text-muted-foreground max-md:hidden">{t("rentals.depositShort", { amount: t.money(b.deposit_cents) })}</span> : null}
                   </span>
                 )
               const r = (rates ?? []).find((x) => x.object_id === o.id)
-              return r ? <span className="text-muted-foreground">{`${t.money(r.price_cents)} ${t.dynamic(`rentals.units.${r.unit}`)}`}</span> : ""
+              return r ? (
+                <span className="text-muted-foreground">
+                  {t.money(r.price_cents)}
+                  <span className="max-md:block max-md:text-xs"> {t.dynamic(`rentals.units.${r.unit}`)}</span>
+                </span>
+              ) : (
+                ""
+              )
             },
-            className: "whitespace-nowrap",
+            className: "whitespace-nowrap text-right tabular-nums",
           },
         ]}
       />

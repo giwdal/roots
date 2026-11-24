@@ -29,7 +29,7 @@ export function InviteLink({ id }: { id: string }) {
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={renew}>
+      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={renew} data-confirm="members.confirmRenew">
         {t("members.renewLink")}
       </Button>
       {open && (

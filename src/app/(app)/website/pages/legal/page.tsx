@@ -24,7 +24,7 @@ export default async function LegalPage({ searchParams }: PageProps<"/website/pa
       <PageHeader crumbs={[{ label: t("website.pages.nav"), href: "/website/pages" }, { label: t("website.pages.legal") }]} title={t("website.pages.legal")} description={t("site.legalHint")} />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
       <PublishBar t={t} pending={site.pending} url={siteUrl(ctx.org.slug, "", ctx.org.site_domain)} back="/website/pages/legal" />
-      <form action={saveWebsiteDraft} className="grid max-w-3xl gap-6">
+      <form action={saveWebsiteDraft} className="grid min-w-0 gap-6">
         <input type="hidden" name="back" value="/website/pages/legal" />
         <FormCard title={t("site.imprint")}>
           <Label htmlFor="imprint" className="sr-only">{t("site.imprint")}</Label>

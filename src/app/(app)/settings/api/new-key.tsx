@@ -3,7 +3,8 @@
 import { useActionState } from "react"
 import { CopyIcon } from "lucide-react"
 import { toast } from "sonner"
-import { SubmitButton } from "@/components/submit-button"
+import { Choice } from "@/components/choice"
+import { SaveBar } from "@/components/save-bar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +17,7 @@ export function NewKey({ groups }: { groups: { module: string; label: string; pe
   const [state, action] = useActionState(createApiKey, {})
   if (state.key)
     return (
-      <div className="grid gap-3 rounded-lg border border-primary p-4">
+      <div className="grid gap-3">
         <p className="font-medium">{t("api.createdTitle")}</p>
         <p className="text-sm text-muted-foreground">{t("api.createdHint")}</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -33,41 +34,35 @@ export function NewKey({ groups }: { groups: { module: string; label: string; pe
       </div>
     )
   return (
-    <form action={action} className="grid gap-4 rounded-lg border p-4">
+    <form action={action} className="grid gap-4">
       {state.error && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}
         </p>
       )}
-      <div className="grid gap-2">
+      <div className="grid max-w-xl gap-2">
         <Label htmlFor="key-name">{t("api.name")}</Label>
         <Input id="key-name" name="name" required maxLength={100} placeholder={t("api.namePlaceholder")} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="key-expires">{t("api.expires")}</Label>
-        <select id="key-expires" name="expires" defaultValue="365" className="h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-2 text-sm">
-          {["30", "90", "365", "0"].map((d) => (
-            <option key={d} value={d}>
-              {t.dynamic(`api.expiresIn.${d}`)}
-            </option>
-          ))}
-        </select>
+        <Choice id="key-expires" name="expires" label={t("api.expires")} required defaultValue="365" options={["30", "90", "365", "0"].map((d) => ({ value: d, label: t.dynamic(`api.expiresIn.${d}`) }))} />
       </div>
       <fieldset className="grid gap-3">
         <legend className="mb-1 text-sm font-medium">{t("api.permissions")}</legend>
         {groups.map((g) => (
           <div key={g.module} className="grid gap-1">
-            <p className="text-xs text-muted-foreground">{g.label}</p>
+            <p className="text-sm font-medium">{g.label}</p>
             {g.perms.map((p) => (
               <label key={p.key} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="permissions" value={p.key} className="size-4" />
+                <input type="checkbox" name="permissions" value={p.key} className="size-4 accent-primary" />
                 {p.label} <span className="font-mono text-xs text-muted-foreground">{p.key}</span>
               </label>
             ))}
           </div>
         ))}
       </fieldset>
-      <SubmitButton className="justify-self-start">{t("api.create")}</SubmitButton>
+      <SaveBar label={t("api.create")} always />
     </form>
   )
 }

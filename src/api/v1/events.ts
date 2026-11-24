@@ -33,9 +33,9 @@ export const Event = z.object({
   max_tickets_per_order: z.number().int(),
   links: z.array(z.object({ label: z.string(), url: z.string() })).describe("The event's own links (max 3), shown as buttons on its page"),
   show_code_field: z.boolean().describe("Shop shows the discount code field (?code= links work either way)"),
-  counts_visit: z.boolean().describe("Member check-ins here count towards membership visit limits (default true). Off = still let in and counted as attendees"),
   event_type_id: uuid.nullable().describe("The event's type (GET /event-types), null = none"),
   event_type_slug: z.string().nullable().describe("Slug of that type"),
+  waitlist: z.boolean().describe("Sold out → the shop offers the waiting list (default true)"),
   door: z.object({ methods: z.array(z.enum(DOOR_METHODS)), reader_id: z.string().nullable(), cash_account_id: uuid.nullable() }).describe("Door sales (POS): payment methods offered, card reader, cash book account for cash"),
   email_template_id: uuid.nullable().describe("Email template for this event's ticket, guest-list and waiting-list mails (null = the org's default, else roots' built-in mail). See GET /email/templates"),
   custom: Custom,
@@ -45,7 +45,7 @@ export const Event = z.object({
   updated_at: ts,
 })
 export const EVENT_COLS =
-  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, counts_visit, event_type_id, event_types(slug), door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
+  "id, title, slug, status, starts_at, ends_at, location_id, venue_name, venue_address, description, capacity, image_path, ticket_names, max_tickets_per_order, links, show_code_field, waitlist, event_type_id, event_types(slug), door, email_template_id, custom, published_at, deleted_at, created_at, updated_at"
 const eventOut = <T extends { image_path: string | null; door: unknown; event_types: { slug: string } | null }>({ image_path, event_types, ...e }: T) => ({
   ...e,
   event_type_slug: event_types?.slug ?? null,
@@ -68,8 +68,8 @@ const EventFields = z.object({
   max_tickets_per_order: z.number().int().min(1).max(100),
   email_template_id: uuid.nullable().describe("An email template of the org (GET /email/templates); null = the org's default"),
   show_code_field: z.boolean().describe("Show the discount code field in the shop (default true); ?code= links work either way"),
-  counts_visit: z.boolean().describe("Member check-ins at this event count towards membership visit limits (default true, or the type's default); off = e.g. club nights"),
-  event_type_id: uuid.nullable().describe("An event type of the organisation (GET /event-types); null clears it. On create the type's defaults (counts_visit, capacity) fill what the request leaves out. Give this or event_type_slug"),
+  waitlist: z.boolean().describe("Offer the waiting list when sold out (default true); off = joining is refused, people already on it keep their place"),
+  event_type_id: uuid.nullable().describe("An event type of the organisation (GET /event-types); null clears it. On create the type's default (capacity) fills what the request leaves out. Give this or event_type_slug"),
   event_type_slug: z.string().regex(EVENT_SLUG).nullable().describe("The same by slug"),
   door: z
     .object({ methods: z.array(z.enum(DOOR_METHODS)).max(3), reader_id: z.string().max(100).nullable().optional(), cash_account_id: uuid.nullable().optional() })
@@ -130,7 +130,7 @@ async function templateOf(db: Db, orgId: string, id: string | null | undefined) 
 async function typeOf(db: Db, orgId: string, id: string | null | undefined, slug: string | null | undefined, forNew: boolean): Promise<{ id: string | null; defaults: TypeDefaults | null } | undefined> {
   if (id === undefined && slug === undefined) return undefined
   if (id === null || slug === null) return { id: null, defaults: null }
-  let q = db.from("event_types").select("id, counts_visit, capacity, active").eq("org_id", orgId)
+  let q = db.from("event_types").select("id, capacity, active").eq("org_id", orgId)
   q = id ? q.eq("id", id) : q.eq("slug", slug!)
   const { data } = await q.maybeSingle()
   if (!data) throw new ApiError(422, "invalid_reference", "event_type_id / event_type_slug does not belong to this organisation.")

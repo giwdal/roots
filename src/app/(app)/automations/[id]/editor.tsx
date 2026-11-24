@@ -1,44 +1,58 @@
 "use client"
 
 import "@xyflow/react/dist/style.css"
-import { useCallback, useMemo, useState, useTransition } from "react"
+import "./flow.css"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { DateInput } from "@/components/date-input"
 import {
   addEdge,
   Background,
+  BaseEdge,
   Controls,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
   Handle,
-  MiniMap,
+  Panel,
   Position,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
+  type EdgeProps,
   type Node,
   type NodeProps,
 } from "@xyflow/react"
-import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, ClockIcon, SendIcon, DownloadIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
+import { BellIcon, FilePlus2Icon, SearchIcon, SigmaIcon, CheckIcon, ChevronsUpDownIcon, CircleAlertIcon, ClockIcon, SendIcon, DownloadIcon, PlusIcon, FlaskConicalIcon, XIcon, GitForkIcon, LayoutListIcon, MailIcon, PencilIcon, SaveIcon, RepeatIcon, TagIcon, TagsIcon, Trash2Icon, WebhookIcon, ZapIcon, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { InfoTip } from "@/components/info-tip"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { Textarea } from "@/components/ui/textarea"
+import { ContentSheet, ContentSheetTitle } from "@/components/content-sheet"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
 import { useT } from "@/i18n/client"
+import { usePhone } from "@/lib/use-phone"
 import { cn } from "@/lib/utils"
 import { ACTIONS, DATA_STEPS, stepKey, triggerKey, validate, WAIT_UNITS, type Graph, type NodeType, type TraceStep } from "@/automations/graph"
 import { creatableFor, deletableFor, def, OBJECTS, searchFields, objectsFor, OPS_FOR, parseRecordTrigger, SCHEDULE_OBJECTS, splitPath, writableFor, type Field, type Kind, type ObjectKey, type RefList } from "@/automations/objects"
-import { saveWorkflow, testPickers, testRun, testSamples, type TestPicker } from "../actions"
+import { saveWorkflow, setActiveAction, testPickers, testRun, testSamples, type TestPicker } from "../actions"
+import { useLeaveGuard } from "@/components/save-bar"
+import { Switch } from "@/components/ui/switch"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 type Data = Record<string, unknown>
 type FlowNode = Node<Data, NodeType>
 type Option = { value: string; label: string }
+type Branch = "yes" | "no" | null // an output: a condition's yes/no, null = the one output of every other step
 export type EditorOptions = {
   triggers: { group: string; items: { key: string; label: string }[] }[] // by module: its events + "record created/changed/deleted"
   customFields: Record<string, { key: string; label: string; type: string; options: string[] }[]> // per object (contact, event)
@@ -114,7 +128,7 @@ const DEFAULTS: Record<NodeType, Data> = {
   for_each: { object: "", rules: [], sort: "", dir: "asc", limit: 50, label: "" },
   telegram: { chat_id: "", text: "" },
 }
-// The sidebar's sections.
+// The step picker's groups; each group has one colour (icon tiles on the cards and in the picker).
 const PALETTE: { section: string; types: NodeType[] }[] = [
   { section: "logic", types: ["condition", "wait"] },
   { section: "query", types: ["find_record", "aggregate", "for_each"] },
@@ -122,41 +136,127 @@ const PALETTE: { section: string; types: NodeType[] }[] = [
   { section: "data", types: ["add_tag", "remove_tag", "set_field", "create_record", "delete_record"] },
   { section: "connect", types: ["webhook"] },
 ]
+const SECTION_COLOR: Record<string, string> = { trigger: "var(--warning)", logic: "var(--chart-3)", query: "var(--chart-5)", send: "var(--chart-2)", data: "var(--chart-1)", connect: "var(--chart-4)" }
+const colorOf = (type: NodeType) => SECTION_COLOR[type === "trigger" ? "trigger" : (PALETTE.find((s) => s.types.includes(type))?.section ?? "connect")]
+// Canvas grid of the vertical flow: one row per step, branches side by side.
+const CARD_W = 320
+const ROW = 150
+const COL = 360
 
-// One step on the canvas: icon, kind, a one-line summary; conditions have a yes and a no output.
-function StepNode({ type, data, selected }: NodeProps<FlowNode>) {
-  const t = useT()
+function StepTile({ type, small }: { type: NodeType; small?: boolean }) {
   const Icon = ICONS[type]
+  const c = colorOf(type)
+  return (
+    <span aria-hidden className={cn("grid shrink-0 place-items-center rounded-lg", small ? "size-6 rounded-md" : "size-9")} style={{ background: `color-mix(in oklch, ${c} 16%, transparent)`, color: c }}>
+      <Icon className={small ? "size-3.5" : "size-4"} />
+    </span>
+  )
+}
+
+// What the cards and connectors need from the editor (they are rendered by React Flow, not by the editor itself).
+type FlowApi = { canEdit: boolean; testing: boolean; telegram: boolean; insertOnEdge: (edge: string, type: NodeType) => void; appendAfter: (node: string, branch: Branch, type: NodeType) => void }
+const FlowCtx = createContext<FlowApi | null>(null)
+type Meta = { n?: number; problem?: string; free: Branch[] } // step number (from the trigger), first problem, outputs without a next step
+
+// The searchable step picker: a popover next to its "+" (a bottom sheet on phones), grouped like the old palette.
+function AddStepMenu({ onPick, telegram, children }: { onPick: (type: NodeType) => void; telegram: boolean; children: React.ReactElement }) {
+  const t = useT()
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={children} />
+      <PopoverContent sheet title={t("automations.addStep")} className="w-72 p-0" align="center">
+        <Command>
+          <CommandInput placeholder={t("automations.searchStep")} />
+          <CommandList className="max-h-80 md:max-h-96">
+            <CommandEmpty>{t("automations.noTrigger")}</CommandEmpty>
+            {PALETTE.map((sec) => (
+              <CommandGroup key={sec.section} heading={t.dynamic(`automations.sections.${sec.section}`)}>
+                {sec.types.map((type) => {
+                  const off = type === "telegram" && !telegram
+                  return (
+                    <CommandItem key={type} value={`${t.dynamic(`automations.nodes.${type}`)} ${t.dynamic(`automations.sections.${sec.section}`)}`} disabled={off} onSelect={() => (onPick(type), setOpen(false))}>
+                      <StepTile type={type} small />
+                      <span className="grid">
+                        <span>{t.dynamic(`automations.nodes.${type}`)}</span>
+                        {off && <span className="text-xs text-muted-foreground">{t("automations.telegramOff")}</span>}
+                      </span>
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// The small round "+" on connectors and below open outputs.
+function PlusButton({ label, ...props }: { label: string } & React.ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      {...props}
+      className="nodrag nopan grid size-6 place-items-center rounded-full border bg-card text-muted-foreground shadow-xs transition-colors hover:border-ring hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:size-8"
+    >
+      <PlusIcon className="size-3.5" />
+    </button>
+  )
+}
+
+// One step on the canvas: coloured icon tile, "2. E-Mail senden", then its own name or what it is set to.
+function StepNode({ id, type, data, selected }: NodeProps<FlowNode>) {
+  const t = useT()
+  const flow = useContext(FlowCtx)!
+  const meta = (data.__meta as Meta | undefined) ?? { free: [] }
   const summary = (() => {
     const d = data as Record<string, string | number | { field: string }[]>
-    if (type === "trigger") return (d.event as string) ? triggerLabel(String(d.event), t) : t("automations.pickEvent")
-    if (type === "wait") return `${d.amount} ${t.dynamic(`automations.units.${d.unit}`)}`
-    if (type === "condition") return ((d.rules as { field: string }[]) ?? []).map((r) => r.field).filter(Boolean).join(", ") || "–"
-    if (type === "for_each") return d.object ? `${t.dynamic(`automations.objects.${d.object}`)} · max. ${d.limit ?? 50}` : "–"
-    return String(d.subject ?? d.tag ?? d.field ?? d.url ?? d.text ?? d.to ?? "") || "–"
+    if (type === "trigger") return (d.event as string) ? triggerLabel(d.event === "schedule" && d.date ? "date_reached" : String(d.event), t) : ""
+    if (type === "wait") return d.mode === "until" ? (d.until ? t("automations.until", { when: String(d.until) }) : "") : t.dynamic(`automations.duration.${d.unit}`, { count: Number(d.amount) || 0 })
+    if (type === "condition") return ((d.rules as { field: string }[]) ?? []).map((r) => r.field).filter(Boolean).join(", ")
+    if (type === "find_record" || type === "aggregate" || type === "for_each" || type === "create_record" || type === "delete_record")
+      return d.object ? t.dynamic(`automations.objects.${d.object}`) + (type === "for_each" ? ` · max. ${d.limit ?? 50}` : "") : ""
+    return String(d.subject || d.tag || d.field || d.url || d.text || "")
   })()
-  const problem = Boolean(data.__problem)
+  const own = String(data.label ?? "")
   const trace = data.__trace as TraceStep | null | undefined // undefined = no test run, null = not reached
+  const kind = t.dynamic(`automations.nodes.${type}`)
+  const add = (branch: Branch) => (
+    <AddStepMenu telegram={flow.telegram} onPick={(nt) => flow.appendAfter(id, branch, nt)}>
+      <PlusButton label={t("automations.addStep")} onClick={(e) => e.stopPropagation()} />
+    </AddStepMenu>
+  )
+  const handle = "!size-2 !border-0 !bg-muted-foreground/50"
   return (
     <div
+      style={{ width: CARD_W }}
       className={cn(
-        "w-64 rounded-lg border bg-card px-3 py-2 text-sm shadow-sm",
-        selected && "ring-2 ring-ring",
-        problem && "border-destructive",
-        type === "trigger" && "border-primary",
-        trace && "border-primary bg-primary/5",
+        "relative rounded-xl border bg-card text-sm shadow-xs transition-[border-color,box-shadow]",
+        selected ? "border-ring ring-2 ring-ring/25" : "hover:border-input",
+        meta.problem && !selected && "border-destructive/50",
         trace === null && "opacity-50",
       )}
     >
-      {type !== "trigger" && <Handle type="target" position={Position.Top} />}
-      <div className="flex items-center gap-2">
-        <Icon className="size-4 shrink-0 text-muted-foreground" />
-        <span className="truncate font-medium">{String(data.label ?? "") || t.dynamic(`automations.nodes.${type}`)}</span>
+      {type !== "trigger" && <Handle type="target" position={Position.Top} className={handle} />}
+      <div className="flex items-center gap-3 p-3">
+        <StepTile type={type} />
+        <div className="grid min-w-0 flex-1">
+          <p className="truncate text-xs text-muted-foreground">{meta.n ? `${meta.n}. ${kind}` : kind}</p>
+          <p className={cn("truncate font-medium", !own && !summary && "font-normal text-muted-foreground italic")}>{own || summary || t("automations.needsSetup")}</p>
+        </div>
+        {meta.problem && (
+          <span title={t.dynamic(`automations.issues.${meta.problem}`)} className="shrink-0 text-destructive">
+            <CircleAlertIcon className="size-4" aria-label={t.dynamic(`automations.issues.${meta.problem}`)} />
+          </span>
+        )}
       </div>
-      <p className="mt-1 truncate text-xs text-muted-foreground">{summary}</p>
       {trace && (
-        <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-primary">
-          <CheckIcon className="size-3" />
+        <p className="flex items-center gap-1 border-t px-3 py-1.5 text-xs font-medium" style={{ color: "var(--success)" }}>
+          <CheckIcon className="size-3 shrink-0" />
           <span className="truncate">
             {trace.branch
               ? t(trace.branch === "yes" ? "automations.yes" : "automations.no")
@@ -170,29 +270,57 @@ function StepNode({ type, data, selected }: NodeProps<FlowNode>) {
       )}
       {type === "condition" ? (
         <>
-          <Handle type="source" id="yes" position={Position.Bottom} style={{ left: "30%" }} />
-          <Handle type="source" id="no" position={Position.Bottom} style={{ left: "70%" }} />
-          <div className="mt-1 flex justify-between px-[22%] text-[10px] text-muted-foreground">
-            <span>{t("automations.yes")}</span>
-            <span>{t("automations.no")}</span>
-          </div>
+          <Handle type="source" id="yes" position={Position.Bottom} style={{ left: "25%" }} className={handle} />
+          <Handle type="source" id="no" position={Position.Bottom} style={{ left: "75%" }} className={handle} />
         </>
       ) : (
-        <Handle type="source" position={Position.Bottom} />
+        <Handle type="source" position={Position.Bottom} className={handle} />
       )}
+      {/* Open outputs: a short line down to a "+" (conditions: one per free branch, labelled ja / nein). */}
+      {flow.canEdit && !flow.testing &&
+        meta.free.map((b) => (
+          <div key={b ?? "next"} className="absolute top-full flex -translate-x-1/2 flex-col items-center" style={{ left: b === "yes" ? "25%" : b === "no" ? "75%" : "50%" }}>
+            <span className="h-4 w-px bg-border" />
+            {b && <span className="mb-1 text-[11px] text-muted-foreground">{t(b === "yes" ? "automations.yes" : "automations.no")}</span>}
+            {add(b)}
+          </div>
+        ))}
     </div>
   )
 }
 const duration = (ms: number, t: ReturnType<typeof useT>) =>
-  ms % 86_400_000 === 0 ? `${ms / 86_400_000} ${t("automations.units.days")}` : ms % 3_600_000 === 0 ? `${ms / 3_600_000} ${t("automations.units.hours")}` : `${ms / 60_000} ${t("automations.units.minutes")}`
+  ms % 86_400_000 === 0 ? t("automations.duration.days", { count: ms / 86_400_000 }) : ms % 3_600_000 === 0 ? t("automations.duration.hours", { count: ms / 3_600_000 }) : t("automations.duration.minutes", { count: ms / 60_000 })
 
 // The one line a card shows in a test run: the filled text / subject / tag / "field = value".
 const previewLine = (p?: Record<string, string>) =>
   !p ? "" : p.field ? `${p.field} = ${p.value || "–"}` : (p.subject ?? p.text ?? p.tag ?? p.to ?? p.url ?? Object.values(p).find(Boolean) ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 
-const nodeTypes = Object.fromEntries(["trigger", "condition", "wait", ...DATA_STEPS, ...ACTIONS].map((k) => [k, StepNode]))
+// A connector: rounded right angles, its ja / nein label and a "+" in the middle to insert a step there.
+function StepEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, label, style, markerEnd }: EdgeProps) {
+  const t = useT()
+  const flow = useContext(FlowCtx)!
+  const [path, x, y] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 12 })
+  return (
+    <>
+      <BaseEdge id={id} path={path} style={style} markerEnd={markerEnd} />
+      <EdgeLabelRenderer>
+        <div className="nodrag nopan pointer-events-auto absolute flex items-center gap-1" style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}>
+          {label && <span className="rounded-full border bg-background px-1.5 text-[11px] leading-4 text-muted-foreground">{label}</span>}
+          {flow.canEdit && !flow.testing && (
+            <AddStepMenu telegram={flow.telegram} onPick={(type) => flow.insertOnEdge(id, type)}>
+              <PlusButton label={t("automations.insertStep")} onClick={(e) => e.stopPropagation()} />
+            </AddStepMenu>
+          )}
+        </div>
+      </EdgeLabelRenderer>
+    </>
+  )
+}
 
-export function WorkflowEditor(props: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean }) {
+const nodeTypes = Object.fromEntries(["trigger", "condition", "wait", ...DATA_STEPS, ...ACTIONS].map((k) => [k, StepNode]))
+const edgeTypes = { default: StepEdge }
+
+export function WorkflowEditor(props: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean; active: boolean }) {
   return (
     <ReactFlowProvider>
       <Editor {...props} />
@@ -200,15 +328,21 @@ export function WorkflowEditor(props: { id: string; name: string; description: s
   )
 }
 
-function Editor({ id, name: initialName, description: initialDescription, graph, options, canEdit }: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean }) {
+function Editor({ id, name: initialName, description: initialDescription, graph, options, canEdit, active: initialActive }: { id: string; name: string; description: string; graph: Graph; options: EditorOptions; canEdit: boolean; active: boolean }) {
   const t = useT()
+  const router = useRouter()
+  const flowApi = useReactFlow()
+  const [active, setActive] = useState(initialActive)
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
+  const branchLabel = useCallback((h: string | null | undefined) => (h ? t(h === "yes" ? "automations.yes" : "automations.no") : undefined), [t])
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(graph.nodes.map((n) => ({ ...n, data: n.data as Data })) as FlowNode[])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(graph.edges.map((e) => ({ ...e, sourceHandle: e.sourceHandle ?? null, label: e.sourceHandle ? t(e.sourceHandle === "yes" ? "automations.yes" : "automations.no") : undefined })))
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(graph.edges.map((e) => ({ ...e, sourceHandle: e.sourceHandle ?? null, label: branchLabel(e.sourceHandle) })))
   const [selected, setSelected] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [pending, start] = useTransition()
+  // One save model: the canvas is one form; leaving with unsaved changes asks, switching on saves them first.
+  useLeaveGuard(canEdit && dirty)
   // Test run: pick a real event of the trigger type, play the (unsaved) flow through, show the path.
   // "f:" = own test data: records picked per object (works before anything has happened).
   type Test = { samples: { id: string; at: string; label: string }[]; pickers: TestPicker[]; picks: Record<string, string>; eventId: string; trace: TraceStep[] | null; data: Record<string, unknown> | null }
@@ -234,72 +368,125 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
     edges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target, ...(e.sourceHandle ? { sourceHandle: e.sourceHandle as "yes" | "no" } : {}) })),
   })
   const problems = useMemo(() => validate(current()), [nodes, edges]) // eslint-disable-line react-hooks/exhaustive-deps
-  const flagged = new Set(problems.map((p) => p.node).filter(Boolean))
+  // Steps in the order they run (breadth first from the trigger): numbers on the cards, the tidy layout.
+  const order = useMemo(() => {
+    const trigger = nodes.find((n) => n.type === "trigger")
+    const seen: string[] = trigger ? [trigger.id] : []
+    for (let i = 0; i < seen.length; i++)
+      for (const e of edges.filter((x) => x.source === seen[i]).sort((a, b) => Number(a.sourceHandle === "no") - Number(b.sourceHandle === "no"))) if (!seen.includes(e.target)) seen.push(e.target)
+    return seen
+  }, [nodes, edges])
+  const freeOf = (n: FlowNode): Branch[] => {
+    const outs = edges.filter((e) => e.source === n.id)
+    return n.type === "condition" ? (["yes", "no"] as const).filter((h) => !outs.some((e) => e.sourceHandle === h)) : outs.length ? [] : [null]
+  }
   const traced = new Map((test?.trace ?? []).map((st) => [st.node, st]))
-  const shown = nodes.map((n) => ({ ...n, data: { ...n.data, __problem: flagged.has(n.id), __trace: test?.trace ? (traced.get(n.id) ?? null) : undefined } }))
+  const shown = nodes.map((n) => {
+    const meta: Meta = { n: order.indexOf(n.id) + 1 || undefined, problem: problems.find((p) => p.node === n.id)?.key, free: freeOf(n) }
+    return { ...n, data: { ...n.data, __meta: meta, __trace: test?.trace ? (traced.get(n.id) ?? null) : undefined } }
+  })
   const shownEdges = test?.trace
     ? edges.map((e) => {
         const from = traced.get(e.source)
         const taken = !!from && traced.has(e.target) && (!from.branch || from.branch === e.sourceHandle)
-        return taken ? { ...e, animated: true, style: { stroke: "var(--primary)", strokeWidth: 2 } } : e
+        return taken ? { ...e, animated: true, style: { stroke: "var(--success)", strokeWidth: 2 } } : e
       })
     : edges
 
+  const edgeTo = (source: string, branch: Branch | undefined, target: string): Edge => ({ id: `${source}-${branch ?? ""}-${target}`, source, target, sourceHandle: branch ?? null, label: branchLabel(branch) })
   const onConnect = useCallback(
     (c: Connection) => {
-      setEdges((es) => addEdge({ ...c, id: `${c.source}-${c.sourceHandle ?? ""}-${c.target}`, label: c.sourceHandle ? t(c.sourceHandle === "yes" ? "automations.yes" : "automations.no") : undefined }, es))
+      setEdges((es) => addEdge({ ...c, id: `${c.source}-${c.sourceHandle ?? ""}-${c.target}`, label: branchLabel(c.sourceHandle) }, es))
       setDirty(true)
     },
-    [setEdges, t],
+    [setEdges, branchLabel],
   )
-  const add = (type: NodeType) => {
-    const after = nodes.find((n) => n.id === selected) ?? nodes.at(-1)
-    const nid = `${type}-${crypto.randomUUID().slice(0, 8)}`
-    const position = after ? { x: after.position.x, y: after.position.y + 140 } : { x: 0, y: 0 }
-    setNodes((ns) => [...ns, { id: nid, type, position, data: structuredClone(DEFAULTS[type]) }])
-    // Connect from the selected step when it has a free output (conditions: the free branch).
-    if (after) {
-      const outs = edges.filter((e) => e.source === after.id)
-      const handle = after.type === "condition" ? (["yes", "no"] as const).find((h) => !outs.some((e) => e.sourceHandle === h)) : outs.length ? undefined : null
-      if (handle !== undefined) setEdges((es) => addEdge({ id: `${after.id}-${handle ?? ""}-${nid}`, source: after.id, target: nid, sourceHandle: handle, label: handle ? t(handle === "yes" ? "automations.yes" : "automations.no") : undefined }, es))
-    }
-    setSelected(nid)
+  const newNode = (type: NodeType, position: { x: number; y: number }): FlowNode => ({ id: `${type}-${crypto.randomUUID().slice(0, 8)}`, type, position, data: structuredClone(DEFAULTS[type]), selected: true })
+  const placeNew = (n: FlowNode, move: Set<string> = new Set(), dx = 0) => {
+    setNodes((ns) => [...ns.map((x) => ({ ...x, selected: false, position: move.has(x.id) ? { x: x.position.x + dx, y: x.position.y + ROW } : x.position })), n])
+    setSelected(n.id)
     setDirty(true)
+  }
+  // "+" on a connector: the new step goes in between, everything below moves one row down (a new condition's
+  // "ja" branch to the left, so its open "nein" has room).
+  const insertOnEdge = (eid: string, type: NodeType) => {
+    const e = edges.find((x) => x.id === eid)
+    const target = e && nodes.find((n) => n.id === e.target)
+    if (!e || !target) return
+    const below = new Set([e.target])
+    for (const nid of below) for (const x of edges) if (x.source === nid) below.add(x.target)
+    const n = newNode(type, target.position)
+    placeNew(n, below, type === "condition" ? -COL / 2 : 0)
+    setEdges((es) => [...es.filter((x) => x.id !== eid), edgeTo(e.source, e.sourceHandle as Branch, n.id), edgeTo(n.id, type === "condition" ? "yes" : null, e.target)])
+  }
+  // "+" below an open output: the new step one row down (a condition's branches to the left / right).
+  const appendAfter = (sid: string, branch: Branch, type: NodeType) => {
+    const s = nodes.find((n) => n.id === sid)
+    if (!s) return
+    const n = newNode(type, { x: s.position.x + (branch === "yes" ? -COL / 2 : branch === "no" ? COL / 2 : 0), y: s.position.y + ROW })
+    placeNew(n)
+    setEdges((es) => [...es, edgeTo(sid, branch, n.id)])
+  }
+  // Toolbar "Schritt hinzufügen": after the selected step if it has an open output, else after the last open one.
+  const addStep = (type: NodeType) => {
+    const sel = nodes.find((n) => n.id === selected)
+    const after = sel && freeOf(sel).length ? sel : [...order].reverse().map((nid) => nodes.find((n) => n.id === nid)!).find((n) => freeOf(n).length)
+    if (after) return appendAfter(after.id, freeOf(after)[0], type)
+    const low = Math.max(0, ...nodes.map((n) => n.position.y))
+    placeNew(newNode(type, { x: 0, y: low + ROW }))
   }
   const update = (nid: string, patch: Data) => {
     setNodes((ns) => ns.map((n) => (n.id === nid ? { ...n, data: { ...n.data, ...patch } } : n)))
     setDirty(true)
   }
+  // Removing a step that sits in a line closes the gap: what came before now leads to what came after.
+  const bridge = (gone: string[]) => {
+    const add: Edge[] = []
+    for (const nid of gone) {
+      if (nodes.find((n) => n.id === nid)?.type === "condition") continue
+      const ins = edges.filter((e) => e.target === nid)
+      const outs = edges.filter((e) => e.source === nid)
+      if (ins.length === 1 && outs.length === 1 && !gone.includes(ins[0].source) && !gone.includes(outs[0].target)) add.push(edgeTo(ins[0].source, ins[0].sourceHandle as Branch, outs[0].target))
+    }
+    if (add.length) setEdges((es) => [...es.filter((e) => !gone.includes(e.source) && !gone.includes(e.target)), ...add.filter((a) => !es.some((e) => e.id === a.id))])
+  }
   const remove = (nid: string) => {
+    bridge([nid])
     setNodes((ns) => ns.filter((n) => n.id !== nid))
     setEdges((es) => es.filter((e) => e.source !== nid && e.target !== nid))
     setSelected(null)
     setDirty(true)
   }
-  // Tidy up: steps in rows by distance from the trigger, branches side by side.
+  // Tidy up: a top-down tree from the trigger, each step centred over what follows it, branches side by side
+  // (ja left, nein right); steps nothing leads to go in a row below.
   const layout = () => {
-    const depth = new Map<string, number>()
-    const trigger = nodes.find((n) => n.type === "trigger")
-    const queue = trigger ? [trigger.id] : []
-    if (trigger) depth.set(trigger.id, 0)
-    while (queue.length) {
-      const nid = queue.shift()!
-      for (const e of edges.filter((x) => x.source === nid))
-        if (!depth.has(e.target)) {
-          depth.set(e.target, depth.get(nid)! + 1)
-          queue.push(e.target)
-        }
+    const parent = new Map<string, string>()
+    for (const nid of order) for (const e of edges) if (e.source === nid && !parent.has(e.target) && order.indexOf(e.target) > order.indexOf(nid)) parent.set(e.target, nid)
+    // A condition keeps a column for each branch, also an open one (its "+" stays beside the other branch).
+    const slots = (nid: string): (string | null)[] =>
+      nodes.find((n) => n.id === nid)?.type === "condition"
+        ? (["yes", "no"] as const).flatMap((h) => {
+            const e = edges.find((x) => x.source === nid && x.sourceHandle === h)
+            return !e ? [null] : parent.get(e.target) === nid ? [e.target] : []
+          })
+        : order.filter((k) => parent.get(k) === nid)
+    const width = (nid: string): number => Math.max(1, slots(nid).reduce((s, k) => s + (k ? width(k) : 1), 0))
+    const pos = new Map<string, { x: number; y: number }>()
+    const place = (nid: string, left: number, depth: number) => {
+      pos.set(nid, { x: (left + width(nid) / 2 - 0.5) * COL, y: depth * ROW })
+      let l = left
+      for (const k of slots(nid)) {
+        if (k) place(k, l, depth + 1)
+        l += k ? width(k) : 1
+      }
     }
-    const rows = new Map<number, string[]>()
-    nodes.forEach((n) => rows.set(depth.get(n.id) ?? 99, [...(rows.get(depth.get(n.id) ?? 99) ?? []), n.id]))
-    setNodes((ns) =>
-      ns.map((n) => {
-        const d = depth.get(n.id) ?? 99
-        const row = rows.get(d)!
-        return { ...n, position: { x: (row.indexOf(n.id) - (row.length - 1) / 2) * 300, y: (d === 99 ? rows.size : d) * 140 } }
-      }),
-    )
+    if (order[0]) place(order[0], 0, 0)
+    const shift = pos.get(order[0])?.x ?? 0
+    const bottom = Math.max(0, ...[...pos.values()].map((p) => p.y)) + ROW
+    const loose = nodes.filter((n) => !pos.has(n.id))
+    setNodes((ns) => ns.map((n) => ({ ...n, position: pos.has(n.id) ? { x: pos.get(n.id)!.x - shift, y: pos.get(n.id)!.y } : { x: (loose.indexOf(n) - (loose.length - 1) / 2) * COL, y: bottom } })))
     setDirty(true)
+    requestAnimationFrame(() => flowApi.fitView({ maxZoom: 1, padding: 0.2, duration: 200 }))
   }
   const save = () =>
     start(async () => {
@@ -310,6 +497,20 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
         toast.success(r.problems?.length ? t("automations.savedDraft") : t("automations.saved"))
       }
     })
+  // The "Aktiv" switch: switching on first saves what is on screen (an active flow must be valid), then activates.
+  const toggleActive = (on: boolean) =>
+    start(async () => {
+      if (on && dirty) {
+        const r = await saveWorkflow({ id, name, description, graph: current() })
+        if (r.error) return void toast.error(r.error)
+        setDirty(false)
+      }
+      const r = await setActiveAction(id, on)
+      if (r.error) return void toast.error(r.error)
+      setActive(on)
+      toast.success(t(on ? "automations.activated" : "automations.deactivated"))
+      router.refresh()
+    })
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ roots: "workflow", version: 1, name, description, graph: current() }, null, 2)], { type: "application/json" })
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${name.replace(/[^\w-]+/g, "-").toLowerCase() || "workflow"}.json` })
@@ -317,6 +518,30 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
     URL.revokeObjectURL(a.href)
   }
   const sel = nodes.find((n) => n.id === selected)
+  const phone = usePhone()
+  const select = (nid: string | null) => (setSelected(nid), setNodes((ns) => ns.map((n) => (n.selected !== (n.id === nid) ? { ...n, selected: n.id === nid } : n))))
+  const panelOpen = !!sel || !!test
+  const closePanel = () => (sel ? select(null) : setTest(null))
+  // Esc closes the side panel (unless a menu / picker inside it is open and takes the key itself).
+  useEffect(() => {
+    if (!panelOpen || phone) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented || document.querySelector("[data-slot=popover-content], [role=menu], [role=listbox]")) return
+      if (sel) select(null)
+      else setTest(null)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  })
+  // Desktop: a step opened behind the side panel slides into view.
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!sel || phone || !box.current) return
+    const { x, y, zoom } = flowApi.getViewport()
+    const right = (sel.position.x + CARD_W) * zoom + x
+    const room = box.current.clientWidth - 420
+    if (right > room) flowApi.setViewport({ x: x - (right - room), y, zoom }, { duration: 200 })
+  }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
   // Results of data steps, usable by every step as objects ("Ergebnis: Mitgliedschaft").
   const flowOptions: EditorOptions = {
     ...options,
@@ -332,137 +557,172 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
       })
     })(),
   }
+  const api: FlowApi = { canEdit, testing: !!test?.trace, telegram: options.telegram.connected, insertOnEdge, appendAfter }
 
-  return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="grid min-w-0 flex-1 gap-1">
-          <Label htmlFor="wf-name">{t("automations.name")}</Label>
-          <Input id="wf-name" value={name} disabled={!canEdit} maxLength={200} onChange={(e) => (setName(e.target.value), setDirty(true))} />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={layout} disabled={!canEdit}>
-            <LayoutListIcon /> {t("automations.tidy")}
-          </Button>
-          <Button type="button" variant={test ? "secondary" : "outline"} size="sm" onClick={() => (test ? setTest(null) : openTest())} disabled={(testing && !test) || !triggerEvent}>
-            <FlaskConicalIcon /> {testing && !test ? t("automations.testLoading") : test ? t("automations.testStop") : t("automations.testRun")}
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={exportJson}>
-            <DownloadIcon /> {t("automations.export")}
-          </Button>
-          {canEdit && (
-            <Button type="button" size="sm" onClick={save} disabled={pending || !dirty}>
-              <SaveIcon /> {pending ? t("automations.saving") : t("common.save")}
-            </Button>
-          )}
-        </div>
-      </div>
-      <Textarea value={description} disabled={!canEdit} maxLength={2000} rows={1} placeholder={t("automations.descriptionPlaceholder")} onChange={(e) => (setDescription(e.target.value), setDirty(true))} />
-      {test && (
-        <section className="grid gap-2 rounded-lg border border-primary/40 p-3" aria-label={t("automations.testRun")}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">{t("automations.testHint")}</p>
-            <Button type="button" variant="ghost" size="icon-sm" aria-label={t("automations.closeTest")} onClick={() => setTest(null)}>
-              <XIcon />
-            </Button>
+  const testSection = test && (
+    <section className="grid gap-3" aria-label={t("automations.testRun")}>
+      <p className="text-xs text-muted-foreground">{t("automations.testHint")}</p>
+      {test.samples.length || test.pickers.length ? (
+        <>
+          <div className="grid gap-2">
+            <Label htmlFor="test-sample">{t("automations.testSample")}</Label>
+            <NativeSelect id="test-sample" value={test.eventId} onChange={(e) => setTest({ ...test, eventId: e.target.value, trace: null, data: null })} className="w-full">
+              {test.samples.map((x) => (
+                <NativeSelectOption key={x.id} value={x.id}>
+                  {new Date(x.at).toLocaleString()}
+                  {x.label && ` · ${x.label}`}
+                </NativeSelectOption>
+              ))}
+              {test.pickers.length > 0 && <NativeSelectOption value="f:">{t("automations.testOwn")}</NativeSelectOption>}
+            </NativeSelect>
+            {!test.samples.length && <p className="text-xs text-muted-foreground">{t("automations.noSamplesOwn")}</p>}
           </div>
-          {test.samples.length || test.pickers.length ? (
-            <div className="grid gap-2">
-              <div className="grid gap-1">
-                <Label htmlFor="test-sample">{t("automations.testSample")}</Label>
-                <NativeSelect id="test-sample" value={test.eventId} onChange={(e) => setTest({ ...test, eventId: e.target.value, trace: null, data: null })} className="w-full">
-                  {test.samples.map((x) => (
-                    <NativeSelectOption key={x.id} value={x.id}>
-                      {new Date(x.at).toLocaleString()}
-                      {x.label && ` · ${x.label}`}
+          {test.eventId === "f:" &&
+            test.pickers.map((p) => (
+              <div key={p.object} className="grid gap-2">
+                <Label htmlFor={`pick-${p.object}`}>{t.dynamic(`automations.objects.${p.object}`)}</Label>
+                <NativeSelect id={`pick-${p.object}`} value={test.picks[p.object] ?? ""} onChange={(e) => setTest({ ...test, picks: { ...test.picks, [p.object]: e.target.value }, trace: null, data: null })} className="w-full">
+                  <NativeSelectOption value="">{t("automations.testNone")}</NativeSelectOption>
+                  {p.options.map((o) => (
+                    <NativeSelectOption key={o.id} value={o.id}>
+                      {o.label}
                     </NativeSelectOption>
                   ))}
-                  {test.pickers.length > 0 && <NativeSelectOption value="f:">{t("automations.testOwn")}</NativeSelectOption>}
                 </NativeSelect>
-                {!test.samples.length && <p className="text-xs text-muted-foreground">{t("automations.noSamplesOwn")}</p>}
-              </div>
-              {test.eventId === "f:" && (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {test.pickers.map((p) => (
-                    <div key={p.object} className="grid gap-1">
-                      <Label htmlFor={`pick-${p.object}`}>{t.dynamic(`automations.objects.${p.object}`)}</Label>
-                      <NativeSelect
-                        id={`pick-${p.object}`}
-                        value={test.picks[p.object] ?? ""}
-                        onChange={(e) => setTest({ ...test, picks: { ...test.picks, [p.object]: e.target.value }, trace: null, data: null })}
-                        className="w-full"
-                      >
-                        <NativeSelectOption value="">{t("automations.testNone")}</NativeSelectOption>
-                        {p.options.map((o) => (
-                          <NativeSelectOption key={o.id} value={o.id}>
-                            {o.label}
-                          </NativeSelectOption>
-                        ))}
-                      </NativeSelect>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Button type="button" size="sm" onClick={runTest} disabled={testing} className="justify-self-start">
-                {testing ? t("automations.testing") : t("automations.runTest")}
-              </Button>
-            </div>
-          ) : (
-            <p className="text-sm">{t("automations.noSamples")}</p>
-          )}
-          {test.data && (
-            <details className="text-xs">
-              <summary className="cursor-pointer">{t("automations.testData")}</summary>
-              <pre className="mt-1 max-h-64 overflow-auto rounded bg-muted p-2">{JSON.stringify(test.data, null, 2)}</pre>
-            </details>
-          )}
-        </section>
-      )}
-      {problems.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-live="polite">
-          {[...new Set(problems.map((p) => p.key))].map((k) => (
-            <li key={k}>
-              <Badge variant="outline" className="border-destructive text-destructive">
-                {t.dynamic(`automations.problems.${k}`)}
-              </Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="grid gap-3 lg:grid-cols-[10rem_minmax(0,1fr)_20rem]">
-        {canEdit && (
-          <aside className="grid content-start gap-3" aria-label={t("automations.addStep")}>
-            {PALETTE.map((sec) => (
-              <div key={sec.section} className="grid gap-0.5">
-                <p className="px-2 text-xs font-medium text-muted-foreground">{t.dynamic(`automations.sections.${sec.section}`)}</p>
-                {sec.types.map((type) => {
-                  const Icon = ICONS[type]
-                  const off = type === "telegram" && !options.telegram.connected
-                  return (
-                    <Button
-                      key={type}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="justify-start"
-                      disabled={off}
-                      title={off ? t("automations.telegramOff") : undefined}
-                      onClick={() => add(type)}
-                    >
-                      <Icon /> {t.dynamic(`automations.nodes.${type}`)}
-                    </Button>
-                  )
-                })}
               </div>
             ))}
-          </aside>
-        )}
-        <div className="h-[70dvh] min-h-[460px] overflow-hidden rounded-lg border">
+          <Button type="button" size="sm" onClick={runTest} disabled={testing} className="justify-self-start">
+            <FlaskConicalIcon /> {testing ? t("automations.testing") : t("automations.runTest")}
+          </Button>
+        </>
+      ) : (
+        <p className="text-sm">{t("automations.noSamples")}</p>
+      )}
+      {test.data && (
+        <details className="text-xs">
+          <summary className="cursor-pointer">{t("automations.testData")}</summary>
+          <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-muted p-2">{JSON.stringify(test.data, null, 2)}</pre>
+        </details>
+      )}
+    </section>
+  )
+  const panelBody = (
+    <>
+      {testSection}
+      {sel && test && <hr className="border-border" />}
+      {sel && <Inspector key={sel.id} node={sel} options={flowOptions} trigger={triggerEvent} trace={test?.trace ? (traced.get(sel.id) ?? null) : undefined} canEdit={canEdit} onChange={(p) => update(sel.id, p)} />}
+    </>
+  )
+  // Panel / sheet title: the step's colour tile, "2. E-Mail senden", its own name (click to rename) and removing it.
+  const panelTitle = sel ? (
+    <span className="flex min-w-0 items-center gap-3">
+      <StepTile type={sel.type as NodeType} />
+      <span className="grid min-w-0 flex-1 text-sm">
+        <span className="truncate text-xs font-normal text-muted-foreground">{(order.indexOf(sel.id) + 1 ? `${order.indexOf(sel.id) + 1}. ` : "") + t.dynamic(`automations.nodes.${sel.type}`)}</span>
+        <StepTitle value={String(sel.data.label ?? "")} fallback={t.dynamic(`automations.nodes.${sel.type}`)} canEdit={canEdit} onChange={(label) => update(sel.id, { label })} />
+      </span>
+      {canEdit && sel.type !== "trigger" && (
+        <Button type="button" variant="ghost" size="icon-sm" onClick={() => remove(sel.id)} aria-label={t("automations.removeStep")} title={t("automations.removeStep")}>
+          <Trash2Icon />
+        </Button>
+      )}
+    </span>
+  ) : (
+    t("automations.testRun")
+  )
+  const issues = [...new Map(problems.map((p) => [p.key, p])).values()]
+
+  return (
+    <FlowCtx.Provider value={api}>
+      <div className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="grid min-w-0 flex-1 basis-72">
+            <input
+              value={name}
+              disabled={!canEdit}
+              maxLength={200}
+              aria-label={t("automations.name")}
+              onChange={(e) => (setName(e.target.value), setDirty(true))}
+              className="-mx-1.5 min-w-0 truncate rounded-md bg-transparent px-1.5 text-lg font-semibold tracking-tight outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100"
+            />
+            <input
+              value={description}
+              disabled={!canEdit}
+              maxLength={2000}
+              aria-label={t("automations.description")}
+              placeholder={canEdit ? t("automations.descriptionPlaceholder") : ""}
+              onChange={(e) => (setDescription(e.target.value), setDirty(true))}
+              className="-mx-1.5 min-w-0 truncate rounded-md bg-transparent px-1.5 text-sm text-muted-foreground outline-none placeholder:text-muted-foreground/70 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {issues.length > 0 && (
+              <Popover>
+                <PopoverTrigger render={<Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" />}>
+                  <CircleAlertIcon /> {t("automations.issuesCount", { count: issues.length })}
+                </PopoverTrigger>
+                <PopoverContent sheet title={t("automations.issuesTitle")} align="end" className="w-80 p-1">
+                  <ul className="grid">
+                    {issues.map((p) => (
+                      <li key={p.key}>
+                        <button type="button" disabled={!p.node} onClick={() => p.node && select(p.node)} className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm enabled:hover:bg-muted max-md:py-3">
+                          <CircleAlertIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+                          {t.dynamic(`automations.issues.${p.key}`)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
+            )}
+            {canEdit && (
+              <Tooltip>
+                <TooltipTrigger render={<label className="flex h-(--control-sm) items-center gap-2 px-1 text-sm" />}>
+                  <Switch checked={active} disabled={pending} aria-label={t("automations.activeSwitch")} data-confirm={active ? undefined : "automations.confirmActivate"} onCheckedChange={toggleActive} />
+                  <span className="max-md:sr-only">{t(active ? "automations.on" : "automations.off")}</span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64">{t(active ? "automations.activeHint" : "automations.offHint")}</TooltipContent>
+              </Tooltip>
+            )}
+            <Button type="button" variant={test ? "secondary" : "outline"} size="sm" onClick={() => (test ? setTest(null) : openTest())} disabled={(testing && !test) || !triggerEvent}>
+              <FlaskConicalIcon /> {testing && !test ? t("automations.testLoading") : test ? t("automations.testStop") : t("automations.testRun")}
+            </Button>
+            {canEdit && (
+              <Button type="button" variant="outline" size="sm" onClick={layout} className="max-md:hidden">
+                <LayoutListIcon /> {t("automations.tidy")}
+              </Button>
+            )}
+            {canEdit && (
+              <Button type="button" size="sm" onClick={save} disabled={pending || !dirty}>
+                <SaveIcon /> {pending ? t("automations.saving") : dirty ? t("common.save") : t("automations.savedShort")}
+              </Button>
+            )}
+            <ActionsMenu>
+              {canEdit && (
+                <DropdownMenuItem onClick={layout} className="md:hidden">
+                  <LayoutListIcon /> {t("automations.tidy")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={exportJson}>
+                <DownloadIcon /> {t("automations.export")}
+              </DropdownMenuItem>
+              {canEdit && <DropdownMenuSeparator />}
+              {canEdit && (
+                <MenuSubmit form="trash-workflow" icon={<Trash2Icon />} destructive>
+                  {t("automations.toTrash")}
+                </MenuSubmit>
+              )}
+            </ActionsMenu>
+          </div>
+        </div>
+        <div ref={box} className="relative h-[calc(100dvh-14rem)] min-h-[420px] overflow-hidden rounded-xl border bg-background md:h-[calc(100dvh-10.5rem)]">
           <ReactFlow
             nodes={shown}
             edges={shownEdges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onNodesChange={(c) => (onNodesChange(c.filter((x) => x.type !== "remove" || nodes.find((n) => n.id === x.id)?.type !== "trigger")), c.some((x) => x.type !== "select" && x.type !== "dimensions") && setDirty(true))}
+            onNodesDelete={(gone) => bridge(gone.filter((n) => n.type !== "trigger").map((n) => n.id))}
             onEdgesChange={(c) => (onEdgesChange(c), c.some((x) => x.type === "remove") && setDirty(true))}
             onConnect={onConnect}
             onSelectionChange={({ nodes: s }) => setSelected(s[0]?.id ?? null)}
@@ -471,33 +731,47 @@ function Editor({ id, name: initialName, description: initialDescription, graph,
             elementsSelectable
             deleteKeyCode={canEdit ? ["Backspace", "Delete"] : null}
             fitView
-            proOptions={{ hideAttribution: false }}
+            fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
+            minZoom={0.25}
+            maxZoom={1.5}
+            proOptions={{ hideAttribution: true }}
           >
-            <Background />
-            <Controls showInteractive={false} />
-            <MiniMap pannable zoomable className="!hidden md:!block" />
+            <Background gap={20} size={1.2} color="var(--border)" />
+            <Controls showInteractive={false} position="bottom-left" orientation="horizontal" className="max-md:!hidden" />
+            {canEdit && (
+              <Panel position="top-left">
+                <AddStepMenu telegram={options.telegram.connected} onPick={addStep}>
+                  <Button type="button" variant="outline" size="sm" className="bg-card shadow-xs">
+                    <PlusIcon /> {t("automations.addStep")}
+                  </Button>
+                </AddStepMenu>
+              </Panel>
+            )}
           </ReactFlow>
-        </div>
-        <aside className="grid content-start gap-4 rounded-lg border p-3" aria-label={t("automations.settings")}>
-          {sel ? (
-            <Inspector
-              key={sel.id}
-              node={sel}
-              options={flowOptions}
-              trigger={triggerEvent}
-              trace={test?.trace ? (traced.get(sel.id) ?? null) : undefined}
-              canEdit={canEdit}
-              onChange={(p) => update(sel.id, p)}
-              onRemove={() => remove(sel.id)}
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("automations.selectHint")}</p>
+          {panelOpen && !phone && (
+            // Desktop: the open step (and the test run) in a panel over the canvas' right side; X / Esc close it.
+            <aside className="absolute inset-y-2 right-2 z-10 flex w-[min(400px,calc(100%-1rem))] flex-col overflow-hidden rounded-xl border bg-popover shadow-lg" aria-label={t("automations.settings")}>
+              <div className="flex min-h-14 shrink-0 items-center justify-between gap-1 border-b py-2 pr-2 pl-3 text-sm font-medium">
+                <div className="min-w-0 flex-1">{panelTitle}</div>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={t("common.close")} onClick={closePanel}>
+                  <XIcon />
+                </Button>
+              </div>
+              <div className="grid content-start gap-4 overflow-y-auto overscroll-contain p-4">{panelBody}</div>
+            </aside>
           )}
-        </aside>
+        </div>
+        {panelOpen && phone && (
+          // Phones: the open step / test run as a sheet over the canvas; closing it deselects the step.
+          <ContentSheet key={sel?.id ?? "test"} label={t("automations.settings")} onClose={() => {}} onClosed={closePanel} header={<ContentSheetTitle render={<div />} className="text-base font-semibold">{panelTitle}</ContentSheetTitle>}>
+            <div className="grid gap-4 px-4 pb-6">{panelBody}</div>
+          </ContentSheet>
+        )}
       </div>
-    </div>
+    </FlowCtx.Provider>
   )
 }
+
 
 // Settings of the selected step.
 function Inspector({
@@ -507,7 +781,6 @@ function Inspector({
   trace,
   canEdit,
   onChange,
-  onRemove,
 }: {
   node: FlowNode
   options: EditorOptions
@@ -515,7 +788,6 @@ function Inspector({
   trace?: TraceStep | null
   canEdit: boolean
   onChange: (p: Data) => void
-  onRemove: () => void
 }) {
   const t = useT()
   const d = node.data as Record<string, unknown>
@@ -551,14 +823,6 @@ function Inspector({
     )
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-2 font-medium">
-        <StepTitle value={String(d.label ?? "")} fallback={t.dynamic(`automations.nodes.${type}`)} canEdit={canEdit} onChange={(label) => onChange({ label })} />
-        {canEdit && type !== "trigger" && (
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onRemove} aria-label={t("automations.removeStep")}>
-            <Trash2Icon />
-          </Button>
-        )}
-      </div>
       <p className="text-xs text-muted-foreground">{t.dynamic(`automations.help.${type}`)}</p>
       {trace !== undefined && <TraceView trace={trace} />}
       {type === "trigger" && <TriggerForm d={d} options={options} canEdit={canEdit} onChange={onChange} />}
@@ -614,7 +878,11 @@ function Inspector({
       )}
       {(type === "add_tag" || type === "remove_tag") && <TagPick value={String(d.tag ?? "")} tags={options.tags} creatable={type === "add_tag"} disabled={!canEdit} onChange={(tag) => onChange({ tag })} />}
       {type === "set_field" && <SetField d={d} options={options} trigger={trigger} extra={stepKeys} canEdit={canEdit} onChange={onChange} />}
-      {(type === "set_field" || type === "create_record") && <p className="text-xs text-muted-foreground">{t("automations.valuesHint")}</p>}
+      {(type === "set_field" || type === "create_record") && (
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          {t("automations.valuesShort")} <InfoTip label={t("automations.valuesShort")}>{t("automations.valuesHint")}</InfoTip>
+        </p>
+      )}
       {type === "delete_record" && (
         <div className="grid gap-2">
           <NativeSelect value={String(d.object ?? "")} disabled={!canEdit} aria-label={t("automations.object")} className="w-full" onChange={(e) => onChange({ object: e.target.value })}>
@@ -625,7 +893,9 @@ function Inspector({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          <p className="text-xs text-muted-foreground">{t("automations.deleteHint")}</p>
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            {t("automations.deleteShort")} <InfoTip>{t("automations.deleteHint")}</InfoTip>
+          </p>
         </div>
       )}
       {type === "create_record" && <CreateRecord d={d} options={options} trigger={trigger} canEdit={canEdit} onChange={onChange} />}

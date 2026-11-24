@@ -1,0 +1,724 @@
+{
+  "area": "admin",
+  "label": "Plattform",
+  "module": null,
+  "permission": "platform admin (requirePlatformAdmin in admin/layout.tsx)",
+  "nav": [
+    {
+      "label": "Organisationen",
+      "key": "admin.orgs.title",
+      "href": "/admin/orgs"
+    },
+    {
+      "label": "Benutzer",
+      "key": "admin.users.title",
+      "href": "/admin/users"
+    },
+    {
+      "label": "Abrechnung",
+      "key": "admin.billing.title",
+      "href": "/admin/billing"
+    },
+    {
+      "label": "Rollen",
+      "key": "admin.roles.title",
+      "href": "/admin/roles"
+    },
+    {
+      "label": "Aktivität",
+      "key": "admin.activity.title",
+      "href": "/admin/activity"
+    },
+    {
+      "label": "API-Doku",
+      "key": "admin.apiDocs",
+      "href": "/api/docs"
+    }
+  ],
+  "navNotes": "Own <AppShell> (same component as the App) with a single sidebar group 'Plattform', header item 'Zur App' (← APP_HOME), title 'Plattform'. No admin/page.tsx: /admin redirects to /admin/orgs (next.config.ts). Reached from the App sidebar link \"Plattform\" (platform admins only). Pages render no <PageHeader>: only an sr-only h1; the title comes from the shell. Content max-w-5xl.",
+  "pages": [
+    {
+      "route": "/admin/orgs",
+      "redesign": {
+        "research": "Vercel / Stripe admin consoles: list with search and a trash/archived segment, a record opens a detail page with sections; destructive actions in a menu with a typed or explicit confirm.",
+        "job": "Find an org, create one, manage its modules and people.",
+        "phone": "PageHeader primary Neue Organisation; toolbar search + Segments Aktiv · Papierkorb. Rows open the drawer.",
+        "desktop": "Same.",
+        "moves": [
+          "Neue Organisation (body button) → PageHeader primary",
+          "chips Aktiv/Papierkorb → <Segments>",
+          "module Einschalten/Ausschalten → switches? kept as buttons, Ausschalten asks (admin.orgs.confirmModuleOff)",
+          "member Entfernen → confirm",
+          "In den Papierkorb (red body button) → sheet ⋯ MenuSubmit destructive (asks)",
+          "Gefahrenzone + checkbox + Jetzt endgültig löschen → sheet ⋯ MenuSubmit destructive with confirm (admin.orgs.confirmDelete); server no longer needs the checkbox",
+          "Speichern (details) → SaveBar",
+          "Rolle NativeSelect → Choice"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Member count on phone cards was a bare number: '1 Person'. List only (platform data)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
+      ],
+      "file": "src/app/admin/orgs/page.tsx",
+      "title": "Organisationen",
+      "purpose": "Find, create, edit, open, switch modules for, add/remove members of, trash, restore and permanently delete organisations.",
+      "permission": "platform admin",
+      "header": {
+        "actions": [
+          "Neue Organisation (button in page body, top right) → ?new=org"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search name/slug"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trashed orgs"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        },
+        {
+          "param": "new",
+          "meaning": "org → create sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "org id → org drawer"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "type": "search",
+              "component": "SearchBox"
+            }
+          ],
+          "notes": "Pill links 'Aktiv' / 'Papierkorb' (hand-made, not <Segments>)."
+        },
+        {
+          "title": "Organisationen",
+          "kind": "DataTable",
+          "columns": [
+            "Name",
+            "Slug",
+            "Mitglieder",
+            "Angelegt / Gelöscht am (trash)"
+          ],
+          "notes": "Row → ?edit=<id>. Trash hint admin.trash.hint."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=org",
+          "component": "UrlSheet",
+          "title": "Neue Organisation",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "admin.orgs.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "slug",
+              "label": "Slug",
+              "key": "admin.orgs.address",
+              "type": "text",
+              "component": "Input (pattern)",
+              "required": true,
+              "notes": "help onboarding.addressHelp"
+            },
+            {
+              "name": "owner",
+              "label": "Inhaber (E-Mail)",
+              "key": "admin.orgs.owner",
+              "type": "email",
+              "component": "Input",
+              "notes": "empty = I become owner; unknown email gets an invite"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Neue Organisation",
+              "kind": "serverAction",
+              "target": "createOrg (admin/orgs/actions.ts)",
+              "result": "→ ?edit=<new id>, toast created / ownerInvited (with link) / ownerInviteNoMail"
+            }
+          ]
+        },
+        {
+          "param": "?edit=<org id>",
+          "component": "UrlSheet",
+          "title": "<Org name>",
+          "description": "<slug>.<root domain>",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "slug",
+              "label": "Slug",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "email",
+              "label": "Mitglied hinzufügen",
+              "key": "admin.orgs.addMember",
+              "type": "email",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "role_id",
+              "label": "Rolle",
+              "type": "select",
+              "component": "NativeSelect"
+            }
+          ],
+          "notes": "Sections: buttons 'Organisation öffnen' + 'Aktivität'; Details form; Module list (each with Aktiv badge, 'Wird mit aktiviert: …', Einschalten/Ausschalten); Mitglieder list with 'Entfernen' + add form; 'In den Papierkorb' (red). Trashed org: deleted/purge date, 'Wiederherstellen', Gefahrenzone with checkbox 'Ich verstehe, dass alle Daten … gelöscht werden' + 'Jetzt endgültig löschen'.",
+          "actions": [
+            {
+              "label": "Organisation öffnen",
+              "key": "admin.orgs.open",
+              "kind": "serverAction",
+              "target": "openOrg",
+              "result": "sets active org, → App home (as platform admin)"
+            },
+            {
+              "label": "Aktivität",
+              "kind": "link",
+              "target": "/admin/activity?org=<id>"
+            },
+            {
+              "label": "Speichern",
+              "kind": "serverAction",
+              "target": "updateOrg",
+              "confirm": false,
+              "result": "toast 'Gespeichert.' (changing the slug changes the public address, no warning)"
+            },
+            {
+              "label": "Einschalten / Ausschalten (modules.turnOn / turnOff)",
+              "kind": "serverAction",
+              "target": "enableModule / disableModule (module-actions.ts)",
+              "confirm": false,
+              "result": "toast turnedOn/turnedOff; blocked when another module requires it"
+            },
+            {
+              "label": "Entfernen (member)",
+              "key": "members.remove",
+              "kind": "serverAction",
+              "target": "removeMember",
+              "confirm": false
+            },
+            {
+              "label": "Hinzufügen",
+              "key": "admin.orgs.add",
+              "kind": "serverAction",
+              "target": "addMember",
+              "result": "existing account added or invite sent (toast with link)"
+            },
+            {
+              "label": "In den Papierkorb",
+              "key": "admin.trash.moveToTrash",
+              "kind": "serverAction",
+              "target": "trashOrg",
+              "confirm": false,
+              "result": "→ list, toast 'In den Papierkorb verschoben.'"
+            },
+            {
+              "label": "Wiederherstellen",
+              "kind": "serverAction",
+              "target": "restoreOrg"
+            },
+            {
+              "label": "Jetzt endgültig löschen",
+              "key": "admin.trash.deleteNow",
+              "kind": "serverAction",
+              "target": "deleteOrg",
+              "confirm": "checkbox in form (not ConfirmHost)",
+              "result": "→ ?trash=1, toast 'Endgültig gelöscht.'"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/admin/activity?org=",
+        "/ (App home after open)"
+      ],
+      "uxNotes": [
+        "Trashing an org, turning off modules and removing members happen without any confirm.",
+        "Permanent delete uses an in-form checkbox inside a 'Gefahrenzone' box instead of data-confirm (app.md: no danger-zone boxes).",
+        "Very large drawer (details + module switches + members) – app.md suggests records with real content get their own page.",
+        "'Neue Organisation' is a button in the page body, not a header primary; admin pages have no PageHeader at all.",
+        "Slug column header label 'Slug' vs Settings › Allgemein label 'Slug (Webseite)' showing the full domain."
+      ]
+    },
+    {
+      "route": "/admin/users",
+      "redesign": {
+        "job": "Find an account, fix its name, grant/revoke superadmin, remove memberships or delete it.",
+        "phone": "Search, rows; sheet with Name (SaveBar), Superadmin (asks), memberships (Entfernen asks), ⋯ Benutzer löschen (asks).",
+        "desktop": "Same.",
+        "moves": [
+          "Superadmin machen → confirm admin.users.confirmGrant",
+          "Entfernen → confirm",
+          "Gefahrenzone + checkbox → ⋯ destructive confirm",
+          "Speichern → SaveBar",
+          "org names → links to /admin/orgs?edit=<id>"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards dropped the bare org count and the created date (name · last sign-in remain)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/admin/users/page.tsx",
+      "title": "Benutzer",
+      "purpose": "Find accounts, edit name, grant/revoke superadmin, remove memberships, delete accounts.",
+      "permission": "platform admin",
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "email/name search"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        },
+        {
+          "param": "edit",
+          "meaning": "user id → user drawer"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "type": "search",
+              "component": "SearchBox"
+            }
+          ]
+        },
+        {
+          "title": "Benutzer",
+          "kind": "DataTable",
+          "columns": [
+            "E-Mail (+ Superadmin / unbestätigt badges)",
+            "Name",
+            "Organisationen",
+            "Letzte Anmeldung",
+            "Angelegt"
+          ]
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=<user id>",
+          "component": "UrlSheet",
+          "title": "<Name or E-Mail>",
+          "description": "<E-Mail>",
+          "fields": [
+            {
+              "name": "full_name",
+              "label": "Name",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "Sections Profil, Plattform-Zugriff (help text), Mitgliedschaften (org + role, 'Entfernen'), Gefahrenzone (not for self).",
+          "actions": [
+            {
+              "label": "Speichern",
+              "kind": "serverAction",
+              "target": "updateProfile",
+              "result": "toast 'Gespeichert.'"
+            },
+            {
+              "label": "Superadmin machen / Superadmin entziehen",
+              "kind": "serverAction",
+              "target": "setSuperadmin",
+              "confirm": false,
+              "notes": "hidden for own account"
+            },
+            {
+              "label": "Entfernen (membership)",
+              "kind": "serverAction",
+              "target": "removeMembership",
+              "confirm": false
+            },
+            {
+              "label": "Benutzer löschen",
+              "key": "admin.users.delete",
+              "kind": "serverAction",
+              "target": "deleteUser",
+              "confirm": "checkbox 'Ich verstehe, dass dieses Konto endgültig gelöscht wird.'"
+            }
+          ]
+        }
+      ],
+      "uxNotes": [
+        "Granting platform-wide superadmin rights has no confirm.",
+        "No way to see/open a user's orgs from the drawer (org names are plain text).",
+        "No create/invite user here; accounts only come from sign-up or invites."
+      ]
+    },
+    {
+      "route": "/admin/billing",
+      "redesign": {
+        "job": "Prices per org and month.",
+        "phone": "Unchanged.",
+        "desktop": "Unchanged.",
+        "moves": [
+          "unchanged in this pass (already SaveBar + TypedInput money)"
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Hand-made stat boxes (one per row on phones) → shared <Stats>; phone cards show the total only (cryptic '4 / 1', '106 · 1.304,86 €' stacks gone, table unchanged from md)."
+        }
+      },
+      "file": "src/app/admin/billing/page.tsx",
+      "title": "Abrechnung",
+      "purpose": "Per month: what roots charges each org (subscription, usage, sales fees, discount), and set default or per-org prices from a future month on.",
+      "permission": "platform admin",
+      "urlState": [
+        {
+          "param": "month",
+          "meaning": "YYYY-MM shown (default current)"
+        },
+        {
+          "param": "price",
+          "meaning": "default | <org id> → price sheet (wide)"
+        },
+        {
+          "param": "error / ok",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Month switcher",
+          "kind": "custom",
+          "notes": "‹ / › icon buttons (aria Vorheriger/Nächster Monat), 'Monat Jahr · läuft', button 'Standardpreis' → ?price=default"
+        },
+        {
+          "title": "Stats",
+          "kind": "custom",
+          "notes": "hand-made <dl>: Fällig gesamt, Verkaufsgebühren offen, Von Stripe eingezogen, Umsatz über roots"
+        },
+        {
+          "title": "Organisationen",
+          "kind": "DataTable",
+          "columns": [
+            "Organisation (+ price source badge + summary)",
+            "Abo",
+            "Nutzer / Mitglieder",
+            "Verkäufe",
+            "Gebühr eingezogen",
+            "Gebühr offen",
+            "Rabatt",
+            "Fällig"
+          ],
+          "notes": "Money right-aligned tabular-nums. Row → ?price=<org>. Footnote admin.billing.footnote."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?price=default | ?price=<org id>",
+          "component": "UrlSheet (wide)",
+          "title": "Standardpreis / <Org name>",
+          "fields": [
+            {
+              "name": "month",
+              "label": "Gilt ab",
+              "key": "admin.billing.validFrom",
+              "type": "select",
+              "component": "NativeSelect (next 12 months)"
+            },
+            {
+              "name": "base",
+              "label": "Grundgebühr pro Monat",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "user",
+              "label": "Pro Team-Nutzer",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "included_users",
+              "label": "Inklusive Nutzer",
+              "type": "number",
+              "component": "Input inputMode=numeric"
+            },
+            {
+              "name": "member",
+              "label": "Pro aktivem Mitglied",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "included_members",
+              "label": "Inklusive Mitglieder",
+              "type": "number",
+              "component": "Input"
+            },
+            {
+              "name": "module.<key>",
+              "label": "Module: one money field per module",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "sales_percent",
+              "label": "Prozent vom Verkauf",
+              "type": "decimal",
+              "component": "Input"
+            },
+            {
+              "name": "sales_fixed",
+              "label": "Fix je Verkauf",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "discount_percent",
+              "label": "Rabatt in % (100 = kostenlos)",
+              "type": "number",
+              "component": "Input"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "First card 'Preise' lists the price history (ab <Monat>: summary + note); planned (future) rows have a trash icon.",
+          "actions": [
+            {
+              "label": "Preis speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "savePrice (admin/billing/actions.ts)",
+              "result": "toast 'Preis gespeichert.' / onlyFuture / invalidAmount"
+            },
+            {
+              "label": "Geplanten Preis löschen",
+              "where": "row",
+              "kind": "confirm",
+              "target": "deletePrice",
+              "confirm": true
+            }
+          ]
+        }
+      ],
+      "uxNotes": [
+        "One of the few admin forms with <SaveBar always> and TypedInput:money; percentages and counts are plain Inputs.",
+        "Stats are a hand-made <dl>, not <DetailList>.",
+        "Month navigation via ‹ › links only; no jump to a month."
+      ]
+    },
+    {
+      "route": "/admin/roles",
+      "redesign": {
+        "job": "Define the global roles every org assigns.",
+        "phone": "PageHeader primary Neue Rolle; rows; sheet: names, permissions, SaveBar; ⋯ Rolle löschen (asks, hint: all orgs).",
+        "desktop": "Same.",
+        "moves": [
+          "Neue Rolle (body button) → PageHeader primary",
+          "Löschen (red next to Save) → sheet ⋯ destructive with confirm",
+          "Speichern → SaveBar with confirm (admin.roles.confirmSave: changes rights in every org)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked list. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/admin/roles/page.tsx",
+      "title": "Rollen",
+      "purpose": "Define the global roles (names DE/EN, permissions per module) that orgs assign.",
+      "permission": "platform admin",
+      "header": {
+        "actions": [
+          "Neue Rolle (page body button) → ?new=role"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "role → create sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "role id → edit sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Rollen",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Inhaber-Rolle badge)",
+            "Berechtigungen (summary)",
+            "Vergeben (member count)"
+          ],
+          "notes": "intro admin.roles.intro"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=role | ?edit=<role id>",
+          "component": "UrlSheet",
+          "title": "Neue Rolle / roles.editTitle",
+          "fields": [
+            {
+              "name": "name_de",
+              "label": "Name (Deutsch)",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "name_en",
+              "label": "Name (Englisch)",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "permissions",
+              "label": "roles.fullAccess (*) + one Checkbox per permission, grouped by module",
+              "type": "checkbox[]",
+              "component": "Checkbox",
+              "notes": "owner role: no permission list (roles.summaryOwner)"
+            }
+          ],
+          "actions": [
+            {
+              "label": "roles.save",
+              "kind": "serverAction",
+              "target": "saveRole",
+              "result": "toast roles.saved; nameTaken"
+            },
+            {
+              "label": "roles.delete",
+              "kind": "serverAction",
+              "target": "deleteRole",
+              "confirm": false,
+              "result": "roles.inUse when assigned"
+            }
+          ]
+        }
+      ],
+      "uxNotes": [
+        "Deleting a global role (affects all orgs) has no confirm; it is a red button next to Save.",
+        "Editing permissions of a role changes rights in every org at once – no warning or count shown in the sheet."
+      ]
+    },
+    {
+      "route": "/admin/activity",
+      "redesign": {
+        "job": "Audit log and failures.",
+        "phone": "Unchanged.",
+        "desktop": "Unchanged.",
+        "moves": [
+          "unchanged in this pass"
+        ],
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Filter chips wrapped into four rows on phones: one scrolling row now; action badges coloured (Angelegt green, Gelöscht red) and capitalised."
+        }
+      },
+      "file": "src/app/admin/activity/page.tsx",
+      "title": "Aktivität",
+      "purpose": "Platform-wide change log of core tables, filterable by org and table, plus an 'Fehler' view of failed automation runs and failed org mails.",
+      "permission": "platform admin",
+      "urlState": [
+        {
+          "param": "table",
+          "meaning": "table filter or 'errors'"
+        },
+        {
+          "param": "org",
+          "meaning": "org id filter"
+        },
+        {
+          "param": "page",
+          "meaning": "page number (50 per page)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Filter chips",
+          "kind": "custom",
+          "notes": "Alle, Fehler, orgs, roles, org_members, invites, org_modules, org_integrations, platform_admins, event_subscriptions, pay_orders (labels activity.tables.*). 'Gefiltert auf {org}. Alle' line when ?org."
+        },
+        {
+          "title": "Change log",
+          "kind": "custom",
+          "notes": "<ol> of <details>: action badge (angelegt/geändert/gelöscht), table, org link, changed field names, actor · time; expands to JSON before/after."
+        },
+        {
+          "title": "Fehler",
+          "kind": "custom",
+          "notes": "newest 100 failed workflow runs + failed email_log rows: kind badge, title, org link, time, error text. Empty 'Keine Fehler – alles läuft.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neuer / Älter",
+          "key": "activity.newer / activity.older",
+          "where": "section",
+          "kind": "link"
+        }
+      ],
+      "uxNotes": [
+        "Only a fixed list of 9 core tables is filterable although the audit log covers every org table.",
+        "Failed items don't link to the run/mail or the org's page; only to an org filter.",
+        "Pagination uses own buttons (?page=) instead of <Pager>."
+      ]
+    }
+  ]
+}

@@ -9,8 +9,8 @@ import { back } from "@/lib/url"
 export async function disconnectApp(fd: FormData) {
   const t = await getT()
   const supabase = await createClient()
-  const to = String(fd.get("back") ?? "/settings/profile")
-  const path = to.startsWith("/settings/") ? to : "/settings/profile"
+  const to = String(fd.get("back") ?? "/settings/ai")
+  const path = /^\/settings\/[a-z]+$/.test(to) ? to : "/settings/ai"
   const { data: claims } = await supabase.auth.getClaims()
   const { data: row, error } = await supabase.from("mcp_connections").delete().eq("id", String(fd.get("id") ?? "")).select("user_id, client_id").maybeSingle()
   if (error || !row) back(path, { error: error ? dbError(t, error) : t("errors.not_allowed") })

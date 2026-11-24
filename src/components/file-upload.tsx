@@ -1,12 +1,13 @@
 "use client"
 
-import { useRef, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2Icon, UploadIcon } from "lucide-react"
 import { toast } from "sonner"
 import { registerFiles, type UploadedFile } from "@/app/(app)/files/actions"
 import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
+import { cn } from "@/lib/utils"
 import { MAX_FILE_BYTES } from "@/lib/files"
 import { createClient } from "@/lib/supabase/client"
 
@@ -56,14 +57,16 @@ export async function uploadFiles(orgId: string, list: File[], target: { entity?
   return done.map((f, i) => ({ ...f, id: r.ids?.[i] || f.id! })) // the id we chose, if the server didn't echo it
 }
 
-/** Upload button for any record (entity + entityId) or the Files page (folder). Uploads go straight to Storage. */
-export function FileUpload({ orgId, entity, entityId, folder }: { orgId: string; entity?: string; entityId?: string; folder?: string }) {
+/** Upload button for any record (entity + entityId) or the Files page (folder). Uploads go straight to Storage.
+ * `big`: the upload sheet's version — a large tap target that also takes dropped files. */
+export function FileUpload({ orgId, entity, entityId, folder, big }: { orgId: string; entity?: string; entityId?: string; folder?: string; big?: boolean }) {
   const t = useT()
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
   const [pending, start] = useTransition()
+  const [over, setOver] = useState(false)
 
-  const upload = (list: FileList | null) => {
+  const upload = (list: FileList | File[] | null) => {
     const files = [...(list ?? [])]
     if (!files.length) return
     start(async () => {
@@ -74,6 +77,26 @@ export function FileUpload({ orgId, entity, entityId, folder }: { orgId: string;
     })
   }
 
+  if (big)
+    return (
+      <>
+        <input ref={input} type="file" multiple hidden onChange={(e) => upload(e.target.files)} />
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => input.current?.click()}
+          onDragOver={(e) => (e.preventDefault(), setOver(true))}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => (e.preventDefault(), setOver(false), upload(e.dataTransfer.files))}
+          className={cn("grid min-h-40 w-full place-items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center text-sm text-muted-foreground transition-colors hover:bg-muted active:bg-muted", over && "border-primary bg-muted")}
+        >
+          {pending ? <Loader2Icon className="size-6 animate-spin" /> : <UploadIcon className="size-6" />}
+          <span className="font-medium text-foreground">{pending ? t("files.uploading") : t("files.pick")}</span>
+          <span className="max-md:hidden">{t("files.orDrop")}</span>
+        </button>
+      </>
+    )
+
   return (
     <>
       <input ref={input} type="file" multiple hidden onChange={(e) => upload(e.target.files)} />
@@ -82,5 +105,48 @@ export function FileUpload({ orgId, entity, entityId, folder }: { orgId: string;
         {pending ? t("files.uploading") : t("files.upload")}
       </Button>
     </>
+  )
+}
+
+/** Drop files anywhere on a list (desktop) to upload them into the open folder; a hint covers the list while dragging. */
+export function FileDrop({ orgId, folder, children }: { orgId: string; folder?: string; children: React.ReactNode }) {
+  const t = useT()
+  const router = useRouter()
+  const [over, setOver] = useState(false)
+  const [pending, start] = useTransition()
+  const hasFiles = (e: React.DragEvent) => [...e.dataTransfer.types].includes("Files")
+  return (
+    <div
+      className="relative grid min-w-0"
+      onDragOver={(e) => {
+        if (!hasFiles(e)) return
+        e.preventDefault()
+        setOver(true)
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false)
+      }}
+      onDrop={(e) => {
+        if (!hasFiles(e)) return
+        e.preventDefault()
+        setOver(false)
+        const files = [...e.dataTransfer.files]
+        start(async () => {
+          const done = await uploadFiles(orgId, files, { folder }, t)
+          if (done.length) toast.success(t("files.uploaded", { count: done.length }))
+          router.refresh()
+        })
+      }}
+    >
+      {children}
+      {(over || pending) && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-xl border-2 border-dashed border-primary bg-background/80 text-sm font-medium">
+          <span className="flex items-center gap-2">
+            {pending ? <Loader2Icon className="size-4 animate-spin" /> : <UploadIcon className="size-4" />}
+            {pending ? t("files.uploading") : folder ? t("files.dropInto", { folder }) : t("files.dropHere")}
+          </span>
+        </div>
+      )}
+    </div>
   )
 }

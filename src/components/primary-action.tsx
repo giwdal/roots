@@ -27,7 +27,7 @@ export function PrimaryAction({ href, label, more, icon: Icon = PlusIcon }: { hr
         >
           <Icon className="size-6" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="end" sideOffset={20} className="glass min-w-56 rounded-2xl p-1.5">
+        <DropdownMenuContent side="top" align="end" sideOffset={20} sheet={false} className="glass min-w-56 rounded-2xl p-1.5">
           {items(all)}
         </DropdownMenuContent>
       </DropdownMenu>

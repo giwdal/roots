@@ -1,5 +1,5 @@
 import { contactName, CONTACT_FIELDS } from "@/app/(app)/contacts/fields"
-import { contactSearch } from "@/contacts/search"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { notOver } from "@/rentals/fields"
 import type { getT } from "@/i18n/server"
 import type { getContext } from "@/lib/context"
@@ -9,6 +9,7 @@ import { MEMBER_FIELDS } from "@/members/fields"
 import { monthOf } from "@/lib/time"
 import { minutes } from "@/shifts/time"
 import { payrollMonth } from "@/hr/server"
+import { matchWords } from "@/lib/search-words"
 
 type Ctx = Awaited<ReturnType<typeof getContext>>
 type T = Awaited<ReturnType<typeof getT>>
@@ -75,6 +76,90 @@ export const EXPORTERS: Record<string, Exporter> = {
       }
     },
   },
+  documents: {
+    perm: "invoices.view",
+    module: "invoices",
+    name: "rechnungen",
+    async load(ctx, t, sp) {
+      // Same filters as Rechnungen (kind, status incl. overdue, search, contact).
+      const kind = ["invoice", "quote", "cancellation"].find((k) => k === sp.get("kind"))
+      const status = ["draft", "sent", "paid", "accepted", "declined", "cancelled"].find((s) => s === sp.get("status"))
+      const q = clean(sp.get("q"))
+      const contact = /^[0-9a-f-]{36}$/.test(sp.get("contact") ?? "") ? sp.get("contact")! : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("documents")
+          .select("kind, status, number, recipient_name, recipient_email, issue_date, due_date, valid_until, paid_at, net_total, tax_total, gross_total")
+          .eq("org_id", ctx.org.id)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+        if (kind) x = x.eq("kind", kind)
+        if (status) x = x.eq("status", status)
+        if (sp.get("status") === "overdue") x = x.eq("kind", "invoice").eq("status", "sent").lt("due_date", today())
+        if (q) x = x.or(`number.ilike.%${q}%,recipient_name.ilike.%${q}%`)
+        if (contact) x = x.eq("contact_id", contact)
+        return x
+      })
+      return {
+        headers: [t("invoices.number"), t("invoices.kind"), t("invoices.status"), t("invoices.recipient"), t("invoices.recipientEmail"), t("invoices.issueDate"), t("invoices.dueColumn"), t("invoices.paidAt"), t("invoices.net"), t("invoices.taxTotal"), t("invoices.gross")],
+        rows: rows.map((d) => [
+          d.number ?? "",
+          t.dynamic(`invoices.kinds.${d.kind}`),
+          t.dynamic(`invoices.statuses.${d.kind}.${d.status}`),
+          d.recipient_name,
+          d.recipient_email,
+          d.issue_date,
+          d.kind === "quote" ? d.valid_until : d.due_date,
+          d.paid_at ? new Date(d.paid_at).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) : "",
+          d.net_total / 100,
+          d.tax_total / 100,
+          d.gross_total / 100,
+        ]),
+      }
+    },
+  },
+  payments: {
+    perm: "payments.view",
+    module: "payments",
+    name: "zahlungen",
+    async load(ctx, t, sp) {
+      // Same filters as Zahlungen (status, source, event, contact's email, search).
+      const q = clean(sp.get("q"))
+      const uuid = (k: string) => (/^[0-9a-f-]{36}$/.test(sp.get(k) ?? "") ? sp.get(k)! : null)
+      const event = uuid("event")
+      const contact = uuid("contact")
+      const email = contact ? ((await ctx.supabase.from("contacts").select("email").eq("id", contact).eq("org_id", ctx.org.id).maybeSingle()).data?.email ?? "-") : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("pay_orders")
+          .select("created_at, paid_at, customer_name, customer_email, source_module, amount_total, application_fee, status, provider")
+          .eq("org_id", ctx.org.id)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+        if (sp.get("status")) x = x.eq("status", sp.get("status")!)
+        if (sp.get("source")) x = x.eq("source_module", sp.get("source")!)
+        if (event) x = x.eq("source_module", "tickets").eq("source_id", event)
+        if (email) x = x.ilike("customer_email", email.replace(/[%_\\]/g, "\\$&"))
+        if (q) x = x.or(`customer_email.ilike.%${q}%,customer_name.ilike.%${q}%`)
+        return x
+      })
+      const at = (iso: string | null) => (iso ? new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Berlin" }).slice(0, 16) : "")
+      return {
+        headers: [t("payments.date"), t("payments.paidAt"), t("payments.customer"), t("contacts.email"), t("payments.what"), t("payments.amount"), t("payments.fee"), t("payments.status"), t("payments.provider")],
+        rows: rows.map((o) => [
+          at(o.created_at),
+          at(o.paid_at),
+          o.customer_name,
+          o.customer_email,
+          label(t, `payments.sources.${o.source_module}`),
+          o.amount_total / 100,
+          o.application_fee / 100,
+          label(t, `payments.statuses.${o.status}`),
+          o.provider ?? "",
+        ]),
+      }
+    },
+  },
   contacts: {
     perm: "crm.view",
     module: "crm",
@@ -86,7 +171,7 @@ export const EXPORTERS: Record<string, Exporter> = {
       const rows = await all((from, to) => {
         let query = ctx.supabase.from("contacts").select("*").eq("org_id", ctx.org.id).is("deleted_at", null).order("last_name").order("first_name").range(from, to)
         if (picked(sp).length) return query.in("id", picked(sp))
-        if (q) query = query.or(contactSearch(q))
+        if (q) query = matchWords(query, q, CONTACT_SEARCH)
         if (tag) query = query.contains("tags", [tag])
         return query
       })
@@ -117,7 +202,7 @@ export const EXPORTERS: Record<string, Exporter> = {
         if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
         if (status === "ended") query = query.lt("ends_on", now)
         if (type) query = query.eq("type_id", type)
-        if (q) query = query.or(contactSearch(q), { referencedTable: "contacts" })
+        if (q) query = matchWords(query, q, CONTACT_SEARCH, { referencedTable: "contacts" })
         return query
       })
       const memberCols = MEMBER_FIELDS.map((f) => f.key)
@@ -156,7 +241,9 @@ export const EXPORTERS: Record<string, Exporter> = {
           .order("due_on", { ascending: false })
           .range(from, to)
         if (picked(sp).length) return query.in("id", picked(sp))
-        if (status !== "all") query = query.eq("status", status)
+        if (status === "overdue") query = query.eq("status", "open").lt("due_on", new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }))
+        else if (status === "failed") query = query.eq("status", "open").not("failed_at", "is", null)
+        else if (status !== "all") query = query.eq("status", status)
         return query
       })
       return {
@@ -227,16 +314,22 @@ export const EXPORTERS: Record<string, Exporter> = {
     perm: "hr.view",
     module: "hr",
     name: "employees",
-    async load(ctx, t) {
-      const rows = await all((from, to) =>
-        ctx.supabase
+    async load(ctx, t, sp) {
+      // The list's filters: search (name, job title, department, email) and employment type.
+      const q = clean(sp.get("q"))
+      const type = sp.get("type")
+      const rows = await all((from, to) => {
+        let query = ctx.supabase
           .from("employees")
           .select("name, email, phone, job_title, department, employment_type, starts_on, ends_on, pay_type, hourly_rate_cents, monthly_salary_cents, weekly_hours, vacation_days, manager:manager_id(name)")
           .eq("org_id", ctx.org.id)
           .is("deleted_at", null)
           .order("name")
-          .range(from, to),
-      )
+          .range(from, to)
+        if (q) query = query.or(`name.ilike.%${q}%,job_title.ilike.%${q}%,department.ilike.%${q}%,email.ilike.%${q}%`)
+        if (type) query = query.eq("employment_type", type)
+        return query
+      })
       return {
         headers: [t("hr.name"), t("hr.email"), t("hr.phone"), t("hr.jobTitle"), t("hr.department"), t("hr.manager"), t("hr.employmentType"), t("hr.startsOn"), t("hr.endsOn"), t("hr.payType"), t("hr.hourlyRate"), t("hr.monthlySalary"), t("hr.weeklyHours"), t("hr.vacationDays")],
         rows: rows.map((e) => [
@@ -319,6 +412,57 @@ export const EXPORTERS: Record<string, Exporter> = {
           const m = minutes(e)
           return [e.staff?.name ?? "", at(e.started_at), e.ended_at ? at(e.ended_at) : "", m.break, Math.round((m.net / 60) * 100) / 100, e.shifts?.positions?.name ?? e.shifts?.title ?? "", e.note ?? ""]
         }),
+      }
+    },
+  },
+  shop_orders: {
+    perm: "shop.view",
+    module: "shop",
+    name: "bestellungen",
+    async load(ctx, t, sp) {
+      // Same filters as Shop → Bestellungen (view, payment, search, contact).
+      const views: Record<string, string[]> = { open: ["new", "ready"], done: ["shipped", "completed"], cancelled: ["cancelled"] }
+      const view = sp.get("view") ?? "open"
+      const q = clean(sp.get("q"))
+      const contact = /^[0-9a-f-]{36}$/.test(sp.get("contact") ?? "") ? sp.get("contact")! : null
+      const rows = await all((from, to) => {
+        let x = ctx.supabase
+          .from("shop_orders")
+          .select("id, number, status, delivery, payment, name, company, phone, street, postal_code, city, country, placed_at, tracking, pay_orders!inner(status, amount_total, customer_email, pay_order_items(description, quantity, metadata))")
+          .eq("org_id", ctx.org.id)
+          .not("placed_at", "is", null)
+          .order("placed_at", { ascending: false })
+          .range(from, to)
+        if (picked(sp).length) return x.in("id", picked(sp))
+        if (views[view]) x = x.in("status", views[view])
+        if (q) x = /^\d+$/.test(q) ? x.eq("number", Number(q)) : x.ilike("name", `%${q}%`)
+        if (contact) x = x.eq("contact_id", contact)
+        if (sp.get("pay") === "open") x = x.in("pay_orders.status", ["open", "failed", "expired"])
+        if (sp.get("pay") === "paid") x = x.in("pay_orders.status", ["paid", "partially_refunded"])
+        return x
+      })
+      const at = (iso: string | null) => (iso ? new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Berlin" }).slice(0, 16) : "")
+      return {
+        headers: [t("store.orderNumber"), t("store.date"), t("store.fields.name"), t("store.fields.company"), t("store.fields.email"), t("store.fields.phone"), t("store.items"), t("store.total"), t("store.delivery"), t("store.street"), t("store.postalCode"), t("store.city"), t("store.country"), t("store.tracking"), t("store.paymentMethod"), t("store.payment"), t("store.status")],
+        rows: rows.map((o) => [
+          o.number,
+          at(o.placed_at),
+          o.name,
+          o.company,
+          o.pay_orders.customer_email,
+          o.phone,
+          o.pay_orders.pay_order_items.filter((i) => !(i.metadata as Record<string, unknown> | null)?.shipping).map((i) => `${i.quantity}× ${i.description}`).join(", "),
+          o.pay_orders.amount_total / 100,
+          t.dynamic(`store.deliveries.${o.delivery}`),
+          o.street,
+          o.postal_code,
+          o.city,
+          o.country,
+          o.tracking,
+          t.dynamic(`store.payments.${o.payment}`),
+          t.dynamic(`store.payStatus.${o.pay_orders.status}`),
+          t.dynamic(`store.orderStatus.${o.status}`),
+        ]),
       }
     },
   },

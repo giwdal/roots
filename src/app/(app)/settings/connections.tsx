@@ -1,5 +1,5 @@
 import { BotIcon } from "lucide-react"
-import { FormCard } from "@/components/page"
+import { RowGroup } from "@/components/section"
 import { SubmitButton } from "@/components/submit-button"
 import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
@@ -21,11 +21,10 @@ export async function Connections({ ctx, scope, back }: { ctx: Ctx; scope: "mine
   const { data: people } = scope === "org" && ids.length ? await ctx.supabase.from("profiles").select("id, full_name, email").in("id", ids) : { data: [] }
   const who = (id: string) => people?.find((p) => p.id === id)?.full_name || people?.find((p) => p.id === id)?.email || ""
   return (
-    <FormCard id="connections" title={scope === "mine" ? t("settings.myConnections") : t("settings.connections")} description={scope === "mine" ? t("settings.myConnectionsHint") : t("settings.connectionsHint")}>
+    <RowGroup id="connections" title={scope === "mine" ? t("settings.myConnections") : t("settings.connections")} description={scope === "mine" ? t("settings.myConnectionsHint") : t("settings.connectionsHint")}>
       {rows?.length ? (
-        <ul className="divide-y rounded-lg border">
-          {rows.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm">
+          rows.map((r) => (
+            <div key={r.id} className="flex min-h-12 flex-wrap items-center gap-3 px-4 py-2 text-sm">
               <BotIcon className="size-4 text-muted-foreground" aria-hidden />
               <span className="grid min-w-0 flex-1">
                 <span className="truncate font-medium">{r.client_name || "App"}</span>
@@ -37,16 +36,15 @@ export async function Connections({ ctx, scope, back }: { ctx: Ctx; scope: "mine
               <form action={disconnectApp}>
                 <input type="hidden" name="id" value={r.id} />
                 <input type="hidden" name="back" value={back} />
-                <SubmitButton size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                <SubmitButton size="sm" variant="ghost" data-confirm="settings.confirmDisconnect" className="text-destructive hover:text-destructive">
                   {t("settings.disconnect")}
                 </SubmitButton>
               </form>
-            </li>
-          ))}
-        </ul>
+            </div>
+          ))
       ) : (
-        <p className="text-sm text-muted-foreground">{t("settings.noConnections")}</p>
+        <p className="px-4 py-3 text-sm text-muted-foreground">{t("settings.noConnections")}</p>
       )}
-    </FormCard>
+    </RowGroup>
   )
 }

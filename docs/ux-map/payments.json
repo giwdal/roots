@@ -1,0 +1,261 @@
+{
+  "area": "finance",
+  "label": "Zahlungen",
+  "module": "payments",
+  "nav": [
+    {
+      "label": "Rechnungen",
+      "key": "invoices.nav",
+      "href": "/invoices"
+    },
+    {
+      "label": "Zahlungen",
+      "key": "payments.nav",
+      "href": "/payments"
+    },
+    {
+      "label": "Kassenbuch",
+      "key": "cashbook.nav",
+      "href": "/cashbook"
+    },
+    {
+      "label": "Einstellungen",
+      "key": "common.settings",
+      "href": "/invoices/settings",
+      "permission": "invoices.manage",
+      "notes": "gear only (nav child gear: true), listed in Settings › Bereiche"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/payments",
+      "file": "src/app/(app)/payments/page.tsx",
+      "title": "Zahlungen",
+      "purpose": "List all pay orders (tickets, shop, tests) with status; open one to see items, tickets, payments, refunds and refund or cancel tickets.",
+      "permission": "payments.view (module payments)",
+      "size": "list",
+      "header": {
+        "area": "finance",
+        "menu": [
+          {
+            "label": "Testzahlung",
+            "key": "payments.testPayment",
+            "target": "?new=test",
+            "permission": "platform admin only"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search customer email + name"
+        },
+        {
+          "param": "status",
+          "meaning": "open | paid | partially_refunded | refunded | failed | expired (FilterMenu)"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "edit",
+          "meaning": "<pay order id> = order sheet"
+        },
+        {
+          "param": "new",
+          "meaning": "test = test payment sheet (platform admins)"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast (inside the sheet when open)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Provider hint",
+          "kind": "custom",
+          "notes": "org.integrations.manage only, when no provider is ready: 'Verbinde einen Zahlungsanbieter (Stripe oder SumUp), um Zahlungen anzunehmen.' or payments.notReady + link 'Zu den Integrationen' → /settings/integrations."
+        },
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Suchen…",
+              "key": "common.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "status",
+              "label": "Status",
+              "key": "payments.status",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "all-label 'Alle'; status labels lowercase (offen, bezahlt, …)"
+            }
+          ]
+        },
+        {
+          "title": "Zahlungen",
+          "kind": "DataTable",
+          "columns": [
+            "Datum",
+            "Kunde (name or email)",
+            "Wofür (Tickets / Shop / Testzahlung)",
+            "Betrag (right, tabular)",
+            "Status"
+          ],
+          "notes": "Row → ?edit=<id>. No bulk actions."
+        }
+      ],
+      "actions": [],
+      "overlays": [
+        {
+          "param": "?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Bestellung · <amount>",
+          "fields": [],
+          "actions": [
+            {
+              "label": "<event name> (Wofür)",
+              "where": "sheet",
+              "kind": "link",
+              "target": "/events/<event id>/tickets#sold",
+              "notes": "ticket orders only"
+            },
+            {
+              "label": "Stornieren (per ticket)",
+              "key": "payments.cancelTicket",
+              "where": "row",
+              "kind": "confirm",
+              "target": "cancelTicketAction (payments/actions.ts)",
+              "permission": "payments.refund",
+              "confirm": true,
+              "result": "toast 'Ticket storniert.' / 'Erstattung angefragt. Stripe bestätigt sie gleich.'; confirm payments.confirmCancelTicket"
+            },
+            {
+              "label": "In der Shop-Bestellung erstatten (Stücke, Bestand, Rechnung)",
+              "key": "payments.refundInShop",
+              "where": "sheet",
+              "kind": "link",
+              "target": "/shop/orders/<id>?refund=1",
+              "notes": "instead of the refund form for shop orders"
+            },
+            {
+              "label": "Erstatten",
+              "key": "payments.refund",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "refund (payments/actions.ts, bound to order id)",
+              "permission": "payments.refund",
+              "confirm": false,
+              "result": "toast 'Erstattet.' / 'Erstattung angefragt. Stripe bestätigt sie gleich.'",
+              "notes": "fields: 'Betrag in Euro (leer = alles)' (TypedInput:money, hint payments.refundLeft + payments.feeKept), 'Grund (optional)' (Input); red destructive button"
+            }
+          ],
+          "notes": "description = customer email. DetailList: Status, Wofür, Datum, Bezahlt am, Plattformgebühr. Lists: Positionen (+ Summe), Tickets (code · type · holder + status badge), Zahlungen (provider · date + status), Erstattungen (amount · reason + status)."
+        },
+        {
+          "param": "?new=test",
+          "component": "UrlSheet",
+          "title": "Testzahlung",
+          "fields": [
+            {
+              "name": "amount",
+              "label": "Betrag in Euro",
+              "key": "payments.testAmount",
+              "type": "money",
+              "component": "TypedInput:money",
+              "required": true,
+              "notes": "default 1,00"
+            },
+            {
+              "name": "email",
+              "label": "E-Mail (optional)",
+              "key": "payments.testEmail",
+              "type": "email",
+              "component": "Input type=email"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Zum Checkout",
+              "key": "payments.startCheckout",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "createTestPayment",
+              "permission": "platform admin",
+              "confirm": false,
+              "result": "redirect to the provider's checkout"
+            }
+          ],
+          "notes": "description payments.testHelp ('… Stripe-Checkout. Nur für Plattform-Admins.')"
+        }
+      ],
+      "links": [
+        "/settings/integrations",
+        "/events/[eventId]/tickets#sold",
+        "/shop/orders/[id]?refund=1"
+      ],
+      "empty": "'Noch keine Bestellungen.' (plain text, no EmptyState)",
+      "phone": "Cards; sheet full width; no primary action.",
+      "uxNotes": [
+        "Refunding a whole (non-shop) order is a red button with no confirm, while the shop refund and ticket cancel both ask first.",
+        "Label drift: the page is 'Zahlungen' but rows/sheet are 'Bestellung' and the empty text says 'Noch keine Bestellungen.'; the column is 'Kunde' (not gendered) while shop uses 'Käufer:in'.",
+        "Status labels are lowercase ('offen', 'bezahlt') unlike capitalised statuses elsewhere (shop 'Bezahlt', tickets 'Gültig').",
+        "Refund form uses refund.bind(null, id) instead of the hidden id field the rules require.",
+        "The order sheet is the target of links from tickets and shop (?edit=<pay order id>), so it acts as a record page but is a sheet; there is no deep page per payment.",
+        "Refund hint 'Stripe bestätigt sie gleich' is Stripe-specific although SumUp is also supported.",
+        "No export (payments are money data an accountant would want).",
+        "Empty list has no EmptyState explaining where payments come from."
+      ],
+      "redesign": {
+        "job": "See every incoming payment (tickets, shop, tests) with its state, find one, refund if needed.",
+        "phone": "Top bar: Zahlungen, ⋯ (export, Testzahlung for platform admins). Provider hint card if not connected. Toolbar: search, then a scrolling row: Status filter, Wofür filter, event/contact chip. Cards: customer + status badge, line 2 Wofür · date, amount. Row → sheet.",
+        "desktop": "<ListToolbar> search · Status · Wofür · chips. Table: Kunde:in (name, muted email), Wofür, Datum, Status badge, Betrag right. Sheet ?edit=<id>: title 'Zahlung · amount', badge, DetailList, Positionen, Tickets, Vorgänge, Erstattungen, Verknüpft (event, shop order, invoice), Erstatten form with confirm.",
+        "moves": [
+          "provider hint + link Zu den Integrationen → unchanged (org.integrations.manage)",
+          "q SearchBox → <ListToolbar> search",
+          "status FilterMenu → toolbar; labels capitalised (Offen, Bezahlt, Teilweise erstattet, Erstattet, Fehlgeschlagen, Abgelaufen)",
+          "new: ?source= filter (Wofür: Tickets, Shop, Testzahlung) — target of the report's revenue tiles",
+          "?event= chip → unchanged",
+          "new: ?contact=<id> filter (payments with the contact's email) + chip; linked from the contact page",
+          "column Datum → third column",
+          "column Kunde → first column 'Kund:in' (name + muted email)",
+          "column Wofür → unchanged",
+          "column Betrag → last, right-aligned",
+          "column Status → badge with status variants (success paid, warning open, info refunded/partially, destructive failed/expired)",
+          "empty text 'Noch keine Bestellungen.' → <EmptyState> 'Noch keine Zahlungen' + where they come from; filtered empty short text",
+          "new: ⋯ Export (xlsx/csv, entity payments, same filters)",
+          "⋯ Testzahlung (platform admins) → ⋯ (unchanged)",
+          "sheet title 'Bestellung · amount' → 'Zahlung · amount', description customer email (mailto in DetailList)",
+          "sheet DetailList Status, Wofür (event / shop order link), Datum, Bezahlt am, Plattformgebühr → unchanged, plus Kund:in and Rechnung (shop invoice) links",
+          "sheet Positionen / Tickets / Zahlungen / Erstattungen lists → unchanged; status words as badges; 'Zahlungen' list renamed 'Vorgänge' with provider label",
+          "ticket 'Stornieren' (confirm) → unchanged",
+          "'In der Shop-Bestellung erstatten' link → unchanged (→ /shop/orders/<id>?new=refund)",
+          "Erstatten form (amount TypedInput money, reason) → unchanged fields; hidden id field instead of bind; red button asks first (payments.confirmRefund + Hint); refund toast provider-neutral",
+          "?new=test sheet (amount, email, Zum Checkout) → unchanged; email as TypedInput email; SaveBar always 'Zum Checkout'"
+        ],
+        "built": true,
+        "kept": "uxNote 4 kept: the payment stays a sheet (?edit=<id>) – links from tickets, shop orders, invoices and contacts point there and its content is short; it now carries the Verknüpft links.",
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards cut 'Tickets · 19.11.2026, 01:2…' and the badge: phone line is now 'Wofür · TT.MM. · badge' (phone-only columns), table keeps date + time. Sheet unchanged."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7
+      ]
+    }
+  ]
+}

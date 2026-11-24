@@ -1,17 +1,17 @@
 import Link from "next/link"
-import { contactSearch } from "@/contacts/search"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { ContactImportBody } from "./import/body"
 import { UrlSheet } from "@/components/url-sheet"
 import { notFound, redirect } from "next/navigation"
 import { DownloadIcon, PlusIcon, TagIcon, Trash2Icon, UploadIcon, UsersIcon } from "lucide-react"
 import { BulkBar } from "@/components/bulk-bar"
 import { SubmitButton } from "@/components/submit-button"
-import { Input } from "@/components/ui/input"
+import { TagSelect } from "@/components/tag-select"
 import { bulkContacts } from "./actions"
 import { ActionsMenu, MenuExport, MenuLink, MenuSeparator } from "@/components/actions-menu"
 import { FilterMenu } from "@/components/filter-menu"
 import { EmptyState, Page, PageHeader } from "@/components/page"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
 import { Notice } from "@/components/notice"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
 import { contactName } from "./fields"
+import { matchWords } from "@/lib/search-words"
 
 export default async function ContactsPage({ searchParams }: PageProps<"/contacts">) {
   const ctx = await requirePerm("crm.view")
@@ -30,12 +31,18 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
     ?.replace(/[%,()*]/g, "")
     .trim()
   const tag = param(sp, "tag")
+  const dup = param(sp, "dup") === "1"
   const trash = canManage && param(sp, "trash") === "1"
   const page = pageParam(sp)
   // Old drawer links (?edit=<id>) → the contact's page.
   const editId = param(sp, "edit")
   if (editId && /^[0-9a-f-]{36}$/.test(editId)) redirect(`/contacts/${editId}`)
   if (param(sp, "new")) redirect("/contacts/new") // old drawer link
+
+  // Possible duplicates (same first + last name): marked in the list, ?dup=1 shows only them.
+  // ponytail: first 200 pairs only; page through contact_duplicates() if an org ever has more.
+  const pairs = trash ? Promise.resolve({ data: [] }) : ctx.supabase.rpc("contact_duplicates", { p_org: ctx.org.id, p_limit: 200 })
+  const dupIds = dup ? new Set(((await pairs).data ?? []).flatMap((p) => [p.a_id, p.b_id])) : null
 
   // All filtering happens here in the query; the UI only writes the URL.
   let query = ctx.supabase
@@ -46,12 +53,14 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
   query = trash
     ? query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
     : query.is("deleted_at", null).order("last_name", { nullsFirst: false }).order("first_name").order("company")
-  if (q) query = query.or(contactSearch(q))
+  if (q) query = matchWords(query, q, CONTACT_SEARCH)
   if (tag) query = query.contains("tags", [tag])
-  const [{ data }, { data: tagRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id })])
+  if (dupIds) query = query.in("id", [...dupIds])
+  const [{ data }, { data: tagRows }, { data: pairRows }] = await Promise.all([query, ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }), pairs])
+  const dupes = new Set((pairRows ?? []).flatMap((p) => [p.a_id, p.b_id]))
   const rows = data?.slice(0, PAGE_SIZE) ?? []
   const tags = ((tagRows ?? []) as unknown as string[]).sort((a, b) => a.localeCompare(b, t.locale))
-  const empty = !q && !tag && !trash && page === 1 && !rows.length
+  const empty = !q && !tag && !dup && !trash && page === 1 && !rows.length
 
   return (
     <Page>
@@ -81,10 +90,10 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
       {!empty && (
-        <div className="flex flex-wrap items-center gap-2">
-          <SearchBox q={q} label={t("common.search")} />
+        <ListToolbar search={<SearchBox q={q} label={t("common.search")} />}>
           {!trash && tags.length > 0 && <FilterMenu param="tag" label={t("contacts.tags")} options={tags.map((tg) => ({ value: tg, label: tg }))} />}
-        </div>
+          {!trash && (dup || dupes.size > 0) && <FilterMenu param="dup" label={t("contacts.duplicates.filter")} options={[{ value: "1", label: t("contacts.duplicates.only") }]} />}
+        </ListToolbar>
       )}
       {trash && <p className="text-sm text-muted-foreground">{t("contacts.trashHint", { days: 30 })}</p>}
 
@@ -96,7 +105,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
         empty={
           trash ? (
             t("contacts.emptyTrash")
-          ) : q || tag ? (
+          ) : q || tag || dup ? (
             t("contacts.noMatch")
           ) : (
             <EmptyState
@@ -105,9 +114,14 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
               text={t("contacts.emptyText")}
               action={
                 canManage && (
-                  <Button render={<Link href="/contacts/new" />} nativeButton={false} size="sm">
-                    <PlusIcon /> {t("contacts.new")}
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button render={<Link href="/contacts/new" />} nativeButton={false} size="sm">
+                      <PlusIcon /> {t("contacts.new")}
+                    </Button>
+                    <Button render={<Link href="/contacts?import=1" scroll={false} />} nativeButton={false} size="sm" variant="outline">
+                      <UploadIcon /> {t("contacts.import")}
+                    </Button>
+                  </div>
                 )
               }
             />
@@ -118,14 +132,17 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
             header: t("contacts.name"),
             cell: (r) => (
               <span className="grid">
-                <span className="font-medium">{contactName(r)}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{contactName(r)}</span>
+                  {dupes.has(r.id) && <Badge variant="warning">{t("contacts.merge.duplicate")}</Badge>}
+                </span>
                 {r.company && contactName(r) !== r.company && <span className="text-xs text-muted-foreground">{r.company}</span>}
               </span>
             ),
           },
-          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span> },
-          { header: t("contacts.phone"), cell: (r) => r.phone, className: "whitespace-nowrap" },
-          { header: t("contacts.city"), cell: (r) => r.city },
+          { header: t("contacts.email"), cell: (r) => <span className="break-all">{r.email}</span>, phone: false },
+          { header: t("contacts.phone"), cell: (r) => r.phone, className: "whitespace-nowrap", phone: false },
+          { header: t("contacts.city"), cell: (r) => r.city, phone: false },
           {
             header: t("contacts.tags"),
             cell: (r) => (
@@ -137,30 +154,41 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
                 ))}
               </span>
             ),
+            phone: false,
+          },
+          // Phones: one line that fits – email (else phone) and the first tag with "+n".
+          { header: t("contacts.email"), cell: (r) => r.email || r.phone, table: false },
+          {
+            header: t("contacts.tags"),
+            cell: (r) =>
+              r.tags.length > 0 && (
+                <Badge variant="secondary">
+                  {r.tags[0]}
+                  {r.tags.length > 1 && ` +${r.tags.length - 1}`}
+                </Badge>
+              ),
+            table: false,
           },
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
 
       {canManage && !trash && (
-        <BulkBar form="bulk-contacts">
+        <BulkBar form="bulk-contacts" action={bulkContacts}>
           <input type="hidden" name="back" value={`/contacts${withParams(sp, {})}`} />
-          <Input name="bulk_tag" list="bulk-tags" placeholder={t("contacts.tags")} aria-label={t("contacts.tags")} className="h-8 w-36" />
-          <datalist id="bulk-tags">
-            {tags.map((tg) => (
-              <option key={tg} value={tg} />
-            ))}
-          </datalist>
-          <SubmitButton size="sm" variant="outline" formAction={bulkContacts} name="intent" value="tag-add">
+          <div className="w-56" aria-label={t("contacts.tags")}>
+            <TagSelect name="bulk_tag" options={tags} creatable />
+          </div>
+          <SubmitButton size="sm" variant="outline" name="intent" value="tag-add">
             <TagIcon /> {t("common.addTag")}
           </SubmitButton>
-          <SubmitButton size="sm" variant="ghost" formAction={bulkContacts} name="intent" value="tag-remove">
+          <SubmitButton size="sm" variant="ghost" name="intent" value="tag-remove">
             {t("common.removeTag")}
           </SubmitButton>
           <Button type="submit" size="sm" variant="outline" formAction="/export/contacts" formMethod="get" name="format" value="xlsx">
             <DownloadIcon /> {t("common.exportSelected")}
           </Button>
-          <SubmitButton size="sm" variant="ghost" formAction={bulkContacts} name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
+          <SubmitButton size="sm" variant="ghost" name="intent" value="trash" data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
             <Trash2Icon /> {t("common.toTrash")}
           </SubmitButton>
         </BulkBar>

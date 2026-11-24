@@ -24,26 +24,41 @@ async function manager(path = PATH) {
   return { ctx, t }
 }
 
-export async function createCampaign(fd: FormData) {
-  const { ctx, t } = await manager()
-  const name = str(fd, "name", 200)
-  if (!name) back(`${PATH}?new=1`, { error: t("email.nameRequired") })
-  const { data, error } = await ctx.supabase.from("email_campaigns").insert({ org_id: ctx.org.id, name, subject: name }).select("id").single()
-  if (error || !data) back(`${PATH}?new=1`, { error: dbError(t, error) })
-  back(`${PATH}/${data.id}`, {})
-}
+const UUID = /^[0-9a-f-]{36}$/
 
-function readCampaign(fd: FormData, members: boolean) {
-  const audience: Audience = { tags: parseTags(String(fd.get("tags") ?? "")).slice(0, 20), members: members && fd.get("members") === "active" ? "active" : null }
+async function readCampaign(ctx: Awaited<ReturnType<typeof requirePerm>>, fd: FormData) {
+  const eventRaw = String(fd.get("event") ?? "")
+  // Event buyers only for an event of this org (RLS scopes the lookup) and with the tickets module.
+  const event = UUID.test(eventRaw) && ctx.modules.has("tickets") ? ((await ctx.supabase.from("events").select("id").eq("id", eventRaw).eq("org_id", ctx.org.id).maybeSingle()).data?.id ?? null) : null
+  const audience: Audience = {
+    tags: parseTags(String(fd.get("tags") ?? "")).slice(0, 20),
+    members: ctx.modules.has("members") && fd.get("members") === "active" ? "active" : null,
+    event,
+  }
   return { name: str(fd, "name", 200), subject: str(fd, "subject", 300), body: String(fd.get("body") ?? "").slice(0, 200000), format: formatOf(fd), audience }
 }
 
-/** Save; the submit button decides what else happens: "test" (to me), "send" (now), "schedule" (at send_at). */
+/**
+ * Create (no id: /email/new) or save; the submit button decides what else happens: "test" (to me), "send" (now),
+ * "schedule" (at send_at).
+ */
 export async function saveCampaign(fd: FormData) {
   const { ctx, t } = await manager()
-  const id = str(fd, "id", 36)
+  const c = await readCampaign(ctx, fd)
+  let id = str(fd, "id", 36)
+  if (!id) {
+    const retry = `${PATH}/new${c.audience.event ? `?event=${c.audience.event}` : ""}`
+    if (!c.name) back(retry, { error: t("email.nameRequired") })
+    const { data, error } = await ctx.supabase
+      .from("email_campaigns")
+      .insert({ org_id: ctx.org.id, ...c, subject: c.subject || c.name, audience: c.audience as never })
+      .select("id")
+      .single()
+    if (error || !data) back(retry, { error: dbError(t, error) })
+    id = data.id
+    if (!fd.get("intent")) back(`${PATH}/${id}`, { ok: t("email.created") })
+  }
   const here = `${PATH}/${id}`
-  const c = readCampaign(fd, ctx.modules.has("members"))
   if (!c.name) back(here, { error: t("email.nameRequired") })
   const { data: current } = await ctx.supabase.from("email_campaigns").select("status").eq("id", id).eq("org_id", ctx.org.id).single()
   if (!current || current.status === "sending" || current.status === "sent") back(here, { error: t("email.alreadySent") })
@@ -93,6 +108,23 @@ export async function trashCampaign(fd: FormData) {
   back(PATH, error ? { error: dbError(t, error) } : { ok: t("email.trashed") })
 }
 
+export async function restoreCampaign(fd: FormData) {
+  const { ctx, t } = await manager()
+  const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.email_campaigns", p_id: str(fd, "id", 36) })
+  back(`${PATH}?trash=1`, error ? { error: dbError(t, error) } : { ok: t("email.restored") })
+}
+
+/** Event picker of the audience (campaign to an event's buyers): the org's events by title, newest first (≤ 20). */
+export async function searchEvents(q: string) {
+  const ctx = await requirePerm("email.manage")
+  const t = await getT()
+  const clean = q.replace(/[%,()*]/g, "").trim()
+  let query = ctx.supabase.from("events").select("id, title, starts_at").eq("org_id", ctx.org.id).is("deleted_at", null).order("starts_at", { ascending: false }).limit(20)
+  if (clean) query = query.ilike("title", `%${clean}%`)
+  const { data } = await query
+  return (data ?? []).map((e) => ({ id: e.id, label: e.title, detail: t.date(e.starts_at, { dateStyle: "medium" }) }))
+}
+
 export async function saveAutomation(fd: FormData) {
   const { ctx, t } = await manager(AUTO)
   const id = str(fd, "id", 36)
@@ -107,12 +139,13 @@ export async function saveAutomation(fd: FormData) {
     format: formatOf(fd),
     active: fd.get("active") === "on",
   }
-  if (!row.name || !event || !row.subject || !row.body.trim()) back(AUTO, { error: t("email.automationInvalid") })
-  if (event.module && !ctx.modules.has(event.module)) back(AUTO, { error: t("errors.not_allowed") })
+  const retry = id ? `${AUTO}?edit=${id}` : `${AUTO}?new=1`
+  if (!row.name || !event || !row.subject || !row.body.replace(/<[^>]+>/g, "").trim()) back(retry, { error: t("email.automationInvalid") })
+  if (event.module && !ctx.modules.has(event.module)) back(retry, { error: t("errors.not_allowed") })
   const { error } = id
     ? await ctx.supabase.from("email_automations").update(row).eq("id", id).eq("org_id", ctx.org.id)
     : await ctx.supabase.from("email_automations").insert({ ...row, org_id: ctx.org.id })
-  back(AUTO, error ? { error: dbError(t, error) } : { ok: t("email.saved") })
+  back(error ? retry : AUTO, error ? { error: dbError(t, error) } : { ok: t("email.saved") })
 }
 
 export async function deleteAutomation(fd: FormData) {
@@ -121,7 +154,7 @@ export async function deleteAutomation(fd: FormData) {
   back(AUTO, error ? { error: dbError(t, error) } : { ok: t("email.deleted") })
 }
 
-const TPL = "/email/templates"
+const TPL = "/email/settings"
 
 export async function saveTemplateAction(fd: FormData) {
   const { ctx, t } = await manager(TPL)

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { checkElements, readSubmission, template } from "./elements.ts"
+import { checkElements, readElements, readSubmission, template } from "./elements.ts"
 
 const els = template("membership", { privacy: "Datenschutz", statutes: "Satzung" })
 const ctx = { purpose: "membership", customDefs: [], typeIds: ["t1"], today: "2027-01-01" }
@@ -26,6 +26,7 @@ test("required fields, consents, mandate and type are enforced", () => {
   assert.equal(read({ ...base, iban: "123" }).error, "errors.invalid_iban")
   const consent = els.find((e) => e.kind === "consent")
   assert.equal(read({ ...base, [`consent.${consent.id}`]: "" }).error, "errors.consent_required")
+  assert.equal(read({ ...base, [`consent.${consent.id}`]: "1", mandate_ok: "1" }).error, undefined) // documented API value
 })
 
 test("fields not on the form are ignored", () => {
@@ -47,4 +48,15 @@ test("checkElements: templates pass, duplicates and foreign elements don't", () 
   assert.equal(checkElements([{ id: "m", kind: "mandate" }], "contact", []), "errors.invalid_input")
   assert.equal(checkElements([f("custom.size")], "contact", []), "errors.invalid_input")
   assert.equal(checkElements([f("custom.size")], "contact", ["size"]), null)
+})
+
+test("builder elements: trimmed, unknown kinds dropped, ids kept or made", () => {
+  const els = readElements(JSON.stringify([{ id: "a1", kind: "field", field: "email", label: "  Mail ", required: true }, { kind: "text", body: " Hi " }, { id: "x", kind: "nope" }, { id: "bad id!", kind: "consent", label: "Ok", required: false }]))
+  assert.equal(els.length, 3)
+  assert.deepEqual(els[0], { id: "a1", kind: "field", field: "email", label: "Mail", help: undefined, required: true })
+  assert.equal(els[1].body, "Hi")
+  assert.match(els[1].id, /^[a-z0-9]+$/)
+  assert.notEqual(els[2].id, "bad id!")
+  assert.equal(readElements("{"), null)
+  assert.equal(readElements("{}"), null)
 })

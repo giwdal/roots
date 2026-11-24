@@ -6,6 +6,7 @@ import { messages } from "@/i18n/config";
 import { I18nProvider } from "@/i18n/client";
 import { getLocale, getT } from "@/i18n/server";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorker } from "@/components/service-worker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_SCRIPT } from "@/components/theme-switch";
 
@@ -22,12 +23,24 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
   // roots' icon as metadata (not app/favicon.ico, which would sit on every page): org pages set their own logo.
-  return { title: { default: "roots", template: "%s – roots" }, description: t("meta.description"), icons: { icon: "/favicon.ico" } };
+  return {
+    title: { default: "roots", template: "%s – roots" },
+    description: t("meta.description"),
+    icons: { icon: "/favicon.ico", apple: "/app-icon/180" },
+    // Home-screen App on iOS: standalone, content under a translucent status bar (safe areas are handled).
+    appleWebApp: { capable: true, title: "roots", statusBarStyle: "black-translucent" },
+  };
 }
 
 // cover: iOS browsers only report their own toolbars in env(safe-area-inset-*) with this, so the floating bar,
 // sheets and save bars sit above the browser UI instead of behind it.
-export const viewport: Viewport = { viewportFit: "cover" };
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fdfdfd" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
+  ],
+};
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
@@ -48,6 +61,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Suspense>{children}</Suspense>
           </TooltipProvider>
           <Toaster position="top-center" />
+          <ServiceWorker />
         </I18nProvider>
       </body>
     </html>

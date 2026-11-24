@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { BulkBar } from "@/components/bulk-bar"
 import { SubmitButton } from "@/components/submit-button"
-import { bulkTrashEvents } from "./actions"
+import { bulkRestoreEvents, bulkTrashEvents } from "./actions"
 import { notFound, redirect } from "next/navigation"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
-import { CalendarDaysIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { CalendarDaysIcon, PlusIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { Segments } from "@/components/segments"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
 import { FilterMenu } from "@/components/filter-menu"
 import { Notice } from "@/components/notice"
@@ -40,9 +41,11 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
 
   // All filtering happens here in the query; the UI only writes the URL.
   const now = new Date().toISOString()
+  // The one number per event: tickets out (sold + guest lists) against the capacity, counted in the same query.
+  const tickets = !trash && ctx.modules.has("tickets") && ctx.can("tickets.view")
   let query = ctx.supabase
     .from("events")
-    .select(`id, title, slug, status, starts_at, ends_at, venue_name, deleted_at, event_types${typeSlug ? "!inner" : ""}(name, slug, color)`)
+    .select(`id, title, slug, status, starts_at, ends_at, venue_name, capacity, deleted_at, sold:tickets(count), event_types${typeSlug ? "!inner" : ""}(name, slug, color)`)
     .eq("org_id", ctx.org.id)
     .range(...pageRange(page))
   if (trash) query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
@@ -56,18 +59,11 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
   }
   if (q) query = query.or(`title.ilike.%${q}%,venue_name.ilike.%${q}%`)
   if (typeSlug) query = query.eq("event_types.slug", typeSlug)
+  if (tickets) query = query.in("sold.status", ["valid", "used"])
   const [{ data }, { data: typeList }] = await Promise.all([query, ctx.supabase.from("event_types").select("name, slug").eq("org_id", ctx.org.id).order("name")])
   const rows = data?.slice(0, PAGE_SIZE) ?? []
-  const chip = (href: string, current: boolean, label: string) => (
-    <Link
-      key={label}
-      href={href}
-      aria-current={current ? "true" : undefined}
-      className="inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm"
-    >
-      {label}
-    </Link>
-  )
+  const counts = tickets ? new Map(rows.map((r) => [r.id, r.sold[0]?.count ?? 0])) : null
+  const filtered = !!(q || status || typeSlug || view !== "upcoming")
 
   return (
     <Page>
@@ -87,30 +83,30 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <SearchBox q={q} label={t("common.search")} />
+      <ListToolbar search={<SearchBox q={q} label={t("common.search")} />}>
         {!trash && (
           <>
-            <nav aria-label={t("eventsPage.when")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
-              {VIEWS.map((v) => chip(withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined, edit: undefined }), v === view, t.dynamic(`eventsPage.${v}`)))}
-            </nav>
+            <Segments
+              label={t("eventsPage.when")}
+              items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined }), label: t.dynamic(`eventsPage.${v}`), current: v === view }))}
+            />
             <FilterMenu param="status" label={t("eventsPage.status")} options={STATUSES.map((s) => ({ value: s, label: t.dynamic(`eventsPage.statuses.${s}`) }))} />
             {!!typeList?.length && <FilterMenu param="type" label={t("eventsPage.type")} options={typeList.map((x) => ({ value: x.slug, label: x.name }))} />}
           </>
         )}
-      </div>
+      </ListToolbar>
       {trash && <p className="text-sm text-muted-foreground">{t("eventsPage.trashHint", { days: 30 })}</p>}
 
       <DataTable
         rows={rows}
         rowKey={(r) => r.id}
         rowHref={(r) => `/events/${r.id}`}
-        select={canManage && !trash ? { form: "bulk-events", label: t("common.select") } : undefined}
+        select={canManage ? { form: "bulk-events", label: t("common.select") } : undefined}
         empty={
           trash ? (
             t("eventsPage.emptyTrash")
-          ) : q || status || typeSlug || view !== "upcoming" ? (
-            t("eventsPage.empty")
+          ) : filtered ? (
+            t("eventsPage.noMatch")
           ) : (
             <EmptyState
               area="events"
@@ -128,11 +124,14 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
         }
         columns={[
           {
-            header: t("eventsPage.titleLabel"),
+            header: t("eventsPage.event"),
             cell: (r) => (
-              <span className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{r.title}</span>
-                <TypeBadge type={r.event_types} />
+              <span className="grid min-w-0">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{r.title}</span>
+                  <TypeBadge type={r.event_types} />
+                </span>
+                {r.venue_name && <span className="truncate text-xs text-muted-foreground">{r.venue_name}</span>}
               </span>
             ),
           },
@@ -141,16 +140,30 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
             cell: (r) => t.date(r.starts_at, { dateStyle: "medium", timeStyle: "short" }),
             className: "whitespace-nowrap",
           },
-          { header: t("eventsPage.where"), cell: (r) => <span className="text-muted-foreground">{r.venue_name}</span> },
           { header: t("eventsPage.status"), cell: (r) => <StatusBadge t={t} status={r.status} /> },
+          ...(counts
+            ? [
+                {
+                  header: t("tickets.title"),
+                  cell: (r: (typeof rows)[number]) => `${counts.get(r.id) ?? 0}${r.capacity ? ` / ${r.capacity}` : ""}`,
+                  className: "text-right tabular-nums",
+                },
+              ]
+            : []),
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(data?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
-      {canManage && !trash && (
+      {canManage && (
         <BulkBar form="bulk-events">
-          <SubmitButton size="sm" variant="ghost" formAction={bulkTrashEvents} data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
-            <Trash2Icon /> {t("common.toTrash")}
-          </SubmitButton>
+          {trash ? (
+            <SubmitButton size="sm" variant="ghost" formAction={bulkRestoreEvents}>
+              <RotateCcwIcon /> {t("eventsPage.restore")}
+            </SubmitButton>
+          ) : (
+            <SubmitButton size="sm" variant="ghost" formAction={bulkTrashEvents} data-confirm="common.confirmTrashMany" className="text-destructive hover:text-destructive">
+              <Trash2Icon /> {t("common.toTrash")}
+            </SubmitButton>
+          )}
         </BulkBar>
       )}
     </Page>

@@ -10,43 +10,48 @@ import { MIN_PASSWORD } from "@/lib/inputs"
 import { back } from "@/lib/url"
 import { eventTypes, personChannels } from "@/events/registry"
 
-const backTo = (formData: FormData) => (formData.get("back") === "/settings/profile" ? "/settings/profile" : "/account")
-
-export async function updateName(formData: FormData) {
-  const session = await getSession()
-  if (!session) redirect("/login?next=/account")
-  const t = await getT()
-  const full_name = String(formData.get("full_name") ?? "").trim() || null
-  const { error } = await session.supabase.from("profiles").update({ full_name }).eq("id", session.userId)
-  if (error) back(backTo(formData), { error: dbError(t, error) })
-  back(backTo(formData), { ok: t("account.saved") })
+// Where the form came from: a settings page (or its sheet) or the standalone /account page.
+const backTo = (formData: FormData, key = "back") => {
+  const to = String(formData.get(key) ?? "")
+  return /^\/settings\/[a-z]+(\?edit=[a-z]+)?$/.test(to) ? to : "/account"
 }
 
+/** Name edited in place (InlineField): saves the one value, the sidebar shows it after the refresh. */
+export async function patchProfile(formData: FormData): Promise<{ error?: string }> {
+  const session = await getSession()
+  const t = await getT()
+  if (!session || formData.get("field") !== "full_name") return { error: t("errors.not_allowed") }
+  const full_name = String(formData.get("value") ?? "").trim().slice(0, 100) || null
+  const { error } = await session.supabase.from("profiles").update({ full_name }).eq("id", session.userId)
+  if (error) return { error: dbError(t, error) }
+  revalidatePath("/", "layout")
+  return {}
+}
+
+// `retry` = where errors go (the open password sheet), `back` = where it lands once changed.
 export async function updatePassword(formData: FormData) {
   const session = await getSession()
   if (!session) redirect("/login?next=/account")
   const t = await getT()
+  const retry = formData.get("retry") ? backTo(formData, "retry") : backTo(formData)
   const password = String(formData.get("password") ?? "")
-  if (password.length < MIN_PASSWORD) back(backTo(formData), { error: t("auth.passwordTooShort", { min: MIN_PASSWORD }) })
-  if (password !== String(formData.get("repeat") ?? "")) back(backTo(formData), { error: t("account.passwordsDontMatch") })
+  if (password.length < MIN_PASSWORD) back(retry, { error: t("auth.passwordTooShort", { min: MIN_PASSWORD }) })
+  if (password !== String(formData.get("repeat") ?? "")) back(retry, { error: t("account.passwordsDontMatch") })
   const { error } = await session.supabase.auth.updateUser({ password })
-  if (error) back(backTo(formData), { error: authError(t, error) })
+  if (error) back(retry, { error: authError(t, error) })
   back(backTo(formData), { ok: t("account.passwordChanged") })
 }
 
-// Saves the whole grid: every visible event type × channel gets an explicit on/off.
-export async function savePreferences(formData: FormData) {
+/** One switch of Settings › Benachrichtigungen: this event type on this channel, on or off. */
+export async function setPreference(eventType: string, channel: string, enabled: boolean): Promise<{ error?: string }> {
   const session = await getSession()
-  if (!session) redirect("/login?next=/account")
   const t = await getT()
-  const rows = eventTypes
-    .filter((e) => e.audience && (!e.audience.platform || session.isPlatformAdmin))
-    .flatMap((e) =>
-      personChannels.map((channel) => ({ user_id: session.userId, event_type: e.key, channel, enabled: formData.get(`${e.key}:${channel}`) === "on" }))
-    )
-  const { error } = await session.supabase.from("notification_preferences").upsert(rows, { onConflict: "user_id,event_type,channel" })
-  if (error) back(backTo(formData), { error: dbError(t, error) })
-  back(backTo(formData), { ok: t("prefs.saved") })
+  const known = eventTypes.some((e) => e.key === eventType && e.audience && (!e.audience.platform || session?.isPlatformAdmin))
+  if (!session || !known || !(personChannels as readonly string[]).includes(channel)) return { error: t("errors.not_allowed") }
+  const { error } = await session.supabase
+    .from("notification_preferences")
+    .upsert({ user_id: session.userId, event_type: eventType, channel, enabled: !!enabled }, { onConflict: "user_id,event_type,channel" })
+  return error ? { error: dbError(t, error) } : {}
 }
 
 export async function updateAvatar(formData: FormData) {

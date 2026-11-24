@@ -1,0 +1,274 @@
+# UX backlog (user feedback, 18 Nov 2026)
+
+Open tasks from the review of the first redesigned areas. `[ ]` open, `[x]` done (with commit). Area passes read this
+file too; shared items are done once in shared components.
+
+## A. One look for every control (shared components)
+- [x] A1 (system.md, `--control` tokens in globals.css; button/input/select/combobox/segments/filter/export) One control height per context: toolbars and forms `h-9` (inputs, selects, filter triggers, segments,
+      search, buttons), top bar `h-8` (⋯, primary, Sprout); phones `h-11` for form fields. Today input/select h-8,
+      button sm h-7, filter trigger sm, segments min-h-7 → they don't line up.
+- [x] A2 (system.md §Buttons) Button variants with fixed roles: primary (one per screen), outline (secondary), ghost (toolbar/icon),
+      link (inline text links: `--link`, no underline, underline on hover), destructive (only in confirms/menus).
+      Same font size (`text-sm`) and icon size (16 px) in every button.
+- [x] A3 (system.md §Type) Type scale used everywhere: page/record title `text-xl font-semibold`, section heading `text-sm font-medium`,
+      body `text-sm`, meta/labels `text-xs text-muted-foreground`, numbers `tabular-nums`. One font (Geist).
+- [x] A4 (system.md §Icons) Icon sizes: 16 px in buttons/rows/menus, 20 px tab bar, AreaIcon 20 px tile; lucide only, stroke default.
+- [x] A5 (`link` utility in globals.css, applied in App pages; public pages later) Contact data and inline links not underlined in bright white (contact page e-mail): `--link` colour or plain
+      text with a small action icon.
+- [x] A6 (image-form.tsx + picture-picker.tsx: tap the picture → upload at once, remove asks first; shop keeps its tile) Pictures: one `<PictureField>` (tap the picture / "+" tile → upload at once, ⋯ remove) replaces
+      `<ImageForm>`'s native "Choose File · No file chosen · Hochladen" everywhere (event image, profile, logo, org).
+- [x] A7 (ImageForm `labelHidden`, event image) No duplicate labels — keep checking in area passes:: a section with one field shows the section title only ("Bild / Bild").
+
+## B. Record pages: layout, header, editing
+- [x] B1 (patterns.md §8) Decide and document the record layout (research: Linear issue, Attio/HubSpot record, Stripe customer):
+      desktop = main column (what happens: related lists, activity) + right rail (~320 px) with the properties;
+      phones = identity header → key properties → main content. Single column only for simple records.
+- [x] B2 (page.tsx: record pages always show title + badges in the page) Identity header on record pages: name + badges (+ avatar/area icon) together in the page; a lone badge pill
+      above the content (contact page "Tickets") must not happen.
+- [ ] B3 (component done: inline-field.tsx + patterns.md §8; areas still to adopt with patch actions) Inline editing of properties (click value → field, Enter/blur saves, Esc cancels, error toast + revert) in the
+      right rail instead of a "Bearbeiten" sheet for single values; compound values (address, bank) open a small dialog;
+      create flows stay forms. Needs per-field "patch" server actions that only update the given field.
+- [ ] B4 Stat tiles: short values only (unit/period into the hint, no wrapping "30,00 € / Quartal").
+- [ ] B5 Rows with actions on phones (dues card): one visible action at most, the rest in the row ⋯ or the row's
+      sheet; no squeezed buttons, no truncated two-line meta.
+- [ ] B6 Remove repetition: titles that repeat the top bar, descriptions that explain the obvious; self-explanatory,
+      minimal, clear decisions for the user.
+- [ ] B5 Adopt inline editing in the other record pages: hr/[id] is the first (`patchEmployee` + `<InlineField>`);
+      the shift sheet and the team sheet are small records and stay `?edit=` sheets. Done since: contacts, projects,
+      rental objects (`patchRentalObject`), rentals (`patchRental`), courses (`patchCourse`).
+
+## C. Overlays on desktop
+- [x] C1 (content-sheet.tsx: centred dialog from md, compact/normal/wide widths, darker backdrop) Desktop: forms/quick creates/confirms as a centred dialog (sizes: compact / default / wide), phones keep the
+      bottom sheet — one component (`<ContentSheet>` responsive), so every `<UrlSheet>` follows.
+- [ ] C2 Single values edited inline (B3) instead of opening any overlay.
+
+## D. Data types, URLs, navigation
+- [ ] D1 One display per data type across the App (dates, times, ranges, money, counts "12 / 200", durations,
+      people, status, booleans, empty "–", links) — written in patterns.md §3, helpers where repeated.
+- [ ] D2 URL rules written down and checked: `/<area>`, `/<area>/<id>`, `/<area>/<id>/<sub>`, `/<area>/new`,
+      `/<area>/settings`; params `?edit ?new ?trash ?q ?page ?view` + filters. Fix outliers (`/rentals/r/[id]`,
+      `/members/[id]` = membership vs contact, `/scan`).
+- [x] D3 (topbar-crumbs.tsx: own nav stack in sessionStorage, back = history when it came from inside the App, else parent) Back navigation like a native app: the top bar back goes back in history when the person came from inside
+      the App (member → contact → back = member), else to the parent; iOS edge-swipe works in standalone PWAs since
+      iOS 12.2 (don't block it); keep the parent fallback for deep links.
+
+## E. Complex components on phones
+- [x] E1 (24 h times + German dates; components/phone-calendar.tsx inside CalendarView, Kalender pass) Calendar on phones —
+      a week strip (Mo–So with dots for days that have entries, swipe for the next
+      week) above the day's agenda, like iOS Calendar / Google Calendar; filters ("Bereich") as a chip row; "+" creates
+      on the selected day; month = compact grid with dots + the day's list below. Desktop keeps week/month grids.
+- [ ] E2 Tables: cards on phones (done in DataTable); wide editors (positions, variants) as cards.
+- [x] E3 (projects/board.tsx: column chips + snap on phones; Timeline scrolls in its own box) Boards/timelines: one column at a time with snap / own scroll box.
+- [ ] E4 Research per component (calendar, table, board, timeline, picker) and note the chosen pattern in mobile.md.
+- [x] E5 (phones always get the week strip + day list, any consumer) `<CalendarView>` opens on week on phones too (Schichten › Plan, Abwesenheiten); mobile.md §3 wants list/day
+      as the phone default — a phone default view in the shared component (found in the Schichten pass).
+- [x] E6 (Vermietung + Kurse pass: /courses/new?start= pre-fills an optional first date, the calendar sends it) Kurse: /courses/new takes no date yet; the calendar's "Neu am …" sheet links to it without the day (Kurse pass:
+      accept ?start= for the first session). Drag & drop on phones (board cards, calendar entries) isn't offered: status
+      and dates change in the task panel / record instead.
+
+## F. Settings structure
+- [x] F1 (Settings pass: src/settings/sections.ts, section nav grouped Du / Organisation, phones get the index at /settings) Separate personal settings (Profil, Benachrichtigungen, Sicherheit/Passkeys, KI-Assistent, Sprache, Darstellung)
+      from org settings (Allgemein, Team, Rollen, Module, Bereiche, Felder, Orte, Integrationen, API) and area settings
+      (gear) and platform admin (/admin); section nav grouped "Du" / "Organisation"; people only see what they may change.
+
+## I. Installable app (PWA) — native feel on phones
+Goal: on phones roots works like a native app from the home screen, on desktop like a perfect web app.
+Today there is no manifest, no app icons, no service worker.
+- [x] I1 (src/app/manifest.ts, /app-icon/[size] generated icons, appleWebApp + themeColor in layout; install hint still open) Web app manifest (`src/app/manifest.ts`: name, short_name, `display: standalone`, start_url `/`, theme and
+      background colours for light/dark, icons 192/512 + maskable) and `apple-touch-icon`, iOS status bar style,
+      splash colours; "Zum Home-Bildschirm" hint once for phone users in Safari.
+- [x] I2 (public/sw.js: static cache + /offline page, production only) Service worker: app shell + static assets cached, offline page instead of the browser error, network-first
+      for data (the door already keeps offline sales on the device).
+- [ ] I3 Instant navigation: prefetch the tab bar targets and area pages, skeletons (loading.tsx) everywhere,
+      View Transitions for push/pop between list and record (native-like slide), keep scroll position on back.
+- [ ] I4 Native functions where they help: Web Push for notifications (iOS 16.4+ for home-screen apps; the inbox
+      already exists → a push channel in `src/events/channels/`), app badge with the unread count
+      (`navigator.setAppBadge`), Web Share for links/tickets/invoices, camera for scanning (exists) and photos of
+      receipts, `tel:`/`mailto:`/maps links, file picker for documents, haptic-like feedback via pressed states.
+- [ ] I5 Standalone details: safe areas (done), no rubber-band on the shell, pull-to-refresh on lists, edge-swipe
+      back not blocked, links to other origins open in the browser.
+
+## J. Search + Sprout on phones (quick access)
+- [~] J1 (quick actions + Gehe zu + recents done, Start shows the same quick actions via src/lib/quick-actions.ts; direct row actions like call/mail still open) Search as the phone's quick-access hub: recents + "Schnellaktionen" (Neuer Kontakt, Ticket scannen, Einchecken,
+      Neue Bestellung, Zeit erfassen … — only modules that are on and permitted) shown before typing; results grouped by
+      area with AreaIcon, records first, then pages, then actions; a result row can act directly where safe
+      (call/mail a contact, open the scanner).
+- [~] J2 (done: "Sprout fragen: …" row opens a new Sprout chat with the question; phone Sprout as full-height sheet still to check) Sprout inside search: when Sprout is set up, the search field doubles as the prompt — "Frag Sprout: …" as the
+      last row (Enter on no hit or ⌘↵ asks Sprout), the answer opens the Sprout sheet with the question; on phones
+      Sprout is a full-height sheet (not a side panel) reachable from the search tab and the top bar.
+- [ ] J3 Voice: dictation button in the search/Sprout field on phones (the comment form already dictates).
+- [x] J4 (courses, automations, shift team, payments added; members by name; every group has its area colour) ⌘K sources for every record type (courses, shifts, HR, automations, cash book, payments missing).
+
+## K. Start page & notifications
+- [x] K1 (Start pass: Jetzt card = shifts/now-card.tsx, "Wartet auf dich" counts, my tasks, events, my shifts, quick actions; push/app badge stay I4) Start (home) per person: "Für dich" first — my next shift (with Einchecken), my tasks due, things waiting for me
+      (approvals, new submissions, overdue dues/invoices I handle), today's events; then quick actions; tiles only for
+      modules that are on. Research: Linear inbox/My issues, Notion home, Shopify home.
+- [~] K2 (done: day groups, unread first, Alle · Ungelesen, area filter, mark all read with toast, opening another org's notification switches and says so, preferences under Settings › Benachrichtigungen; open: push + app badge = I4, delete / mark unread one) Notifications: one inbox (grouped by day, unread first, mark all read, filter by area with AreaIcon), every
+      row opens the record (switching org visibly when it belongs to another org), settings per channel in the person's
+      settings (F1); push + app badge on phones (I4).
+
+## L. Comments & notes (one system)
+Today: contacts have their own `contact_notes` (plain text "Verlauf"), projects/tasks use the generic `comments`
+(entity + entity_id, attachments as files, dictation) with `<CommentForm>` + `<ActivityFeed>`.
+- [ ] L1 One `<Comments entity entityId attachments photos dictation mentions?>` component (form + feed, same look
+      everywhere: avatar, name, relative time, edit/delete own, attachments as thumbnails) built on `comments`.
+- [ ] L2 Move contact notes into `comments` (migration copying `contact_notes` → `comments` with entity `contacts`,
+      RLS check that the comment policy covers contacts), then contacts use L1; drop `contact_notes` later.
+- [ ] L3 Offer it on every record with real content: contacts, members, events, shop orders, invoices, rentals,
+      courses, HR people (switch per module via props, not copies).
+
+## M. Performance (fast like a native app)
+- [x] M1 (docs/plans/performance-review.md; skeletons added for every area + record-shaped ones for [id] pages) Measure: per area count DB round trips per request (target ≤ 2: context, then layout ∥ page), find
+      sequential awaits and N+1 loops; every area has a `loading.tsx` skeleton that matches the page.
+- [ ] M2 Caching: what can be cached per org (nav/module lists, settings, custom field defs, statuses) with
+      `"use cache"` + tags invalidated by the actions; public pages already cached (`public-cache.ts`).
+- [~] M3 (done: locale names without the message JSON in client code, Sprout chat loaded on first open; open: cmdk + date picker lazy, de.json per namespace to the client) Client: prefetch tab bar + sidebar targets, keep JS small on phones (no heavy libs in the shell, dynamic
+      import for editors/calendars/canvas), images via next/image sizes, fonts preloaded once.
+- [ ] M4 Perceived speed: optimistic UI for toggles/inline edits/checklists, instant pressed states, skeletons
+      instead of spinners, View Transitions between list and record.
+
+## H. Code
+- [ ] H1 Clean, generic code: shared pieces live once in `src/components/` / `src/lib/` (e.g. the status-badge maps,
+      Section/RowGroup, picker search actions, inline-row editors) instead of near-copies per area; no repetition
+      where one helper fits.
+- [ ] H2 Modules work together and alone: every cross-module link, card, ⌘K source, filter and Start tile checks
+      `ctx.modules` + permission; an org with 1 module gets a complete, clean App.
+
+## G. Process
+- [ ] G1 Look at the real UI regularly (headless browser screenshots at 375 / 1280, light + dark) and fix what shows.
+- [ ] G3 Final review when everything is done: best user flows, clear information, works on phone and desktop,
+      state-of-the-art UX/UI.
+- [ ] G2 Re-check every redesigned area on phones (Events, Einlass, Shop, Finanzen, Kontakte, Mitglieder, E-Mails,
+      Formulare, Gästelisten) against mobile.md §5.
+
+## P. Public & marketing pages — on hold (user: skip for now)
+- [ ] P1 (not now) Apply `docs/design/references/taste-skill.md` (anti-slop rules for landing pages: hero discipline, no
+      em-dashes, eyebrow limits, real images, one verb per action, full state cycle) to the roots website
+      (`src/app/site/`) and, where it fits, to the org public pages (`src/app/s/`), together with `public.json`'s
+      uxNotes (checkout keeps typed values, waitlist feedback, shorter shop checkout, way back to the org site).
+      The skill itself says dashboards are out of its scope: the App follows system.md / patterns.md instead.
+
+## V. Found in the Vermietung + Kurse pass (not fixed there)
+- [ ] V1 Kurse: "Leitung" is free text; link it to an HR person / shift-team member (picker) once both exist.
+- [ ] V2 Kurse list: no Laufend · Vergangen filter and no export (needs a "has upcoming dates" column or SQL view to
+      filter + paginate on the server); participants export per course exists.
+- [ ] V3 Neue Vergabe: the period fields (date vs. date + time, term) follow the object's first rate; picking another
+      rate in the form doesn't switch them (needs a small client form).
+- [ ] V4 Belegung: bookings can't be moved by drag (CalendarView supports `onMove`; needs a `moveRental` action with the
+      same overlap checks).
+- [ ] V5 Objekte: all objects load at once (≤ 1000, filtered in JS); paginate on the server when orgs grow.
+- [ ] V6 Comments (L3) on rentals and courses once `<Comments>` exists.
+
+## Y. Found in the Settings · Start · Dateien · Wiki · Automationen · Admin pass (not fixed there)
+- [x] Y1 (00c0c96: client `<OptionRows>`, colours stored on create too) Settings › Felder: a new option gets its colour only after the field was saved once (second round trip).
+- [x] Y2 (b7406a5: settings/locations/actions.ts; a save no longer clears notes) Settings › Orte: the actions live in shifts/actions.ts although locations are core; move to settings/locations.
+- [x] Y3 (b7406a5: 'tickets only' note, secrets masked via CSS, card states unified with S15) Integrationen: payment cost panel doesn't say it only applies to ticket orders (§ 270a for the shop); connect
+      sheet secrets are plain text fields (password managers); card states (links / sheets / buttons) differ per provider.
+- [ ] Y4 Automationen canvas: condition values for events, forms, courses, guest lists are NativeSelects of the newest 200
+      → `<RecordPicker>` with a search action per ref list (the inspector is client-side); deleting a step on touch only
+      via the inspector.
+- [~] Y5 (90fce8f: row ⋯ read/unread, counts refresh when the tab returns; open: remove a row needs a delete grant/policy on notifications (schema)) Benachrichtigungen: no delete / mark unread for one row; the unread count refreshes only on navigation.
+- [~] Y6 (a597d04: segmented share choice, recent list paged; open: the tree load per view (cache, see §Z #2)) Wiki: Teilen popover uses native radios (→ `<Choice>`); "Zuletzt geändert" fixed 15 rows; every page view loads
+      the tree (≤ 2000 rows).
+- [~] Y7 (90fce8f: folder picked from existing folders or 'Neuer Ordner …'; open: folder list from ≤ 2000 rows (needs a distinct RPC)) Dateien: folders are free text (a typo makes a new folder), folder chips from the first 2000 files.
+- [ ] Y8 Admin: the org drawer (details, modules, members) could be its own page /admin/orgs/<id>; activity paging is
+      still hand-made (→ `<Pager>`); onboarding doesn't suggest the address from the name. (Done in the sweep: billing
+      uses `<Stats>`, activity chips scroll, onboarding has a way back with ?new=1 and says Adresse.)
+- [~] Y9 (775f9da: overdue dues link to `?status=overdue`; open: shifts have no page of their own) Start: "Meine Schichten" rows open Schichten › Meine (a shift has no page of its own); "Beiträge überfällig"
+      opens Beiträge without an overdue filter (the list has none yet).
+- [~] Y10 (00b4298: `setup` nav flag + E-Mail-Vorlagen gear entry; open: Team's `members.*` keys) Settings › Bereiche only lists gear pages of nav.ts (Vorlagen, E-Mail-Vorlagen, Website › Marke aren't gear
+      pages); Team still uses `members.*` keys next to the Mitglieder module.
+- [ ] Y11 L (comments) not started in this pass: L2 needs the migration question in §Z answered first.
+
+## S. Found in the sweep (Events · Einlass · Gästelisten · Shop; not fixed there)
+- [x] S1 (DetailList phoneLimit + PhoneMore; events, guest lists, contacts) Event page: Eigenschaften show all 8+ values on phones; patterns §8 wants the first 4 + "Alle anzeigen" (a shared
+      collapsible `<DetailList limit>` would serve every record page).
+- [ ] S2 Guest list entries seeded/added before a ticket type exists show no ticket until the list is saved once (sync runs on save).
+- [ ] S3 (Finanzen) Issued invoices: the internal note (`notes`, never printed) can't be changed after issuing (the document is frozen as a whole); a note edited in place would need the freeze trigger to allow `notes`.
+- [x] S4 (chart-1 green again, five distinct hues) (Finanzen) `--chart-1` and `--chart-2` in theme.css are almost the same blue (light and dark); report charts now skip neighbours (`ORDER` in reports/charts.tsx), but calendar/project colours using chart-2 next to chart-1 look alike too.
+- [x] S5 (775f9da: `?edit=bank` compact dialog with `<MandateFields>` + `saveMembershipBank`) (Mitglieder) Membership page: bank details + mandate still open the whole form (`?edit=details`); a small `?edit=bank` sheet (IBAN, BIC, holder, mandate date/ref) would match the contact's address dialog.
+- [x] S6 (775f9da: `?status=overdue` segment, Überfällig stat links there, export handles overdue/failed) (Mitglieder) Beiträge has no "Überfällig" filter (Start's tile and the member list's red "Bezahlt bis" lead there, see Y9).
+- [x] S7 (635885f: draft = Veröffentlichen, live = ⋯ Schließen, closed = Wieder öffnen (`setFormStatus`); builder save keeps the status) (Formulare) Form status (Entwurf · Veröffentlicht · Geschlossen) is a segment control inside the builder's settings form; patterns §8 wants status changes as actions (draft: Veröffentlichen exists; live: ⋯ "Schließen", closed: "Wieder öffnen").
+- [ ] S8 (Schichten) Team's "Beschäftigung" is the free-text `staff.role_label`, while Personal has `employees.employment_type` for the same person: show the HR type when the person is linked (or drop the free text).
+- [x] S9 (page.tsx: a node primary with an icon is the round button on phones, also kept in ⋯ because a SaveBar hides the round button; one without an icon stays in ⋯) (Kommunikation, Formulare) A header primary that submits a form (Jetzt senden, Veröffentlichen) gets no round button on phones, only a row in ⋯ — check whether `<PageHeader primary>` nodes should become the round button too.
+- [x] S10 (dc3ca1d: `<DataTable fixed>` + column widths) (Projekte) Aufgaben (desktop, grouped by due date): every group is its own table, so the columns don't line up from group to group (one table with group header rows would).
+- [x] S11 (dc3ca1d: 'Projekt angelegt' / 'Aufgabe angelegt') (Projekte) The activity feed's entry for the record's own creation reads just "angelegt" (no subject); "Projekt angelegt" / the record's name would read better.
+- [x] S12 (dc3ca1d: label beside the bar from its start to the row's end, sticky) (Projekte) Timeline: a bar that ends just after the visible start shows only the end of its label (the label sticks inside the bar's visible part, which is short).
+- [x] S13 (8b02859: month/week/list show long contracts as key dates (`rentalMarks()`), per-object view keeps bars) (Vermietung) Belegung month view draws open-ended / long contracts as year-long bars (needed in the per-object view); the shared Kalender shows them as key dates only. Same for the month grid here?
+- [x] S14 (46d4d93: ghost button from md, row ⋯ on phones) (Kurse) Participant rows keep one "Abmelden" button each (now a quiet ghost button); patterns §5 would put it into a row ⋯ on phones.
+- [x] S15 (b7406a5: one outline button per card, connect ways in the connect sheet) (Settings) Integrationen: every provider card has its own filled button(s), so the page shows 5+ primaries
+      and SumUp's two buttons share one row on phones; one "Verbinden" per card (outline) + the alternatives in the
+      connect sheet would match patterns §5 (with Y3).
+- [x] S16 (378281e: grouped by nav area in sidebar order) (Settings) Benachrichtigungen groups use the module names from Settings › Module ("Schichtplanung",
+      "Onlineshop", "Ticketing", "Angebote & Rechnungen"), not the sidebar's area words (Schichten, Shop, Events,
+      Finanzen); grouping by nav area (`areaOfModule`) would read like the rest of the App.
+- [x] S17 (a597d04: Seiten + save status in one row (WikiEditor `lead`)) (Wiki) Phone page view: the "Seiten" button and the save status take a row each above the title; one row
+      (Seiten left, status right) would bring the content up.
+- [x] S18 (5e31c07: inspector as a sheet on phones) (Automationen) The canvas inspector and test run are still a long single column under the canvas on phones;
+      a step tap could open the inspector as a sheet (like the wiki tree).
+- [~] S19 (90fce8f: shorter placeholder, inbox titles without a leading emoji; open: admin tab bar on phones) (shell) Search placeholder "Kontakte, Events, Rechnungen …" is cut at 390 px; the admin area on phones has no
+      tab bar (sidebar trigger only). Notification titles carry emojis from the message texts (🔑 📋) next to the area
+      tile — two icons per row.
+
+## Z. To discuss tomorrow
+- **Bug in the database (Events › Tickets, Einlass, key API):** `ticket_availability()` returns 0 left for every ticket
+  type *without* a quota: `greatest(t.quota - count, 0)` is `greatest(null, 0)` = 0 in Postgres, so the
+  `coalesce(…, ∞)` never applies. The App shows "noch 0 frei" per type and Einlass shows "online noch frei 0" in red;
+  the public shop is not affected (`ticket_offer()`). Fix = one migration: `case when t.quota is null then 2147483647
+  else greatest(t.quota - …, 0) end`. OK to run it on production?
+- Shop product page: kept as one form + SaveBar (like Shopify's product editor: price, VAT, variants, description and
+  stock depend on each other) instead of inline fields like the other record pages. OK, or inline the single values
+  (name, price, VAT, category) and keep the form only for variants + description?
+- Inline editing (`patchEvent`, `patchGuestList`, now also `patchMembership`) is App-only for now; the key API keeps its full `PATCH` endpoints.
+- Shared layout fixes from the Finanzen sweep: `FormCard` content, `Section` and `RecordPicker` are now `minmax(0,1fr)` grids (long values truncate instead of pushing the card wider than the phone), and `UrlSheet` puts its actions on their own row below the title on phones (they floated beside a wrapped title). OK as the rule for every sheet?
+- Invoice drafts stay one form + SaveBar (like the shop product page): positions, totals and tax mode depend on each other, and issuing freezes everything. OK?
+- Performance fixes that need DB migrations on the production database (performance-review.md #1, #3): a foreign key
+  org_members.user_id → profiles (names in one query) and small SQL functions for totals that are currently summed
+  from at most 1 000 rows in JS — **#3 is also a correctness bug** (event revenue, check-ins, overdue dues, project
+  progress, new submissions are wrong past 1 000 rows). OK to run these migrations?
+- Caching the per-user context (#2, saves ~70 ms on every request) changes how fast role/module changes apply
+  (tags invalidate it; still RLS-safe). OK?
+- The manifest is global, so public org pages could also be "installed" as roots. Limit it to the App (only link it
+  from the App layout), or give orgs their own manifest later?
+- Inline editing needs one `patch<Entity>` server action per record type (validated per field) — fine to add to the
+  key API too (`PATCH /<entity>/{id}` with one field), or keep it App-only?
+- Record titles now show in the page *and* the top bar on desktop (crumb + big title, like Linear/Stripe). OK, or only
+  in the top bar with badges next to it?
+- Schichten: a team member can only be set inactive, not removed: deleting a `staff` row cascades to their time
+  entries (payroll history). Keep it that way, or add an archive / anonymise step?
+- Personal: an HR record needs an org member (account). Minijobber without a login can't be added — allow HR records
+  without an account (name + email only), as the API's `employees` table would allow?
+- Campaign drafts stay one editor form + SaveBar (name, subject, body, audience, schedule depend on each other, like invoice drafts); sent campaigns are now a read-only page (mail preview + audience). OK?
+- `<CalendarView>` time grids now scroll to an hour before the earliest entry (was a fixed 07:00) in every calendar (Schichten, Kalender, …). OK as the rule?
+- Kalender: projects longer than two weeks now show only "Name · Start" / "Name · Ende" (like long-term rentals) instead of a bar across every week; the phone calendar dots entries longer than a week only on their first and last day. OK as the rule (and for Belegung, S13)?
+- `<Timeline>` (projects, tasks) now opens a week before today instead of at the earliest item; month/group names and bar labels stick to the left edge. OK?
+- `<InlineField>`: an empty amount shows "Leer" as text until clicked (was a right-aligned "Leer €" field); ghost inputs no longer show the dark input background. OK for every record page?
+- **Passkeys don't work on the hosted Supabase project:** `GET /auth/v1/passkeys` answers 404 (passkeys switched off
+  in Auth settings), so Settings › Sicherheit could never list or add one. The page now says "noch nicht
+  freigeschaltet" and disables the button. Switch passkeys on in the Supabase dashboard (and add the App's domains as
+  relying parties), or drop the section?
+- Settings redirects: `next.config.ts` still sent `/settings` → Allgemein and `/settings/notifications` →
+  Integrationen (from before the Du / Organisation split), so the phone settings index and the personal notification
+  settings were unreachable. Removed both; `/settings/activity` and `/settings/members` redirects stay. OK?
+- S9 rule: a header primary given as a node (form button) becomes the round button on phones when it has an icon and
+  also stays in the ⋯ sheet (a SaveBar hides the round button, and e.g. invoice drafts show their SaveBar). OK, or
+  only the round button?
+- Tooltips are hidden on touch screens everywhere (`[@media(hover:none)]` in ui/tooltip.tsx), per mobile.md §2. OK?
+- The Menü sheet no longer has a Start tile (Start is the tab bar's first tab and the inbox the row above the tiles).
+- Beiträge now has six status segments (Offen · Überfällig · Rücklastschrift · Bezahlt · Storniert · Alle; the rule
+  says ≤ 5). Keep, or move Storniert/Alle into a FilterMenu?
+- `<RefreshOnReturn>` in the App layout re-reads the page's server parts when the tab comes back after ≥ 1 min (unread
+  count, lists). OK, or only the count (would need a small client poll / an endpoint)?
+- (Final review, docs/plans/final-review.md #2) **New members are overdue on day one:** dues for a member who joins in
+  November get the year's due date (15.01.) and the full yearly fee. Due date = max(period due, membership start)?
+  And pro-rata for joiners as an org setting (Mitglieder › Einstellungen), or always the full period?
+- (Final review #3) Issued invoices have no "Per E-Mail senden" (PDF attached, logged in Versand). Build it as the
+  invoice's next step (primary until sent, then "Als bezahlt markieren")?
+- (Final review #5) Phones show an issued invoice's main action three times (labelled button in the page, round
+  icon button, ⋯ sheet). Keep only the labelled in-page button on record pages that render one (and no round button)?
+- (Final review #6) The phone back chevron follows the App history (member → contact → back = member) but its label
+  names the parent ("Zurück zu Kontakte"). Label "Zurück" when going back in history?
+- `back()` now redirects with `replace` (Back after an action no longer lands on the same page; after "anlegen" Back
+  goes to the list, not the form). OK as the rule?
+- Confirmations: red button only for destructive questions; wanted steps (bezahlt, ausstellen, senden, freigeben)
+  get the normal button (pattern list `POSITIVE` in confirm-submit.tsx). OK, or an explicit `data-confirm-tone`?

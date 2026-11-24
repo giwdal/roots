@@ -1,0 +1,728 @@
+{
+  "area": "communication",
+  "label": "Kommunikation › E-Mail",
+  "module": "email",
+  "nav": [
+    {
+      "label": "E-Mail-Kampagnen",
+      "href": "/email"
+    },
+    {
+      "label": "E-Mail-Automationen",
+      "href": "/email/automations"
+    },
+    {
+      "label": "E-Mail-Vorlagen",
+      "href": "/email/templates"
+    },
+    {
+      "label": "E-Mail-Versand",
+      "href": "/email/log"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/email",
+      "file": "src/app/(app)/email/page.tsx",
+      "title": "Kampagnen",
+      "purpose": "List email campaigns (draft, scheduled, sending, sent) and create a new one.",
+      "permission": "email.view",
+      "size": "list (no <Page>; layout grid max-w-6xl)",
+      "header": {
+        "area": "communication",
+        "primary": {
+          "label": "Neue Kampagne",
+          "key": "email.newCampaign",
+          "href": "?new=1",
+          "permission": "email.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "1 = create sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Kampagnen",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Betreff)",
+            "Status (Entwurf / Geplant · date / Wird versendet / Versendet)",
+            "Empfänger:innen (– for draft/scheduled)"
+          ],
+          "notes": "Row → /email/<id>. Max 200 rows, no pagination."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=1",
+          "component": "UrlSheet",
+          "title": "Neue Kampagne",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "email.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Newsletter Oktober'"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen",
+              "key": "email.create",
+              "kind": "serverAction",
+              "target": "createCampaign",
+              "result": "→ /email/<id> (no toast)"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/email/[id]"
+      ],
+      "empty": "EmptyState 'Noch keine Kampagnen.' / 'Eine Kampagne ist eine E-Mail an viele: an Tags oder alle aktiven Mitglieder, sofort oder geplant.' + 'Neue Kampagne'",
+      "uxNotes": [
+        "Campaigns are soft-deleted (trash from the campaign page) but there is no trash view or restore anywhere.",
+        "No search, filter or ⋯ menu; sidebar label 'E-Mail-Kampagnen' vs page title 'Kampagnen'.",
+        "A one-field sheet only to name the campaign before the real editor page – an extra step."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards said 'Versendet · 3 · 19.11.2026' (a bare number): now status badge + '3 Personen' for sent campaigns, the change date for drafts (phone-only column; table unchanged). /email/new checked: the SaveBar showed 'Ungespeicherte Änderungen' + Abbrechen on load because MultiSelect (tags) fired an input event on mount in dev Strict Mode; fixed in components/multi-select.tsx (compares with the last value), which fixes every form with chips."},
+        "job": "See every campaign and its state, open one, start a new one; switch to automations or the send log.",
+        "phone": "Top bar: Kommunikation › E-Mails, ⋯ (gear E-Mail-Einstellungen, Papierkorb). Round + = Neue Kampagne. Toolbar: search, then a scroll row: Status filter, Segments Kampagnen · Automationen · Versand. Cards: name + status badge, subject, recipients/date.",
+        "desktop": "<ListToolbar> search · Status FilterMenu · (event chip) · Segments on the right. Table: Name (+ Betreff), Status badge (colour per state, date when scheduled), Empfänger:innen, Datum.",
+        "moves": [
+          "primary Neue Kampagne (?new=1 sheet) → link to /email/new (the full editor, created on 'Kampagne anlegen'); old ?new=1 redirects",
+          "?new sheet field Name → /email/new Inhalt card",
+          "?new sheet action Anlegen → /email/new SaveBar 'Kampagne anlegen' (saveCampaign without id)",
+          "column Name (+ Betreff) → unchanged",
+          "column Status → badge with state colours (Entwurf secondary, Geplant info + date, Wird versendet warning, Versendet success)",
+          "column Empfänger:innen → unchanged; new column Datum (sent / scheduled / last change)",
+          "200-row cap → <Pager>",
+          "empty state → <EmptyState> with Neue Kampagne (text mentions Event-Käufer:innen); filtered empty → short text",
+          "new: search ?q= (name, subject), Status FilterMenu ?status=, ?event= chip (campaigns to an event's buyers, linked from the event page)",
+          "new: ⋯ Papierkorb → ?trash=1 with 'Wiederherstellen' per row (restoreCampaign)",
+          "new: gear → /email/settings",
+          "sidebar E-Mail-Kampagnen → sidebar 'E-Mails' (page title Kampagnen in the Segments)"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "route": "/email/[id]",
+      "file": "src/app/(app)/email/[id]/page.tsx",
+      "title": "Kampagne (name)",
+      "purpose": "Write a campaign, choose recipients, send a test, schedule or send now; after sending, see delivery stats.",
+      "permission": "email.view",
+      "size": "record (no <Page>)",
+      "header": {
+        "crumbs": [
+          "Kampagnen",
+          "<Name>"
+        ],
+        "badge": "status (+ scheduled date)",
+        "meta": "after sending: '{sent} versendet · {queued} in der Warteschlange · {failed} fehlgeschlagen · {skipped} übersprungen' + delivery stats",
+        "menu": [
+          {
+            "label": "Planung aufheben",
+            "key": "email.unschedule",
+            "target": "unscheduleCampaign",
+            "notes": "scheduled only",
+            "confirm": false
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "email.toTrash",
+            "target": "trashCampaign (destructive)",
+            "confirm": true,
+            "notes": "not while sending; also offered for sent campaigns"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Inhalt",
+          "key": "email.content",
+          "anchor": "#content",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "email.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "subject",
+              "label": "Betreff",
+              "key": "email.subject",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "format + body",
+              "label": "Format: Text / Editor / Eigenes HTML",
+              "key": "email.format",
+              "type": "richtext|html",
+              "component": "EmailBodyField",
+              "notes": "placeholders BASE_PLACEHOLDERS"
+            }
+          ]
+        },
+        {
+          "title": "Empfänger:innen",
+          "key": "email.audience",
+          "anchor": "#audience",
+          "kind": "FormCard",
+          "description": "email.audienceHint, or 'Geht an {count} Personen.' once chosen",
+          "fields": [
+            {
+              "name": "tags",
+              "label": "Kontakte mit einem dieser Tags",
+              "key": "email.audienceTags",
+              "type": "tags",
+              "component": "TagSelect (not creatable)"
+            },
+            {
+              "name": "members",
+              "label": "Alle aktiven Mitglieder",
+              "key": "email.audienceMembers",
+              "type": "checkbox",
+              "notes": "members module only"
+            }
+          ]
+        },
+        {
+          "title": "Versand",
+          "key": "email.sending",
+          "anchor": "#send",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "send_at",
+              "label": "Senden am",
+              "key": "email.sendAt",
+              "type": "datetime-local",
+              "component": "DateInput"
+            }
+          ],
+          "notes": "Only while editable (draft/scheduled + email.manage). Buttons submit the same form with intent=test|schedule|send."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveCampaign",
+          "result": "toast email.saved"
+        },
+        {
+          "label": "Test an mich",
+          "key": "email.sendTest",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveCampaign intent=test",
+          "result": "saves, then toast 'Test an {email} verschickt.' or email.noProvider"
+        },
+        {
+          "label": "Planen",
+          "key": "email.schedule",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveCampaign intent=schedule",
+          "confirm": false,
+          "result": "toast email.scheduled; past date → email.scheduleInvalid"
+        },
+        {
+          "label": "Jetzt senden",
+          "key": "email.sendNow",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveCampaign intent=send",
+          "confirm": false,
+          "result": "toast 'Wird an {count} Personen versendet.'"
+        }
+      ],
+      "links": [
+        "/email"
+      ],
+      "phone": "Aside (audience, sending) stacks below the content card.",
+      "uxNotes": [
+        "'Jetzt senden' mails the whole audience with no confirmation and no recipient count on the button (count is in the audience card description, only after saving).",
+        "Recipient count only refreshes after a save; changing tags shows no live reach.",
+        "Send/test/schedule buttons sit inside the edit form and also save it, while the SaveBar is the separate save path.",
+        "After sending, the page shows totals only; no per-recipient list (the send log is a separate, unfiltered page).",
+        "Audience = tags or active members only; no link to preview who exactly is included."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Drafts: no false 'unsaved' bar on load any more (MultiSelect fix), 'Planen' has the control height of the date/time fields beside it (was sm). Sent / view-only campaigns showed the disabled editor (toolbar, Editor/HTML switch, placeholder help, empty tag field): now a read-only page: Stats, Inhalt = Betreff + the rendered mail in a sandboxed iframe (placeholders visible), Empfänger:innen as DetailList (tags, members, event link, Versendet am). Probleme stat hint lists only the non-zero parts ('1 unzustellbar', was '0 fehlgeschlagen · 1 unz…' cut off)."},
+        "job": "Write the campaign, pick who gets it, test it, then send or schedule it; afterwards see how it went.",
+        "phone": "Top bar: ‹ E-Mails · name, ⋯ (Test an mich, Planung aufheben, Papierkorb). Header: status badge, meta (scheduled for … / sent on … to n). Sent: Stats 2 per row (Empfänger:innen, Versendet, Zugestellt, Unzustellbar/Spam) + 'Versand ansehen'. Draft: Inhalt card, Empfänger:innen card (reach), Versand card (Test an mich, Senden am + Planen); 'Jetzt senden' in the ⋯ sheet / as the header button from md; SaveBar at the bottom.",
+        "desktop": "Header: badge, meta, ⋯, primary 'Jetzt senden' (asks first: 'An {count} Personen senden?'). Stats for sending/sent. RecordLayout: Inhalt left; Empfänger:innen + Versand right; one form, one SaveBar.",
+        "moves": [
+          "badge status (+ date) → state colours (CampaignBadge)",
+          "meta stats line → <Stats> tiles (Empfänger:innen, Versendet, Wartend/Fehlgeschlagen, Zugestellt, Unzustellbar + Spam when tracked) for sending/sent; meta = sent / scheduled date",
+          "⋯ Planung aufheben → unchanged (scheduled only)",
+          "⋯ In den Papierkorb → unchanged (red, confirm), restorable from /email?trash=1",
+          "Inhalt: Name, Betreff, Format + body (EmailBodyField) → unchanged in the one form",
+          "Empfänger:innen: tags (TagSelect), Alle aktiven Mitglieder (checkbox) → unchanged; hint says the conditions combine",
+          "new audience: Käufer:innen eines Events (RecordPicker, server search) — tickets module only; stored in audience.event (jsonb, no schema change), App + API + MCP",
+          "reach 'Geht an {count} Personen.' → unchanged in the card description",
+          "Versand: Senden am (DateInput) + Planen → unchanged (submits the one form with intent=schedule)",
+          "Test an mich → stays in the Versand card (submits the one form with intent=test)",
+          "Jetzt senden → header primary (form=campaign, intent=send) with data-confirm email.confirmSend + data-confirm-count = reach",
+          "SaveBar → unchanged (one form)",
+          "after sending: new 'Versand ansehen' → /email/log?campaign=<id> (per-recipient list)"
+        ],
+        "built": true,
+        "kept": "Live reach while editing tags is not built: the count (card + send confirm) is from the last save; 'Jetzt senden' saves first and the toast names the real count."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "route": "/email/automations",
+      "file": "src/app/(app)/email/automations/page.tsx",
+      "title": "Automationen",
+      "purpose": "Event + delay → email to the person concerned; several on one event form a sequence.",
+      "permission": "email.view",
+      "size": "list (no <Page>)",
+      "header": {
+        "area": "communication",
+        "description": "email.automationsHint",
+        "primary": {
+          "label": "Neue Automation",
+          "key": "email.newAutomation",
+          "href": "/email/automations?new=1",
+          "permission": "email.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "1 = create sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "<id> = edit sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Automationen",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Betreff)",
+            "Auslöser (event type)",
+            "Wartezeit (sofort / n Tage/Stunden/Minuten)",
+            "Status (aktiv / pausiert)"
+          ],
+          "notes": "Row → ?edit=<id>; sorted by event then delay"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=1 | ?edit=<id>",
+          "component": "UrlSheet (wide)",
+          "title": "Neue Automation / name",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "email.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "event_type",
+              "label": "Auslöser",
+              "key": "email.trigger",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "AUTOMATION_EVENTS of enabled modules"
+            },
+            {
+              "name": "delay",
+              "label": "Wartezeit",
+              "key": "email.delay",
+              "type": "number",
+              "component": "Input type=number"
+            },
+            {
+              "name": "unit",
+              "label": "Einheit",
+              "key": "email.unit",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Minuten / Stunden / Tage"
+            },
+            {
+              "name": "subject",
+              "label": "Betreff",
+              "key": "email.subject",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "format + body",
+              "type": "richtext|html|text",
+              "component": "EmailBodyField",
+              "notes": "placeholders = base + event vars; new automations start in format 'text'"
+            },
+            {
+              "name": "active",
+              "label": "aktiv",
+              "key": "email.active",
+              "type": "checkbox",
+              "notes": "default on"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen / Speichern",
+              "key": "email.create",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveAutomation",
+              "result": "toast email.saved; missing fields → email.automationInvalid"
+            },
+            {
+              "label": "Löschen",
+              "key": "email.delete",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteAutomation (hard delete)",
+              "confirm": false,
+              "notes": "red ghost button at the bottom"
+            }
+          ]
+        }
+      ],
+      "links": [],
+      "empty": "EmptyState 'Noch keine Automationen.' (no text, no action button)",
+      "uxNotes": [
+        "Delete is a bottom ghost button without confirm (templates sheet uses a ⋯ destructive item with confirm).",
+        "No test-send for automations (campaigns and templates have one).",
+        "New automations default to plain 'Text' format, new campaigns/templates to the editor.",
+        "Overlaps with the separate Automations module (/automations workflows) which can also send emails – two places for 'send an email when X'.",
+        "Area page shows a description sentence (guide: no intro sentences on overviews)."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Wartezeit said '1 Stunden' (no plural): now 'nach 1 Stunde' / 'nach 7 Tagen' via plural keys email.after.*; status badges 'Aktiv' / 'Pausiert' capitalised. Sheet: Wartezeit and Einheit were two fields with two labels: now one sentence-like row 'Wartezeit [1] [Minuten | Stunden | Tage]' (patterns §4)."},
+        "job": "See which mails go out automatically on which event, switch one on/off, edit or add one.",
+        "phone": "Same top bar/⋯ as Kampagnen; round + = Neue Automation. Toolbar: Segments Kampagnen · Automationen · Versand. Cards: name + Aktiv/Pausiert badge, trigger · delay. Sheet full width: name, Auslöser, Wartezeit + Einheit, Betreff, body, aktiv; ⋯ Löschen (red, confirm).",
+        "desktop": "Toolbar with the Segments on the right; table Name (+ Betreff), Auslöser, Wartezeit, Status. Edit sheet (wide).",
+        "moves": [
+          "header description → removed (area pages carry no intro sentence); the explanation sits in the EmptyState text and the sheet",
+          "primary Neue Automation → unchanged (?new=1)",
+          "columns → unchanged; Status badge success/secondary",
+          "sheet Name → unchanged",
+          "sheet Auslöser NativeSelect → <Choice> (≤ 15 → dropdown)",
+          "sheet Wartezeit → <TypedInput kind=number>",
+          "sheet Einheit NativeSelect → <Choice> segments (Minuten · Stunden · Tage)",
+          "sheet Betreff, body → unchanged; new automations start in the editor format (rich), like campaigns",
+          "sheet aktiv checkbox → unchanged",
+          "sheet SaveBar Anlegen/Speichern → unchanged",
+          "sheet Löschen (ghost button, no confirm) → sheet ⋯ red item with confirm email.confirmDeleteAutomation",
+          "empty state → <EmptyState> with text + Neue Automation",
+          "sidebar E-Mail-Automationen → Segment 'Automationen' on E-Mails"
+        ],
+        "kept": "uxNote 2 (no test send for automations) and 4 (overlap with the Automationen module) kept: out of a UX pass.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "route": "/email/templates",
+      "file": "src/app/(app)/email/templates/page.tsx",
+      "title": "Vorlagen",
+      "purpose": "Design of event mails (tickets, guest-list tickets, waiting list) and, with the shop, the shop buyer mail texts.",
+      "permission": "email.view",
+      "size": "list (no <Page>)",
+      "header": {
+        "area": "communication",
+        "description": "email.templates.hint",
+        "primary": {
+          "label": "Neue Vorlage",
+          "key": "email.templates.new",
+          "href": "/email/templates?new=1",
+          "permission": "email.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "1 = create sheet"
+        },
+        {
+          "param": "edit",
+          "meaning": "<id> or 'builtin'"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Vorlagen",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Betreff)",
+            "Status ('Standard' badge)"
+          ],
+          "notes": "First row is always the built-in 'roots-Standard'. Row → ?edit=<id>|builtin"
+        },
+        {
+          "title": "Shop-Mails",
+          "key": "email.templates.shopMails",
+          "anchor": "#shop",
+          "kind": "FormCard",
+          "description": "email.templates.shopMailsHint",
+          "notes": "Only with shop module + shop.manage. Per mail kind (Bestellbestätigung, Zahlung erhalten, Abholbereit, Versendet, Storniert, Erschienen, Erstattung): on/off checkbox + 'Eigener Text' textarea. SaveBar → saveShopMails (same data as Shop → Einstellungen)."
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=builtin",
+          "component": "UrlSheet (wide)",
+          "title": "roots-Standard",
+          "fields": [],
+          "notes": "Hint email.templates.builtInHint, subject + raw HTML in a hand-made <dl>, placeholder list (<details>).",
+          "actions": [
+            {
+              "label": "Kopieren & anpassen",
+              "key": "email.templates.copy",
+              "kind": "serverAction",
+              "target": "copyBuiltInTemplate",
+              "permission": "email.manage",
+              "result": "→ ?edit=<new id>"
+            }
+          ]
+        },
+        {
+          "param": "?new=1 | ?edit=<id>",
+          "component": "UrlSheet (wide)",
+          "title": "Neue Vorlage / name",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "email.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "subject",
+              "label": "Betreff",
+              "key": "email.subject",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "format + body",
+              "component": "EmailBodyField",
+              "notes": "EVENT_PLACEHOLDERS; hint email.templates.placeholderHint + placeholder list"
+            },
+            {
+              "name": "is_default",
+              "label": "Standardvorlage für alle Events",
+              "key": "email.templates.makeDefault",
+              "type": "checkbox"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen / Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveTemplateAction",
+              "result": "→ ?edit=<id> toast email.saved"
+            },
+            {
+              "label": "Testmail an mich",
+              "key": "email.templates.test",
+              "where": "menu",
+              "kind": "serverAction",
+              "target": "testTemplate"
+            },
+            {
+              "label": "Löschen",
+              "key": "email.delete",
+              "where": "menu",
+              "kind": "confirm",
+              "target": "deleteTemplate",
+              "confirm": true,
+              "notes": "confirm email.templates.confirmDelete"
+            }
+          ]
+        }
+      ],
+      "links": [],
+      "uxNotes": [
+        "Name 'Vorlagen' collides with Dateien → Vorlagen (letter templates); these are event-mail templates only, which the title does not say.",
+        "Shop buyer mails are editable here and in Shop → Einstellungen (duplicate path), in a form below the table on the same page.",
+        "The built-in template sheet shows raw HTML in a hand-made <dl> instead of a rendered preview / <DetailList>.",
+        "Templates do not apply to campaigns or automations, only event and shop mails."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "E-Mail-Einstellungen (/email/settings) checked phone + desktop: Vorlagen rows › + AddLink, Shop-Mails and Versand as link rows. No change needed."},
+        "job": "Set how event mails (tickets, guest list, waiting list) look; find where the shop buyer mails are set.",
+        "phone": "Route /email/settings (E-Mail-Einstellungen, from the gear): RowGroup E-Mail-Vorlagen (rows: roots-Standard + own templates with Standard badge ›, + Neue E-Mail-Vorlage), RowGroup Shop-Mails (link row to Shop-Einstellungen), RowGroup Versand (link to Integrationen). Sheets as before.",
+        "desktop": "Same, settings width.",
+        "moves": [
+          "page /email/templates → /email/settings (gear: true in nav); old URL redirects with ?edit / ?new",
+          "title Vorlagen → 'E-Mail-Vorlagen' (group heading), page 'E-Mail-Einstellungen'",
+          "header description → group description",
+          "primary Neue Vorlage → AddLink '+ Neue E-Mail-Vorlage' at the end of the group (?new=1)",
+          "DataTable rows (name + subject, Standard badge) → setting rows › (?edit=<id> | builtin)",
+          "Shop-Mails link → unchanged (RowGroup row → /shop/settings#mails)",
+          "new: Versand row → /settings/integrations (email provider), org.integrations.manage only",
+          "?edit=builtin: hint, subject + raw HTML <dl> → hint, <DetailList> subject, rendered preview in a sandboxed iframe, Platzhalter; Kopieren & anpassen unchanged",
+          "?new / ?edit sheet fields Name, Betreff, body, Platzhalter, Standardvorlage → unchanged",
+          "sheet ⋯ Testmail an mich, Löschen (confirm) → unchanged",
+          "⌘K hits for templates → /email/settings?edit=<id>"
+        ],
+        "built": true,
+        "kept": "uxNote 3 (templates don't apply to campaigns/automations) kept: different mail kinds, a model change."
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "route": "/email/log",
+      "file": "src/app/(app)/email/log/page.tsx",
+      "title": "Versand",
+      "purpose": "Every mail sent in the org's name (queue + system mails, 90 days), with status and delivery.",
+      "permission": "email.view",
+      "size": "list (no <Page>)",
+      "header": {
+        "area": "communication",
+        "description": "email.logHint"
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search recipient or subject"
+        },
+        {
+          "param": "view",
+          "meaning": "all (default) | system | bulk"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Empfänger:in oder Betreff",
+              "key": "email.logSearch",
+              "component": "SearchBox"
+            },
+            {
+              "name": "view",
+              "label": "Alle · System-Mails · Kampagnen & Automationen",
+              "key": "email.logViews.*",
+              "component": "Segments"
+            }
+          ]
+        },
+        {
+          "title": "Versand",
+          "kind": "DataTable",
+          "columns": [
+            "An (+ Betreff)",
+            "Art (linked to the record: shop order, event, invoice, contact, form, campaign, automation, workflow)",
+            "Status (+ delivery, error)",
+            "Zeitpunkt"
+          ],
+          "notes": "No row link; only the 'Art' cell links."
+        }
+      ],
+      "links": [
+        "/shop/orders/[id]",
+        "/events/[id]",
+        "/invoices/[id]",
+        "/contacts/[id]",
+        "/forms/[id]",
+        "/email/[id]",
+        "/email/automations?edit=",
+        "/automations/[id]"
+      ],
+      "empty": "'Noch nichts versendet.'",
+      "uxNotes": [
+        "No filter by contact or campaign in the URL, so the contact page and campaign page can't deep-link into 'their' mails (contact page links here unfiltered).",
+        "Uses <Segments> correctly, while members/dues/submissions hand-build the same chips.",
+        "No resend/retry for failed mails."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone rows had three squeezed parts on line 3 (kind truncated, Versendet + Zugestellt stacked and cut, time cut): now one line, the most telling state as a badge (Unzustellbar red, Zugestellt green, else the send status) · '19.11., 01:30'; the kind stays in the table. Kind link uses the `link` style."},
+        "job": "Check whether a mail went out (to a person, of a campaign) and why not.",
+        "phone": "Toolbar: search, scroll row: Art FilterMenu (Alle · System-Mails · Kampagnen & Automationen), contact/campaign chip, Segments. Cards: address + status badge, subject, kind link, time.",
+        "desktop": "ListToolbar: search · Art · chips · Segments right. Table unchanged.",
+        "moves": [
+          "header description → removed (area page)",
+          "SearchBox → ListToolbar search",
+          "Segments Alle · System-Mails · Kampagnen & Automationen → FilterMenu 'Art' (?view=), so the area Segments (Kampagnen · Automationen · Versand) is the only segmented control",
+          "?contact= chip → unchanged",
+          "new ?campaign=<id> chip (from the campaign page 'Versand ansehen')",
+          "columns An, Art (linked), Status (+ delivery, error), Zeitpunkt → unchanged; status badge colours (success / warning / destructive / secondary)",
+          "automation links → /email/automations?edit=<id> unchanged",
+          "Pager → unchanged",
+          "sidebar E-Mail-Versand → Segment 'Versand' on E-Mails"
+        ],
+        "kept": "uxNote 3 (resend failed mails) kept: needs a queue retry rule, not a UX change.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ]
+    }
+  ],
+  "research": "Mailchimp / Brevo / Loops: a campaign is one page that reads top to bottom as a checklist (To · Subject · Content), with 'Send test' and 'Schedule / Send' as the last step; 'Send' always names the audience size in a confirm; sent campaigns open on their report (sent, delivered, bounced). Automations are a list with trigger, delay and an on/off state. Sending log = a filterable activity list. Templates/branding live in settings. Taken: views Kampagnen · Automationen · Versand as Segments on one area page; the campaign page opens on its state with 'Jetzt senden' (count in the confirm) as the next step; test/schedule submit the one form; E-Mail-Vorlagen under the gear.",
+  "navRedesign": {
+    "sidebar": "Kommunikation = E-Mails · Formulare. E-Mails opens Kampagnen; Automationen and Versand are <Segments> views on it (same URLs /email/automations, /email/log). E-Mail-Vorlagen → /email/settings (E-Mail-Einstellungen, nav child gear: true); /email/templates redirects there (keeps ?edit / ?new).",
+    "label": "area child 'E-Mails'; templates are 'E-Mail-Vorlagen' (Vorlagen = letters in Dateien)"
+  }
+}

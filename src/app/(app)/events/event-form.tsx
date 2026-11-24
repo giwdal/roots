@@ -14,39 +14,73 @@ import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { DateInput } from "@/components/date-input"
 import { TypeAndDefaults } from "./type-and-defaults"
+import { MoreDetails } from "@/components/section"
 
 type Ev = Tables<"events">
 
-// Event form (new event drawer + the event page) and the status badge (list + page).
+// Event form (new event page + the event's edit sheet) and the status badge (list + page).
 export function StatusBadge({ t, status }: { t: T; status: string }) {
-  const variant = status === "published" ? "default" : status === "cancelled" ? "destructive" : "secondary"
+  const variant = status === "published" ? "success" : status === "cancelled" ? "destructive" : status === "trashed" ? "outline" : "secondary"
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 
-export async function EventForm({ t, action, ev, disabled, initialType }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; initialType?: string }) {
+export async function EventForm({ t, action, ev, disabled, initialType, start }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; initialType?: string; start?: string /* new event: "YYYY-MM-DDTHH:MM" pre-filled (from a calendar day) */ }) {
   const ctx = await getContext()
   const mails = ctx.modules.has("email") && ctx.can("email.view")
   const [{ data: locations }, defs, { data: templates }, { data: allTypes }] = await Promise.all([
     ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name"),
     loadFields(ctx.supabase, ctx.org.id, "events"),
     mails ? ctx.supabase.from("email_templates").select("id, name, is_default").eq("org_id", ctx.org.id).order("name") : Promise.resolve({ data: null }),
-    ctx.supabase.from("event_types").select("id, name, slug, counts_visit, capacity, active").eq("org_id", ctx.org.id).order("name"),
+    ctx.supabase.from("event_types").select("id, name, slug, capacity, active").eq("org_id", ctx.org.id).order("name"),
   ])
   // Inactive types can't be picked for new events; an event keeps the one it has.
   const types = (allTypes ?? []).filter((x) => x.active || x.id === ev?.event_type_id)
   const withTypes = !ev && types.length > 0 // new event: the type comes first and prefills
   const fallback = templates?.find((x) => x.is_default)
+  const more = (
+    <>
+          <FormCard id="links" title={t("eventsPage.links")} description={t("eventsPage.linksHint")}>
+            {[0, 1, 2].map((i) => {
+              const l = (ev?.links as { label: string; url: string }[] | undefined)?.[i]
+              return (
+                <div key={i} className="grid max-w-2xl gap-2 sm:grid-cols-[12rem_1fr]">
+                  <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
+                  <TypedInput kind="url" name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
+                </div>
+              )
+            })}
+          </FormCard>
+
+          <FormCard id="page" title={t("eventsPage.publicPage")}>
+            <div className="grid max-w-xl gap-2">
+              <Label htmlFor="ev-slug">{t("eventsPage.slug")}</Label>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span className="shrink-0">/e/</span>
+                <Input id="ev-slug" name="slug" defaultValue={ev?.slug} placeholder="sommerfest-2026" pattern="[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]" />
+              </div>
+            </div>
+          </FormCard>
+          {mails && !!templates?.length && (
+            <FormCard id="emails" title={t("eventsPage.emails")} description={t("eventsPage.emailsHint", { fallback: fallback?.name ?? t("eventsPage.builtInMail") })}>
+              <div className="grid gap-2">
+                <Label htmlFor="ev-template">{t("eventsPage.emailTemplate")}</Label>
+                <Choice id="ev-template" name="email_template" label={t("eventsPage.emailTemplate")} defaultValue={ev?.email_template_id} options={templates.map((x) => ({ value: x.id, label: x.name }))} />
+              </div>
+            </FormCard>
+          )}
+    </>
+  )
   return (
     <form action={action} className="grid gap-6">
       {ev && <input type="hidden" name="id" value={ev.id} />}
       <fieldset disabled={disabled} className="grid gap-6">
         {withTypes && (
           <FormCard id="type" title={t("eventsPage.type")}>
-            <TypeAndDefaults types={types} initialSlug={initialType} showCounts={ctx.modules.has("members")} />
+            <TypeAndDefaults types={types} initialSlug={initialType} />
           </FormCard>
         )}
         <FormCard id="when" title={t("eventsPage.basics")}>
-          <div className="grid gap-2">
+          <div className="grid max-w-xl gap-2">
             <Label htmlFor="ev-title">{t("eventsPage.titleLabel")}</Label>
             <Input id="ev-title" name="title" defaultValue={ev?.title} required maxLength={200} className="text-base font-medium" />
           </div>
@@ -56,10 +90,10 @@ export async function EventForm({ t, action, ev, disabled, initialType }: { t: T
               <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} dropdown defaultValue={ev.event_type_id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
             <div className="grid gap-2">
               <Label htmlFor="ev-starts">{t("eventsPage.startsAt")}</Label>
-              <DateInput id="ev-starts" name="starts_at" type="datetime-local" defaultValue={ev ? toLocalInput(ev.starts_at) : undefined} required />
+              <DateInput id="ev-starts" name="starts_at" type="datetime-local" defaultValue={ev ? toLocalInput(ev.starts_at) : start} required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ev-ends">{t("eventsPage.endsAt")}</Label>
@@ -71,71 +105,39 @@ export async function EventForm({ t, action, ev, disabled, initialType }: { t: T
         <FormCard id="where" title={t("eventsPage.where")}>
           {(locations?.length ?? 0) > 0 && (
             <div className="grid gap-2">
-              <Label htmlFor="ev-location">{t("locations.title")}</Label>
-              <Choice id="ev-location" name="location" label={t("locations.title")} defaultValue={ev?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+              <Label htmlFor="ev-location">{t("eventsPage.savedPlace")}</Label>
+              <Choice id="ev-location" name="location" label={t("eventsPage.savedPlace")} defaultValue={ev?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="ev-venue">{t("eventsPage.venueName")}</Label>
+              <Label htmlFor="ev-venue">{t("eventsPage.venueNameShort")}</Label>
               <Input id="ev-venue" name="venue_name" defaultValue={ev?.venue_name ?? ""} maxLength={200} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="ev-address">{t("eventsPage.venueAddress")}</Label>
+              <Label htmlFor="ev-address">{t("eventsPage.venueAddressShort")}</Label>
               <Input id="ev-address" name="venue_address" defaultValue={ev?.venue_address ?? ""} maxLength={500} autoComplete="off" />
             </div>
           </div>
-        </FormCard>
-
-        <FormCard id="about" title={t("eventsPage.description")}>
-          <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} />
+          {/* How many fit belongs to the place (a new event with types gets it from the type's box above). */}
           {!withTypes && (
             <div className="grid gap-2">
               <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
               <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
             </div>
           )}
-          {!withTypes && ctx.modules.has("members") && (
-            <div className="grid gap-1">
-              <input type="hidden" name="counts_visit_field" value="1" />
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="size-4 accent-primary" name="counts_visit" value="on" defaultChecked={ev?.counts_visit ?? true} />
-                {t("eventsPage.countsVisit")}
-              </label>
-              <p className="text-xs text-muted-foreground">{t("eventsPage.countsVisitHint")}</p>
-            </div>
-          )}
+        </FormCard>
+
+        <FormCard id="about" title={t("eventsPage.description")}>
+          <Textarea id="ev-description" name="description" defaultValue={ev?.description ?? ""} maxLength={20000} rows={6} aria-label={t("eventsPage.description")} className="max-w-2xl" />
           <CustomFieldInputs defs={defs} values={ev?.custom as CustomValues | undefined} idPrefix="ev-custom" />
         </FormCard>
 
-        <FormCard id="links" title={t("eventsPage.links")} description={t("eventsPage.linksHint")}>
-          {[0, 1, 2].map((i) => {
-            const l = (ev?.links as { label: string; url: string }[] | undefined)?.[i]
-            return (
-              <div key={i} className="grid gap-2 sm:grid-cols-[12rem_1fr]">
-                <Input name={`link_label_${i}`} defaultValue={l?.label ?? ""} maxLength={60} placeholder={i === 0 ? "Telegram" : t("eventsPage.linkTitle")} aria-label={t("eventsPage.linkTitle")} />
-                <Input name={`link_url_${i}`} defaultValue={l?.url ?? ""} maxLength={500} inputMode="url" placeholder="https://…" aria-label={t("eventsPage.linkUrl")} />
-              </div>
-            )
-          })}
-        </FormCard>
-
-        <FormCard id="page" title={t("eventsPage.publicPage")}>
-          <div className="grid gap-2">
-            <Label htmlFor="ev-slug">{t("eventsPage.slug")}</Label>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <span className="shrink-0">/e/</span>
-              <Input id="ev-slug" name="slug" defaultValue={ev?.slug} placeholder="sommerfest-2026" pattern="[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]" />
-            </div>
-          </div>
-        </FormCard>
-        {mails && !!templates?.length && (
-          <FormCard id="emails" title={t("eventsPage.emails")} description={t("eventsPage.emailsHint", { fallback: fallback?.name ?? t("eventsPage.builtInMail") })}>
-            <div className="grid gap-2">
-              <Label htmlFor="ev-template">{t("eventsPage.emailTemplate")}</Label>
-              <Choice id="ev-template" name="email_template" label={t("eventsPage.emailTemplate")} defaultValue={ev?.email_template_id} options={templates.map((x) => ({ value: x.id, label: x.name }))} />
-            </div>
-          </FormCard>
+        {ev ? (
+          more
+        ) : (
+          // Creating: links, address and mail template are rarely needed at first (progressive disclosure).
+          <MoreDetails label={t("common.moreDetails")}>{more}</MoreDetails>
         )}
         {!disabled && <SaveBar label={ev ? undefined : t("eventsPage.create")} always={!ev} />}
       </fieldset>

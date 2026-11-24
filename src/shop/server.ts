@@ -279,6 +279,13 @@ export async function ensureInvoice(orderId: string, force = false) {
   const o = await loadOrder(orderId)
   if (!o || o.pay_orders.amount_total === 0) return // free orders (name your price 0 €, free downloads): no invoice
   if (!force && (o.pay_orders.metadata as { no_invoice?: boolean } | null)?.no_invoice) return // team order without invoice
+  const paidNow = ["paid", "partially_refunded"].includes(o.pay_orders.status)
+  // An invoice that exists already (a team order with "Rechnung erstellen", auto invoices off) follows the payment.
+  if (o.invoice_id && paidNow && !force) {
+    const { data: inv } = await db().from("documents").select("status").eq("id", o.invoice_id).single()
+    if (inv?.status === "sent") await db().from("documents").update({ status: "paid" }).eq("id", o.invoice_id)
+    if (inv?.status !== "draft") return
+  }
   const [{ data: mod }, settings] = await Promise.all([
     db().from("org_modules").select("module_key").eq("org_id", o.org_id).eq("module_key", "invoices").maybeSingle(),
     shopSettings(o.org_id),

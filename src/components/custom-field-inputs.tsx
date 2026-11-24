@@ -9,7 +9,7 @@ import { TypedInput } from "@/components/typed-input"
 export function CustomFieldInputs({ defs, values, idPrefix, single }: { defs: FieldDef[]; values?: CustomValues; idPrefix: string; single?: boolean }) {
   if (!defs.length) return null
   return (
-    <div className={single ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}>
+    <div className={single ? "grid max-w-xl gap-4" : "grid max-w-2xl gap-4 sm:grid-cols-2"}>
       {defs.map((d) => {
         const id = `${idPrefix}-${d.key}`
         const name = `custom.${d.key}`
@@ -22,13 +22,13 @@ export function CustomFieldInputs({ defs, values, idPrefix, single }: { defs: Fi
             </label>
           )
         return (
-          <div key={d.key} className="grid gap-2">
+          <div key={d.key} className="grid content-start gap-2">
             <Label htmlFor={id}>
               {d.label}
               {d.required && <span aria-hidden> *</span>}
             </Label>
             {d.type === "select" ? (
-              <NativeSelect id={id} name={name} defaultValue={value} required={d.required} className="w-full">
+              <NativeSelect id={id} name={name} defaultValue={value} required={d.required} className="w-full max-w-xs">
                 <NativeSelectOption value="">–</NativeSelectOption>
                 {d.options.map((o) => (
                   <NativeSelectOption key={o} value={o}>

@@ -10,9 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
-import { ChatView, type Model } from "./chat"
+import dynamic from "next/dynamic"
+import type { Model } from "./chat"
 import { useSprout } from "./context"
 import { SproutOrb } from "./sprout-orb"
+
+// The chat (AI SDK, markdown rendering) loads on first open, not with every App page.
+const ChatView = dynamic(() => import("./chat").then((m) => m.ChatView), { ssr: false })
 
 type Setup = Awaited<ReturnType<typeof sproutSetup>>
 type Chat = { id: string; messages: UIMessage[]; title: string; starred: boolean; saved: boolean; prompt?: string }
@@ -137,7 +141,7 @@ export function SproutPanel({ orgId }: { orgId: string }) {
                     variant="ghost"
                     size="icon-xs"
                     aria-label={t("sprout.deleteChat")}
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
                     onClick={() =>
                       start(async () => {
                         await deleteChat(c.id)
@@ -168,7 +172,7 @@ export function SproutPanel({ orgId }: { orgId: string }) {
       ) : !models.length ? (
         <div className="m-4 grid gap-3 text-sm">
           <p>{t("sprout.needKey")}</p>
-          <Button size="sm" className="justify-self-start" render={<Link href="/settings/profile#ai" />} nativeButton={false}>
+          <Button size="sm" className="justify-self-start" render={<Link href="/settings/ai" />} nativeButton={false}>
             {t("sprout.addKeyLink")}
           </Button>
         </div>

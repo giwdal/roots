@@ -7,26 +7,29 @@ import { Button } from "@/components/ui/button"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
-// Where the sheet sits: over the content area only (not the sidebar, not the Sprout panel), below the top bar, a
-// gap to the sides. Measured from the App shell, so a collapsed sidebar or an open Sprout panel just work; phones:
-// full width. Set straight on the element (no state), again on resize.
-function place(el: HTMLElement, compact?: boolean) {
-  // compact: no fixed top, the sheet is as tall as its content up to the space below the top bar
-  const pos = (left: string, right: string, top: string) =>
-    Object.assign(el.style, compact ? { left, right, top: "auto", maxHeight: `calc(100dvh - ${top})` } : { left, right, top })
+// Where it sits. Phones: a sheet from the bottom, full width, 2.5 rem below the top. From md: a dialog centred over the
+// whole window, as wide as its kind allows, 10 % from the top. Set straight on the element (no state), again on resize.
+const WIDTH = { compact: 520, normal: 720, wide: 1100 }
+function place(el: HTMLElement, kind: keyof typeof WIDTH) {
   const inset = document.querySelector<HTMLElement>("[data-slot=sidebar-inset]")
-  if (!inset || window.innerWidth < 768) return pos("0px", "0px", "2.5rem")
-  const r = inset.getBoundingClientRect()
-  const head = inset.querySelector("header")?.getBoundingClientRect().bottom ?? r.top
-  pos(`${r.left + 16}px`, `${window.innerWidth - r.right + 16}px`, `${head + 16}px`)
+  if (!inset || window.innerWidth < 768) {
+    const top = "2.5rem"
+    return Object.assign(el.style, kind === "compact" ? { left: "0px", right: "0px", top: "auto", bottom: "0px", maxHeight: `calc(100dvh - ${top})` } : { left: "0px", right: "0px", top, bottom: "0px", maxHeight: "" })
+  }
+  // Centred over the whole window (like every dialog), not over the content column.
+  const width = Math.min(WIDTH[kind], window.innerWidth - 48)
+  const left = (window.innerWidth - width) / 2
+  const top = Math.max(48, Math.round(window.innerHeight * 0.1))
+  Object.assign(el.style, { left: `${left}px`, right: `${window.innerWidth - left - width}px`, top: `${top}px`, bottom: "auto", maxHeight: `${window.innerHeight - top - 48}px` })
 }
 
 /**
- * The App's drawer: a large sheet rising from the bottom over the content area, rounded top corners, close (X) top
- * right in the title bar. `<UrlSheet>` uses it for every record/new/edit drawer; content left-aligned below (wide =
- * imports, previews). Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
+ * The App's overlay for forms, quick creates, imports and confirmations: on phones a sheet rising from the bottom
+ * (grab handle, swipe down), from md a dialog centred over the whole window. Title bar with close (X) on the right.
+ * `<UrlSheet>` uses it for every record/new/edit overlay (wide = imports, previews; compact = short questions).
+ * Keeps data-slot="sheet-content" so the SaveBar sticks inside it.
  */
-export function ContentSheet({ onClose, onClosed, wide, compact, header, children, label, closeButton = true }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; compact?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string; closeButton?: boolean }) {
+export function ContentSheet({ onClose, onClosed, wide, compact, header, children, label, closeButton = true, floating }: { onClose: () => boolean | void; onClosed: () => void; wide?: boolean; compact?: boolean; header: React.ReactNode; children: React.ReactNode; label?: string; closeButton?: boolean; floating?: boolean }) {
   const t = useT()
   // Closing: ask (`onClose` may say no), slide down, then `onClosed` (e.g. drop the URL param) once the animation ended.
   const [open, setOpen] = useState(true)
@@ -43,7 +46,7 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
       onOpenChangeComplete={(o) => !o && onClosed()}
     >
       <Drawer.Portal>
-        <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity duration-200 animate-in fade-in-0 data-ending-style:opacity-0" />
+        <Drawer.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity md:bg-black/40 duration-200 animate-in fade-in-0 data-ending-style:opacity-0 motion-reduce:animate-none motion-reduce:transition-none" />
         <Drawer.VirtualKeyboardProvider>
           {/* The Viewport owns swipe handling; click-through so the backdrop and the page still get presses. */}
           <Drawer.Viewport className="pointer-events-none fixed inset-0 z-50">
@@ -52,21 +55,23 @@ export function ContentSheet({ onClose, onClosed, wide, compact, header, childre
             aria-label={label}
             ref={(el) => {
               if (!el) return
-              const update = () => place(el, compact)
+              const update = () => place(el, compact ? "compact" : wide ? "wide" : "normal")
               update()
               window.addEventListener("resize", update)
               return () => window.removeEventListener("resize", update)
             }}
-            className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none"
+            className="pointer-events-auto fixed bottom-0 z-50 flex translate-y-(--drawer-swipe-movement-y) flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-popover pb-[env(safe-area-inset-bottom)] md:rounded-2xl md:border-b md:pb-0 md:fade-in-0 md:zoom-in-[0.98] md:slide-in-from-bottom-4 md:data-ending-style:opacity-0 text-sm text-popover-foreground shadow-2xl animate-in duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] slide-in-from-bottom transition-transform data-ending-style:translate-y-full data-swiping:transition-none motion-reduce:animate-none motion-reduce:transition-none"
           >
             {/* Title bar: grab handle (phones), title (+ actions, ⋯) left, close right; stays on top while the content scrolls. */}
-            <div className={cn("sticky top-0 z-30 bg-popover/95 backdrop-blur", (header || closeButton) && "border-b")}>
-              <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
+            {/* `floating`: no title bar — the record's own title opens the content and the header's buttons (⋯, ✕)
+                float in the top-right corner (Linear's issue dialog). */}
+            <div className={cn("sticky top-0 z-30", floating ? "h-0" : "bg-popover/95 backdrop-blur", !floating && (header || closeButton) && "border-b")}>
+              <div aria-hidden className={cn("mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden", floating && "relative")} />
               {(header || closeButton) && (
-                <div className="flex items-start gap-3 px-6 py-4">
-                  <div className="min-w-0 flex-1">{header}</div>
+                <div className={floating ? "absolute top-3 right-4 flex items-center gap-1 rounded-lg bg-popover/90 backdrop-blur md:top-4 [&_[data-slot=button]]:border-transparent [&_[data-slot=button]]:bg-transparent [&_[data-slot=button]]:shadow-none" : "flex items-start gap-3 px-6 py-4"}>
+                  <div className={floating ? "flex items-center" : "min-w-0 flex-1"}>{header}</div>
                   {closeButton && (
-                    <Drawer.Close render={<Button variant="ghost" size="icon-sm" className="-mr-2 shrink-0" />}>
+                    <Drawer.Close render={<Button variant="ghost" size="icon-sm" className={cn("shrink-0", !floating && "-mr-2")} />}>
                       <XIcon />
                       <span className="sr-only">{t("common.close")}</span>
                     </Drawer.Close>

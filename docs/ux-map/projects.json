@@ -1,0 +1,1152 @@
+{
+  "area": "projects",
+  "label": "Projekte",
+  "module": "projects",
+  "research": "Linear: projects as a list/board with a project page (properties edited in place in a right rail: status, lead, dates; progress; the project's issues as list/board), issues open as a panel with title + description edited in place, properties as rows that save on pick, sub-issues, comments + activity below; 'My issues' is the personal default view, a create row at the top of a list (type + Enter), keyboard first. Asana/Notion boards: one column per status, '+' at the bottom of a column creates in place; on phones one column fills the screen and you swipe sideways (Asana) or pick a column from chips. Things/Todoist 'Today/My tasks': grouped by due (Überfällig · Heute · Diese Woche · Später · Ohne Datum), quick add with Enter, ticking off in place. Taken: project page per patterns.md §8 (Stats, Eigenschaften inline, description autosaves), task panel with in-place title/description and property rows that save on change, Aufgaben with Meine · Alle and grouping by status / due, a quick add row (Enter, stays in the list), the board as one column at a time with snap + column chips on phones, trash for tasks with restore. Beyond the main screens: Linear's project page keeps an activity/updates feed under the description and shows progress as a percentage + counts; Asana and Linear empty states offer the one action that fills them ('Create issue', 'Add task'); Asana keeps deleted tasks restorable from a trash ('Recently deleted'); Things / Todoist phone apps put quick add at the thumb and group 'Today/Upcoming' by date; Linear mobile shows the issue as a full-height sheet with properties as tappable rows.",
+  "navRedesign": {
+    "sidebar": "Projekte = Projekte · Aufgaben. Einstellungen → gear (nav.ts gear: true, Settings › Bereiche, ⌘K). The header button 'Alle Aufgaben' on /projects goes (the sidebar has it).",
+    "label": "Aufgaben (was 'Alle Aufgaben'), Projekte (was 'Übersicht')",
+    "urls": "trash = ?trash=1 on /projects and /projects/tasks (old /projects?view=trash redirects); task sheet ?task=<id> (kept), new task ?new=task, time on a project ?new=time / ?edit=<entry> (old ?time= redirects, done in the Schichten pass), project links ?edit=links, custom fields ?edit=custom."
+  },
+  "nav": [
+    {
+      "label": "Übersicht",
+      "key": "nav.overview",
+      "href": "/projects",
+      "permission": "projects.view"
+    },
+    {
+      "label": "Alle Aufgaben",
+      "key": "projects.allTasks",
+      "href": "/projects/tasks",
+      "permission": "projects.view"
+    },
+    {
+      "label": "Einstellungen",
+      "key": "common.settings",
+      "href": "/projects/settings",
+      "permission": "projects.manage"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/projects",
+      "redesign": {
+        "job": "See every project at a glance (state, lead, progress, dates) and open one; start a new one.",
+        "phone": "Top bar 'Projekte' (⋯: Papierkorb; gear). Toolbar: search full width, then one scrolling row: Verantwortlich filter, Board · Liste · Zeitachse segments (icons only). Board: column chips (name + count) above one column at a time, horizontal snap; quick add at the bottom of the column. Liste: cards (name + dot, status, lead, period, progress). Zeitachse in its own scroll box. Round + = Neues Projekt.",
+        "desktop": "Header: gear · ⋯ (Papierkorb) · Neues Projekt. Toolbar: search, Verantwortlich, view segments right. Board columns 19 rem, horizontal scroll; list table; timeline full width.",
+        "moves": [
+          "header action 'Alle Aufgaben' (outline) → removed: the sidebar entry Aufgaben is the one path",
+          "header menu Papierkorb → ⋯ 'Papierkorb' → /projects?trash=1 (old ?view=trash redirects); in the trash ⋯ 'Zurück zu den Projekten'",
+          "header settings gear → kept (projects.manage)",
+          "primary 'Neues Projekt' → kept (/projects/new), hidden in the trash",
+          "toolbar q 'Projekte suchen' → <ListToolbar search>",
+          "toolbar FilterMenu Verantwortlich → kept in the toolbar row",
+          "toolbar view segments Board · Liste · Zeitachse → kept, right (ml-auto); scroll row on phones",
+          "Board (columns by project status, counts, cards) → shared <Board>; phones: column chips + one column with snap",
+          "board quick add 'Neues Projekt…' → kept per column (name + Enter → the project page, as before)",
+          "drag card → kept (moveProjectAction)",
+          "Zeitachse + drag bar → kept (moveProjectDates), own scroll box",
+          "Liste columns Name, Status, Verantwortlich, Zeitraum, Fortschritt → kept; status with its colour dot",
+          "Papierkorb table Name, Gelöscht am, Wiederherstellen → kept on ?trash=1 with the 30-day hint",
+          "EmptyState 'Noch keine Projekte' + Neues Projekt → kept",
+          "legacy ?task=<id> → redirect /projects/tasks?task=<id> (kept)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Board cards showed due dates in the browser's locale ('Wed, 02/17'): now t.date ('Mi., 17. Feb.'), also on task boards. List phone cards ran off ('Akti · Daniel Ladw · 30.10.2026 – 18.01.2 · 1/(') : now status · end date (red when over) · progress; lead and period stay in the table. Zeitachse opened at the earliest project (July), so current ones were off-screen on phones: <Timeline> now opens a week before today, month names, group names and bar labels stick to the left edge while scrolling (shared, also project and task timelines)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        2
+      ],
+      "file": "src/app/(app)/projects/page.tsx",
+      "title": "Projekte (trash: \"Projekte · Papierkorb\")",
+      "purpose": "All projects as board (by project status), list or timeline; quick-create, drag between status columns, move dates; trash view with restore.",
+      "permission": "projects.view (layout also requires the projects module)",
+      "size": "list (max-w-none for board/timeline)",
+      "header": {
+        "area": "projects",
+        "settings": "/projects/settings (projects.manage)",
+        "actions": [
+          {
+            "label": "Alle Aufgaben",
+            "key": "projects.allTasks",
+            "target": "/projects/tasks",
+            "notes": "outline button, hidden in trash"
+          }
+        ],
+        "menu": [
+          {
+            "label": "Papierkorb | Zurück zu den Projekten",
+            "key": "projects.trash / projects.backToProjects",
+            "target": "/projects?view=trash | /projects",
+            "permission": "projects.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neues Projekt",
+          "key": "projects.newProject",
+          "href": "/projects/new",
+          "permission": "projects.manage",
+          "notes": "hidden in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "board (default) | list | timeline | trash (trash view, projects.manage)"
+        },
+        {
+          "param": "q",
+          "meaning": "search project name"
+        },
+        {
+          "param": "lead",
+          "meaning": "FilterMenu Verantwortlich (user id)"
+        },
+        {
+          "param": "task",
+          "meaning": "legacy: redirects to /projects/tasks?task=<id>"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Projekte suchen",
+              "key": "projects.searchProjects",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "lead",
+              "label": "Verantwortlich",
+              "key": "projects.lead",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "all label 'Alle'"
+            },
+            {
+              "name": "view",
+              "label": "Ansicht",
+              "key": "projects.view",
+              "type": "segments",
+              "component": "Segments (ViewSegments): Board · Liste · Zeitachse",
+              "notes": "ml-auto; labels sr-only on phones (icons only)"
+            }
+          ]
+        },
+        {
+          "title": "Board",
+          "kind": "Board",
+          "notes": "Kanban (kibo-ui) per project status column with count; cards: colour dot, name, description snippet, end date (red if overdue), task progress done/all, lead initials; card → /projects/<id>. Drag & drop saves at once (moveProjectAction, toast on error). Quick-add input 'Neues Projekt…' + '+' at the bottom of every column (createProjectAction). Max 500 projects."
+        },
+        {
+          "title": "Zeitachse",
+          "kind": "Timeline",
+          "notes": "bars start–end grouped by status; drag moves dates (moveProjectDates, projects.manage); empty 'Keine Projekte gefunden.'"
+        },
+        {
+          "title": "Liste",
+          "kind": "DataTable",
+          "columns": [
+            "Name (colour dot, strikethrough when done)",
+            "Status",
+            "Verantwortlich",
+            "Zeitraum",
+            "Fortschritt"
+          ],
+          "notes": "row → /projects/<id>"
+        },
+        {
+          "title": "Papierkorb",
+          "kind": "DataTable",
+          "columns": [
+            "Name",
+            "Gelöscht am",
+            "(Wiederherstellen)"
+          ],
+          "notes": "hint 'Gelöschte Projekte bleiben 30 Tage hier und lassen sich wiederherstellen.'; empty 'Der Papierkorb ist leer.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neues Projekt…",
+          "key": "projects.quickAddProject",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "createProjectAction (board column quick add)",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "redirect /projects/<id>, toast 'Projekt angelegt.'"
+        },
+        {
+          "label": "(drag card)",
+          "where": "section",
+          "kind": "client",
+          "target": "moveProjectAction",
+          "permission": "projects.manage",
+          "confirm": false
+        },
+        {
+          "label": "(drag bar)",
+          "where": "section",
+          "kind": "client",
+          "target": "moveProjectDates",
+          "permission": "projects.manage",
+          "confirm": false
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "projects.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restoreProjectAction",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "toast 'Projekt wiederhergestellt.'"
+        }
+      ],
+      "links": [
+        "/projects/new",
+        "/projects/[id]",
+        "/projects/tasks",
+        "/projects/settings"
+      ],
+      "empty": "EmptyState 'Noch keine Projekte' / 'Ein Projekt bündelt Aufgaben, Termine, Dateien und Verknüpfungen, z. B. „Sommerfest 2027“.' + button 'Neues Projekt' (projects.manage)",
+      "phone": "Board scrolls horizontally (17rem columns); segment labels icon-only; primary as round +.",
+      "uxNotes": [
+        "Trash is a value of ?view (view=trash), while HR uses ?status=trash and contacts ?trash=1.",
+        "Board quick-add and the /projects/new page are two create paths with different results (quick add = name only, lands on the project page).",
+        "'Alle Aufgaben' is both a header button and a sidebar entry (duplicate path).",
+        "Progress counts are computed from up to 10,000 task rows loaded on every visit; project list capped at 500 without paging."
+      ]
+    },
+    {
+      "route": "/projects/new",
+      "redesign": {
+        "job": "Create a project: name first, the rest optional.",
+        "phone": "One column: Projekt (Name, Beschreibung), Details (Status segments/dropdown, Verantwortlich, Start, Ende, Farbe swatches), custom fields. SaveBar 'Projekt anlegen'.",
+        "desktop": "Same in form width, Details two columns.",
+        "moves": [
+          "Name, Beschreibung (RichTextEditor) → unchanged",
+          "Status (NativeSelect) → <Choice> (segments ≤ 5)",
+          "Verantwortlich (NativeSelect) → <Choice> (dropdown, search when many) with 'Niemand'",
+          "Start / Ende → <DateInput>; ?start=<day> from the calendar pre-fills Start",
+          "Farbe (colour dots) → unchanged",
+          "custom fields → unchanged",
+          "SaveBar 'Projekt anlegen' → unchanged"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Status offered 'Abgeschlossen' and wrapped onto a second segment row on phones: only open columns are offered when creating. Otherwise checked: name, description, details, SaveBar 'Projekt anlegen'."
+        }
+      },
+      "uxNotesDone": [
+        0
+      ],
+      "file": "src/app/(app)/projects/new/page.tsx",
+      "title": "Neues Projekt",
+      "purpose": "Create a project with name, description, status, lead, dates, colour and custom fields.",
+      "permission": "projects.manage",
+      "size": "form (NewPage)",
+      "header": {
+        "crumbs": [
+          "Projekte",
+          "Neues Projekt"
+        ]
+      },
+      "sections": [
+        {
+          "title": "Projekt",
+          "anchor": "#project",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "projects.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "projects.description",
+              "type": "richtext",
+              "component": "RichTextEditor"
+            }
+          ]
+        },
+        {
+          "title": "Details",
+          "anchor": "#details",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "status_id",
+              "label": "Status",
+              "key": "projects.status",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "project columns; default first"
+            },
+            {
+              "name": "lead_id",
+              "label": "Verantwortlich",
+              "key": "projects.lead",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "'Niemand' + team"
+            },
+            {
+              "name": "start_on",
+              "label": "Start",
+              "key": "projects.start",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "end_on",
+              "label": "Ende",
+              "key": "projects.end",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "color",
+              "label": "Farbe",
+              "key": "projects.color",
+              "type": "radio",
+              "component": "colour dots (radio, sr-only labels)",
+              "notes": "default blue"
+            },
+            {
+              "name": "custom.<key>",
+              "label": "(org custom fields for projects)",
+              "type": "custom",
+              "component": "CustomFieldInputs"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Projekt anlegen",
+          "key": "projects.createProject",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "createProjectAction",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "redirect /projects/<id>, toast 'Projekt angelegt.'"
+        }
+      ],
+      "links": [
+        "/projects"
+      ],
+      "uxNotes": [
+        "Status (often ≤ 5 columns) uses a NativeSelect, not <Choice>."
+      ]
+    },
+    {
+      "route": "/projects/[id]",
+      "redesign": {
+        "job": "One project: how far it is, what's due, who does what, the conversation; change its properties on the spot.",
+        "phone": "Top bar ‹ Projekte · ⋯ (Verknüpfen, Papierkorb). Identity: colour dot + name (tap to rename), status badge, meta (lead · period). Stats 2×2: Fortschritt, Offen, Überfällig (→ list filtered), Stunden (time module). View segments (scroll): Übersicht · Board · Liste · Zeitachse · Kalender · Zeit. Übersicht: Eigenschaften (each value edited in place), Beschreibung (rich text, saves itself), Aufgaben (next open ones + quick add + 'Alle anzeigen'), Aktivität (comment + feed), Verknüpft, Dateien. Round + = Neue Aufgabe (?new=task).",
+        "desktop": "Header: title + badge + meta, ⋯, primary 'Neue Aufgabe'. Stats row, segments row. Übersicht: main column Beschreibung, Aufgaben, Aktivität; right rail (22 rem) Eigenschaften, Verknüpft, Dateien. Task views full width with their filter toolbar under the segments.",
+        "moves": [
+          "segments Übersicht · Board · Liste · Zeitachse · Kalender · Zeit → one fixed row under the Stats on every view (no more jumping into the task toolbar)",
+          "name (InlineTitle, renameProjectAction) → kept in the title, now saved through patchProject (field name)",
+          "badge status → status badge (success when the column counts as done, else info)",
+          "meta 'Verantwortlich: … · Zeitraum' → kept",
+          "⋯ 'Projekt in den Papierkorb' → kept (destructive, confirm)",
+          "Fortschritt card (bar, 'x von y erledigt', 'n überfällig', 'Zum Board') → <Stats>: Fortschritt (x/y, %), Offen, Überfällig (tone warn, → ?view=list&due=overdue), Stunden (→ ?view=time)",
+          "Beschreibung (RichTextEditor in the SaveBar form) → main column, edited in place, autosaves (patchProject field description)",
+          "Details: Status, Verantwortlich, Start, Ende, Farbe → Eigenschaften rail as <InlineField>s (choice / choice / date / date / choice) + patchProject",
+          "Details: custom fields → Eigenschaften as customDetails(); 'Ändern' → ?edit=custom sheet (CustomFieldInputs + SaveBar, saveProjectCustom)",
+          "SaveBar 'Speichern' (updateProjectAction) → removed from the page: every property saves on its own (one save model); updateProjectAction stays for old forms/API parity",
+          "Dokumente (FileList) → rail 'Dateien'",
+          "Verknüpft list + X 'Verknüpfung entfernen' + LinkPicker → rail <LinkRows> (icon per kind); managing in ?edit=links sheet: search & link (LinkPicker), rows with ✕ that asks first",
+          "Aktivität (CommentForm with dictation/attachments + feed, edit/delete own) → main column under Aufgaben",
+          "Aufgaben (board/list/timeline/calendar) → task views (TasksView with projectId) + an Aufgaben section on Übersicht (open tasks by due, quick add row)",
+          "Zeit view (clock in/out box, '+ Zeit nachtragen', TimeEntryList, totals per person) → kept (built in the Schichten pass: ?new=time / ?edit=<id>)",
+          "?task=<id> task panel → kept",
+          "time sheet fields (Person, Aufgabe, Beginn, Ende, Pause, Notiz) + Speichern/Löschen → shared <TimeEntrySheet> (kept)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Open task rows ran off the right edge on phones (the list was a grid that grew with the longest title, due date cut): rows truncate the title now. Checked the views: Liste grouped by status, Board with column chips, Zeitachse (opens at today), Kalender (phone calendar), Zeit (Einstempeln, entries one line with one badge). Eigenschaften inline in the rail (5 values, no limit needed). Activity shows 'Jemand' for seeded rows only."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        2,
+        4,
+        5
+      ],
+      "file": "src/app/(app)/projects/[id]/page.tsx",
+      "title": "<Project name> (editable inline in the title)",
+      "purpose": "One project: activity feed with comments, progress, description and details, documents, linked records; its tasks as board/list/timeline/calendar; time tracked on it.",
+      "permission": "projects.view (edit: projects.manage; Zeit view: shifts module + shifts.self/view/manage/approve)",
+      "size": "record (max-w-none for task views)",
+      "header": {
+        "crumbs": [
+          "Projekte",
+          "<Name>"
+        ],
+        "badge": "project status (secondary when it counts as done)",
+        "meta": "'Verantwortlich: {name} · <Zeitraum>'",
+        "menu": [
+          {
+            "label": "Projekt in den Papierkorb",
+            "key": "projects.projectToTrash",
+            "target": "trashProjectAction (MenuSubmit destructive, form #trash-project)",
+            "permission": "projects.manage"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "overview (default) | board | list | timeline | calendar | time"
+        },
+        {
+          "param": "q / assignee / due / tag",
+          "meaning": "task filters in task views (see /projects/tasks)"
+        },
+        {
+          "param": "task",
+          "meaning": "<task id> = task panel"
+        },
+        {
+          "param": "cal",
+          "meaning": "calendar sub-view in the calendar task view (month/week/agenda)"
+        },
+        {
+          "param": "time",
+          "meaning": "new | <entry id> = time entry sheet (Zeit view)"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Ansicht",
+          "kind": "custom",
+          "notes": "Segments Übersicht · Board · Liste · Zeitachse · Kalender · Zeit; on overview right-aligned above the content, in task views inside the task toolbar."
+        },
+        {
+          "title": "Aktivität",
+          "anchor": "#activity",
+          "kind": "ActivityFeed",
+          "notes": "CommentForm (text, 'Diktieren', 'Datei anhängen', 'Foto aufnehmen'; attachments land in the project's documents) + feed of comments and changes of the project and its tasks; task entries link to ?view=list&task=<id>; author can 'Bearbeiten' / 'Kommentar löschen' (confirm 'Kommentar löschen?')."
+        },
+        {
+          "title": "Fortschritt (aside)",
+          "anchor": "#progress",
+          "kind": "custom",
+          "notes": "progress bar, '{done} von {count} Aufgaben erledigt', '{count} Aufgaben überfällig' (red), link 'Zum Board' → ?view=board"
+        },
+        {
+          "title": "Beschreibung (aside)",
+          "anchor": "#description",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "projects.description",
+              "type": "richtext",
+              "component": "RichTextEditor"
+            }
+          ],
+          "notes": "same form as Details, one SaveBar"
+        },
+        {
+          "title": "Details (aside)",
+          "anchor": "#details",
+          "kind": "FormCard",
+          "notes": "Status, Verantwortlich, Start, Ende, Farbe, custom fields (stacked); fieldset disabled without projects.manage"
+        },
+        {
+          "title": "Dokumente (aside)",
+          "anchor": "#files",
+          "kind": "FileList",
+          "notes": "card title files.title"
+        },
+        {
+          "title": "Verknüpft (aside)",
+          "anchor": "#links",
+          "kind": "custom",
+          "notes": "description 'Wiki-Seiten, Veranstaltungen, Kontakte … die zum Projekt gehören.'; list of linked records (title link + kind label) with X 'Verknüpfung entfernen'; LinkPicker 'Suchen und verknüpfen …' (global search, ≥2 chars, groups wiki/events/contacts/invoices/forms/rentals; click = link at once)"
+        },
+        {
+          "title": "Aufgaben (board/list/timeline/calendar)",
+          "kind": "Board",
+          "notes": "TasksView limited to this project (see /projects/tasks); quick-add puts new tasks into this project; no Projekt filter/column"
+        },
+        {
+          "title": "Zeit",
+          "kind": "custom",
+          "notes": "Clock box: 'Auf Projekt einstempeln' / 'Ausstempeln' (shifts.self + in team), hint 'Einstempeln startet die Zeit auf diesem Projekt.' or 'Läuft gerade auf {project} seit {time} – Ausstempeln beendet das.', ghost '+ Zeit nachtragen' → ?time=new. TimeEntryList with Person column (newest 500). Aside 'Zeit auf dem Projekt': total + per person."
+        }
+      ],
+      "actions": [
+        {
+          "label": "(rename in title)",
+          "where": "header",
+          "kind": "client",
+          "target": "renameProjectAction (InlineTitle: blur/Enter saves, Escape resets)",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "refresh; error toast"
+        },
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "updateProjectAction",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Projekt in den Papierkorb",
+          "key": "projects.projectToTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashProjectAction",
+          "permission": "projects.manage",
+          "confirm": true,
+          "result": "/projects, toast 'Projekt in den Papierkorb gelegt.'"
+        },
+        {
+          "label": "Kommentieren",
+          "key": "activity.comment",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addCommentAction",
+          "confirm": false,
+          "notes": "every viewer may comment"
+        },
+        {
+          "label": "(link record)",
+          "where": "section",
+          "kind": "client",
+          "target": "addLinkAction",
+          "permission": "projects.manage",
+          "confirm": false
+        },
+        {
+          "label": "Verknüpfung entfernen",
+          "key": "projects.unlink",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "removeLinkAction",
+          "permission": "projects.manage",
+          "confirm": false
+        },
+        {
+          "label": "Auf Projekt einstempeln / Ausstempeln",
+          "key": "time.clockInProject / time.clockOut",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "clock (shifts/time-actions.ts)",
+          "permission": "shifts.self",
+          "confirm": false
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?task=<id>",
+          "component": "UrlSheet (wide) – TaskDrawer",
+          "title": "<Task title>",
+          "notes": "see /projects/tasks overlay"
+        },
+        {
+          "param": "?time=new | ?time=<entry id>",
+          "component": "UrlSheet",
+          "title": "Zeit nachtragen | Zeiteintrag bearbeiten",
+          "fields": [
+            {
+              "name": "staff",
+              "label": "Person",
+              "key": "time.person",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "managers only, new entries"
+            },
+            {
+              "name": "task_id",
+              "label": "Aufgabe",
+              "key": "time.task",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "'Keine bestimmte Aufgabe'; project tasks, max 500"
+            },
+            {
+              "name": "started_at",
+              "label": "Beginn",
+              "key": "time.start",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "required": true
+            },
+            {
+              "name": "ended_at",
+              "label": "Ende",
+              "key": "time.end",
+              "type": "datetime",
+              "component": "DateInput:datetime-local"
+            },
+            {
+              "name": "break_minutes",
+              "label": "Pause (Minuten)",
+              "key": "time.breakMinutes",
+              "type": "number",
+              "component": "Input type=number"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "time.note",
+              "type": "textarea",
+              "component": "Textarea"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "key": "time.save",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "saveEntry",
+              "confirm": false
+            },
+            {
+              "label": "Eintrag löschen",
+              "key": "time.delete",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteEntry",
+              "confirm": false
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/projects",
+        "/projects/[id]?view=…",
+        "linked records (wiki, events, contacts, invoices, forms, rental objects)",
+        "/files/[id]"
+      ],
+      "phone": "RecordLayout: aside (progress, details, files, links) below the activity feed; segment labels icon-only.",
+      "uxNotes": [
+        "Three save models on one page: name saves inline on blur, description/details via SaveBar, links/comments/checklists at once.",
+        "Page title is an <input> (InlineTitle) inside PageHeader; docs say the title shows only in the top bar for record pages.",
+        "On overview the view Segments sit alone above the content, in task views inside the toolbar: switch moves position between views.",
+        "Project description is rich text (RichTextEditor) while task description is a plain Textarea rendered as Markdown.",
+        "Removing a link (X) has no confirm; link picker results disappear only after the add succeeds (no 'linked' toast).",
+        "Time sheet param is ?time=new|<id>, while /shifts/me and /shifts/hours use ?new=time / ?edit=<id> for the same form.",
+        "Time entry delete without confirm (shared TimeEntryForm)."
+      ]
+    },
+    {
+      "route": "/projects/tasks",
+      "redesign": {
+        "job": "Work through tasks: mine first, everyone's when needed; add one in a second; move them along.",
+        "phone": "Top bar 'Aufgaben' (⋯: Papierkorb; gear). Toolbar: Meine · Alle segments, search, one scrolling row of filters (Zuständig in Alle, Fällig, Projekt, Tags, Gruppierung in Liste) and the view segments (icons). Liste (now the default view, like Linear's My issues) as cards grouped by status or due with a quick add row on top (type + Enter, stays). Board: column chips + one column with snap. Round + = Neue Aufgabe (?new=task sheet).",
+        "desktop": "Header: gear · ⋯ (Papierkorb) · Neue Aufgabe. Toolbar: Meine · Alle, search, filters, view segments right. Liste grouped with headings (count), quick add on top, tick boxes + bulk bar.",
+        "moves": [
+          "title 'Alle Aufgaben' → 'Aufgaben' (sidebar, crumb, title)",
+          "FilterMenu Zuständig (Alle / Meine Aufgaben / team) → segments Meine · Alle (Meine = default, ?assignee=all for Alle); the person filter stays in Alle",
+          "FilterMenu Fällig, Projekt, Tags → kept in the toolbar row",
+          "view segments → Liste · Board · Zeitachse · Kalender (Liste first = default; ?view=board for the board), right",
+          "Board (cards, drag) → shared <Board>; column quick add now stays on the board (type + Enter, refocused) instead of opening the panel",
+          "Liste (DataTable with bulk) → grouped tables (Status: one per column; Fälligkeit: Überfällig · Heute · Diese Woche · Später · Ohne Datum) via ?group=status|due; Meine defaults to due",
+          "new: quick add row on top of the list (Enter creates in the first column, in Meine assigned to me, on a project page in that project)",
+          "new: primary 'Neue Aufgabe' → ?new=task sheet (Titel, Projekt search picker, Fällig, Zuständig) → creates and opens ?task=<id>; ?due= pre-fills (calendar)",
+          "bulk 'Verschieben' + status select, 'In den Papierkorb' (confirm) → kept",
+          "Zeitachse (grouped by project, drag) → kept, own scroll box",
+          "Kalender (due dates, drag) → kept; empty day click → ?new=task with that due date",
+          "empty 'Keine Aufgaben gefunden.' → EmptyState with 'Neue Aufgabe' (Meine: link to Alle)",
+          "new: ⋯ Papierkorb → ?trash=1: trashed tasks with Wiederherstellen (restoreTaskAction)",
+          "task panel ?task=<id>: Titel (Input) → title edited in place at the top of the sheet",
+          "task panel: Status, Projekt (NativeSelect of all projects), Start, Fällig, Zuständig, Tags, custom fields → property rows (label left, control right) that save on change; Projekt = server-search <RecordPicker> (searchProjects)",
+          "task panel: Beschreibung (Textarea, Markdown) → borderless textarea in place under the title, saves itself; readers see Markdown",
+          "task panel: Unteraufgaben (tick, X hover-only, add) → ticks + always visible ✕ (no hover-only) + add with Enter",
+          "task panel: autosave status 'Speichert…/Gespeichert.' → kept in the sheet meta",
+          "task panel ⋯ 'In den Papierkorb' (confirm) → kept; new ⋯ 'Zum Projekt' when it has one",
+          "task panel Aktivität (comments, attachments when in a project) → kept below"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked phone + desktop: Meine · Alle, Fällig/Projekt filters, grouping Überfällig · Heute · Nächste 7 Tage · Später, quick add; board dates fixed with the project board (t.date). Task panel ?task=: property rows autosave, Unteraufgaben with visible ✕, comments with dictation/camera; no change needed. Desktop: each group is its own table, so column widths differ between groups (left as is)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "src/app/(app)/projects/tasks/page.tsx",
+      "title": "Alle Aufgaben",
+      "purpose": "All tasks of the org across projects (and without one) as board, list, timeline or calendar; filter, bulk-move, bulk-trash, open the task panel.",
+      "permission": "projects.view",
+      "size": "list (max-w-none)",
+      "header": {
+        "crumbs": [
+          "Projekte",
+          "Alle Aufgaben"
+        ],
+        "settings": "/projects/settings (projects.manage)"
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "board (default) | list | timeline | calendar"
+        },
+        {
+          "param": "q",
+          "meaning": "search title + description"
+        },
+        {
+          "param": "assignee",
+          "meaning": "'me' or user id"
+        },
+        {
+          "param": "due",
+          "meaning": "overdue | week | none"
+        },
+        {
+          "param": "project",
+          "meaning": "project id or 'none'"
+        },
+        {
+          "param": "tag",
+          "meaning": "one tag"
+        },
+        {
+          "param": "cal",
+          "meaning": "calendar sub-view (month/week/agenda) in the calendar view"
+        },
+        {
+          "param": "date",
+          "meaning": "calendar focus date"
+        },
+        {
+          "param": "task",
+          "meaning": "<id> = task panel"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Aufgaben suchen",
+              "key": "projects.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "assignee",
+              "label": "Zuständig",
+              "key": "projects.assignee",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Alle / Meine Aufgaben / team"
+            },
+            {
+              "name": "due",
+              "label": "Fällig",
+              "key": "projects.due",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Jede Fälligkeit / Überfällig / Nächste 7 Tage / Ohne Datum"
+            },
+            {
+              "name": "project",
+              "label": "Projekt",
+              "key": "projects.project",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Alle Projekte / Ohne Projekt / projects"
+            },
+            {
+              "name": "tag",
+              "label": "Tags",
+              "key": "projects.tags",
+              "type": "select",
+              "component": "FilterMenu"
+            },
+            {
+              "name": "view",
+              "label": "Ansicht",
+              "key": "projects.view",
+              "type": "segments",
+              "component": "Segments: Board · Liste · Zeitachse · Kalender"
+            }
+          ]
+        },
+        {
+          "title": "Board",
+          "kind": "Board",
+          "notes": "task columns (task_statuses scope task); cards: title, tags (max 2 + '+n'), project name, snippet, due (red if overdue), checklist progress, assignee initials; drag saves at once; quick-add 'Neue Aufgabe…' per column → opens the new task panel. Max 1000 tasks."
+        },
+        {
+          "title": "Liste",
+          "kind": "DataTable",
+          "columns": [
+            "Aufgabe (+ snippet)",
+            "Status",
+            "Projekt",
+            "Fällig",
+            "Zuständig",
+            "Tags",
+            "Unteraufgaben"
+          ],
+          "notes": "tick boxes for projects.manage (bulk)"
+        },
+        {
+          "title": "Zeitachse",
+          "kind": "Timeline",
+          "notes": "grouped by project ('Ohne Projekt'); drag moves start/due (moveTaskDates)"
+        },
+        {
+          "title": "Kalender",
+          "kind": "Calendar",
+          "notes": "tasks with due date as all-day entries ('✓' when done), month/week/agenda; drag changes due (moveTaskDue)"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neue Aufgabe…",
+          "key": "projects.quickAdd",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "createTaskAction",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "opens ?task=<new id> (no toast)"
+        },
+        {
+          "label": "Verschieben (+ status select)",
+          "key": "projects.moveTo",
+          "where": "bulk",
+          "kind": "serverAction",
+          "target": "bulkTasks intent=move",
+          "permission": "projects.manage",
+          "confirm": false,
+          "result": "toast common.bulkDone"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "common.toTrash",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkTasks intent=trash",
+          "permission": "projects.manage",
+          "confirm": true,
+          "result": "toast common.bulkTrashed"
+        },
+        {
+          "label": "(drag card / bar / calendar entry)",
+          "where": "section",
+          "kind": "client",
+          "target": "moveTaskAction | moveTaskDates | moveTaskDue",
+          "permission": "projects.manage",
+          "confirm": false
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?task=<id>",
+          "component": "UrlSheet (wide) – TaskDrawer",
+          "title": "<Task title>",
+          "fields": [
+            {
+              "name": "title",
+              "label": "Aufgabe",
+              "key": "projects.taskTitle",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "status_id",
+              "label": "Status",
+              "key": "projects.status",
+              "type": "select",
+              "component": "NativeSelect"
+            },
+            {
+              "name": "project_id",
+              "label": "Projekt",
+              "key": "projects.project",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "'Ohne Projekt' + all projects"
+            },
+            {
+              "name": "start_on",
+              "label": "Start",
+              "key": "projects.start",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "due_on",
+              "label": "Fällig",
+              "key": "projects.due",
+              "type": "date",
+              "component": "DateInput:date"
+            },
+            {
+              "name": "assignees",
+              "label": "Zuständig",
+              "key": "projects.assignees",
+              "type": "multiselect",
+              "component": "PeopleSelect (MultiSelect, max 20, 'Person suchen…')"
+            },
+            {
+              "name": "tags",
+              "label": "Tags",
+              "key": "projects.tags",
+              "type": "tags",
+              "component": "TagSelect creatable"
+            },
+            {
+              "name": "custom.<key>",
+              "label": "(custom fields for tasks)",
+              "type": "custom",
+              "component": "CustomFieldInputs"
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "projects.description",
+              "type": "textarea",
+              "component": "Textarea (Markdown; rendered via <Markdown> for readers)",
+              "notes": "placeholder 'Details, Links, Notizen…'"
+            },
+            {
+              "name": "checklist",
+              "label": "Unteraufgaben",
+              "key": "projects.checklist",
+              "type": "list",
+              "component": "Checklist (tick, X remove, 'Unteraufgabe hinzufügen' + 'Hinzufügen')",
+              "notes": "saves at once"
+            }
+          ],
+          "actions": [
+            {
+              "label": "(autosave)",
+              "where": "sheet",
+              "kind": "client",
+              "target": "autosaveTaskAction (AutosaveForm, 700 ms debounce; status 'Speichert…' / 'Gespeichert.' in the sheet meta slot)",
+              "permission": "projects.manage",
+              "confirm": false
+            },
+            {
+              "label": "In den Papierkorb",
+              "key": "projects.toTrash",
+              "where": "menu",
+              "kind": "confirm",
+              "target": "trashTaskAction",
+              "permission": "projects.manage",
+              "confirm": true,
+              "result": "toast 'Aufgabe im Papierkorb.'"
+            },
+            {
+              "label": "Kommentieren",
+              "key": "activity.comment",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "addCommentAction",
+              "confirm": false,
+              "notes": "attachments only when the task has a project"
+            }
+          ],
+          "notes": "meta 'Angelegt am {date} · erledigt am {date}'; Aktivität section (comments + changes) under the fields."
+        }
+      ],
+      "links": [
+        "/projects",
+        "/projects/settings"
+      ],
+      "empty": "'Keine Aufgaben gefunden.' (no EmptyState with action)",
+      "phone": "Board horizontal scroll; list as cards without tick boxes (no bulk on phones); segment labels icon-only.",
+      "uxNotes": [
+        "Task panel autosaves (no SaveBar), while the project page uses SaveBar: two save models in one area.",
+        "Checklist remove button is opacity-0 until hover/focus (docs: nothing only on hover).",
+        "No create page or primary button for tasks; only per-column quick add on the board (list/timeline/calendar views have no way to create a task).",
+        "No trash view for tasks (trashed tasks can't be restored from the UI).",
+        "Project select in the task panel is a NativeSelect of all projects.",
+        "Five FilterMenus + view Segments in one toolbar."
+      ]
+    },
+    {
+      "route": "/projects/settings",
+      "redesign": {
+        "job": "Set the columns of both boards once.",
+        "phone": "Top bar ‹ Projekte · Einstellungen. Two groups (Spalten der Aufgaben, Spalten der Projekte): rows colour dot · name · 'erledigt' switch · ↑ ↓ · ✕, '+ Spalte hinzufügen'. One SaveBar.",
+        "desktop": "Same in form width.",
+        "moves": [
+          "per-row Speichern / Hinzufügen buttons → one form, one <SaveBar> (saveColumnsAction)",
+          "colour dots → a colour button per row that cycles/picks (popover-free: swatch row inside the row on desktop, the dot opens the swatches on phones)",
+          "Name der Spalte → inline input per row (visible header row on desktop)",
+          "zählt als erledigt (checkbox) → checkbox labelled 'erledigt' per row",
+          "Nach oben / Nach unten (a round trip each) → ↑ ↓ in client state, saved with the SaveBar",
+          "Spalte löschen (no confirm) → ✕ that asks first for saved columns; a column with tasks fails with 'Die Spalte enthält noch Aufgaben.'; the last column can't be removed",
+          "empty row 'Neue Spalte' → '+ Spalte hinzufügen' link"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: two column-rows lists (tasks, projects) with colour, 'erledigt', ↑↓ ✕ visible on phones, one SaveBar. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ],
+      "file": "src/app/(app)/projects/settings/page.tsx",
+      "title": "Einstellungen",
+      "purpose": "Define the columns of the task board and of the project board (name, colour, 'zählt als erledigt', order).",
+      "permission": "projects.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Projekte",
+          "Einstellungen"
+        ]
+      },
+      "sections": [
+        {
+          "title": "Spalten des Boards",
+          "anchor": "#columns",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "color",
+              "label": "Farbe",
+              "key": "projects.color",
+              "type": "radio",
+              "component": "colour dots"
+            },
+            {
+              "name": "name",
+              "label": "Name der Spalte",
+              "key": "projects.statusName",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "new row placeholder 'Neue Spalte'"
+            },
+            {
+              "name": "is_done",
+              "label": "zählt als erledigt",
+              "key": "projects.isDone",
+              "type": "checkbox",
+              "component": "native checkbox"
+            }
+          ],
+          "notes": "description projects.setupHint; one inline row per column + empty row to add"
+        },
+        {
+          "title": "Spalten der Projekte",
+          "anchor": "#project-columns",
+          "kind": "FormCard",
+          "notes": "same rows for project statuses; description projects.projectSetupHint"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern / Hinzufügen",
+          "key": "common.save / projects.add",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "saveStatusAction",
+          "confirm": false,
+          "result": "toast 'Spalte gespeichert.'"
+        },
+        {
+          "label": "Nach oben / Nach unten",
+          "key": "projects.move.up / projects.move.down",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "moveStatusAction",
+          "confirm": false
+        },
+        {
+          "label": "Spalte löschen",
+          "key": "projects.deleteStatus",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "deleteStatusAction",
+          "confirm": false,
+          "result": "toast 'Spalte gelöscht.' or error 'Die Spalte enthält noch Aufgaben.'; disabled when only one column"
+        }
+      ],
+      "links": [
+        "/projects"
+      ],
+      "uxNotes": [
+        "Column delete (red trash icon) without confirm.",
+        "Reordering via up/down buttons with a full page round trip each, while boards themselves support drag & drop.",
+        "Row hidden-label inputs (aria-label only) – no visible column headers."
+      ]
+    },
+    {
+      "route": "/projects/setup",
+      "redesign": {
+        "job": "Old address.",
+        "phone": "redirect",
+        "desktop": "redirect",
+        "moves": [
+          "redirect /projects/settings → kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Redirect only; nothing to look at."
+        }
+      },
+      "file": "src/app/(app)/projects/setup/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Old address; redirects to /projects/settings.",
+      "links": [
+        "/projects/settings"
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { activeChildHref, appRoute, within } from "@/lib/url"
 import { useState, useTransition } from "react"
-import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon } from "lucide-react"
+import { CheckIcon, ChevronsLeftRightIcon, ChevronsUpDownIcon, IdCardIcon, LanguagesIcon, Loader2Icon, LogOutIcon, UserIcon, KeyboardIcon } from "lucide-react"
 import { openMyMemberArea } from "@/app/(app)/actions"
 import { signOut } from "@/app/login/actions"
 import { SearchButton } from "@/components/command-search"
@@ -37,12 +37,17 @@ import {
 } from "@/components/ui/sidebar"
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
-import { localeNames, locales } from "@/i18n/config"
+import { localeNames, locales } from "@/i18n/locales"
 
-// The item's icon, or a spinner while its page loads (instant feedback on click, before the server answers).
+// The item's icon with a spinner over it while its page loads (instant feedback on click; the area's colour tile stays).
 function NavIcon({ icon }: { icon: React.ReactNode }) {
   const { pending } = useLinkStatus()
-  return pending ? <Loader2Icon className="animate-spin" /> : icon
+  return (
+    <span className="relative grid shrink-0 place-items-center">
+      <span className={pending ? "opacity-40" : undefined}>{icon}</span>
+      {pending && <Loader2Icon className="absolute animate-spin" />}
+    </span>
+  )
 }
 
 export type SidebarLink = { href: string; label: string; icon: React.ReactNode; count?: number; newTab?: boolean; children?: { href: string; label: string }[] } // children: sub-pages (the area opens the first)
@@ -104,6 +109,8 @@ export function AppSidebar({
                     >
                       {n.newTab ? n.icon : <NavIcon icon={n.icon} />}
                       <span>{n.label}</span>
+                      {/* Collapsed to icons: the count becomes a dot on the icon (the badge is hidden then). */}
+                      {!!n.count && <span aria-hidden className="absolute top-1.5 left-6 hidden size-2 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block" />}
                     </SidebarMenuButton>
                     {!!n.count && <SidebarMenuBadge className="tabular-nums">{n.count}</SidebarMenuBadge>}
                     {/* Sub-pages of the current area only: moving to another area collapses this one. */}
@@ -169,6 +176,10 @@ function UserMenu({ me }: { me: Me }) {
                 <IdCardIcon /> {t("account.memberArea")}
               </DropdownMenuItem>
             )}
+            {/* Desktop only: the keys are for keyboards. */}
+            <DropdownMenuItem className="max-md:hidden" onClick={() => window.dispatchEvent(new Event("shortcuts:open"))}>
+              <KeyboardIcon /> {t("shortcuts.title")}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel className="flex items-center gap-2">
@@ -212,8 +223,14 @@ export function PageTitle({ groups, fallback }: { groups: { items: SidebarLink[]
   return (
     <span className="flex min-w-0 items-center gap-2 text-sm font-medium [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground">
       {parent.icon}
-      <span className="truncate">{parent.label}</span>
-      {sub && <span className="truncate text-muted-foreground">› {sub}</span>}
+      {/* Phones: one line, only the page you're on (the sub-page, else the area). */}
+      <span className={sub ? "truncate max-md:hidden" : "truncate"}>{parent.label}</span>
+      {sub && (
+        <span className="truncate text-muted-foreground max-md:text-foreground">
+          <span className="max-md:hidden">› </span>
+          {sub}
+        </span>
+      )}
     </span>
   )
 }

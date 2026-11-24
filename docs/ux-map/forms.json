@@ -1,0 +1,527 @@
+{
+  "area": "communication",
+  "label": "Kommunikation › Formulare",
+  "module": "forms",
+  "nav": [
+    {
+      "label": "Formulare",
+      "href": "/forms"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/forms",
+      "file": "src/app/(app)/forms/page.tsx",
+      "title": "Formulare (trash: \"Formulare · Papierkorb\")",
+      "purpose": "List public forms with their purpose, status and count of new submissions; create a form.",
+      "permission": "forms.view",
+      "size": "list",
+      "header": {
+        "area": "communication",
+        "menu": [
+          {
+            "label": "Papierkorb / Alle",
+            "key": "forms.trash / forms.all",
+            "target": "/forms?trash=1 | /forms",
+            "permission": "forms.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neues Formular",
+          "key": "forms.new",
+          "href": "?new=1",
+          "permission": "forms.manage",
+          "notes": "hidden in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "new",
+          "meaning": "1 = create sheet"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast (error shown inside the sheet while creating)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Formulare",
+          "kind": "DataTable",
+          "columns": [
+            "Titel",
+            "Zweck (Kontaktformular / Mitgliedsantrag)",
+            "Status (Entwurf / Veröffentlicht / Geschlossen)",
+            "Neue Einsendungen (count badge or –); in trash: 'Wiederherstellen' button"
+          ],
+          "notes": "Row → /forms/<id> (no row link in trash). All forms loaded, no pagination. Trash hint forms.trashHint."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Wiederherstellen",
+          "key": "forms.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restoreForm",
+          "permission": "forms.manage",
+          "result": "→ /forms?trash=1; slug taken → errors.slug_taken"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?new=1",
+          "component": "UrlSheet",
+          "title": "Neues Formular",
+          "fields": [
+            {
+              "name": "title",
+              "label": "Titel",
+              "key": "forms.formTitle",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Mitgliedsantrag'"
+            },
+            {
+              "name": "purpose",
+              "label": "Zweck",
+              "key": "forms.purpose",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "Kontaktformular / Mitgliedsantrag (members module only; default membership when on). Hint forms.purposeHint"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen",
+              "key": "forms.create",
+              "kind": "serverAction",
+              "target": "createForm",
+              "result": "→ /forms/<id> toast forms.created"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/forms/[id]"
+      ],
+      "empty": "'Noch keine Formulare.' (plain text, no <EmptyState>) / trash 'Der Papierkorb ist leer.'",
+      "phone": "Cards; primary as round +.",
+      "uxNotes": [
+        "No <EmptyState> and no search/filter/pagination.",
+        "Two-option purpose uses NativeSelect instead of <Choice> segments.",
+        "Create sheet button is left-aligned SubmitButton (justify-self-start) while email's create sheet aligns right (justify-self-end).",
+        "Default purpose is 'Mitgliedsantrag' whenever the members module is on."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: ListToolbar (search + Status), cards with purpose + status badge + 'n neu' (warning). No change needed."},
+        "job": "Find a form, see which have new submissions, create one.",
+        "phone": "Top bar: Kommunikation › Formulare, ⋯ (Papierkorb). Round + = Neues Formular. Toolbar: search + Status filter. Cards: title + status badge, purpose · 'n neu'.",
+        "desktop": "ListToolbar search · Status. Table: Titel (+ Zweck), Status badge, Neue Einsendungen (warning badge).",
+        "moves": [
+          "⋯ Papierkorb / Alle → unchanged (?trash=1)",
+          "primary Neues Formular → unchanged (?new=1 sheet: a quick create that then opens the form)",
+          "sheet Titel → unchanged",
+          "sheet Zweck NativeSelect → <Choice> segments (Kontaktformular · Mitgliedsantrag), hint unchanged",
+          "sheet Anlegen (left SubmitButton) → <SaveBar label='Formular anlegen' always>",
+          "column Titel → Titel + Zweck muted; column Zweck merged",
+          "column Status → badge colours (Veröffentlicht success, Entwurf secondary, Geschlossen outline)",
+          "column Neue Einsendungen → warning badge with count",
+          "trash Wiederherstellen per row → unchanged; trash hint unchanged",
+          "empty 'Noch keine Formulare.' → <EmptyState> with Neues Formular",
+          "new: search ?q=, Status FilterMenu ?status="
+        ],
+        "kept": "uxNote 4 (membership as default purpose) kept: most orgs using forms collect member applications.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "route": "/forms/[id]",
+      "file": "src/app/(app)/forms/[id]/page.tsx",
+      "title": "Formular (title) › Aufbau",
+      "purpose": "Build the form: ordered elements (fields, text, consent, SEPA mandate) and settings (title, slug, status, texts, tags).",
+      "permission": "forms.view",
+      "size": "record (layout grid max-w-6xl, no <Page>)",
+      "header": {
+        "crumbs": [
+          "Formulare",
+          "<Titel>"
+        ],
+        "badge": "status (Entwurf / Veröffentlicht / Geschlossen)",
+        "actions": [
+          {
+            "label": "Öffentliche Seite",
+            "key": "forms.openPublic",
+            "kind": "link",
+            "target": "<site>/f/<slug> (new tab)",
+            "notes": "only when published"
+          }
+        ],
+        "notes": "Header is rendered by src/app/(app)/forms/[id]/layout.tsx, followed by a tab bar (NavLink): 'Aufbau' (/forms/<id>) · 'Einsendungen' (/forms/<id>/submissions) — forms.tabs.*"
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Felder und Inhalte",
+          "key": "forms.elements",
+          "anchor": "#form-elements",
+          "kind": "custom",
+          "description": "forms.elementsHint / forms.elementsHintMembership",
+          "notes": "Ordered list; each element shows kind label (Feld/Text/Einwilligung/Lastschrift) + name, icon buttons ↑ ↓ 🗑, and its own inline form with a 'Speichern' button.",
+          "fields": [
+            {
+              "name": "label",
+              "label": "Beschriftung (optional)",
+              "key": "forms.label",
+              "type": "text",
+              "component": "Input",
+              "notes": "field elements; placeholder = default field label"
+            },
+            {
+              "name": "help",
+              "label": "Hinweis (optional)",
+              "key": "forms.help",
+              "type": "text",
+              "component": "Input",
+              "notes": "field elements"
+            },
+            {
+              "name": "label",
+              "label": "Text der Einwilligung",
+              "key": "forms.consentText",
+              "type": "textarea",
+              "component": "native textarea",
+              "notes": "consent elements"
+            },
+            {
+              "name": "body",
+              "label": "Text",
+              "key": "forms.textBody",
+              "type": "textarea",
+              "component": "native textarea",
+              "notes": "text elements, plain text"
+            },
+            {
+              "name": "required",
+              "label": "Pflichtfeld",
+              "key": "forms.required",
+              "type": "checkbox",
+              "notes": "field + consent"
+            },
+            {
+              "name": "kind",
+              "label": "Hinzufügen",
+              "key": "forms.addElement",
+              "type": "select",
+              "component": "NativeSelect with optgroup",
+              "notes": "unused contact fields + custom fields (+ membership fields), Text, Einwilligung, SEPA-Lastschriftmandat (membership, once)"
+            }
+          ]
+        },
+        {
+          "title": "Einstellungen",
+          "key": "forms.settings",
+          "anchor": "#form-settings",
+          "kind": "FormCard",
+          "notes": "Aside column; own form with SaveBar.",
+          "fields": [
+            {
+              "name": "title",
+              "label": "Titel",
+              "key": "forms.formTitle",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "slug",
+              "label": "Slug",
+              "key": "forms.slug",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "status",
+              "label": "Status",
+              "key": "forms.status",
+              "type": "choice",
+              "component": "Choice",
+              "required": true,
+              "notes": "Entwurf / Veröffentlicht / Geschlossen"
+            },
+            {
+              "name": "intro",
+              "label": "Einleitung",
+              "key": "forms.intro",
+              "type": "textarea",
+              "component": "native textarea"
+            },
+            {
+              "name": "success_text",
+              "label": "Text nach dem Absenden",
+              "key": "forms.successText",
+              "type": "textarea",
+              "component": "native textarea"
+            },
+            {
+              "name": "tags",
+              "label": "Tags für Einsender:innen",
+              "key": "forms.tags",
+              "type": "tags",
+              "component": "TagSelect (creatable)",
+              "notes": "help forms.tagsHelp"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Nach oben / Nach unten",
+          "key": "forms.moveUp / forms.moveDown",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "moveElement",
+          "permission": "forms.manage"
+        },
+        {
+          "label": "Entfernen",
+          "key": "forms.remove",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "removeElement",
+          "permission": "forms.manage",
+          "confirm": false
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "updateElement",
+          "permission": "forms.manage"
+        },
+        {
+          "label": "Hinzufügen",
+          "key": "forms.add",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addElement",
+          "permission": "forms.manage"
+        },
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveFormSettings",
+          "permission": "forms.manage",
+          "result": "toast forms.saved; slug taken → errors.slug_taken"
+        },
+        {
+          "label": "Formular in den Papierkorb",
+          "key": "forms.toTrash",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "trashForm",
+          "permission": "forms.manage",
+          "confirm": false,
+          "notes": "plain outline button at the very bottom of the page, below the RecordLayout",
+          "result": "→ /forms toast forms.trashed"
+        }
+      ],
+      "links": [
+        "/forms",
+        "/forms/[id]/submissions",
+        "<site>/f/<slug>"
+      ],
+      "phone": "Tab bar scrolls horizontally; settings aside stacks below the element list.",
+      "uxNotes": [
+        "Uses an in-page tab bar (layout NavLinks) for Aufbau/Einsendungen; the design guide says sub-pages go into the sidebar tree, not a tab bar.",
+        "Trash is a plain outline button at the page bottom without confirm, not a red ⋯ item (guide: delete = destructive ⋯ item with confirm).",
+        "Removing an element has no confirm.",
+        "Every element has its own 'Speichern' button plus the settings SaveBar: many save points, and no live preview of the public form.",
+        "Reordering is one server round-trip per step (↑/↓), no drag.",
+        "Public link only appears when published; no copy button, and the slug field shows no full URL.",
+        "Text elements and consent are plain textareas, not the RichTextEditor used in email."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Element rows ran off the right edge on phone and desktop (a long consent label as nowrap text set the grid's min-content width, so ↓ and ✕ were cut off): ol/li are minmax(0,1fr) grids now. Status segments wrapped onto two lines in the rail: equal thirds. Header meta left a dangling '·' when the link wrapped on phones; the public link uses the `link` style."},
+        "job": "Build the form (fields, texts, consents) and its settings, then publish it.",
+        "phone": "Top bar: ‹ Formulare · title, ⋯ (Öffentliche Seite, Einsendungen exportieren, Papierkorb). Header: status badge, meta purpose · public link + copy. Segments Aufbau · Einsendungen (n). Element rows full width (kind, name, ↑ ↓ ✕, inputs), '+ Element hinzufügen' (action sheet), then the settings card, SaveBar at the bottom.",
+        "desktop": "Header with 'Veröffentlichen' as primary for drafts (saves + publishes). Segments under the header. RecordLayout: elements left, Einstellungen right; one form, one SaveBar.",
+        "moves": [
+          "layout tab bar (NavLinks Aufbau · Einsendungen) → <Segments> under the header (record sub-views), Einsendungen with the count of new ones",
+          "header action Öffentliche Seite → meta link (+ CopyButton) and ⋯ item; only when published",
+          "element rows (kind, name) → unchanged look, rows of <ElementRows> inside the one form",
+          "row ↑ / ↓ (one server round trip each) → client buttons, saved with the SaveBar",
+          "row Entfernen (no confirm) → ✕ with confirm forms.confirmRemoveElement, saved with the SaveBar",
+          "row inputs Beschriftung, Hinweis, Text der Einwilligung, Text, Pflichtfeld → unchanged inside the row",
+          "row Speichern per element → removed: everything saves with the one SaveBar (saveForm)",
+          "Hinzufügen NativeSelect + button → '+ Element hinzufügen' dropdown (fields not used yet, Text, Einwilligung, Lastschriftmandat), added client-side",
+          "Einstellungen card: Titel, Slug, Status (Choice), Einleitung, Text nach dem Absenden, Tags → unchanged, in the same form",
+          "SaveBar (settings only) → one SaveBar for elements + settings",
+          "Formular in den Papierkorb (outline button at the bottom, no confirm) → ⋯ red item with confirm forms.confirmTrash",
+          "new: primary 'Veröffentlichen' for drafts (submits the form with publish=1)",
+          "new: ⋯ Einsendungen exportieren (moved from the submissions toolbar)"
+        ],
+        "kept": "uxNote 4 (drag to reorder) and 7 (rich text in text elements) kept: ↑ ↓ work on touch + keyboard; the public form renders plain text.",
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        5
+      ]
+    },
+    {
+      "route": "/forms/[id]/submissions",
+      "file": "src/app/(app)/forms/[id]/submissions/page.tsx",
+      "title": "Formular (title) › Einsendungen",
+      "purpose": "Review submissions; accept (creates member) or reject membership applications.",
+      "permission": "forms.view",
+      "size": "record (shared layout)",
+      "header": {
+        "crumbs": [
+          "Formulare",
+          "<Titel>"
+        ],
+        "notes": "same layout header + tab bar as /forms/[id]"
+      },
+      "urlState": [
+        {
+          "param": "status",
+          "meaning": "all (default) | new | accepted | rejected"
+        },
+        {
+          "param": "page",
+          "meaning": "pagination"
+        },
+        {
+          "param": "sub",
+          "meaning": "<submission id> = detail sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "status",
+              "label": "Alle · Neu · Angenommen · Abgelehnt",
+              "component": "hand-built chip nav"
+            }
+          ],
+          "notes": "ExportMenu (entity submissions) on the right."
+        },
+        {
+          "title": "Einsendungen",
+          "kind": "DataTable",
+          "columns": [
+            "Person",
+            "E-Mail",
+            "Eingegangen",
+            "Status"
+          ],
+          "notes": "Row → ?sub=<id>"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Exportieren",
+          "where": "toolbar",
+          "kind": "download",
+          "target": "/export/submissions?form=<id>&format="
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?sub=<id>",
+          "component": "UrlSheet",
+          "title": "<person name>",
+          "description": "received date (full)",
+          "fields": [],
+          "notes": "Status badge, buttons 'Zum Kontakt' (/contacts/<id>) and 'Zur Mitgliedschaft' (/members/<id>) when linked, DetailList of contact data, custom values (raw keys), membership type, desired start, IBAN, account holder, consents (✓/✗).",
+          "actions": [
+            {
+              "label": "Annehmen / Als Mitglied aufnehmen",
+              "key": "forms.accept / forms.acceptMember",
+              "kind": "serverAction",
+              "target": "acceptSubmission",
+              "permission": "forms.manage",
+              "confirm": false,
+              "notes": "only status new",
+              "result": "toast forms.accepted, stays in sheet"
+            },
+            {
+              "label": "Ablehnen",
+              "key": "forms.reject",
+              "kind": "serverAction",
+              "target": "rejectSubmission",
+              "permission": "forms.manage",
+              "confirm": false
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/contacts/[id]",
+        "/members/[id]",
+        "/export/submissions"
+      ],
+      "empty": "'Noch keine Einsendungen.'",
+      "uxNotes": [
+        "Default filter is 'Alle' although the forms list advertises 'Neue Einsendungen' counts; new ones are not pre-filtered.",
+        "Accept/Reject (creates a membership or rejects an applicant) have no confirmation; buttons are plain side by side, main action not at the thumb on phones.",
+        "Custom field values in the sheet are labelled by their raw key, not the field label.",
+        "Status filter is a hand-built chip nav; export uses <ExportMenu> in the toolbar while other lists put export in the header ⋯."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards squeezed email + full date + badge into one cut-off line: now 'TT.MM., HH:MM · badge' (email in the sheet/table). Sheet: answers were in database key order (E-Mail, Telefon, Nachname, Vorname): now in field order, email as mailto and phone as tel links; consents show 'Einwilligung: ✓ text' instead of a lone ✓ as the label."},
+        "job": "Work through new submissions: read one, accept or reject it.",
+        "phone": "Same header + Segments. Toolbar: Segments Neu · Angenommen · Abgelehnt · Alle. Cards: person + status badge, email, date. Sheet: badge, Verknüpft rows (Kontakt, Mitgliedschaft), DetailList of answers by label, buttons stacked full width at the bottom (Annehmen at the thumb).",
+        "desktop": "Toolbar Segments; table Person, E-Mail, Eingegangen, Status; sheet with actions in the title row.",
+        "moves": [
+          "status chips (hand-built) → <Segments>; default 'Neu' when there are new ones, else Alle (?status=all keeps Alle)",
+          "ExportMenu in the toolbar → header ⋯ Exportieren",
+          "columns → unchanged; status badge colours (Neu warning, Angenommen success, Abgelehnt secondary)",
+          "sheet badge → sheet meta",
+          "sheet Zum Kontakt / Zur Mitgliedschaft buttons → <LinkRows> 'Verknüpft'",
+          "sheet DetailList: custom values by raw key → by the field's label",
+          "sheet Annehmen / Als Mitglied aufnehmen → confirm (forms.confirmAccept / confirmAcceptMember), main action at the bottom on phones",
+          "sheet Ablehnen → confirm forms.confirmReject",
+          "Pager → unchanged"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "research": "Tally / Typeform / Fillout: the builder is one canvas of blocks you edit in place, add with '+' (or '/'), reorder and delete per block (asks first when it has answers); publish is the main button; Results/Submissions is a tab with 'new' marked; one submission opens in a side panel with every answer by its label. Taken: Aufbau · Einsendungen as record Segments, elements as inline rows saved with one SaveBar, '+ Element' menu, 'Veröffentlichen' as the primary of a draft, submissions open on 'Neu'.",
+  "navRedesign": {
+    "sidebar": "Kommunikation = E-Mails · Formulare (unchanged entry)",
+    "label": "Formulare"
+  }
+}

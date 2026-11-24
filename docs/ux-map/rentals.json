@@ -1,0 +1,1364 @@
+{
+  "area": "rentals",
+  "label": "Vermietung",
+  "module": "rentals",
+  "research": "Airbnb host app (2025 rebuild: Today · Calendar · Listings · Messages; a reservation opens on its state: guest, dates, payout, with the next action – accept a request, message – on top; the calendar is per listing with a multi-listing view), Booking.com extranet (reservations list filtered by arrival/stay/departure + a calendar per room type), Lodgify/Smoobu (one multi-calendar with a row per unit, booking detail as a page with guest, dates, price, deposit), Skedda/Robin (spaces as a list + a day/week grid per space; empty slot = book), long-term property management (Buildium, Hausify/objego): a lease page shows term, rent, deposit, tenants and key dates (start, notice deadline, end) with 'Kündigung erfassen' as an action, documents next to it. Empty states offer the one action (Add listing / Add unit). Taken: objects as the area home (what's free / with whom), Vergaben as the list with a Kalender view switch (Belegung), the rental page on its state (Stats: Laufzeit/Frist/Miete/Kaution; next step as primary: Bestätigen, Kündigung eintragen, Zurücknehmen), properties edited in place, people + keys as main lists, status changes as actions with confirmation; object page per patterns.md §8.",
+  "navRedesign": {
+    "sidebar": "Vermietung = Objekte · Vergaben. Belegung → view switch 'Liste · Kalender' on Vergaben (route /rentals/list/calendar, old /rentals/calendar redirects). No area settings (no gear).",
+    "label": "Objekte (was 'Übersicht'); Belegung = the Kalender view of Vergaben",
+    "urls": "trash ?trash=1 on /rentals and /rentals/list (old ?view=trash redirects); object page sheets ?new=rate, ?edit=<rate id> (old ?rate= redirects), ?new=children (old ?several=1), ?new=handout(&item=<child>) (old ?handout=), ?edit=parent; rental page ?new=person, ?edit=term, ?edit=notice, ?new=contract&template=<id> (old ?contract= redirects); Vergaben ?q= (object name), ?contact= filter chip."
+  },
+  "nav": [
+    {
+      "label": "Übersicht",
+      "key": "nav.overview",
+      "href": "/rentals",
+      "permission": "rentals.view"
+    },
+    {
+      "label": "Vergaben",
+      "key": "rentals.tabs.rentals",
+      "href": "/rentals/list",
+      "permission": "rentals.view"
+    },
+    {
+      "label": "Belegung",
+      "key": "rentals.tabs.calendar",
+      "href": "/rentals/calendar",
+      "permission": "rentals.view"
+    }
+  ],
+  "pages": [
+    {
+      "route": "/rentals",
+      "redesign": {
+        "job": "See at a glance what is free and what is given out (to whom, until when, for how much), open an object, add one.",
+        "phone": "Top bar 'Objekte' (⋯: Export, Papierkorb). Toolbar: search full width, then a scroll row Kategorie filter + Alle · Frei · Vergeben. Cards: name + status badge, one line 'Art · Gehört zu' / who + period. Round + = Neues Objekt.",
+        "desktop": "Header meta '3 von 5 vermietet · 1.200 € Miete pro Monat', ⋯ (Export, Papierkorb), primary Neues Objekt. Toolbar search · Kategorie · segments right. Table Name, Status, Gehört dazu, Miete.",
+        "moves": [
+          "header meta rented/total + monthly rent → kept",
+          "⋯ Exportieren → kept",
+          "⋯ Papierkorb → kept (?trash=1); in the trash ⋯ 'Zurück zu den Objekten' (no second 'Alle')",
+          "primary Neues Objekt → kept, hidden in the trash",
+          "toolbar q → <ListToolbar search>",
+          "FilterMenu Kategorie → kept",
+          "Segments Alle · Frei · Vergeben → kept, right",
+          "column Name (+ Art · parent) → kept",
+          "column Status → badge from rentals/badges.tsx (Frei success, Inaktiv secondary, Verloren destructive), who + period as text (no link inside the row: the row opens the object, the object shows the rental)",
+          "column Gehört dazu → kept",
+          "column Miete → kept, right-aligned tabular",
+          "row Wiederherstellen (trash) → kept",
+          "EmptyState + Neues Objekt → kept; filtered 'Keine Objekte gefunden.'; trash hint + empty text kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards had four lines with a cut-off 'ab 19.11.2026: Emma Brau' and a dangling '·': now one line 'badge · tenant' or 'Frei · ab 21. Nov.' (rentals.nextShort), price on the right; the long status text stays in the table and in the trash the restore button stays on phones."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        3
+      ],
+      "file": "src/app/(app)/rentals/page.tsx",
+      "title": "Vermietung (trash: \"Vermietung · Papierkorb\")",
+      "purpose": "Objects (rooms, studios, vehicles, items, keys) with what's going on now: free, rented to whom until when, rent; entry to each object.",
+      "permission": "rentals.view (layout also requires the rentals module)",
+      "size": "list",
+      "header": {
+        "area": "rentals",
+        "meta": "'{count} von {total} vermietet · {amount} Miete pro Monat' (top-level rentable/lendable objects; monthly + yearly/12 rents)",
+        "menu": [
+          {
+            "label": "Exportieren",
+            "target": "/export/rental_objects?family=…",
+            "notes": "MenuExport with family filter"
+          },
+          {
+            "label": "Papierkorb | Alle",
+            "key": "rentals.trash / rentals.all",
+            "target": "/rentals?trash=1 | /rentals",
+            "permission": "rentals.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neues Objekt",
+          "key": "rentals.newObject",
+          "href": "/rentals/new",
+          "permission": "rentals.manage",
+          "notes": "hidden in trash"
+        }
+      },
+      "urlState": [
+        {
+          "param": "q",
+          "meaning": "search object name (client-side filter over ≤ 1000 objects)"
+        },
+        {
+          "param": "family",
+          "meaning": "FilterMenu Kategorie: place | vehicle | item | access | other; also lists child objects"
+        },
+        {
+          "param": "view",
+          "meaning": "Segments: all (default) | free | busy"
+        },
+        {
+          "param": "trash",
+          "meaning": "1 = trash view (rentals.manage)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "q",
+              "label": "Objekte suchen…",
+              "key": "rentals.search",
+              "type": "search",
+              "component": "SearchBox"
+            },
+            {
+              "name": "family",
+              "label": "Kategorie",
+              "key": "rentals.filterFamily",
+              "type": "select",
+              "component": "FilterMenu",
+              "notes": "Orte & Räume, Fahrzeuge, Gegenstände, Zugang, Anderes"
+            },
+            {
+              "name": "view",
+              "label": "Status",
+              "key": "rentals.status",
+              "type": "segments",
+              "component": "Segments: Alle · Frei · Vergeben"
+            }
+          ],
+          "notes": "Toolbar hidden when there are no objects and in trash."
+        },
+        {
+          "title": "Objekte",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ Art · parent)",
+            "Status (Frei + 'ab {date}: {who}' | tenant names link → /rentals/r/<id> + period | 'gehört fest dazu' | Inaktiv/Verloren | Wiederherstellen in trash)",
+            "Gehört dazu ('{count} (vergeben: {out})', only when any object has a parent)",
+            "Miete (current price + 'Kaution {amount}', or the tariff muted)"
+          ],
+          "notes": "Without search/family only top-level objects. Row → /rentals/<id> (not in trash). Trash hint 'Gelöschtes wird nach 30 Tagen endgültig entfernt.'"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Wiederherstellen",
+          "key": "rentals.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restoreObjectAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "→ /rentals/<id>, toast 'Wiederhergestellt.'"
+        }
+      ],
+      "links": [
+        "/rentals/new",
+        "/rentals/[id]",
+        "/rentals/r/[id]",
+        "/export/rental_objects"
+      ],
+      "empty": "EmptyState 'Noch keine Objekte.' / 'Lege an, was ihr vermietet oder ausgebt: Räume, Studios, Stellplätze, Fahrzeuge, Geräte – und die Schlüssel dazu.' + 'Neues Objekt'. Filtered: 'Keine Objekte gefunden.' Trash: 'Der Papierkorb ist leer.'",
+      "phone": "DataTable cards; primary round +.",
+      "uxNotes": [
+        "Within one area the trash is ?trash=1 on objects but ?view=trash on Vergaben.",
+        "Trash menu item back is labelled 'Alle' (rentals.all), the same word as the 'Alle' segment.",
+        "No pagination (≤ 1000 objects, code comment ponytail); search is substring on name only.",
+        "No settings page for the area (no gear, no 'Einstellungen' nav entry) unlike other areas."
+      ]
+    },
+    {
+      "route": "/rentals/new",
+      "redesign": {
+        "job": "Create an object with what it is and where it belongs; how it is given out follows from its kind and is changed in place on the object page.",
+        "phone": "NewPage, one column: Name, Art, Gehört zu (search picker), Ort, Beschreibung, then 'Weitere Angaben' (custom fields); SaveBar 'Objekt anlegen'.",
+        "desktop": "Same form, form width.",
+        "moves": [
+          "Name → kept",
+          "Art (grouped select of ~30 kinds) → kept as grouped select (Choice would lose the groups)",
+          "Gehört zu (select of all objects) → RecordPicker with server search (searchObjects); ?parent= pre-picks",
+          "Ort → Choice, kept",
+          "Beschreibung → kept",
+          "Weitere Angaben (custom fields) → own key rentals.moreFields",
+          "Vergabe options (rentable/lendable/included/capacity/deposit) → not on create: family defaults, then edited in place on the object page",
+          "SaveBar Objekt anlegen → kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: name, kind, parent picker, description, SaveBar. No change."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ],
+      "file": "src/app/(app)/rentals/new/page.tsx",
+      "title": "Neues Objekt",
+      "purpose": "Create an object (name, kind, parent, location, description, custom fields); ?parent=&kind= preselect from an object page.",
+      "permission": "rentals.manage",
+      "size": "form (NewPage)",
+      "header": {
+        "crumbs": [
+          "Vermietung",
+          "Neues Objekt"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "parent",
+          "meaning": "preselect 'Gehört zu'"
+        },
+        {
+          "param": "kind",
+          "meaning": "preselect Art"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Objekt",
+          "anchor": "#object",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "rentals.name",
+              "type": "text",
+              "component": "Input",
+              "required": true
+            },
+            {
+              "name": "kind",
+              "label": "Art",
+              "key": "rentals.kind",
+              "type": "select",
+              "component": "NativeSelect with optgroups per family",
+              "notes": "default room; 'Anderes' last"
+            },
+            {
+              "name": "parent_id",
+              "label": "Gehört zu",
+              "key": "rentals.parent",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "'– oberste Ebene –' + all objects (≤ 1000) as 'Name · Art'"
+            },
+            {
+              "name": "location_id",
+              "label": "Ort",
+              "key": "rentals.location",
+              "type": "choice",
+              "component": "Choice",
+              "notes": "only when org has locations"
+            },
+            {
+              "name": "description",
+              "label": "Beschreibung",
+              "key": "rentals.description",
+              "type": "textarea",
+              "component": "Textarea"
+            }
+          ]
+        },
+        {
+          "title": "Weitere Angaben",
+          "anchor": "#custom",
+          "kind": "FormCard",
+          "notes": "CustomFieldInputs; only when custom fields for rental_objects exist; title uses membership.moreFields"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Objekt anlegen",
+          "key": "rentals.createObject",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveObjectAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "→ /rentals/<id>, toast 'Angelegt.'"
+        }
+      ],
+      "links": [
+        "/rentals"
+      ],
+      "uxNotes": [
+        "Rentable/lendable/capacity/deposit ('Vergabe' card) are not on the create form; they come from family defaults and must be fixed on the object page afterwards.",
+        "Custom fields card title borrows the members key membership.moreFields ('Weitere Angaben').",
+        "Parent picker is a NativeSelect of every object (incl. keys)."
+      ]
+    },
+    {
+      "route": "/rentals/[id]",
+      "redesign": {
+        "job": "One object: is it free or with whom, what's booked next, what belongs to it (keys, who holds them), its rates; change a property in place.",
+        "phone": "Top bar ‹ Objekte · name (⋯: Unterobjekt mit allen Angaben, Papierkorb). Title + Art badge + status badge, meta Gehört zu · Ort. Stats 2×2: Jetzt (Frei / who), Nächste Vergabe, Miete, Gehört dazu. Eigenschaften (inline). Vergaben (current, 'Frühere (n)' collapsed). Gehört dazu rows with Ausgeben / Zurücknehmen. Tarife. Verknüpft. Dateien. Round + = Mietvertrag anlegen / Buchen / Ausleihen / Ausgeben.",
+        "desktop": "Header as phone + primary. Stats row. Main: Vergaben, Gehört dazu, Tarife. Right rail: Eigenschaften (each value edited in place), Verknüpft, Dateien.",
+        "moves": [
+          "crumbs Vermietung › (Parent) › Name → Objekte › (Parent) › Name",
+          "badge Art → kept + status badge (Frei/Vergeben/Inaktiv/Verloren)",
+          "meta status text → Stats 'Jetzt'; meta = Gehört zu · Ort",
+          "⋯ Unterobjekt anlegen → kept as a link inside the ?new=children sheet ('Einzeln mit allen Angaben anlegen'), not a third path in ⋯",
+          "⋯ In den Papierkorb → kept (confirm)",
+          "primary Mietvertrag anlegen | Buchen | Ausleihen | Ausgeben → kept (Ausgeben opens ?new=handout)",
+          "section Vergaben current + Frühere → main 'Vergaben' (rows: people, period, price, state badge, contract files); empty 'Noch keine Vergaben.'",
+          "row Zurück (lendable) → 'Zurücknehmen' with confirm",
+          "section Gehört dazu + '+ Schlüssel' (instant) + '+ mehrere…' → one AddLink 'Hinzufügen' → ?new=children sheet (Wie viele? default 1, Art, Name davor, Kaution); no instant create",
+          "Gehört dazu row Ausgeben → ?new=handout&item=<child>; Zurück → 'Zurücknehmen' (confirm)",
+          "section Tarife + '+ Tarif hinzufügen' → main 'Tarife', AddLink → ?new=rate; rows → ?edit=<rate id>",
+          "Dateien → right rail",
+          "aside ObjectForm (Name, Art, Gehört zu, Ort, Beschreibung, Status) → Eigenschaften inline (patchRentalObject): Name, Art (choice with filter), Ort, Status, Beschreibung; Gehört zu → ?edit=parent compact sheet with search picker",
+          "aside Vergabe card (Vermietbar, Wird ausgegeben, Gehört fest dazu, Gleichzeitig vergebbar, Kaution) → Eigenschaften inline (ja/nein choices, number, money)",
+          "aside Weitere Angaben → custom fields inline (customInlineItems)",
+          "SaveBar Speichern → removed: every value saves on its own",
+          "sheet ?handout= (An, Beginn, Kaution, Notiz, Ausgeben) → ?new=handout(&item=); same fields, SaveBar 'Ausgeben'",
+          "sheet ?several=1 (Wie viele?, Art, Name davor, Kaution, Anlegen) → ?new=children",
+          "sheet ?rate= (Name, Preis, Abrechnung, Kaution, Mindestens, Laufzeit, Verlängert sich um, Kündigungsfrist, Aktiv, Speichern) → ?new=rate / ?edit=<id>; Abrechnung Choice; term fields one column on phones, three from sm",
+          "Tarif löschen (ghost button, no confirm) → sheet ⋯ red 'Tarif löschen' with confirm",
+          "Verknüpft (new): linked projects (project_links), parent object"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Eigenschaften (10 values) pushed Vergaben far down on phones: phoneLimit 4 + 'weitere anzeigen'. Empty money/number values were filled input boxes in dark mode ('Leer €' box, '120' box): InlineField ghost inputs are transparent in dark mode too, and an empty amount shows 'Leer' as text until clicked (shared component)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6
+      ],
+      "file": "src/app/(app)/rentals/[id]/page.tsx",
+      "title": "<Object name>",
+      "purpose": "One object: its rentals (current/planned, earlier), what belongs to it (keys with holder, rooms, fixtures) with hand-out/return, rates, files; object details editable on the right.",
+      "permission": "rentals.view (edit: rentals.manage)",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Vermietung",
+          "(<Parent>)",
+          "<Name>"
+        ],
+        "badge": "Art (kind)",
+        "meta": "Inaktiv/Verloren | 'gehört fest dazu' | 'Vergeben an {who}' | 'Frei'",
+        "menu": [
+          {
+            "label": "Unterobjekt anlegen",
+            "key": "rentals.addSub",
+            "target": "/rentals/new?parent=<id>",
+            "permission": "rentals.manage"
+          },
+          {
+            "label": "In den Papierkorb",
+            "key": "rentals.toTrash",
+            "target": "trashObjectAction (MenuSubmit destructive)",
+            "permission": "rentals.manage"
+          }
+        ],
+        "primary": {
+          "label": "Mietvertrag anlegen | Buchen | Ausleihen | Ausgeben",
+          "key": "rentals.newWord.<word> / rentals.handOut",
+          "href": "/rentals/r/new?object=<id> (rentable) | ?handout=<id> (lendable only)",
+          "permission": "rentals.manage",
+          "notes": "word depends on family + first rate unit; none when inactive/included"
+        }
+      },
+      "urlState": [
+        {
+          "param": "handout",
+          "meaning": "<object id> = hand-out sheet (this object or a child)"
+        },
+        {
+          "param": "several",
+          "meaning": "1 = add several children sheet"
+        },
+        {
+          "param": "rate",
+          "meaning": "new | <rate id> = rate sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "<Mietvertrag|Buchung|Ausleihe|Ausgabe> · Aktuell",
+          "anchor": "#rentals",
+          "kind": "custom",
+          "notes": "rows: people line, period, price, state badge, contract files (→ /files/<id>), 'Zurück' for running loans; collapsed <details> 'Frühere (n)'. Empty 'Noch keine Vergaben.' Shown when rentable/lendable or has rentals."
+        },
+        {
+          "title": "Gehört dazu (n)",
+          "anchor": "#children",
+          "kind": "custom",
+          "notes": "card actions: '+ <Schlüssel|…>' (creates one child at once) and '+ mehrere…' (?several=1). Rows → /rentals/<child>; status 'bei {who} seit {date}' / 'da' / 'verloren' / 'gehört fest dazu'; per row 'Ausgeben' (→ ?handout=<child>) or 'Zurück'. Empty 'Nichts – z. B. Schlüssel, Räume oder feste Einrichtung hier anlegen.'"
+        },
+        {
+          "title": "Tarife",
+          "anchor": "#rates",
+          "kind": "custom",
+          "notes": "only rentable; description rentals.ratesHint; card action '+ Tarif hinzufügen'; rows → ?rate=<id> with summary (price/unit, term, renewal, notice, deposit), 'Inaktiv' badge. Empty 'Noch keine Tarife.'"
+        },
+        {
+          "title": "Dateien",
+          "kind": "FileList",
+          "notes": "entity rental_objects"
+        },
+        {
+          "title": "Objekt (aside)",
+          "anchor": "#object",
+          "kind": "FormCard",
+          "notes": "ObjectForm: same fields as /rentals/new + Status Choice (Aktiv/Inaktiv/Verloren)"
+        },
+        {
+          "title": "Vergabe (aside)",
+          "anchor": "#options",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "rentable",
+              "label": "Vermietbar (mit Tarifen)",
+              "key": "rentals.rentable",
+              "type": "checkbox",
+              "component": "native checkbox"
+            },
+            {
+              "name": "lendable",
+              "label": "Wird ausgegeben (z. B. Schlüssel, Gerät)",
+              "key": "rentals.lendable",
+              "type": "checkbox",
+              "component": "native checkbox"
+            },
+            {
+              "name": "included",
+              "label": "Gehört fest zum übergeordneten Objekt (wird nur mit ihm vergeben)",
+              "key": "rentals.included",
+              "type": "checkbox",
+              "component": "native checkbox"
+            },
+            {
+              "name": "capacity",
+              "label": "Gleichzeitig vergebbar",
+              "key": "rentals.capacity",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "hint rentals.capacityHint"
+            },
+            {
+              "name": "deposit",
+              "label": "Kaution",
+              "key": "rentals.deposit",
+              "type": "money",
+              "component": "TypedInput:money"
+            }
+          ]
+        },
+        {
+          "title": "Weitere Angaben (aside)",
+          "anchor": "#custom",
+          "kind": "FormCard"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveObjectAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "+ <Kind>",
+          "key": "rentals.addChild",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addChildrenAction count=1",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast '1 Objekt angelegt.'"
+        },
+        {
+          "label": "Zurück",
+          "key": "rentals.giveBack",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "returnAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast 'Zurückgenommen.'"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "rentals.toTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashObjectAction",
+          "permission": "rentals.manage",
+          "confirm": true,
+          "result": "→ /rentals, toast 'Objekt in den Papierkorb verschoben.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?handout=<object id>",
+          "component": "UrlSheet",
+          "title": "<Name> · Ausgeben",
+          "fields": [
+            {
+              "name": "contact_id",
+              "label": "An",
+              "key": "rentals.handOutTo",
+              "type": "contact",
+              "component": "ContactPicker"
+            },
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "rentals.starts",
+              "type": "date",
+              "component": "TypedInput:date",
+              "notes": "default today"
+            },
+            {
+              "name": "deposit",
+              "label": "Kaution",
+              "key": "rentals.deposit",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "default object deposit"
+            },
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "rentals.note",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Ausgeben",
+              "key": "rentals.handOut",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "handOutAction",
+              "confirm": false,
+              "result": "toast 'Ausgegeben.'; a child handed out while the object is rented is attached to that rental"
+            }
+          ]
+        },
+        {
+          "param": "?several=1",
+          "component": "UrlSheet",
+          "title": "+ mehrere",
+          "fields": [
+            {
+              "name": "count",
+              "label": "Wie viele?",
+              "key": "rentals.howMany",
+              "type": "number",
+              "component": "TypedInput:number",
+              "required": true,
+              "notes": "default 4, max 100"
+            },
+            {
+              "name": "kind",
+              "label": "Art",
+              "key": "rentals.kind",
+              "type": "select",
+              "component": "NativeSelect"
+            },
+            {
+              "name": "prefix",
+              "label": "Name/Nummer davor",
+              "key": "rentals.prefix",
+              "type": "text",
+              "component": "Input",
+              "notes": "hint rentals.prefixHint (A-1, A-2 …)"
+            },
+            {
+              "name": "deposit",
+              "label": "Kaution",
+              "key": "rentals.deposit",
+              "type": "money",
+              "component": "TypedInput:money"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Anlegen",
+              "key": "rentals.addChildren",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "addChildrenAction",
+              "confirm": false,
+              "result": "toast '{count} Objekte angelegt.'"
+            }
+          ]
+        },
+        {
+          "param": "?rate=new | ?rate=<id>",
+          "component": "UrlSheet",
+          "title": "Tarif hinzufügen | <Rate name>",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "rentals.rateName",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Langzeit, Stunde, Wochenende'"
+            },
+            {
+              "name": "price",
+              "label": "Preis",
+              "key": "rentals.price",
+              "type": "money",
+              "component": "TypedInput:money",
+              "required": true
+            },
+            {
+              "name": "unit",
+              "label": "Abrechnung",
+              "key": "rentals.unit",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "pro Stunde/Tag/Woche/Monat/Jahr/einmalig"
+            },
+            {
+              "name": "deposit",
+              "label": "Kaution",
+              "key": "rentals.deposit",
+              "type": "money",
+              "component": "TypedInput:money"
+            },
+            {
+              "name": "min_units",
+              "label": "Mindestens",
+              "key": "rentals.minUnits",
+              "type": "number",
+              "component": "TypedInput:number"
+            },
+            {
+              "name": "term_months",
+              "label": "Laufzeit in Monaten",
+              "key": "rentals.termMonths",
+              "type": "number",
+              "component": "TypedInput:number",
+              "notes": "fieldset 'Nur bei monatlich/jährlich'"
+            },
+            {
+              "name": "renew_months",
+              "label": "Verlängert sich um (Monate)",
+              "key": "rentals.renewMonths",
+              "type": "number",
+              "component": "TypedInput:number"
+            },
+            {
+              "name": "notice_months",
+              "label": "Kündigungsfrist (Monate)",
+              "key": "rentals.noticeMonths",
+              "type": "number",
+              "component": "TypedInput:number"
+            },
+            {
+              "name": "active",
+              "label": "Aktiv",
+              "key": "rentals.rateActive",
+              "type": "checkbox",
+              "component": "native checkbox",
+              "notes": "edit only"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern | Tarif hinzufügen",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveRateAction",
+              "confirm": false,
+              "result": "toast 'Tarif gespeichert.'"
+            },
+            {
+              "label": "Tarif löschen",
+              "key": "rentals.deleteRate",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "deleteRateAction",
+              "confirm": false,
+              "result": "toast 'Tarif gelöscht.'"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/rentals",
+        "/rentals/new",
+        "/rentals/r/new",
+        "/rentals/r/[id]",
+        "/rentals/[id] (children, parent)",
+        "/files/[id]"
+      ],
+      "phone": "RecordLayout: object form (aside) below rentals, children, rates and files.",
+      "uxNotes": [
+        "The record's own edit form sits in the aside while lists fill the main column (inverse of other record pages, e.g. HR, rentals/r).",
+        "'+ Schlüssel' creates an object immediately on click (no sheet, no undo besides trash).",
+        "'Zurück' (return a key/item) and 'Tarif löschen' run without confirm; 'Tarif löschen' is a ghost red button, not a ⋯ item.",
+        "Rate term fields sit in a 3-column grid without a phone breakpoint (grid-cols-3), likely cramped at 360px.",
+        "Primary action label changes per object (Mietvertrag anlegen / Buchen / Ausleihen / Ausgeben), and lendable objects open a sheet while rentable ones open a page.",
+        "Three sheet params on one page (?handout, ?several, ?rate) instead of ?new=<thing> / ?edit=<id>.",
+        "'Unterobjekt anlegen' (⋯) and '+ <Kind>' / '+ mehrere…' (card) are three paths to add children."
+      ]
+    },
+    {
+      "route": "/rentals/list",
+      "redesign": {
+        "job": "Work through all rentals: what runs now, what is planned, open requests; switch to the calendar (Belegung).",
+        "phone": "Top bar 'Vergaben' (⋯: Export, Papierkorb). Toolbar: search (object), scroll row Laufend · Geplant · Anfragen · Beendet · Alle + Kategorie + Liste · Kalender. Cards: object + state badge, people · period. Round + = Neue Vergabe.",
+        "desktop": "Toolbar search, status segments, Kategorie, Liste · Kalender right. Table Objekt, Personen, Zeitraum, Preis (right), Status; bulk export / trash.",
+        "moves": [
+          "⋯ Exportieren → kept (with filters)",
+          "⋯ Papierkorb → ?trash=1 (old ?view=trash redirects); back item 'Zurück zu den Vergaben'",
+          "primary Neue Vergabe → kept",
+          "Segments status → kept",
+          "FilterMenu Kategorie → kept",
+          "new: search by object name (?q=), ?contact= chip (from the contact page)",
+          "new: Liste · Kalender view switch (Kalender = /rentals/list/calendar)",
+          "table columns → kept; Preis right-aligned; state badges via rentals/badges.tsx",
+          "bulk Exportieren / In den Papierkorb (confirm) → kept",
+          "row Wiederherstellen (trash) → kept",
+          "empty 'Noch keine Vergaben.' → EmptyState with Neue Vergabe when nothing exists; filtered: 'Keine Vergaben in dieser Ansicht.'"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Phone cards cut the state badge ('Lea Kleir · 03.05.2( · |'): now state badge first, then the main tenant, and the start ('20. Nov., 18:00') only for what is still to come; full period and all people stay in the table."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ],
+      "file": "src/app/(app)/rentals/list/page.tsx",
+      "title": "Vergaben (trash: \"Vergaben · Papierkorb\")",
+      "purpose": "All rentals (contracts, bookings, loans, handouts) across objects: running, planned, requests, ended; export, bulk trash, restore.",
+      "permission": "rentals.view",
+      "size": "list",
+      "header": {
+        "area": "rentals",
+        "menu": [
+          {
+            "label": "Exportieren",
+            "target": "/export/rentals?view=&family="
+          },
+          {
+            "label": "Papierkorb | Laufend",
+            "key": "rentals.trash / rentals.views.current",
+            "target": "/rentals/list?view=trash | /rentals/list",
+            "permission": "rentals.manage"
+          }
+        ],
+        "primary": {
+          "label": "Neue Vergabe",
+          "key": "rentals.newRentalAny",
+          "href": "/rentals/r/new",
+          "permission": "rentals.manage",
+          "notes": "goes to the object picker first"
+        }
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "current (default) | upcoming | requests | ended | all | trash"
+        },
+        {
+          "param": "family",
+          "meaning": "FilterMenu Kategorie"
+        },
+        {
+          "param": "page",
+          "meaning": "Pager"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "view",
+              "label": "Status",
+              "key": "rentals.stateCol",
+              "type": "segments",
+              "component": "Segments: Laufend · Geplant · Anfragen · Beendet · Alle"
+            },
+            {
+              "name": "family",
+              "label": "Kategorie",
+              "key": "rentals.filterFamily",
+              "type": "select",
+              "component": "FilterMenu"
+            }
+          ],
+          "notes": "hidden in trash"
+        },
+        {
+          "title": "Vergaben",
+          "kind": "DataTable",
+          "columns": [
+            "Objekt (+ Art)",
+            "Personen",
+            "Zeitraum",
+            "Preis",
+            "Status (badge Anfrage/Storniert/Kommend/Läuft/Beendet; Wiederherstellen in trash)"
+          ],
+          "notes": "row → /rentals/r/<id>; tick boxes for rentals.manage"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Ausgewählte exportieren",
+          "key": "common.exportSelected",
+          "where": "bulk",
+          "kind": "download",
+          "target": "GET /export/rentals?format=xlsx&ids=…",
+          "confirm": false
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "common.toTrash",
+          "where": "bulk",
+          "kind": "confirm",
+          "target": "bulkTrashRentals",
+          "permission": "rentals.manage",
+          "confirm": true,
+          "result": "toast common.bulkTrashed"
+        },
+        {
+          "label": "Wiederherstellen",
+          "key": "rentals.restore",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "restoreRentalAction",
+          "permission": "rentals.manage",
+          "confirm": false
+        }
+      ],
+      "links": [
+        "/rentals/r/[id]",
+        "/rentals/r/new",
+        "/export/rentals"
+      ],
+      "empty": "'Noch keine Vergaben.' (same text for every view and filter; no EmptyState)",
+      "phone": "DataTable cards without tick boxes.",
+      "uxNotes": [
+        "No search box (other lists have SearchBox).",
+        "Empty text 'Noch keine Vergaben.' also shows when a filter/view simply has no match.",
+        "Trash toggle back-label 'Laufend' instead of 'Zurück zur Liste'/'Alle'."
+      ]
+    },
+    {
+      "route": "/rentals/calendar",
+      "redesign": {
+        "job": "See occupancy over time per object; click a booking to open it, an empty slot to book.",
+        "phone": "Vergaben with Kalender selected: PhoneCalendar (week strip + day list, Monat), '+' on a day books there. Round + = Neue Vergabe.",
+        "desktop": "Vergaben header + toolbar with Liste · Kalender; calendar month / week / per object / list.",
+        "moves": [
+          "route /rentals/calendar → /rentals/list/calendar (redirect), sidebar entry removed (view switch on Vergaben)",
+          "header description → removed (area pages show none)",
+          "new: primary Neue Vergabe",
+          "calendar entries, colours (request lighter), readOnly, slot → /rentals/r/new?start&end(&resource) → kept"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Now /rentals/list/calendar (Liste · Kalender). Phone: the long-term contract's day row read '3.5. 01:00 – 3.5. 01:00' (same day, different years): now '3.5.2026 – 3.5.2027'; its dots only on start and end (shared phone calendar)."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1
+      ],
+      "file": "src/app/(app)/rentals/calendar/page.tsx",
+      "title": "Belegung",
+      "purpose": "Occupancy of rentable objects (per-object columns or one calendar); click opens a rental, empty slot/drag starts a new booking.",
+      "permission": "rentals.view (create: rentals.manage)",
+      "size": "list",
+      "header": {
+        "area": "rentals",
+        "description": "Belegung der vermietbaren Objekte. Klick auf eine Vergabe öffnet sie, Klick auf einen freien Platz legt eine Buchung an. (rentals.calendarHint)"
+      },
+      "urlState": [
+        {
+          "param": "view",
+          "meaning": "resource | month (default) | week | agenda"
+        },
+        {
+          "param": "date",
+          "meaning": "focus date"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Belegung",
+          "kind": "Calendar",
+          "notes": "entries '<Objekt> · <Person> (Anfrage)', requests chart-4, confirmed chart-1; open-ended contracts drawn one year ahead; read-only (no drag). Rentals from 120 days ago; max 200 objects / 3000 rentals."
+        }
+      ],
+      "actions": [
+        {
+          "label": "(empty slot / drag)",
+          "where": "section",
+          "kind": "link",
+          "target": "/rentals/r/new?x=1&start=…&end=…(&resource=<object>)",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "with an object column → new rental form; otherwise the object picker 'Welches Objekt?'"
+        }
+      ],
+      "links": [
+        "/rentals/r/[id]",
+        "/rentals/r/new"
+      ],
+      "uxNotes": [
+        "Area page with a description (docs: area pages show none).",
+        "No primary 'Neue Vergabe' button here, creation only via slot click.",
+        "Rentals can't be moved by drag (readOnly) although CalendarView supports onMove."
+      ]
+    },
+    {
+      "route": "/rentals/r/new",
+      "redesign": {
+        "job": "Create a rental for one object quickly: who, when, which rate.",
+        "phone": "Without object: 'Welches Objekt?' with a search field and the list (big rows), empty state when nothing is rentable. With object: Personen (picker), Zeitraum, Preis & Bedingungen (Tarif, Preis, Abrechnung, Kaution), Weitere Angaben + Notiz; SaveBar with the word.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "picker step plain list → list with SearchBox (?q=, keeps start/end), EmptyState with link to the objects",
+          "Hauptmieter:in ContactPicker → kept",
+          "Zeitraum (TermFields / DateInputs) → kept",
+          "Status Choice Bestätigt/Anfrage → kept",
+          "Tarif NativeSelect → Choice (segments ≤5, select ≤15)",
+          "Preis / Kaution TypedInput money → kept",
+          "Abrechnung NativeSelect → Choice with emptyLabel 'aus dem Tarif'",
+          "Notiz textarea → with a visible label",
+          "custom fields title → rentals.moreFields",
+          "SaveBar word → kept; contract redirect now ?new=contract&template=<id>"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked the object chooser and the form (period follows the rate, people, price). No change."
+        }
+      },
+      "uxNotesDone": [
+        2
+      ],
+      "file": "src/app/(app)/rentals/r/new/page.tsx",
+      "title": "<Mietvertrag|Buchung|Ausleihe|Ausgabe> · <Object>  (without object: \"Welches Objekt?\")",
+      "purpose": "Create a rental for one object: main tenant, period/term, status, rate/price/deposit, custom fields, note. Without ?object it first lists rentable objects to pick.",
+      "permission": "rentals.manage",
+      "size": "form (NewPage)",
+      "header": {
+        "crumbs": [
+          "<Object> (or Belegung for the picker)",
+          "<title>"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "object | resource",
+          "meaning": "object id"
+        },
+        {
+          "param": "start / end",
+          "meaning": "prefill from the calendar"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Welches Objekt? (picker step)",
+          "kind": "custom",
+          "notes": "plain list of active rentable, non-included objects (≤ 500), each → ?object=<id> keeping start/end; no search"
+        },
+        {
+          "title": "Personen",
+          "anchor": "#who",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "contact_id",
+              "label": "Hauptmieter:in",
+              "key": "rentals.roles.main",
+              "type": "contact",
+              "component": "ContactPicker"
+            }
+          ],
+          "notes": "description rentals.peopleHintNew"
+        },
+        {
+          "title": "Zeitraum",
+          "anchor": "#when",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "starts_at",
+              "label": "Beginn",
+              "key": "rentals.starts",
+              "type": "date | datetime",
+              "component": "DateInput (date for long-term, datetime-local otherwise)",
+              "required": true
+            },
+            {
+              "name": "ends_at",
+              "label": "Ende",
+              "key": "rentals.ends",
+              "type": "datetime",
+              "component": "DateInput:datetime-local",
+              "notes": "short-term only"
+            },
+            {
+              "name": "term_mode",
+              "label": "Laufzeit",
+              "key": "rentals.termLabel",
+              "type": "segments",
+              "component": "TermFields SegmentGroup: Unbefristet · Feste Laufzeit",
+              "notes": "long-term only; fixed → months Input + 'bis {date}'"
+            },
+            {
+              "name": "term_after",
+              "label": "Danach",
+              "key": "rentals.afterLabel",
+              "type": "segments",
+              "component": "SegmentGroup: Endet · Verlängert sich automatisch",
+              "notes": "renew → 'jeweils um N Monate'"
+            },
+            {
+              "name": "notice_months",
+              "label": "Kündigungsfrist (Monate)",
+              "key": "rentals.notice",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "default 3"
+            },
+            {
+              "name": "status",
+              "label": "Status",
+              "key": "rentals.requestStatus",
+              "type": "choice",
+              "component": "Choice",
+              "required": true,
+              "notes": "Bestätigt / Anfrage; hint rentals.statusHint"
+            }
+          ]
+        },
+        {
+          "title": "Preis & Bedingungen",
+          "anchor": "#price",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "rate_id",
+              "label": "Tarif",
+              "key": "rentals.rate",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "only when rates exist; '– ohne Tarif –'; hint 'Leere Felder werden aus dem Tarif übernommen.'"
+            },
+            {
+              "name": "price",
+              "label": "Preis",
+              "key": "rentals.price",
+              "type": "money",
+              "component": "TypedInput:money",
+              "notes": "placeholder 'aus dem Tarif'"
+            },
+            {
+              "name": "unit",
+              "label": "Abrechnung",
+              "key": "rentals.unit",
+              "type": "select",
+              "component": "NativeSelect"
+            },
+            {
+              "name": "deposit",
+              "label": "Kaution",
+              "key": "rentals.deposit",
+              "type": "money",
+              "component": "TypedInput:money"
+            }
+          ]
+        },
+        {
+          "title": "Weitere Angaben | Notiz",
+          "anchor": "#more",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "note",
+              "label": "Notiz",
+              "key": "rentals.note",
+              "type": "textarea",
+              "component": "Textarea (placeholder as label)"
+            }
+          ],
+          "notes": "+ CustomFieldInputs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Mietvertrag anlegen | Buchen | Ausleihen | Ausgeben",
+          "key": "rentals.newWord.<word>",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "createRentalAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "→ /rentals/r/<id>, toast 'Angelegt.'; with a contract template and a tenant → /rentals/r/<id>?contract=<tpl>, toast 'Angelegt – jetzt den Vertrag erstellen.'"
+        }
+      ],
+      "links": [
+        "/rentals/[id]",
+        "/rentals/calendar",
+        "/rentals/r/[id]"
+      ],
+      "uxNotes": [
+        "Long-term vs short-term form is decided by the first rate's unit; changing the 'Tarif' select doesn't switch the period fields.",
+        "Only one (main) tenant on create; more people afterwards on the rental page.",
+        "Picker step is a long unsearchable list."
+      ]
+    },
+    {
+      "route": "/rentals/r/[id]",
+      "redesign": {
+        "job": "Know where a rental stands (who, term, next deadline, rent, deposit) and do the next step: confirm a request, enter notice, take something back, write the contract.",
+        "phone": "Top bar ‹ Objekt · word (⋯: Stornieren, Papierkorb). Title 'Mietvertrag · Objekt' + state badge, meta people · period. Stats 2×2 (Beginn/Läuft seit, next deadline or end, Miete, Kaution). Eigenschaften (inline). Laufzeit facts (Ändern → ?edit=term). Personen (✕ asks, + Person). Schlüssel & Zugang. Verknüpft. Dateien. Round + = next step.",
+        "desktop": "Header actions Vertrag erstellen (outline), ⋯, primary next step. Stats. Main: Laufzeit, Personen, Schlüssel. Right rail: Eigenschaften (Preis, Abrechnung, Kaution, Tarif, Notiz, custom fields), Verknüpft (Objekt, Rechnungen/Zahlungen of the main tenant, projects), Dateien.",
+        "moves": [
+          "crumbs → Objekte › Objekt › word",
+          "badge state → rentals/badges.tsx colours",
+          "meta period · price · notice → people · period; price into Stats; 'Gekündigt am' into Laufzeit facts",
+          "header Vertrag erstellen (one template / menu / choose) → kept as outline action; opens ?new=contract&template=<id> (old ?contract= redirects)",
+          "header Zurück (short-term running) → primary 'Zurücknehmen' with confirm",
+          "⋯ In den Papierkorb → kept (confirm)",
+          "Zeitraum card (TermFields / DateInputs) → 'Laufzeit' facts in the main column, 'Ändern' → ?edit=term sheet with the same fields + SaveBar",
+          "Status Choice (Bestätigt/Anfrage/Storniert) in the SaveBar → actions: primary 'Bestätigen' for requests, ⋯ 'Stornieren' (confirm), ⋯ 'Wieder bestätigen' for cancelled",
+          "Preis & Bedingungen card (Preis, Abrechnung, Kaution, 'Tarif: name', Kaution zurückgegeben) → Eigenschaften inline (patchRental): Preis, Abrechnung, Kaution (badge when returned), Tarif (choice of the object's rates)",
+          "Weitere Angaben / Notiz → Eigenschaften inline: custom fields (customInlineItems) + Notiz (textarea)",
+          "SaveBar Speichern → removed",
+          "aside Personen list + add form → main 'Personen': rows → contact, ✕ 'Entfernen' asks; AddLink 'Person hinzufügen' → ?new=person compact sheet (picker + role) ",
+          "aside Kündigung eintragen card → primary 'Kündigung eintragen' (long-term, no notice, not ended) → ?edit=notice compact sheet (earliest end shown, optional other date), save asks first",
+          "aside Schlüssel & Zugang → main section",
+          "aside Dateien → right rail",
+          "footer 'Art · Objekt' line → removed (crumb + Verknüpft)",
+          "Verknüpft (new): Objekt, Rechnungen + Zahlungen of the main tenant (filtered lists), linked projects"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Stats for a booking wrapped ('20.11.2026, / 18:00'): Beginnt/Ende are short ('20.11., 18:00'), the full date stays under Laufzeit. Meta line for a same-day booking said the date twice ('20.11.2026, 18:00 – 20.11.2026, 23:00'): now '20.11.2026, 18:00–23:00' (period() in parts.tsx, also on the object's history). Eigenschaften phoneLimit 4; empty Kaution no longer a filled input box."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "file": "src/app/(app)/rentals/r/[id]/page.tsx",
+      "title": "<Mietvertrag|Buchung|Ausleihe|Ausgabe> · <Object>",
+      "purpose": "One rental: period/term, status, price and conditions, custom fields, note; people with roles; notice; keys handed out on it; files; write the contract from a letter template.",
+      "permission": "rentals.view (edit: rentals.manage; contract: org.files.view)",
+      "size": "record",
+      "header": {
+        "crumbs": [
+          "Vermietung",
+          "<Object>",
+          "<Mietvertrag|…>"
+        ],
+        "badge": "state (Anfrage/Storniert/Kommend/Läuft/Beendet)",
+        "meta": "period · price per unit · 'Gekündigt am {date}'",
+        "actions": [
+          {
+            "label": "Vertrag erstellen",
+            "key": "rentals.writeContract",
+            "target": "?contract=<template> (one template) | dropdown of templates | /files/templates?contact=&rental= (none)",
+            "notes": "needs org.files.view + a main tenant"
+          },
+          {
+            "label": "Zurück",
+            "key": "rentals.giveBack",
+            "target": "returnAction",
+            "notes": "running short-term rentals only, no confirm"
+          }
+        ],
+        "menu": [
+          {
+            "label": "In den Papierkorb",
+            "key": "rentals.toTrash",
+            "target": "trashRentalAction (MenuSubmit destructive)",
+            "permission": "rentals.manage"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "contract",
+          "meaning": "<letter template id> = contract composer sheet"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Zeitraum",
+          "anchor": "#terms",
+          "kind": "FormCard",
+          "notes": "long-term: description = term in words (e.g. 'Läuft seit … · aktuelle Laufzeit bis …, verlängert sich dann um … · Kündigung spätestens bis …') + TermFields; short-term: Beginn/Ende DateInput datetime-local. Status Choice Bestätigt/Anfrage/Storniert + hint."
+        },
+        {
+          "title": "Preis & Bedingungen",
+          "anchor": "#price",
+          "kind": "FormCard",
+          "notes": "description 'Tarif: <name>'; Preis (TypedInput:money), Abrechnung (NativeSelect), Kaution (TypedInput:money); badge 'Kaution zurückgegeben'"
+        },
+        {
+          "title": "Weitere Angaben | Notiz",
+          "anchor": "#more",
+          "kind": "FormCard",
+          "notes": "custom fields + note Textarea; whole main column is one form with SaveBar"
+        },
+        {
+          "title": "Personen (aside)",
+          "anchor": "#people",
+          "kind": "custom",
+          "notes": "description rentals.peopleHint; rows → /contacts/<id> with role; red X 'Entfernen' (tooltip); add form: ContactPicker 'Person hinzufügen' + Choice Hauptmieter:in/Mitnutzer:in + button 'Person hinzufügen'"
+        },
+        {
+          "title": "Kündigung eintragen (aside)",
+          "anchor": "#notice",
+          "kind": "FormCard",
+          "notes": "long-term, no notice yet, not ended; description 'Frühestes Ende bei Kündigung heute: {date}.'; field 'Anderes Enddatum (optional)' TypedInput:date; button 'Kündigung eintragen'"
+        },
+        {
+          "title": "Schlüssel & Zugang (aside)",
+          "anchor": "#keys",
+          "kind": "custom",
+          "notes": "handouts attached to this rental → /rentals/<object>"
+        },
+        {
+          "title": "Dateien (aside)",
+          "kind": "FileList",
+          "notes": "entity rentals"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speichern",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "updateRentalAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast 'Gespeichert.'"
+        },
+        {
+          "label": "Person hinzufügen",
+          "key": "rentals.addPerson",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addPersonAction",
+          "permission": "rentals.manage",
+          "confirm": false
+        },
+        {
+          "label": "Entfernen",
+          "key": "rentals.removePerson",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "removePersonAction",
+          "permission": "rentals.manage",
+          "confirm": false
+        },
+        {
+          "label": "Kündigung eintragen",
+          "key": "rentals.giveNotice",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "giveNoticeAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast 'Kündigung eingetragen – endet am {date}.'"
+        },
+        {
+          "label": "Zurück",
+          "key": "rentals.giveBack",
+          "where": "header",
+          "kind": "serverAction",
+          "target": "returnAction",
+          "permission": "rentals.manage",
+          "confirm": false,
+          "result": "toast 'Zurückgenommen.'"
+        },
+        {
+          "label": "In den Papierkorb",
+          "key": "rentals.toTrash",
+          "where": "menu",
+          "kind": "confirm",
+          "target": "trashRentalAction",
+          "permission": "rentals.manage",
+          "confirm": true,
+          "result": "→ /rentals/<object>, toast 'In den Papierkorb verschoben.'"
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?contract=<template id>",
+          "component": "UrlSheet (wide)",
+          "title": "<Template name>",
+          "notes": "description rentals.contractSheetHint; letters Composer with live preview, fixed contact = main tenant, rental placeholders filled; download / ablegen (stores PDF on the rental + contact, portal-visible) / senden (e-mail)."
+        }
+      ],
+      "links": [
+        "/rentals",
+        "/rentals/[id]",
+        "/contacts/[id]",
+        "/files/templates",
+        "/files/[id]"
+      ],
+      "phone": "RecordLayout: people, notice, keys, files below the form.",
+      "uxNotes": [
+        "Giving notice (changes the contract end) has no confirm.",
+        "Removing a person (red X) has no confirm.",
+        "Three separate submit paths on one page: SaveBar for terms/price, immediate buttons for people and notice, header 'Zurück'.",
+        "Status 'Storniert' sits in the edit form Choice (a destructive state change saved via SaveBar without confirm).",
+        "'Zurück' (rentals.giveBack) means 'take back / return', easily misread as navigation 'back'.",
+        "Note textarea uses its placeholder as the only visible label.",
+        "Rate can't be changed after create (only shown as card description)."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,447 @@
+{
+  "area": "events",
+  "label": "Gästelisten",
+  "module": "guestlists",
+  "nav": [],
+  "pages": [
+    {
+      "route": "/guestlists",
+      "file": "src/app/(app)/guestlists/page.tsx",
+      "title": "Gästelisten",
+      "purpose": "All guest lists of upcoming events plus permanent lists, filterable by event.",
+      "permission": "guestlists.view",
+      "size": "list",
+      "header": {
+        "area": "events",
+        "primary": {
+          "label": "Neue Gästeliste",
+          "key": "guestlists.new",
+          "href": "/guestlists/new[?event=<id>]",
+          "permission": "guestlists.manage"
+        }
+      },
+      "urlState": [
+        {
+          "param": "event",
+          "meaning": "event id filter (lists of that event + permanent lists)"
+        },
+        {
+          "param": "new",
+          "meaning": "legacy → /guestlists/new"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "event",
+              "label": "Event",
+              "key": "guestlists.event",
+              "component": "FilterMenu",
+              "notes": "all-label 'Dauerhafte + kommende Events'; events from 2 days ago on, max 50"
+            }
+          ]
+        },
+        {
+          "title": "Gästelisten",
+          "kind": "DataTable",
+          "columns": [
+            "Name (+ artist)",
+            "Event (title · date, or 'dauerhaft' badge)",
+            "Einträge (n / quota)",
+            "Abendkasse (price or 'frei')",
+            "Link ('Link aktiv' badge)"
+          ],
+          "notes": "Row → /guestlists/<id>. Without filter only upcoming-event and permanent lists; no pagination, no search."
+        }
+      ],
+      "links": [
+        "/guestlists/new",
+        "/guestlists/[id]"
+      ],
+      "empty": "'Noch keine Gästelisten.' (plain text)",
+      "uxNotes": [
+        "Not reachable from the sidebar or ⌘K page list (not in nav.ts) – effectively an orphan overview.",
+        "Past events' lists disappear from the default view with no 'Vergangen' segment to find them again (only via the event filter for events up to 2 days back).",
+        "No <EmptyState>, no search, no trash view (lists are soft-deleted)."
+      ],
+      "redesign": {
+        "job": "Find a guest list (this weekend's or a permanent one), see how full it is, open it.",
+        "phone": "Top bar: Events › Gästelisten, ⋯ (Papierkorb). Round + = Neue Gästeliste. Toolbar: search, scroll row: event chip, Segments Kommend · Vergangen · Alle. Cards: name + Link badge, event · date, entries.",
+        "desktop": "ListToolbar search · chip · Segments right. Table: Name (+ artist), Event, Einträge, Abendkasse, Link.",
+        "moves": [
+          "not in nav → sidebar child 'Gästelisten' under Events + ⌘K source",
+          "event FilterMenu (upcoming only) → ?event= chip (from links; clears with ✕) + search ?q=",
+          "default view upcoming + permanent → Segments Kommend (default) · Vergangen · Alle",
+          "primary Neue Gästeliste → unchanged",
+          "columns → unchanged; 'dauerhaft' badge secondary, Link aktiv badge success",
+          "empty 'Noch keine Gästelisten.' → <EmptyState> with Neue Gästeliste",
+          "new: ⋯ Papierkorb → ?trash=1 with Wiederherstellen per row (tickets re-issued)",
+          "legacy ?new → /guestlists/new (unchanged)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: ListToolbar + Segments, cards with event · count · price, 'dauerhaft' badge. No change needed."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "route": "/guestlists/new",
+      "file": "src/app/(app)/guestlists/new/page.tsx",
+      "title": "Neue Gästeliste",
+      "purpose": "Create a guest list for an event or a permanent one.",
+      "permission": "guestlists.manage",
+      "size": "form",
+      "header": {
+        "crumbs": [
+          "Gästelisten",
+          "Neue Gästeliste"
+        ]
+      },
+      "urlState": [
+        {
+          "param": "event",
+          "meaning": "fixes the event (event picker hidden)"
+        },
+        {
+          "param": "error",
+          "meaning": "error notice"
+        }
+      ],
+      "sections": [
+        {
+          "title": "(no FormCard – one flat form)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Name",
+              "key": "guestlists.name",
+              "type": "text",
+              "component": "Input",
+              "required": true,
+              "notes": "placeholder 'z. B. Allgemein, DJ Foo +, Crew'"
+            },
+            {
+              "name": "event",
+              "label": "Event",
+              "key": "guestlists.event",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "only without ?event; 'Dauerhaft (gilt bei jedem Event)' + upcoming events (max 50)"
+            },
+            {
+              "name": "door_price",
+              "label": "Preis an der Tür in € (0 = frei)",
+              "key": "guestlists.doorPriceEur",
+              "type": "money",
+              "component": "Input inputMode=decimal",
+              "notes": "not TypedInput money"
+            },
+            {
+              "name": "quota",
+              "label": "Max. Einträge",
+              "key": "guestlists.quota",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "placeholder ∞"
+            },
+            {
+              "name": "per_submission",
+              "label": "Namen pro Link-Eintrag",
+              "key": "guestlists.perSubmission",
+              "type": "number",
+              "component": "Input type=number",
+              "notes": "1–50, default 5"
+            },
+            {
+              "name": "artist",
+              "label": "Artist",
+              "key": "guestlists.artist",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "up to 500 artists, '–' = none"
+            },
+            {
+              "name": "link_closes_at",
+              "label": "Link schließt am (optional)",
+              "key": "guestlists.closesAt",
+              "type": "datetime-local",
+              "component": "DateInput"
+            },
+            {
+              "name": "notes",
+              "label": "Notiz (intern)",
+              "key": "guestlists.notes",
+              "type": "text",
+              "component": "Input"
+            }
+          ],
+          "notes": "With an event: hint guestlists.autoTickets (every entry gets a QR ticket)."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Neue Gästeliste",
+          "key": "guestlists.new",
+          "where": "savebar",
+          "kind": "serverAction",
+          "target": "saveList",
+          "result": "→ /guestlists/<id> (no toast); invalid → error errors.invalid_input (generic)"
+        }
+      ],
+      "links": [
+        "/guestlists"
+      ],
+      "uxNotes": [
+        "Crumb always points to /guestlists, even when started from an event's Gästelisten tab (?event=).",
+        "SaveBar label reuses 'Neue Gästeliste' instead of an '… anlegen' verb like other create pages.",
+        "Flat form without FormCards; validation errors are a generic 'invalid input' without naming the field.",
+        "Artist picker is a NativeSelect of up to 500 rows (guide: pickers search on the server)."
+      ],
+      "redesign": {
+        "job": "Create a guest list for an event (or a permanent one) in a few fields.",
+        "phone": "Top bar: ‹ back to the event's Gästelisten (or Gästelisten) · Neue Gästeliste. Cards: Liste (Name, Event picker, Artist picker), Eintragen (Preis an der Tür, Max. Einträge, Namen pro Link-Eintrag, Link schließt am), Notiz. SaveBar 'Gästeliste anlegen'.",
+        "desktop": "Same, form width.",
+        "moves": [
+          "crumb always Gästelisten → with ?event: Events › <event> (→ its Gästelisten) › Neue Gästeliste",
+          "flat form → FormCards Liste · Eintragen · Notiz",
+          "Name → unchanged",
+          "Event NativeSelect (50 rows) → <RecordPicker> server search over events; empty = dauerhaft (hint)",
+          "Preis an der Tür (Input decimal) → <TypedInput kind=money>",
+          "Max. Einträge, Namen pro Link-Eintrag (Input number) → <TypedInput kind=number>",
+          "Artist NativeSelect (500 rows) → <RecordPicker> server search",
+          "Link schließt am → unchanged DateInput",
+          "Notiz (intern) → unchanged",
+          "auto-ticket hint → under the event picker (event lists)",
+          "SaveBar label 'Neue Gästeliste' → 'Gästeliste anlegen'",
+          "generic invalid_input error → errors naming the field (price, quota, names per entry)"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Checked: grouped FormCards, SaveBar 'anlegen'. No change needed."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "route": "/guestlists/[id]",
+      "file": "src/app/(app)/guestlists/[id]/page.tsx",
+      "title": "Gästeliste (name)",
+      "purpose": "Manage one list: public sign-up link, add names, rename/remove entries, see tickets and check-ins.",
+      "permission": "guestlists.view",
+      "size": "list",
+      "header": {
+        "crumbs": [
+          "Events",
+          "<Event title>",
+          "<List name>  (permanent list: Gästelisten › <List name>)"
+        ],
+        "meta": "event · date (or 'Dauerhafte Liste – gilt bei jedem Event') · artist · '{price} an der Tür' or 'frei' · 'mit Tickets'",
+        "actions": [
+          {
+            "label": "Einstellungen",
+            "key": "guestlists.settings",
+            "kind": "sheet",
+            "target": "?edit=1",
+            "permission": "guestlists.manage",
+            "notes": "Pencil icon"
+          }
+        ]
+      },
+      "urlState": [
+        {
+          "param": "edit",
+          "meaning": "1 = settings sheet"
+        },
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Öffentlicher Link",
+          "key": "guestlists.publicLink",
+          "anchor": "#link",
+          "kind": "custom",
+          "notes": "Badge Link aktiv/aus, hint guestlists.linkHint, warning guestlists.linkNeedsPublished + 'Zur Veranstaltung' when the event is unpublished, the URL as external link (no copy button)."
+        },
+        {
+          "title": "Namen hinzufügen",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "names",
+              "label": "Namen hinzufügen (einer pro Zeile, optional „Name, E-Mail“)",
+              "key": "guestlists.addNames",
+              "type": "textarea",
+              "component": "native textarea"
+            }
+          ]
+        },
+        {
+          "title": "{n} Einträge [/ quota]",
+          "key": "guestlists.entriesTitle",
+          "anchor": "#entries",
+          "kind": "DataTable",
+          "columns": [
+            "Gast (inline rename Input + 'Speichern' for managers)",
+            "Eingetragen ('per Link von …' / 'im Dashboard')",
+            "Ticket (code)",
+            "Drin (check-in time)",
+            "(remove icon)"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "Link aktivieren / Link deaktivieren / Neuen Link erzeugen",
+          "key": "guestlists.linkAction.*",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "setLink link=on|off|renew",
+          "permission": "guestlists.manage",
+          "confirm": false,
+          "result": "renew toast 'Neuer Link erzeugt – der alte funktioniert nicht mehr.'"
+        },
+        {
+          "label": "Hinzufügen",
+          "key": "guestlists.add",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "addEntries",
+          "permission": "guestlists.manage",
+          "result": "toast guestlists.added; over quota → guestlists.full"
+        },
+        {
+          "label": "Speichern",
+          "key": "common.save",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "renameEntry",
+          "permission": "guestlists.manage"
+        },
+        {
+          "label": "Entfernen",
+          "key": "guestlists.remove",
+          "where": "row",
+          "kind": "serverAction",
+          "target": "removeEntry (icon-only, aria-label, no tooltip)",
+          "permission": "guestlists.manage",
+          "confirm": false
+        }
+      ],
+      "overlays": [
+        {
+          "param": "?edit=1",
+          "component": "UrlSheet",
+          "title": "<list name>",
+          "fields": [
+            {
+              "name": "(ListForm)",
+              "notes": "Same fields as /guestlists/new except the event picker (event fixed)"
+            }
+          ],
+          "actions": [
+            {
+              "label": "Speichern",
+              "where": "savebar",
+              "kind": "serverAction",
+              "target": "saveList",
+              "result": "→ /guestlists/<id> toast guestlists.saved (re-syncs tickets)"
+            },
+            {
+              "label": "Liste in den Papierkorb",
+              "key": "guestlists.trash",
+              "where": "sheet",
+              "kind": "serverAction",
+              "target": "trashList",
+              "confirm": false,
+              "notes": "inside a red 'Gefahrenzone' box (admin.dangerZone); voids all entries' tickets",
+              "result": "→ /guestlists toast guestlists.trashed"
+            }
+          ]
+        }
+      ],
+      "links": [
+        "/events",
+        "/events/[id]/guestlists",
+        "/events/[id]",
+        "/guestlists",
+        "<site>/g/<token>"
+      ],
+      "phone": "Entries table becomes cards; each card carries an inline rename form and a remove button.",
+      "uxNotes": [
+        "Trashing a list (which voids every guest ticket) has no confirm and sits in a 'Gefahrenzone' box – the guide forbids danger-zone boxes and asks for a ⋯ destructive item.",
+        "'Neuen Link erzeugen' invalidates the shared link without confirmation.",
+        "Removing a guest (voids their ticket) has no confirm; icon-only button without tooltip.",
+        "Every row is an always-on rename form with its own Speichern button.",
+        "Public link can only be opened, not copied (no CopyButton, unlike /members/settings portal link).",
+        "Crumbs differ by list type: event lists → Events › event, permanent lists → Gästelisten; after trashing, every list lands on /guestlists (not back on the event).",
+        "Header 'Einstellungen' is an outline button with a pencil icon, not the gear `settings` slot."
+      ],
+      "redesign": {
+        "job": "Get names onto the list (by hand or by the share link), see who is in, fix a name.",
+        "phone": "Top bar: ‹ event's Gästelisten (or Gästelisten) · list name, ⋯ (Bearbeiten, Papierkorb). Header: Link badge, meta event · date · artist · price. Stats: Gäste n/quota, Drin, per Link. Round + = Gäste hinzufügen. Section Öffentlicher Link: URL + copy, Deaktivieren / Neuer Link (asks). Gäste: cards (name + Drin badge, via · ticket), tap → guest sheet (rename, ⋯ Entfernen).",
+        "desktop": "Same; header actions Bearbeiten, ⋯, primary 'Gäste hinzufügen'. Guests table full width.",
+        "moves": [
+          "header action Einstellungen (pencil, ?edit=1) → action 'Bearbeiten' → ?edit=list (old ?edit=1 redirects)",
+          "settings sheet ListForm → unchanged fields (pickers, TypedInputs) + SaveBar",
+          "settings sheet Gefahrenzone + Liste in den Papierkorb (no confirm) → header ⋯ red item with confirm guestlists.confirmTrash (+ hint: tickets become invalid)",
+          "meta → unchanged",
+          "new: Stats Gäste (n / quota), Drin, Per Link",
+          "Öffentlicher Link: badge, hint, unpublished warning + Zur Veranstaltung → unchanged",
+          "link URL (open only) → URL + CopyButton + open",
+          "Link aktivieren / deaktivieren → unchanged buttons in the section (deactivate asks first)",
+          "Neuen Link erzeugen (no confirm) → confirm guestlists.confirmRenew",
+          "Namen hinzufügen textarea + Hinzufügen → primary 'Gäste hinzufügen' → ?new=guests sheet (textarea + SaveBar 'Hinzufügen')",
+          "entries table: always-on rename Input + Speichern per row → plain name (+ email); tap row → ?edit=<entry> sheet with Name + SaveBar",
+          "row remove icon (no confirm, no tooltip) → guest sheet ⋯ 'Entfernen' red with confirm guestlists.confirmRemove (ticket voided)",
+          "columns Eingetragen, Ticket, Drin → unchanged; Drin badge success",
+          "crumbs (event lists → Events › event; permanent → Gästelisten) → event lists: Events › event › Gästelisten link to the event's tab (unchanged); after trashing an event list → back to the event's Gästelisten"
+        ],
+        "built": true,
+        "sweep": {
+          "done": true,
+          "date": "2026-11-19",
+          "note": "Record layout: name edited in place (InlineTitle), Eigenschaften in the rail (Preis an der Tür, Max. Einträge, Namen pro Link-Eintrag, Link schließt, Notiz) as InlineFields + patchGuestList (same checks as saveList, ticket sync on price/quota); guests in the main column, Öffentlicher Link in the rail; header 'Bearbeiten' → ⋯ 'Alle Angaben bearbeiten' (event, artist pickers); link uses the link class."
+        }
+      },
+      "uxNotesDone": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  ],
+  "research": "Luma / Eventbrite guest lists: a list opens on its numbers (guests, checked in) with 'Add guests' as the main action; a share link with copy; guests in a searchable table, one tap opens a guest to rename or remove (asks first); past events stay reachable by a Past/Upcoming switch. Taken: Stats + 'Gäste hinzufügen' as primary, link section with copy and confirms, guest rows open a sheet, Kommend · Vergangen · Alle.",
+  "navRedesign": {
+    "sidebar": "Events = Events · Gästelisten · Einlass (a list of things door staff and promoters work through; permanent lists have no event). ⌘K source for guest lists.",
+    "label": "Gästelisten"
+  }
+}

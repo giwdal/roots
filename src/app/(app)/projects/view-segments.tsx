@@ -13,7 +13,7 @@ export function ViewSegments({ t, sp, views, current }: { t: T; sp: SearchParams
       items={views.map((v, i) => {
         const Icon = ICONS[v]
         return {
-          href: withParams(sp, { view: i === 0 ? undefined : v, task: undefined, cal: undefined, time: undefined }),
+          href: withParams(sp, { view: i === 0 ? undefined : v, task: undefined, cal: undefined, time: undefined, new: undefined, edit: undefined, group: undefined }),
           current: current === v,
           label: (
             <>

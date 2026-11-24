@@ -1,18 +1,21 @@
 import Link from "next/link"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { notFound, redirect } from "next/navigation"
-import { FilePlusIcon, HistoryIcon, Trash2Icon } from "lucide-react"
+import { FilePlusIcon, FolderInputIcon, HistoryIcon, Trash2Icon } from "lucide-react"
+import { Choice } from "@/components/choice"
+import { PageHeader } from "@/components/page"
+import { SaveBar } from "@/components/save-bar"
 import { Markdown } from "@/components/markdown"
 import { Notice } from "@/components/notice"
-import { PageCrumbs } from "@/components/page-crumbs"
 import { SubmitButton } from "@/components/submit-button"
 import { UrlSheet } from "@/components/url-sheet"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, withParams, type SearchParams } from "@/lib/url"
-import { effectiveVisibility, pathTo } from "@/wiki/tree"
-import { newPageAction, restorePageAction, restoreVersionAction, trashPageAction } from "../actions"
+import { effectiveVisibility, pathTo, subtree } from "@/wiki/tree"
+import { moveToAction, restorePageAction, restoreVersionAction, trashPageAction } from "../actions"
 import { TreeNav } from "../tree-nav"
+import { TreeSheet } from "../tree-sheet"
 import { WikiEditor } from "./editor"
 import { ShareButton } from "./share"
 
@@ -40,15 +43,83 @@ export default async function WikiPageView({ params, searchParams }: { params: P
   const editing = canManage && !page.deleted_at
   const children = all.filter((r) => r.parent_id === page.id).sort((a, b) => a.position - b.position || a.title.localeCompare(b.title, "de"))
 
+  const ancestors = pathTo(all, page.id)
+  const moving = editing && param(sp, "edit") === "move"
+  // Where the page may move: the top level or any page outside its own subtree, each named with its path.
+  const blocked = moving ? subtree(all, page.id) : new Set<string>()
+  const targets = moving
+    ? all
+        .filter((r) => !blocked.has(r.id))
+        .map((r) => ({ value: r.id, label: [...pathTo(all, r.id).map((a) => a.title), r.title].join(" › ") }))
+        .sort((a, b) => a.label.localeCompare(b.label, t.locale))
+    : []
+  const share = (
+    <ShareButton
+      pageId={page.id}
+      canManage={canManage}
+      own={page.visibility}
+      roleIds={page.role_ids}
+      hasParent={!!page.parent_id}
+      inherited={(() => {
+        const e = page.parent_id ? effectiveVisibility(all, page.parent_id) : { visibility: "team", from: null }
+        return { visibility: e.visibility, fromTitle: all.find((r) => r.id === e.from)?.title ?? null }
+      })()}
+      roles={(roles ?? []).filter((r) => !r.is_owner).map((r) => ({ id: r.id, label: t.pick(r.name as Record<string, string>) }))}
+    />
+  )
+
   return (
-    <div className="grid max-w-6xl gap-6">
-      <PageCrumbs items={[{ href: "/wiki", label: t("wiki.title") }, ...pathTo(all, page.id).map((p) => ({ href: `/wiki/${p.id}`, label: p.title })), { label: page.title }]} />
-      <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        crumbs={[{ href: "/wiki", label: t("wiki.title") }, ...ancestors.map((p) => ({ href: `/wiki/${p.id}`, label: p.title })), { label: page.title }]}
+        title={
+          <span className="flex items-center gap-3">
+            {page.icon && <span className="text-3xl leading-none">{page.icon}</span>}
+            {page.title}
+          </span>
+        }
+        titleHidden={editing}
+        meta={!editing && !page.deleted_at ? t("wiki.updated", { date: t.date(page.updated_at, { dateStyle: "medium", timeStyle: "short" }) }) : undefined}
+        actions={!page.deleted_at && share}
+        menu={
+          !page.deleted_at && (
+            <ActionsMenu>
+              {canManage && (
+                <>
+                  <MenuLink href={`/wiki/new?parent=${page.id}`} icon={<FilePlusIcon />}>
+                    {t("wiki.subPage")}
+                  </MenuLink>
+                  <MenuLink href={`/wiki/${page.id}?edit=move`} icon={<FolderInputIcon />}>
+                    {t("wiki.moveTo")}
+                  </MenuLink>
+                </>
+              )}
+              <MenuLink href={`/wiki/${page.id}${withParams(sp, { history: "1", edit: undefined })}`} icon={<HistoryIcon />}>
+                {t("wiki.history")}
+              </MenuLink>
+              {canManage && (
+                <>
+                  <MenuSeparator />
+                  <MenuSubmit form="trash-page" icon={<Trash2Icon />} destructive>
+                    {t("wiki.toTrash")}
+                  </MenuSubmit>
+                </>
+              )}
+            </ActionsMenu>
+          )
+        }
+      />
+      <Notice error={moving ? undefined : param(sp, "error")} ok={param(sp, "ok")} />
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
-        <aside className="hidden rounded-lg border p-2 lg:sticky lg:top-4 lg:grid">
+        <aside className="hidden rounded-xl border p-2 lg:sticky lg:top-4 lg:grid">
           <TreeNav rows={all} current={page.id} label={t("wiki.tree")} movable={canManage} />
         </aside>
         <article className="grid min-w-0 gap-6">
+          {!(editing && !page.deleted_at) && (
+            <div className="lg:hidden">
+              <TreeSheet rows={all} current={page.id} />
+            </div>
+          )}
           {page.deleted_at ? (
             <div className="grid gap-3">
               <p className="rounded-lg border bg-muted px-3 py-2 text-sm">{t("wiki.inTrash")}</p>
@@ -61,56 +132,8 @@ export default async function WikiPageView({ params, searchParams }: { params: P
             </div>
           ) : (
             <>
-              <header className="flex flex-wrap items-start justify-between gap-3">
-                {editing ? (
-                  <span />
-                ) : (
-                  <div className="grid gap-1">
-                    <h1 className="flex items-center gap-3 font-heading text-2xl font-semibold break-words">
-                      {page.icon && <span className="text-4xl leading-none">{page.icon}</span>}
-                      {page.title}
-                    </h1>
-                    <p className="text-xs text-muted-foreground">{t("wiki.updated", { date: t.date(page.updated_at, { dateStyle: "medium", timeStyle: "short" }) })}</p>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {canManage && (
-                    <form action={newPageAction}>
-                      <input type="hidden" name="parent_id" value={page.id} />
-                      <SubmitButton size="sm" variant="outline">
-                        <FilePlusIcon /> {t("wiki.subPage")}
-                      </SubmitButton>
-                    </form>
-                  )}
-                  <ShareButton
-                    pageId={page.id}
-                    canManage={canManage}
-                    own={page.visibility}
-                    roleIds={page.role_ids}
-                    hasParent={!!page.parent_id}
-                    inherited={(() => {
-                      const e = page.parent_id ? effectiveVisibility(all, page.parent_id) : { visibility: "team", from: null }
-                      return { visibility: e.visibility, fromTitle: all.find((r) => r.id === e.from)?.title ?? null }
-                    })()}
-                    roles={(roles ?? []).filter((r) => !r.is_owner).map((r) => ({ id: r.id, label: t.pick(r.name as Record<string, string>) }))}
-                  />
-                  <ActionsMenu>
-                    <MenuLink href={`/wiki/${page.id}${withParams(sp, { history: "1" })}`} icon={<HistoryIcon />}>
-                      {t("wiki.history")}
-                    </MenuLink>
-                    {canManage && (
-                      <>
-                        <MenuSeparator />
-                        <MenuSubmit form="trash-page" icon={<Trash2Icon />} destructive>
-                          {t("wiki.toTrash")}
-                        </MenuSubmit>
-                      </>
-                    )}
-                  </ActionsMenu>
-                </div>
-              </header>
               {editing ? (
-                <WikiEditor key={`${page.id}:${param(sp, "r") ?? ""}`} page={page} orgId={ctx.org.id} />
+                <WikiEditor key={`${page.id}:${param(sp, "r") ?? ""}`} page={page} orgId={ctx.org.id} lead={<TreeSheet rows={all} current={page.id} />} />
               ) : page.body.trim() ? (
                 <Markdown>{page.body}</Markdown>
               ) : (
@@ -142,6 +165,17 @@ export default async function WikiPageView({ params, searchParams }: { params: P
           )}
         </article>
       </div>
+
+      {moving && (
+        <UrlSheet params={["edit"]} title={t("wiki.moveTo")} description={page.title} compact>
+          <form action={moveToAction} className="grid gap-4">
+            <Notice error={param(sp, "error")} />
+            <input type="hidden" name="id" value={page.id} />
+            <Choice name="parent_id" label={t("wiki.moveTo")} options={targets} defaultValue={page.parent_id} emptyLabel={t("wiki.topLevel")} />
+            <SaveBar label={t("wiki.move")} always />
+          </form>
+        </UrlSheet>
+      )}
 
       {showHistory && (
         <UrlSheet params={["history", "version"]} title={t("wiki.history")} description={page.title}>

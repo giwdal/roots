@@ -1,106 +1,146 @@
 import Link from "next/link"
 import { Choice } from "@/components/choice"
+import { TipLabel } from "@/components/info-tip"
 import { FormCard } from "@/components/page"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { SaveBar } from "@/components/save-bar"
+import { MoreDetails } from "@/components/section"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { TypedInput } from "@/components/typed-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { T } from "@/i18n/translate"
 import type { Tables } from "@/lib/supabase/types"
-import { PRODUCT_KINDS, PRODUCT_STATUSES, TAX_RATES } from "@/shop/fields"
+import { PRODUCT_KINDS, TAX_RATES } from "@/shop/fields"
 import { priceInput } from "@/tickets/price"
 import { toLocalInput } from "@/lib/time"
 import { saveProduct } from "./actions"
+import { NypFields } from "./nyp-fields"
 
-export function ProductForm({ t, p, disabled, small }: { t: T; p?: Tables<"products"> | null; disabled?: boolean; small?: boolean }) {
+type P = Tables<"products"> | null | undefined
+
+/** Name, price + VAT in one row, name your price, kind. */
+export function ProductFields({ t, p, small, disabled }: { t: T; p?: P; small?: boolean; disabled?: boolean }) {
+  return (
+    <>
+      <div className="grid max-w-xl content-start gap-2">
+        <Label htmlFor="p-name">{t("store.productName")}</Label>
+        <Input id="p-name" name="name" required maxLength={200} defaultValue={p?.name ?? ""} disabled={disabled} placeholder={t("store.productNamePlaceholder")} />
+      </div>
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="grid content-start gap-2">
+          <Label htmlFor="p-price">{small ? t("store.price") : t("store.priceGross")}</Label>
+          <TypedInput kind="money" id="p-price" name="price" required defaultValue={p ? priceInput(p.price_cents) : ""} disabled={disabled} />
+        </div>
+        {small ? (
+          // Kleinunternehmer: no VAT anywhere, so no rate to pick; the stored rate only applies once they switch.
+          <div className="grid content-start gap-2">
+            <input type="hidden" name="tax_rate" value={String(p?.tax_rate ?? 19)} />
+            <TipLabel tip={t("store.smallBusinessNoVat")}>{t("store.taxRate")}</TipLabel>
+            <p className="flex h-(--control) items-center gap-3 text-sm">
+              {t("store.noVat")}
+              <Link href="/invoices/settings" className="text-[var(--link)] hover:underline">
+                {t("store.smallBusinessChange")}
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <div className="grid content-start gap-2">
+            <Label htmlFor="p-tax">{t("store.taxRate")}</Label>
+            <Choice id="p-tax" name="tax_rate" required label={t("store.taxRate")} defaultValue={String(p?.tax_rate ?? 19)} disabled={disabled} options={TAX_RATES.map((r) => ({ value: String(r), label: `${r} %` }))} />
+          </div>
+        )}
+      </div>
+      <NypFields on={p?.name_your_price ?? false} suggested={p?.suggested_cents != null ? priceInput(p.suggested_cents) : ""} disabled={disabled} />
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-kind">{t("store.kind")}</Label>
+        <Choice id="p-kind" name="kind" required label={t("store.kind")} defaultValue={p?.kind ?? "physical"} disabled={disabled} options={PRODUCT_KINDS.map((k) => ({ value: k, label: t.dynamic(`store.kinds.${k}`) }))} />
+      </div>
+    </>
+  )
+}
+
+/** Stock (only without variants: with variants every row has its own). */
+export function StockField({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+  return (
+    <div className="grid content-start gap-2">
+      <TipLabel htmlFor="p-stock" tip={t("store.stockHint")}>
+        {t("store.stock")}
+      </TipLabel>
+      <TypedInput kind="number" id="p-stock" name="stock" min={0} defaultValue={p?.stock ?? ""} placeholder={t("store.unlimited")} disabled={disabled} />
+    </div>
+  )
+}
+
+/** The rarely needed rest, behind "Mehr Angaben": release date, max per order, category, address, video. */
+export function MoreFields({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+  // One two-column grid (phones: one column), the video link across both.
+  return (
+    <div className="grid max-w-xl gap-4 sm:grid-cols-2">
+      <div className="grid content-start gap-2">
+        <TipLabel htmlFor="p-release" tip={t("store.releaseHint")}>
+          {t("store.releaseOn")}
+        </TipLabel>
+        <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
+      </div>
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
+        <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} defaultValue={p?.max_per_order ?? 10} disabled={disabled} />
+      </div>
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-category">{t("store.category")}</Label>
+        <Input id="p-category" name="category" maxLength={60} defaultValue={p?.category ?? ""} disabled={disabled} placeholder={t("store.categoryPlaceholder")} />
+      </div>
+      <div className="grid content-start gap-2">
+        <Label htmlFor="p-slug">{t("store.slug")}</Label>
+        <InputGroup>
+          <InputGroupAddon>/shop/</InputGroupAddon>
+          <InputGroupInput id="p-slug" name="slug" maxLength={80} defaultValue={p?.slug ?? ""} disabled={disabled} placeholder={t("store.slugPlaceholder")} className="pl-0.5" />
+        </InputGroup>
+      </div>
+      <div className="grid content-start gap-2 sm:col-span-2">
+        <TipLabel htmlFor="p-video" tip={t("store.videoHint")}>
+          {t("store.video")}
+        </TipLabel>
+        <TypedInput kind="url" id="p-video" name="video_url" defaultValue={p?.video_url ?? ""} disabled={disabled} placeholder="https://youtube.com/watch?v=…" />
+      </div>
+    </div>
+  )
+}
+
+/** Whether "Mehr Angaben" starts open: one of its fields differs from the default. */
+export const moreSet = (p: P) => !!p && (!!p.release_at || p.max_per_order !== 10 || !!p.category || !!p.video_url)
+
+/** The description shown on the product page in the shop. */
+export function DescriptionField({ t, p, disabled }: { t: T; p?: P; disabled?: boolean }) {
+  return (
+    <div className="grid max-w-2xl content-start gap-2">
+      <Label htmlFor="p-description">{t("store.description")}</Label>
+      {disabled ? <div className="text-sm text-muted-foreground">{p?.description ? t("store.descriptionSet") : "–"}</div> : <RichTextEditor id="p-description" name="description" defaultValue={p?.description ?? ""} />}
+    </div>
+  )
+}
+
+/** "Neues Produkt": starts as a draft; pictures, variants and music follow on its page, where it is published. */
+export function ProductForm({ t, small }: { t: T; small?: boolean }) {
   return (
     <form action={saveProduct} className="grid gap-6">
-      {p && <input type="hidden" name="id" value={p.id} />}
+      <input type="hidden" name="status" value="draft" />
       <FormCard id="details" title={t("store.product")}>
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-name">{t("store.productName")}</Label>
-          <Input id="p-name" name="name" required maxLength={200} defaultValue={p?.name ?? ""} disabled={disabled} placeholder={t("store.productNamePlaceholder")} />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-price">{small ? t("store.price") : t("store.priceGross")}</Label>
-            <TypedInput kind="money" id="p-price" name="price" required defaultValue={p ? priceInput(p.price_cents) : ""} disabled={disabled} />
-          </div>
-          <div className="grid gap-2 sm:col-span-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="name_your_price" value="1" defaultChecked={p?.name_your_price ?? false} disabled={disabled} className="size-4 accent-primary" /> {t("store.nameYourPrice")}
-            </label>
-            <p className="text-xs text-muted-foreground">{t("store.nameYourPriceHint")}</p>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <Label htmlFor="p-suggested" className="font-normal text-muted-foreground">{t("store.suggestedPrice")}</Label>
-              <TypedInput kind="money" id="p-suggested" name="suggested" defaultValue={p?.suggested_cents != null ? priceInput(p.suggested_cents) : ""} disabled={disabled} />
-            </div>
-          </div>
-          {small ? (
-            // Kleinunternehmer: no VAT anywhere, so no rate to pick; the stored rate only applies once they switch.
-            <div className="grid content-start gap-2">
-              <input type="hidden" name="tax_rate" value={String(p?.tax_rate ?? 19)} />
-              <Label>{t("store.taxRate")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("store.smallBusinessNoVat")}{" "}
-                <Link href="/invoices/settings" className="underline underline-offset-4">
-                  {t("store.smallBusinessChange")}
-                </Link>
-              </p>
-            </div>
-          ) : (
-            <div className="grid content-start gap-2">
-              <Label htmlFor="p-tax">{t("store.taxRate")}</Label>
-              <Choice id="p-tax" name="tax_rate" required label={t("store.taxRate")} defaultValue={String(p?.tax_rate ?? 19)} disabled={disabled} options={TAX_RATES.map((r) => ({ value: String(r), label: `${r} %` }))} />
-            </div>
-          )}
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-kind">{t("store.kind")}</Label>
-            <Choice id="p-kind" name="kind" required label={t("store.kind")} defaultValue={p?.kind ?? "physical"} disabled={disabled} options={PRODUCT_KINDS.map((k) => ({ value: k, label: t.dynamic(`store.kinds.${k}`) }))} />
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-status">{t("store.status")}</Label>
-            <Choice id="p-status" name="status" required label={t("store.status")} defaultValue={p?.status ?? "draft"} disabled={disabled} options={PRODUCT_STATUSES.map((s) => ({ value: s, label: t.dynamic(`store.statuses.${s}`) }))} />
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-stock">{t("store.stock")}</Label>
-            <TypedInput kind="number" id="p-stock" name="stock" min={0} inputMode="numeric" defaultValue={p?.stock ?? ""} placeholder={t("store.unlimited")} disabled={disabled} />
-            <p className="text-xs text-muted-foreground">{t("store.stockHint")}</p>
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-max">{t("store.maxPerOrder")}</Label>
-            <TypedInput kind="number" id="p-max" name="max_per_order" min={1} max={100} inputMode="numeric" defaultValue={p?.max_per_order ?? 10} disabled={disabled} />
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-release">{t("store.releaseOn")}</Label>
-            <TypedInput kind="date" id="p-release" name="release_on" defaultValue={p?.release_at ? toLocalInput(p.release_at).slice(0, 10) : ""} disabled={disabled} />
-            <p className="text-xs text-muted-foreground">{t("store.releaseHint")}</p>
-          </div>
-        </div>
+        <ProductFields t={t} small={small} />
       </FormCard>
-      <FormCard id="page" title={t("store.productPage")}>
-        <div className="grid content-start gap-2">
-          <Label htmlFor="p-description">{t("store.description")}</Label>
-          {disabled ? <div className="text-sm text-muted-foreground">{p?.description ? t("store.descriptionSet") : "–"}</div> : <RichTextEditor id="p-description" name="description" defaultValue={p?.description ?? ""} />}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-category">{t("store.category")}</Label>
-            <Input id="p-category" name="category" maxLength={60} defaultValue={p?.category ?? ""} disabled={disabled} placeholder={t("store.categoryPlaceholder")} />
-          </div>
-          <div className="grid content-start gap-2">
-            <Label htmlFor="p-slug">{t("store.slug")}</Label>
-            <Input id="p-slug" name="slug" maxLength={80} defaultValue={p?.slug ?? ""} disabled={disabled} placeholder={t("store.slugPlaceholder")} />
-          </div>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="p-video">{t("store.video")}</Label>
-            <TypedInput kind="url" id="p-video" name="video_url" defaultValue={p?.video_url ?? ""} disabled={disabled} placeholder="https://youtube.com/watch?v=…" />
-            <p className="text-xs text-muted-foreground">{t("store.videoHint")}</p>
-          </div>
-        </div>
+      <FormCard id="sale" title={t("store.stockTitle")}>
+        <StockField t={t} />
       </FormCard>
-      {!disabled && <SaveBar label={p ? undefined : t("store.createProduct")} always={!p} />}
+      <MoreDetails label={t("common.moreDetails")}>
+        <FormCard id="page" title={t("store.productPage")}>
+          <DescriptionField t={t} />
+        </FormCard>
+        <FormCard id="more" title={t("store.moreTitle")}>
+          <MoreFields t={t} />
+        </FormCard>
+      </MoreDetails>
+      <SaveBar label={t("store.createProduct")} always />
     </form>
   )
 }

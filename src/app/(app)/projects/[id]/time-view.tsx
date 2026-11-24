@@ -1,11 +1,11 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { PlayIcon, PlusIcon, SquareIcon } from "lucide-react"
 import { Notice } from "@/components/notice"
 import { FormCard } from "@/components/page"
 import { SubmitButton } from "@/components/submit-button"
-import { hoursText, TIME_COLS, TimeEntryForm, TimeEntryList, type TimeRow } from "@/components/time-entries"
+import { hoursText, TIME_COLS, TimeEntryList, TimeEntrySheet, type TimeRow } from "@/components/time-entries"
 import { Button } from "@/components/ui/button"
-import { UrlSheet } from "@/components/url-sheet"
 import type { T } from "@/i18n/translate"
 import type { getContext } from "@/lib/context"
 import { param, withParams, type SearchParams } from "@/lib/url"
@@ -19,10 +19,12 @@ export const canTrackTime = (ctx: Ctx) => ctx.modules.has("shifts") && ["shifts.
 
 /**
  * Time on one project (?view=time): hours in total and per person, the entries (everyone's for shifts.view/approve,
- * else your own, RLS), clock in/out on this project, add/edit entries in a drawer (?time=new | <id>).
+ * else your own, RLS), clock in/out on this project, add/edit entries in the time sheet (?new=time | ?edit=<id>, as on Schichten).
  */
 export async function ProjectTime({ ctx, t, sp, base, projectId }: { ctx: Ctx; t: T; sp: SearchParams; base: string; projectId: string }) {
   const here = `${base}?view=time`
+  const old = param(sp, "time") // the sheet's old param
+  if (old) redirect(`${base}${withParams(sp, { time: undefined, ...(old === "new" ? { new: "time" } : { edit: old }) })}`)
   const [{ data: rows }, { data: staffRows }, { data: me }, { data: tasks }] = await Promise.all([
     ctx.supabase.from("time_entries").select(TIME_COLS).eq("org_id", ctx.org.id).eq("project_id", projectId).order("started_at", { ascending: false }).limit(500), // ponytail: newest 500, a month filter when projects get that long
     ctx.supabase.from("staff").select("id, name").eq("org_id", ctx.org.id).order("name"),
@@ -39,8 +41,9 @@ export async function ProjectTime({ ctx, t, sp, base, projectId }: { ctx: Ctx; t
   const total = done.reduce((s, e) => s + minutes(e).net, 0)
   const perPerson = [...done.reduce((m, e) => m.set(e.staff_id, (m.get(e.staff_id) ?? 0) + minutes(e).net), new Map<string, number>())].sort((a, b) => b[1] - a[1])
   const editable = (e: TimeRow) => manager || (self && e.staff_id === myStaff && !e.approved_at)
-  const open = param(sp, "time")
-  const editing = open && open !== "new" ? entries.find((e) => e.id === open && editable(e)) : null
+  const creating = param(sp, "new") === "time"
+  const editing = entries.find((e) => e.id === param(sp, "edit") && editable(e))
+  const open = creating || !!editing
   const elsewhere = running && running.project_id !== projectId
 
   return (
@@ -68,12 +71,12 @@ export async function ProjectTime({ ctx, t, sp, base, projectId }: { ctx: Ctx; t
                   : t("time.clockHintProject")}
               </p>
             )}
-            <Button render={<Link href={withParams(sp, { time: "new" })} />} nativeButton={false} size="sm" variant="ghost" className="ml-auto">
+            <Button render={<Link href={withParams(sp, { new: "time", edit: undefined })} scroll={false} />} nativeButton={false} size="sm" variant="ghost" className="ml-auto">
               <PlusIcon /> {t("time.add")}
             </Button>
           </div>
         )}
-        <TimeEntryList rows={entries} people={people} hideProject editHref={(id) => (editable(entries.find((e) => e.id === id)!) ? withParams(sp, { time: id }) : null)} />
+        <TimeEntryList rows={entries} people={people} hideProject editHref={(id) => (editable(entries.find((e) => e.id === id)!) ? withParams(sp, { edit: id, new: undefined }) : null)} />
       </div>
       <aside className="grid min-w-0 gap-6">
         <FormCard title={t("time.projectTotal")}>
@@ -90,19 +93,18 @@ export async function ProjectTime({ ctx, t, sp, base, projectId }: { ctx: Ctx; t
           )}
         </FormCard>
       </aside>
-      {(open === "new" && (self || manager)) || editing ? (
-        <UrlSheet params={["time"]} title={editing ? t("time.edit") : t("time.add")}>
-          <Notice error={param(sp, "error")} />
-          <TimeEntryForm
-            entry={editing}
-            returnTo={here}
-            canDelete={!!editing}
-            projectId={projectId}
-            tasks={tasks ?? []}
-            staff={manager ? (staffRows ?? []) : undefined}
-            staffId={manager ? (myStaff ?? staffRows?.[0]?.id) : undefined}
-          />
-        </UrlSheet>
+      {(creating && (self || manager)) || editing ? (
+        <TimeEntrySheet
+          params={["new", "edit"]}
+          entry={editing}
+          returnTo={here}
+          canDelete={!!editing}
+          projectId={projectId}
+          tasks={tasks ?? []}
+          pickStaff={manager}
+          staff={manager ? (staffRows?.find((s) => s.id === myStaff) ?? staffRows?.[0] ?? null) : null}
+          error={param(sp, "error")}
+        />
       ) : null}
     </div>
   )

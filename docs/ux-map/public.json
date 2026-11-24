@@ -1,0 +1,691 @@
+{
+  "area": "public",
+  "label": "Öffentliche Seiten (Org-Website, Tickets, Shop, Formulare, Mitgliederbereich)",
+  "module": null,
+  "surface": "Public: served at <org>.<root domain>, at the org's own domain (src/proxy.ts maps the host via site_for_host()), or at /s/<org> on the roots address. Routes below are written relative to the org site (the /s/[site] prefix is stripped on subdomains/own domains). Reads use createPublicClient() (anon) + getSite(slug) / the cached loaders in src/lib/public-cache.ts; writes only through public Server Actions that validate input + link tokens.",
+  "language": "UI language: the org's language (Website › Marke, theme.locale) via x-roots-site, else the visitor's locale cookie / browser. All buyer-facing texts use 'du'.",
+  "nav": [],
+  "frame": {
+    "name": "SiteFrame",
+    "files": ["src/app/s/[site]/layout.tsx", "src/app/s/[site]/frame.tsx", "src/site/theme.ts", "src/site/html.ts"],
+    "summary": "Wraps every public page of an org (live version of org_sites only, via cachedSite()). No roots chrome: no nav bar, no logo bar, no cart icon, no language switch of its own.",
+    "metadata": "generateMetadata: tab title template '%s · <Org>', default '<Org>'; description = site tagline; favicon/apple icon + OG/Twitter image = org logo (imageUrlOn on the org's own domain). Pages add their own title (event: title + date/venue + event picture; product: name + picture; form: title + intro).",
+    "parts": [
+      { "name": "Theme", "shows": "div.site-theme (min-h-svh), .dark when theme.mode = dark; org fonts as a Google Fonts <link> (fontsHref); <style> with token overrides from themeCss(theme) + the org's own CSS (cleanCss)." },
+      { "name": "Header", "shows": "Org's own header HTML (Website › Seiten › Rahmen, header_html), cleaned with cleanHtml(), in div.site-header. Absent when the org set none." },
+      { "name": "Page content", "shows": "children (each page brings its own main column, mostly max-w-xl/2xl, centred)." },
+      { "name": "Footer", "shows": "Org's own footer HTML (footer_html, cleanHtml) in div.site-footer, then a small muted footer row with 'Impressum' (site.imprint → /impressum) and 'Datenschutz' (site.privacy → /datenschutz), each only when the org filled that text." }
+    ],
+    "phone": "Same on every device; pages are single columns that stack (max-w-* + px-4).",
+    "uxNotes": [
+      "Without own header HTML there is no persistent navigation on any public page: the shop, cart, member area and start page are only reachable through back links inside each page.",
+      "Impressum/Datenschutz links disappear entirely when the texts are empty (pages 404), nothing tells the org this on the public side.",
+      "No not-found.tsx and no loading.tsx under src/app/s: unknown orgs/events/products fall back to the global 404, and navigation has no skeleton."
+    ]
+  },
+  "routeHandlers": [
+    { "route": "/t/[order]/pdf?k=<token>", "file": "src/app/s/[site]/t/[order]/pdf/route.ts", "purpose": "Buyer's tickets as PDF (attachment tickets-<id>.pdf)." },
+    { "route": "/o/[order]/invoice?k=<token>", "file": "src/app/s/[site]/o/[order]/invoice/route.ts", "purpose": "Shop order invoice PDF (not for drafts)." },
+    { "route": "/o/[order]/file/[file]?k=<token>", "file": "src/app/s/[site]/o/[order]/file/[file]/route.ts", "purpose": "Product download for paid buyers (signed URL)." },
+    { "route": "/o/[order]/audio/[product]/[zip|wav|mp3]?k=<token>[&t=<track>]", "file": "src/app/s/[site]/o/[order]/audio/[product]/[format]/route.ts", "purpose": "Music downloads (album ZIP or single track) from R2." },
+    { "route": "/shop/[slug]/track/[file]", "file": "src/app/s/[site]/shop/[slug]/track/[file]/route.ts", "purpose": "302 to a short-lived 128k stream MP3 for the player (only tracks marked stream)." },
+    { "route": "/portal/file/[file]", "file": "src/app/s/[site]/portal/file/[file]/route.ts", "purpose": "Rental documents shared with the main tenant (portal session)." },
+    { "route": "/wiki/file/[id]", "file": "src/app/s/[site]/wiki/file/[id]/route.ts", "purpose": "Files embedded in released wiki pages." }
+  ],
+  "pages": [
+    {
+      "route": "/",
+      "file": "src/app/s/[site]/page.tsx",
+      "components": ["src/app/s/[site]/home.tsx", "src/site/blocks.ts", "src/site/template.ts", "src/app/s/[site]/shop/cards.tsx"],
+      "title": "<Org> (Startseite)",
+      "purpose": "The org's public start page: built from the blocks set in Website › Seiten › Startseite, or from the org's own HTML template.",
+      "audience": "anonymous",
+      "header": { "shows": "Blocks mode: org logo (Picture lg square) + org name (h1) + tagline. HTML mode: whatever the template renders." },
+      "urlState": [],
+      "sections": [
+        { "title": "Hero (block hero)", "kind": "custom", "notes": "title, text, one button (button_label → button_href; relative links get the site prefix). Rounded muted box." },
+        { "title": "Text (block text)", "kind": "custom", "notes": "optional heading + Markdown." },
+        { "title": "Links (block links)", "kind": "custom", "notes": "outline buttons; http links open in a new tab; hidden while empty." },
+        { "title": "Kommende Events (block events)", "key": "site.upcoming", "kind": "custom", "notes": "Upcoming events (ends_at ≥ now, max 50, cut to the block's limit, default 10): title, 'Abgesagt' badge (site.cancelled), full date + time · venue; row → /e/<slug>. Empty: 'Gerade sind keine Events geplant.' (site.noEvents)." },
+        { "title": "Event (block event)", "kind": "custom", "notes": "One pinned event as a card: picture 2:1, title, date · venue, button 'Zum Event & Tickets' (site.toEvent) or 'Abgesagt' badge." },
+        { "title": "Formular (block form)", "kind": "custom", "notes": "Form title (or block title), intro, button 'Ausfüllen' (site.openForm) → /f/<slug>." },
+        { "title": "Mitgliederbereich (block portal)", "key": "site.portalDefault", "kind": "custom", "notes": "Heading (default 'Mitgliederbereich'), text, outline button 'Anmelden' (site.toPortal) → /portal." },
+        { "title": "Wissen (block wiki)", "key": "site.wikiDefault", "kind": "custom", "notes": "Publicly released wiki start pages as a list → /wiki/<id>; hidden when none." },
+        { "title": "Shop (block shop)", "key": "store.shopTitle", "kind": "custom", "notes": "ProductCards (2/3/4 columns: square picture, name, price or 'ausverkauft', 'Erscheint <date>'), optional category filter, limit default 6; outline button 'Alle Produkte' (site.allProducts) → /shop[?c=]. Hidden when no products." },
+        { "title": "HTML mode", "kind": "custom", "notes": "home_mode = html: org HTML rendered with the Mustache subset (org, events, next, forms, form, portal, wiki, products, shop, imprint_url, privacy_url), cleaned with cleanPage()." }
+      ],
+      "actions": [
+        { "label": "Zum Event & Tickets / event row", "key": "site.toEvent", "where": "section", "kind": "link", "target": "/e/[slug]" },
+        { "label": "Ausfüllen", "key": "site.openForm", "where": "section", "kind": "link", "target": "/f/[slug]" },
+        { "label": "Anmelden", "key": "site.toPortal", "where": "section", "kind": "link", "target": "/portal" },
+        { "label": "Alle Produkte / product card", "key": "site.allProducts", "where": "section", "kind": "link", "target": "/shop, /shop/[slug]" }
+      ],
+      "states": [
+        "No saved site: default = one 'Kommende Events' block (limit 20).",
+        "Blocks of modules that are off are skipped (blockAvailable)."
+      ],
+      "links": ["/e/[slug]", "/f/[slug]", "/portal", "/wiki/[id]", "/shop", "/shop/[slug]"],
+      "phone": "Single column (max-w-2xl); product cards 2 per row.",
+      "uxNotes": [
+        "The portal block's button says 'Anmelden' (site.toPortal) – the same word the marketing site uses for the roots App login.",
+        "No cart link on the start page even when a shop block is shown; the cart is only linked from /shop.",
+        "Blocks with nothing to show (links, wiki, shop, a pinned event that isn't public any more) vanish silently; only the events block has an empty text."
+      ]
+    },
+    {
+      "route": "/e/[slug]",
+      "file": "src/app/s/[site]/e/[slug]/page.tsx",
+      "components": ["src/app/s/[site]/e/[slug]/shop.tsx", "src/app/s/[site]/e/[slug]/event-view.tsx", "src/app/s/[site]/e/[slug]/actions.ts"],
+      "title": "<Event title>",
+      "purpose": "Public event page: details, timetable, ticket selection (or free sign-up), promo code, waiting list when sold out.",
+      "audience": "anonymous (published events only, via cachedEvent)",
+      "header": { "shows": "Back link '← <Org> · Alle Events' (site.back) → start page; event picture 16:9; 'Abgesagt' badge; title; date + time – end (time only when same day); venue name + address." },
+      "urlState": [
+        { "param": "code", "meaning": "promo/unlock code (uppercased, ≤ 40 chars); applied to ticket_offer" },
+        { "param": "w", "meaning": "waiting-list claim token (from the 'Platz sichern' mail): uses the held seats" },
+        { "param": "#tickets", "meaning": "anchor of the ticket box" }
+      ],
+      "sections": [
+        { "title": "Beschreibung", "kind": "custom", "notes": "plain text, whitespace preserved (not rich text)." },
+        { "title": "Timetable", "key": "lineup.timetable", "kind": "custom", "notes": "Public slots grouped by stage (2 columns from sm): HH:MM–HH:MM + artist or slot title. Hidden when no slots." },
+        {
+          "title": "Tickets / Anmeldung",
+          "key": "shop.title / shop.signupTitle",
+          "kind": "custom",
+          "anchor": "#tickets",
+          "notes": "Only while the event is published (not cancelled). 'Anmeldung' when every type is free. Hidden entirely when no ticket types are on offer.",
+          "fields": [
+            { "name": "code", "label": "Gutscheincode (placeholder) / aria 'Code'", "key": "shop.codePlaceholder / shop.code", "type": "text", "component": "Input (uppercase) + 'Einlösen' (shop.applyCode) in its own GET form", "required": false, "notes": "Hidden when the event turns the code field off (show_code_field); a ?code= link still applies. Result line: 'Code gilt ✓' (shop.codeOk) or 'Dieser Code ist ungültig oder abgelaufen.' (shop.codeInvalid)." },
+            { "name": "t_<typeId>", "label": "aria 'Anzahl <Name>'", "key": "shop.quantity", "type": "number", "component": "Input type=number (w-20)", "required": false, "notes": "One per type on sale; max = min(max per order, remaining). The code-unlocked type, else the first one on sale, is preset to 1. Row shows name · tier, description, struck-through original price when discounted, price or 'Kostenlos', and '· ausverkauft' / '· ab <date>' / '· nicht mehr erhältlich' / '· nur noch n' (≤ 20 left)." }
+          ]
+        },
+        {
+          "title": "Ausgebucht – Warteliste",
+          "key": "waitlist.title",
+          "kind": "custom",
+          "notes": "Only when every offered type is sold out and there is no valid claim. Intro: 'Trag dich ein: Wird ein Platz frei, bekommst du eine E-Mail und kannst ihn 24 Stunden lang sichern.' (waitlist.text).",
+          "fields": [
+            { "name": "name", "label": "Dein Name", "key": "waitlist.name", "type": "text", "component": "Input", "required": true },
+            { "name": "email", "label": "Deine E-Mail", "key": "waitlist.email", "type": "email", "component": "Input type=email", "required": true },
+            { "name": "quantity", "label": "Anzahl Plätze", "key": "waitlist.quantity", "type": "number", "component": "Input type=number (1 … min(20, max per order))", "required": true }
+          ]
+        },
+        { "title": "Event-Links", "kind": "custom", "notes": "outline buttons from the event's links, new tab." },
+        { "title": "Template mode", "kind": "custom", "notes": "When the org has an event template (event_html): the org HTML with {{event.*}}/{{org.*}}, roots' ticket box at {{tickets}} (appended if missing) and the timetable at {{timetable}}; no roots back link/header then." }
+      ],
+      "actions": [
+        { "label": "Einlösen", "key": "shop.applyCode", "where": "section", "kind": "link", "target": "GET /e/[slug]?code=<code>", "result": "page reloads with the code applied" },
+        { "label": "Weiter", "key": "shop.continue", "where": "section", "kind": "link", "target": "GET /e/[slug]/checkout?t_<type>=<n>[&code][&w]", "result": "checkout step; only shown when at least one type is on sale" },
+        { "label": "Auf die Warteliste", "key": "waitlist.join", "where": "section", "kind": "serverAction", "target": "joinWaitlistAction (e/[slug]/actions.ts) → joinWaitlist()", "confirm": false, "result": "event_waitlist row; redirect to /e/[slug] with ?ok='Du stehst auf der Warteliste. Wir melden uns per E-Mail, sobald ein Platz frei wird.' or ?error= (invalid email, name missing, too many, 'Du stehst schon auf der Warteliste.', 'Es gibt wieder freie Plätze – du kannst direkt buchen.'). Later the minute worker mails 'Ein Platz ist frei: <event>' with link /e/<slug>?w=<token>." }
+      ],
+      "states": [
+        "Cancelled: 'Abgesagt' badge, no ticket box.",
+        "Free event: heading 'Anmeldung', price 'Kostenlos'.",
+        "Type not yet on sale: '· ab <date>', no quantity field; ended: '· nicht mehr erhältlich'.",
+        "Sold out: all types '· ausverkauft', no 'Weiter', waiting-list form below.",
+        "Waiting-list claim (?w= valid): muted banner 'Für dich reserviert: n Plätze bis <date time>.' (waitlist.claimBanner); invalid/used: red 'Dieser Link ist abgelaufen oder wurde schon genutzt.' (waitlist.claimExpired)."
+      ],
+      "links": ["/", "/e/[slug]/checkout"],
+      "phone": "Single column; ticket rows wrap the quantity field under the text; waiting-list fields stack (3 columns from sm).",
+      "uxNotes": [
+        "The event page renders no <Notice>: joinWaitlistAction redirects with ?ok=/?error=, but nothing shows it – joining the waiting list (or failing to) gives no visible feedback, and the form simply reappears. back() also drops the #tickets anchor, so the page jumps to the top.",
+        "Promo code is a separate form that reloads the whole page; quantities typed before applying a code are lost.",
+        "Quantity is a bare number input per type with no +/- buttons and no running total before 'Weiter'.",
+        "Back link label 'Alle Events' (site.back) leads to the start page, which may not list events at all (blocks/HTML mode).",
+        "Description is plain text (whitespace-pre-line), while products and forms on the same site show rich text / Markdown."
+      ]
+    },
+    {
+      "route": "/e/[slug]/checkout",
+      "file": "src/app/s/[site]/e/[slug]/checkout/page.tsx",
+      "components": ["src/app/s/[site]/e/[slug]/checkout/actions.ts", "src/app/s/[site]/e/[slug]/checkout/first-holder.tsx", "src/tickets/server.ts (buyTickets)"],
+      "title": "Tickets bestellen / Anmelden",
+      "titleKeys": ["shop.checkoutTitle", "shop.signupCheckout"],
+      "purpose": "Step 2 of buying tickets: buyer name + email, a name per ticket (if the event asks), total incl. service fee, then off to the payment provider (or straight to the tickets when free).",
+      "audience": "anonymous",
+      "header": { "shows": "Back link '← <Event title>' → /e/[slug]; h1 'Tickets bestellen' or (free) 'Anmelden'." },
+      "urlState": [
+        { "param": "t_<typeId>", "meaning": "quantity per ticket type (from the event page form)" },
+        { "param": "code", "meaning": "promo code carried over" },
+        { "param": "w", "meaning": "waiting-list claim token carried over" },
+        { "param": "error", "meaning": "toast via <Notice>" }
+      ],
+      "sections": [
+        {
+          "title": "Käufer:in",
+          "kind": "custom",
+          "fields": [
+            { "name": "name", "label": "Dein Name", "key": "shop.name", "type": "text", "component": "Input (autocomplete name)", "required": true },
+            { "name": "email", "label": "Deine E-Mail", "key": "shop.email", "type": "email", "component": "Input type=email", "required": true }
+          ]
+        },
+        {
+          "title": "Tickets (one card per ticket)",
+          "kind": "custom",
+          "notes": "'Ticket n · <type>' (free: 'Platz n') + price/'Kostenlos'.",
+          "fields": [
+            { "name": "holder[]", "label": "Name auf dem Ticket / Name auf dem Ticket (optional)", "key": "shop.holder / shop.holderOptional", "type": "text", "component": "Input", "required": "only when ticket_names = required, and never for ticket 1", "notes": "Hidden when ticket_names = off. Ticket 1 copies the buyer's name while typing (FirstHolder) and defaults to it on the server." }
+          ]
+        },
+        { "title": "Summe", "kind": "custom", "notes": "With a service fee: 'Tickets' (shop.subtotal) + 'Servicegebühr' (shop.serviceFee) lines; always 'Gesamt' (shop.total) or 'Kostenlos'. Hint: 'Deine Tickets bekommst du direkt nach der Zahlung auf der nächsten Seite und per E-Mail.' (shop.emailHint) / free: shop.signupHint." }
+      ],
+      "actions": [
+        {
+          "label": "{amount} bezahlen / Verbindlich anmelden",
+          "key": "shop.pay / shop.signup",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "buy (checkout/actions.ts) → buyTickets() → reserve_tickets() → startCheckout()",
+          "confirm": false,
+          "result": "Paid: redirect to the provider's checkout (Stripe Checkout etc.); success → /t/<order>?k=<token>&paid=1, cancel → /e/<slug>. Free (total 0): order marked paid at once, tickets issued, redirect to /t/<order>?k=<token>&paid=1. Tickets mail ('ticket' event mail with PDF attachment and the /t link) goes out on fulfilment. Errors → back to this page with ?error= (sold out 'Leider ausverkauft – jemand war schneller.', 'Der Preis hat sich gerade geändert …', not on sale, invalid email, name missing, holder missing, too many; setup problems → 'Der Ticketverkauf ist gerade nicht möglich …' shop.unavailable)."
+        }
+      ],
+      "states": [
+        "Nothing picked: 'Du hast keine Tickets ausgewählt.' + 'Zurück zum Event' link.",
+        "Too many: 'Höchstens {max} Tickets pro Bestellung.' (no form).",
+        "Event not published any more: 404."
+      ],
+      "links": ["/e/[slug]", "/t/[order]"],
+      "phone": "Name/email stack (2 columns from sm); ticket cards full width.",
+      "uxNotes": [
+        "Any error redirects back with ?error=: the form is uncontrolled, so the buyer's name, email and every ticket holder name are lost and must be typed again.",
+        "No way to change quantities here; the only path is the back link, which resets the event page selection to the preset.",
+        "Pay button says '{amount} bezahlen'; the shop's checkout button says 'Zahlungspflichtig bestellen · {amount}' – two wordings for the same step, and the ticket checkout has no AGB/Widerruf checkbox while the shop's has.",
+        "The service fee appears for the first time on this step (not on the event page).",
+        "Name/email are plain Inputs (not TypedInput kind=email), unlike the App."
+      ]
+    },
+    {
+      "route": "/t/[order]",
+      "file": "src/app/s/[site]/t/[order]/page.tsx",
+      "components": ["src/app/s/[site]/t/[order]/auto-refresh.tsx", "src/tickets/server.ts (ticketsForBuyer, qrSvg)"],
+      "title": "Deine Tickets",
+      "titleKey": "shop.yourTickets",
+      "purpose": "The buyer's tickets with QR codes (payment success page, link in the ticket mail, 'Tickets öffnen' in the portal; also guest-list tickets).",
+      "audience": "token (order id + ?k=<secret token>)",
+      "header": { "shows": "With ?paid=1 and status paid: success box (check icon, 'Zahlung erfolgreich!' shop.successTitle, 'Deine Tickets findest du hier und in deinem E-Mail-Postfach – zusammen mit allen Infos zur Anfahrt.' shop.successText). Then h1 'Deine Tickets'." },
+      "urlState": [
+        { "param": "k", "meaning": "access token (required)" },
+        { "param": "paid", "meaning": "1 = coming from the checkout: show the success box" }
+      ],
+      "sections": [
+        { "title": "Status / PDF", "kind": "custom", "notes": "Paid: 'Zeig den QR-Code am Einlass vor. Wir haben die Tickets auch an {email} geschickt.' (shop.keepLink) + outline button 'PDF herunterladen' (shop.pdf). Open: 'Deine Zahlung wird bestätigt … die Seite aktualisiert sich automatisch.' (shop.waiting) with AutoRefresh every 3 s for 3 min; reconcileOrder() asks the provider on each load. Other: shop.orderStatus.<status> text (expired, failed, cancelled, refunded, partially_refunded)." },
+        { "title": "Tickets", "kind": "custom", "notes": "Valid/used tickets: event title, full date · venue, type · holder name, code (mono), 'Eingecheckt' badge (shop.used) when used; white QR (size-40) on the right (below on phones)." }
+      ],
+      "actions": [
+        { "label": "PDF herunterladen", "key": "shop.pdf", "where": "section", "kind": "download", "target": "/t/[order]/pdf?k=<token>" }
+      ],
+      "states": ["open (waiting for payment, auto refresh)", "paid", "expired", "failed", "cancelled", "refunded (tickets invalid)", "partially_refunded"],
+      "links": ["/t/[order]/pdf"],
+      "phone": "Ticket cards stack; QR centred below the text.",
+      "uxNotes": [
+        "Free sign-ups also land here with paid=1, so a free registration is greeted with 'Zahlung erfolgreich!' and 'Deine Tickets' although the checkout said 'Anmeldung'.",
+        "AutoRefresh stops silently after 3 minutes; the page then keeps saying it updates automatically.",
+        "No link back to the event or the org's site from this page.",
+        "No 'add to wallet' / calendar link; the PDF is the only offline option."
+      ]
+    },
+    {
+      "route": "/g/[token]",
+      "file": "src/app/s/[site]/g/[token]/page.tsx",
+      "components": ["src/app/s/[site]/g/[token]/actions.ts", "src/guestlists/server.ts (addViaLink, syncTickets)"],
+      "title": "<Gästeliste> (Gästelisten-Link)",
+      "purpose": "Magic link of a guest list: someone enters their own name and their friends' names onto the list.",
+      "audience": "token (link token; shows no names of others, only what's left)",
+      "header": { "shows": "Org name (muted), list name (h1), event title · full date + time." },
+      "urlState": [{ "param": "ok / error", "meaning": "toast via <Notice>" }],
+      "sections": [
+        {
+          "title": "Eintragen",
+          "kind": "custom",
+          "fields": [
+            { "name": "by", "label": "Dein Name", "key": "guestlists.yourName", "type": "text", "component": "Input", "required": true },
+            { "name": "email", "label": "Deine E-Mail (optional)", "key": "guestlists.yourEmail", "type": "email", "component": "Input type=email", "required": false, "notes": "With an email the guests get their ticket (QR, PDF) by mail once (syncTickets → emailTickets, event mail kind 'guestlist')." },
+            { "name": "name[]", "label": "Wer kommt? (bis zu {count} Namen) – fields 'Name n'", "key": "guestlists.whoComes / guestlists.guestN", "type": "text", "component": "Input × min(per_submission, remaining)", "required": false }
+          ],
+          "notes": "Below: 'Noch n Plätze frei.' (guestlists.left) when the list has a limit."
+        }
+      ],
+      "actions": [
+        { "label": "Eintragen", "key": "guestlists.submit", "where": "section", "kind": "serverAction", "target": "signUp (g/[token]/actions.ts) → addViaLink() → guest_link_add()", "confirm": false, "result": "Back to the same page with toast 'Danke! n Namen stehen auf der Liste.' (guestlists.thanks); with email: tickets mailed. Errors: 'Bitte gib deinen Namen an.', invalid email, 'Die Liste ist voll.', 'Diese Gästeliste ist geschlossen.'" }
+      ],
+      "states": [
+        "Closed: muted box 'Diese Gästeliste ist geschlossen.' (guestlists.closed).",
+        "Full: 'Die Liste ist voll.' (guestlists.full).",
+        "Unknown token: 404."
+      ],
+      "links": [],
+      "phone": "Narrow single column (max-w-md) on every device.",
+      "uxNotes": [
+        "Nothing says what the optional email is for (it is the only way the guests get a QR ticket).",
+        "After a successful submit the same empty form shows again (only a toast confirms); no summary of who was added and no link to the tickets.",
+        "'Dein Name' (submitted_by) is not put on the list itself – the person has to type their own name again into 'Name 1'. Submitting with no guest names fails with the generic 'Bitte prüfe deine Eingaben.' (guest_link_add raises invalid_input), not a specific hint."
+      ]
+    },
+    {
+      "route": "/f/[slug]",
+      "file": "src/app/s/[site]/f/[slug]/page.tsx",
+      "components": ["src/app/s/[site]/f/[slug]/form-renderer.tsx", "src/app/s/[site]/f/[slug]/actions.ts", "src/forms/elements.ts", "src/forms/public.ts"],
+      "title": "<Form title>",
+      "purpose": "A published form (contact sign-up, membership application …) built from the form's ordered elements.",
+      "audience": "anonymous (published forms via cachedForm / public_form())",
+      "header": { "shows": "Org name (muted), form title (h1), intro (hidden after sending)." },
+      "urlState": [{ "param": "done", "meaning": "1 = sent (thank-you text); nomail = sent but the confirmation mail failed" }],
+      "sections": [
+        {
+          "title": "Formular",
+          "kind": "custom",
+          "notes": "Fields come from form.elements (order set in the App). Label = element label, else custom field label, else the platform field's label; '*' when required; optional help line.",
+          "fields": [
+            { "name": "<platform field>", "label": "per element (Vorname, Nachname, E-Mail, Telefon, Straße, PLZ, Ort, Firma, Geburtstag …)", "type": "text|email|tel|date|country", "component": "Input (autocomplete per field) / DateInput for dates / NativeSelect for country", "required": "per element" },
+            { "name": "membership.type", "label": "per element (Mitgliedsart)", "type": "radio", "component": "radio cards: type name, '{fee} pro {interval}' (forms.feePer), 'Aufnahmegebühr {fee}' (forms.entryFee); preselected when only one", "required": "per element" },
+            { "name": "custom.<key>", "label": "custom field label", "type": "text|number|date|email|url|select|boolean", "component": "Input / DateInput / NativeSelect / checkbox (value 'ja')", "required": "per element" },
+            { "name": "text element", "type": "static", "component": "paragraph" },
+            { "name": "consent.<id>", "label": "element label", "type": "checkbox", "component": "native checkbox", "required": "per element" },
+            { "name": "account_holder", "label": "Kontoinhaber:in (falls abweichend)", "key": "forms.accountHolder", "type": "text", "component": "Input (inside fieldset 'SEPA-Lastschriftmandat' forms.mandate)", "required": false },
+            { "name": "iban", "label": "IBAN *", "type": "text", "component": "Input (plain)", "required": true },
+            { "name": "bic", "label": "BIC (optional)", "key": "forms.bicOptional", "type": "text", "component": "Input (plain)", "required": false },
+            { "name": "mandate_ok", "label": "Ich ermächtige {creditor} (Gläubiger-ID {id}) … (forms.mandateText)", "key": "forms.mandateText", "type": "checkbox", "component": "native checkbox", "required": true },
+            { "name": "$website", "type": "hidden honeypot", "component": "hidden Input" }
+          ]
+        }
+      ],
+      "actions": [
+        { "label": "Absenden", "key": "forms.submit", "where": "section", "kind": "serverAction", "target": "submitForm (useActionState) → submitPublicForm()", "confirm": false, "result": "Valid: redirect to ?done=1 → the form's success text or 'Danke! Deine Angaben sind angekommen.' (forms.thanks); ?done=nomail adds 'Deine Angaben sind angekommen – die Bestätigungs-E-Mail konnte aber nicht verschickt werden.'. Purpose contact → contact created/updated at once; membership → waits for the board (Forms › Einsendungen). Invalid: inline red alert above the button ('<Feld>: <Fehler>'), values kept." }
+      ],
+      "states": ["form", "sent (done=1)", "sent, mail failed (done=nomail)", "closed/unpublished: 404 (on submit: 'Dieses Formular ist nicht mehr verfügbar.')"],
+      "links": [],
+      "phone": "Single column (max-w-xl); IBAN/BIC side by side from sm.",
+      "uxNotes": [
+        "Errors show as an inline alert box here, while every other public form (checkout, cart, guest list, portal, waiting list) reports errors as toasts – two patterns on one site.",
+        "IBAN/BIC are plain Inputs without format/check-digit help, while the portal's bank form uses TypedInput kind=iban/bic.",
+        "The thank-you state has no link back to the org's site or anywhere else (dead end).",
+        "Only one error is shown at a time (first failing field), so long forms may need several submits."
+      ]
+    },
+    {
+      "route": "/shop",
+      "file": "src/app/s/[site]/shop/page.tsx",
+      "components": ["src/app/s/[site]/shop/cards.tsx"],
+      "title": "Shop (or the shop's own title)",
+      "titleKey": "store.shopTitle",
+      "purpose": "The org's product catalog with optional category filter and a link to the cart.",
+      "audience": "anonymous (404 when the shop module is off)",
+      "header": { "shows": "Top row: '← <Org>' back link (left), cart pill 'Warenkorb' (store.cart) with item count badge (right). h1 = shop title (settings) or 'Shop'; intro text." },
+      "urlState": [{ "param": "c", "meaning": "category filter" }],
+      "sections": [
+        { "title": "Kategorien", "key": "store.categories", "kind": "custom", "notes": "Pill links 'Alle' (store.allCategories) + each category; only when there are ≥ 2 categories." },
+        { "title": "Produkte", "kind": "custom", "notes": "ProductCards grid (2 / md 3 / lg 4): square picture, name, price label or 'ausverkauft', 'Erscheint <date>'. Empty: 'Hier gibt es gerade nichts zu kaufen.' (store.empty)." }
+      ],
+      "actions": [
+        { "label": "Warenkorb", "key": "store.cart", "where": "header", "kind": "link", "target": "/cart" },
+        { "label": "<product card>", "where": "row", "kind": "link", "target": "/shop/[slug]" }
+      ],
+      "links": ["/", "/cart", "/shop/[slug]"],
+      "phone": "2 product cards per row.",
+      "uxNotes": [
+        "This is the only page with a visible cart link; product pages, the start page's shop block and the order page have none."
+      ]
+    },
+    {
+      "route": "/shop/[slug]",
+      "file": "src/app/s/[site]/shop/[slug]/page.tsx",
+      "components": ["src/app/s/[site]/shop/[slug]/gallery.tsx", "src/app/s/[site]/shop/[slug]/option-picker.tsx", "src/app/s/[site]/shop/[slug]/variant-select.tsx", "src/app/s/[site]/shop/[slug]/player.tsx", "src/app/s/[site]/shop/actions.ts"],
+      "title": "<Product name>",
+      "purpose": "One product: pictures, music player, price/VAT, variant + quantity (+ own price) → into the cart.",
+      "audience": "anonymous",
+      "header": { "shows": "Back link '← Shop' → /shop; h1 name + 'Erscheint <date>' badge (pre-order); price label (text-xl); muted line 'inkl. {rate} % MwSt.' / 'ohne MwSt.' / 'Kein Ausweis der USt. (§ 19 UStG)' + ' · zzgl. Versand' for non-digital." },
+      "urlState": [{ "param": "error", "meaning": "toast via <Notice>" }],
+      "sections": [
+        { "title": "Galerie", "kind": "custom", "notes": "Big square picture + up to 5-column thumbnails; jumps to a variant's own picture (window event shop:image). Grey square without pictures." },
+        { "title": "Player", "key": "store.player", "kind": "custom", "notes": "Bandcamp-style MusicPlayer when the product has tracks: cover, play/pause, seek bar, prev/next, tracklist; locked tracks show a lock + 'nach dem Kauf' (store.buyersOnly); buyable tracks show '<price> · kaufen' (store.buy, title 'Diesen Titel einzeln kaufen') which posts addToCart for that track." },
+        {
+          "title": "In den Warenkorb",
+          "kind": "custom",
+          "notes": "Replaced by 'ausverkauft' (store.soldOut) when the product is sold out.",
+          "fields": [
+            { "name": "item (options)", "label": "<option name>: <picked value>", "type": "buttons", "component": "OptionPicker (button rows per option, unavailable combinations struck through; line below shows price · 'nur noch n da' or 'Diese Kombination ist nicht verfügbar.')", "required": true, "notes": "When the product has options" },
+            { "name": "item (variants)", "label": "Variante", "key": "store.variant", "type": "select", "component": "native select (VariantSelect): '<name> · <price>[ · ausverkauft | · nur noch n da]', sold-out options disabled", "required": true, "notes": "Variants without options" },
+            { "name": "price", "label": "Dein Preis", "key": "store.yourPrice", "type": "money", "component": "Input inputMode=decimal + '€ · mindestens {price}' (store.atLeast)", "required": false, "notes": "Name your price only; prefilled with the suggestion" },
+            { "name": "q", "label": "Anzahl", "key": "store.qty", "type": "number", "component": "Input type=number (1…max per order)", "required": false }
+          ]
+        },
+        { "title": "Beschreibung", "kind": "custom", "notes": "Rich text (cleanHtml)." },
+        { "title": "Video", "kind": "custom", "notes": "YouTube/Vimeo iframe or <video>, full width below." }
+      ],
+      "actions": [
+        { "label": "In den Warenkorb", "key": "store.addToCart", "where": "section", "kind": "serverAction", "target": "addToCart (shop/actions.ts)", "confirm": false, "result": "Line added to the cart cookie; redirect to /cart." },
+        { "label": "<price> · kaufen (track)", "key": "store.buy", "where": "section", "kind": "serverAction", "target": "addToCart (track id)", "result": "redirect to /cart" }
+      ],
+      "states": ["on sale", "few left ('nur noch n da')", "sold out", "pre-order (Erscheint …)", "combination unavailable (submit posts an empty item)"],
+      "links": ["/shop", "/cart"],
+      "phone": "Gallery above the details (2 columns from md); video full width.",
+      "uxNotes": [
+        "Every 'In den Warenkorb' leaves the product page for /cart (no stay-and-continue option, no mini cart).",
+        "With an unavailable option combination the button stays active and posts an empty item.",
+        "Variants without options use a raw <select> styled by hand, not the shared NativeSelect.",
+        "Minimum price for name-your-price is only enforced later (cart shows 'Mindestens …' as a line problem)."
+      ]
+    },
+    {
+      "route": "/cart",
+      "file": "src/app/s/[site]/cart/page.tsx",
+      "components": ["src/app/s/[site]/cart/qty.tsx", "src/app/s/[site]/shop/actions.ts", "src/shop/fields.ts", "src/shop/server.ts (placeOrder)"],
+      "title": "Warenkorb",
+      "titleKey": "store.cart",
+      "purpose": "Cart and checkout on one page: change lines, choose delivery/shipping rate, enter buyer + address, choose payment, accept terms, order.",
+      "audience": "anonymous (cart in a cookie per org)",
+      "header": { "shows": "Back link '← Weiter einkaufen' (store.continueShopping) → /shop; h1 'Warenkorb'." },
+      "urlState": [
+        { "param": "d", "meaning": "delivery: pickup | shipping | digital (links, so totals are computed on the server)" },
+        { "param": "r", "meaning": "shipping rate id" },
+        { "param": "back + k", "meaning": "came back from a cancelled payment: offers 'Warenkorb wiederherstellen'" },
+        { "param": "error", "meaning": "toast via <Notice>" }
+      ],
+      "sections": [
+        { "title": "Zahlung abgebrochen", "kind": "custom", "notes": "Only with ?back and an empty cart: 'Die Zahlung wurde abgebrochen.' (store.paymentCancelled) + button 'Warenkorb wiederherstellen' (store.restoreCart)." },
+        {
+          "title": "Positionen",
+          "kind": "custom",
+          "notes": "Each line: picture, name → product, unit price, line problem in red (store.lineProblem: 'Nicht mehr in dieser Menge verfügbar.', 'Höchstens {max} pro Bestellung.', 'Nicht mehr erhältlich.', 'Mindestens {price}'), quantity, trash, line total. Single tracks show 'Einzeltitel' instead of a quantity. Empty: 'Dein Warenkorb ist leer.' + 'Zum Shop'.",
+          "fields": [
+            { "name": "q", "label": "aria 'Anzahl'", "key": "store.qty", "type": "number", "component": "QtyInput (autosaves 700 ms after a change; 'Ändern' button only without JS)", "required": false },
+            { "name": "price", "label": "Dein Preis", "key": "store.yourPrice", "type": "money", "component": "PriceInput (autosave) + '€ · mindestens {price}'", "required": false, "notes": "name-your-price lines" }
+          ]
+        },
+        { "title": "Lieferung", "key": "store.delivery", "kind": "custom", "notes": "Only when > 1 delivery or shipping: link chips 'Abholung' / 'Digital (Download)' / one per shipping rate '<rate> · <price|kostenlos>'; 'Versandkostenfrei ab {amount}'. Pickup shows the shop's pickup text. None possible: 'Für diese Artikel ist gerade keine Lieferart möglich.'" },
+        { "title": "Summe", "kind": "custom", "notes": "'Zwischensumme', 'Versand', 'Gesamt'; VAT contained per rate ('enthaltene MwSt. {rate} %') or the § 19 UStG note." },
+        {
+          "title": "Bestellen",
+          "kind": "custom",
+          "notes": "Only when a delivery is possible and no line has a problem.",
+          "fields": [
+            { "name": "name", "label": "Dein Name", "key": "store.name", "type": "text", "component": "Input", "required": true },
+            { "name": "email", "label": "Deine E-Mail", "key": "store.email", "type": "email", "component": "Input type=email", "required": true },
+            { "name": "phone", "label": "Telefon", "key": "store.phone", "type": "tel", "component": "Input type=tel", "required": true },
+            { "name": "company", "label": "Firma / Verein (optional)", "key": "store.company", "type": "text", "component": "Input", "required": false, "notes": "fieldset 'Lieferadresse' (shipping) or 'Rechnungsadresse' (other deliveries)" },
+            { "name": "street", "label": "Straße und Hausnummer", "key": "store.street", "type": "text", "component": "Input", "required": true },
+            { "name": "postal_code", "label": "PLZ", "key": "store.postalCode", "type": "text", "component": "Input", "required": true },
+            { "name": "city", "label": "Ort", "key": "store.city", "type": "text", "component": "Input", "required": true },
+            { "name": "country", "label": "Land", "key": "store.country", "type": "select", "component": "native select (rate's countries for shipping, else all; default DE)", "required": true },
+            { "name": "note", "label": "Anmerkung (optional)", "key": "store.note", "type": "textarea", "component": "textarea (2 rows)", "required": false },
+            { "name": "payment", "label": "Bezahlung", "key": "store.payment", "type": "radio", "component": "radio cards: 'Online bezahlen' / 'Überweisung' / 'Bei Abholung bezahlen' + hint line (store.paymentHints)", "required": true, "notes": "Only when total > 0; none possible: 'Für diese Bestellung ist gerade keine Bezahlart möglich. Bitte melde dich beim Shop.'" },
+            { "name": "terms", "label": "Ich akzeptiere die AGB und habe die Widerrufsbelehrung gelesen: AGB · Widerrufsbelehrung", "key": "store.acceptTerms", "type": "checkbox", "component": "native checkbox, links open /shop/agb, /shop/widerruf in a new tab", "required": "when the shop has AGB or Widerruf text" },
+            { "name": "waiver", "label": "Ich stimme zu, dass der Download sofort nach der Zahlung bereitsteht, und weiß, dass ich damit mein Widerrufsrecht für digitale Inhalte verliere.", "key": "store.digitalWaiver", "type": "checkbox", "component": "native checkbox", "required": "when a line is digital" }
+          ]
+        }
+      ],
+      "actions": [
+        { "label": "<qty/price change>", "where": "row", "kind": "serverAction", "target": "updateCart", "result": "cart cookie updated, page reloads with d/r kept" },
+        { "label": "Entfernen (trash icon)", "key": "store.remove", "where": "row", "kind": "serverAction", "target": "updateCart (q=0)", "confirm": false },
+        { "label": "Warenkorb wiederherstellen", "key": "store.restoreCart", "where": "section", "kind": "serverAction", "target": "restoreCart → reopenCart()", "result": "dropped order's lines back in the cart" },
+        {
+          "label": "Zahlungspflichtig bestellen · {amount} / Jetzt bestellen",
+          "key": "store.orderPay / store.orderFree",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "checkout → placeOrder()",
+          "confirm": false,
+          "result": "Online: cart cleared, redirect to the provider checkout; success → /o/<order>?k=<token>&paid=1 (confirmation mail on payment), cancel → /cart?back=<order>&k=<token>. Transfer / pickup: order placed at once, contact linked, invoice for transfer, mail 'confirmation' (with bank details or pay-on-pickup note, pickup text), redirect to /o/<order>?k=<token> (no paid=1). Free total: marked paid at once → /o/…&paid=1. Errors → /cart?d&r&error= (invalid email, name/phone/address missing, terms/waiver missing, sold out, below minimum, cart/price changed, delivery/shipping/payment invalid; setup problems 'Bestellen ist gerade nicht möglich …')."
+        }
+      ],
+      "states": ["empty", "payment cancelled (restore offer)", "line problems (no order form)", "no delivery possible", "no payment possible", "free total (no payment choice)"],
+      "links": ["/shop", "/shop/[slug]", "/shop/agb", "/shop/widerruf", "/o/[order]"],
+      "phone": "Line layout: picture + text, controls on a second row (3 columns from sm); address fields stack.",
+      "uxNotes": [
+        "Any checkout error redirects back with ?error=: name, email, phone, the full address, the note and the checkboxes are all lost and must be re-entered.",
+        "Phone and a full street address are always required, also for pickup and for download-only orders (a single €1 track asks for name, email, phone, street, PLZ, Ort, Land + 2 checkboxes).",
+        "Delivery/rate choice is a page reload (links) – anything already typed into the order form below is lost when the buyer changes delivery afterwards.",
+        "The order form disappears completely while any line has a problem; only the red line text explains why.",
+        "'Warenkorb wiederherstellen' only appears when the cart is empty; with a non-empty cart a cancelled payment shows nothing.",
+        "Country is a hand-styled native <select>, unlike the shared NativeSelect on /f forms."
+      ]
+    },
+    {
+      "route": "/o/[order]",
+      "file": "src/app/s/[site]/o/[order]/page.tsx",
+      "components": ["src/shop/server.ts (orderForBuyer, orderFiles, orderMusic, orderUnreleased)", "src/app/s/[site]/t/[order]/auto-refresh.tsx"],
+      "title": "Bestellung #<number>",
+      "titleKey": "store.orderTitle",
+      "purpose": "The buyer's shop order page: status, bank details, items, delivery, tracking, downloads/music, invoice.",
+      "audience": "token (order id + ?k=<token>)",
+      "header": { "shows": "With ?paid=1 and paid: success box 'Danke für deine Bestellung!' (store.orderThanks) + 'Eine Bestätigung ist unterwegs an {email}.' (store.orderMailed). h1 'Bestellung #n'; '<Org> · <date time>'; badges: status ('Eingegangen' store.orderReceived for new, else store.orderStatus: Abholbereit / Versendet / Erledigt / Storniert) + 'Bezahlt' / 'Unbezahlt'." },
+      "urlState": [{ "param": "k", "meaning": "access token" }, { "param": "paid", "meaning": "1 = back from online payment: success box" }],
+      "sections": [
+        { "title": "Zahlung wird bestätigt", "kind": "custom", "notes": "Online + open: 'Deine Zahlung wird bestätigt … die Seite aktualisiert sich automatisch.' with AutoRefresh; reconcileOrder() on load." },
+        { "title": "Überweisung", "kind": "DetailList-like", "notes": "Transfer + unpaid: 'Bitte überweise bis <date>:', 'Kontoinhaber: …', IBAN (grouped, mono), BIC, 'Betrag: …', 'Verwendungszweck: Bestellung <n>'." },
+        { "title": "Abholung", "kind": "custom", "notes": "Pickup + unpaid: 'Du bezahlst bei der Abholung – bar oder mit Karte.'" },
+        { "title": "Positionen", "kind": "custom", "columns": ["n× Beschreibung", "Betrag"], "notes": "+ 'Gesamt'." },
+        { "title": "Lieferung", "kind": "custom", "notes": "Delivery label; shipping address block; 'Sendungsverfolgung: …' when tracking is set." },
+        { "title": "Erscheint später", "kind": "custom", "notes": "Pre-orders: '<Name> erscheint am <date>. Du wirst dazu nochmals benachrichtigt.'" },
+        { "title": "Musik", "kind": "custom", "notes": "Per album: 'Ganzes Album' → 'Album als ZIP (WAV + MP3 320) · n MB' or 'Album-ZIP wird erstellt …'; tracklist with WAV / MP3 320 links." },
+        { "title": "Downloads", "key": "store.downloads", "kind": "custom", "notes": "Outline buttons per product file." },
+        { "title": "Rechnung", "kind": "custom", "notes": "Outline button 'Rechnung <number>' when an invoice is issued. Footer: 'Heb dir diesen Link auf – hier siehst du jederzeit den Stand deiner Bestellung.'" }
+      ],
+      "actions": [
+        { "label": "Album als ZIP / WAV / MP3 320", "key": "store.albumZipButton", "where": "section", "kind": "download", "target": "/o/[order]/audio/[product]/[format]" },
+        { "label": "<file>", "where": "section", "kind": "download", "target": "/o/[order]/file/[file]" },
+        { "label": "Rechnung <number>", "key": "store.invoiceDownload", "where": "section", "kind": "download", "target": "/o/[order]/invoice" }
+      ],
+      "states": ["online pending (auto refresh)", "paid", "unpaid transfer (bank details)", "unpaid pickup", "ready / shipped / completed", "cancelled", "partially refunded (counts as paid)", "pre-order waiting for release", "ZIP being prepared"],
+      "links": [],
+      "phone": "Single column (max-w-xl).",
+      "uxNotes": [
+        "Transfer and pay-on-pickup orders arrive here without paid=1, so the buyer gets no 'Danke für deine Bestellung' moment – just badges 'Eingegangen' + 'Unbezahlt'.",
+        "Status words differ from the App for the same state only partly ('Eingegangen' here vs 'Zu bearbeiten' in the App), other states reuse the App's words ('Erledigt').",
+        "No link back to the shop or the org's site (dead end apart from downloads).",
+        "'Album-ZIP wird erstellt …' has no auto refresh; the buyer must reload."
+      ]
+    },
+    {
+      "route": "/shop/agb",
+      "file": "src/app/s/[site]/shop/agb/page.tsx",
+      "components": ["src/app/s/[site]/shop/legal.tsx"],
+      "title": "AGB",
+      "titleKey": "store.terms",
+      "purpose": "The shop's terms (Markdown from Shop › Einstellungen).",
+      "audience": "anonymous",
+      "header": { "shows": "'← Shop' back link, h1 'AGB'." },
+      "sections": [{ "title": "Text", "kind": "custom", "notes": "Markdown." }],
+      "states": ["empty text → 404"],
+      "links": ["/shop"],
+      "uxNotes": ["Opened from the cart in a new tab, but the back link goes to /shop rather than closing/returning to the cart."]
+    },
+    {
+      "route": "/shop/widerruf",
+      "file": "src/app/s/[site]/shop/widerruf/page.tsx",
+      "components": ["src/app/s/[site]/shop/legal.tsx"],
+      "title": "Widerrufsbelehrung",
+      "titleKey": "store.withdrawal",
+      "purpose": "The shop's withdrawal notice (Markdown from Shop › Einstellungen).",
+      "audience": "anonymous",
+      "header": { "shows": "'← Shop' back link, h1 'Widerrufsbelehrung'." },
+      "sections": [{ "title": "Text", "kind": "custom", "notes": "Markdown." }],
+      "states": ["empty text → 404"],
+      "links": ["/shop"]
+    },
+    {
+      "route": "/portal",
+      "file": "src/app/s/[site]/portal/page.tsx",
+      "components": ["src/portal/login-form.tsx", "src/portal/login.ts", "src/portal/session.ts", "src/portal/sections.ts", "src/portal/sections/members.tsx", "src/portal/sections/tickets.tsx", "src/portal/sections/courses.tsx", "src/portal/sections/rentals.tsx", "src/portal/sections/wiki.tsx", "src/app/s/[site]/portal/actions.ts"],
+      "title": "Mitgliederbereich",
+      "titleKey": "portal.title",
+      "purpose": "Customer portal of one org: signed out = request a magic link; signed in = greeting, the org's welcome HTML and one tab per section of the enabled modules (membership, dues, own data, tickets, courses, rental, info pages).",
+      "audience": "anonymous (login form) / portal session (30-day cookie per org after the magic link)",
+      "header": { "shows": "Signed out: org name + h1 'Mitgliederbereich'. Signed in: org name + 'Hallo {name}' (first name or email) + ghost button 'Abmelden' (portal.signOut)." },
+      "urlState": [
+        { "param": "tab", "meaning": "card | membership | dues | data | tickets | courses | rental | wiki (first visible tab by default)" },
+        { "param": "sent", "meaning": "1 = login link requested" },
+        { "param": "ok / error", "meaning": "toast via <Notice>" }
+      ],
+      "sections": [
+        {
+          "title": "Anmelden (signed out)",
+          "kind": "custom",
+          "notes": "Intro 'Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du dich anmeldest – ganz ohne Passwort.' (portal.intro). After sending: 'Wenn wir deine Adresse kennen, ist ein Anmeldelink unterwegs. Er ist 30 Minuten gültig.' (portal.linkSent).",
+          "fields": [{ "name": "email", "label": "E-Mail-Adresse", "key": "portal.email", "type": "email", "component": "Input type=email", "required": true }]
+        },
+        { "title": "Willkommen (org HTML)", "kind": "custom", "notes": "portal_html from Website › Seiten › Mitgliederbereich with {{person.first_name}}, {{person.name}}, {{org.*}} (cleanPage)." },
+        { "title": "Karte (tab card, module members)", "key": "portal.tabs.card", "kind": "custom", "notes": "Only the member card, large and centred (IdCard: org, name, number, type, QR member code, status 'Aktiv' / 'Endet am …'). Without code: 'Für dich gibt es noch keine Mitgliedskarte.'; ended: 'Ausgetreten'." },
+        {
+          "title": "Mitgliedschaft (tab membership)",
+          "key": "portal.tabs.membership",
+          "kind": "custom",
+          "notes": "Card 'Meine Mitgliedschaft' with status badge and a hand-made <dl>: Mitgliedsart (+ '{fee} pro {interval}', 'beitragsfrei bis …'), Mitgliedsnummer, Mitglied seit, Zahlung ('Lastschrift von DE12 •••• 1234' / 'Überweisung' / payment method). Below (active, no end date): card 'Kündigen' with 'Bei Kündigung heute endet deine Mitgliedschaft frühestens am {date}.'",
+          "fields": [{ "name": "confirm", "label": "Ja, ich möchte meine Mitgliedschaft kündigen.", "key": "portal.cancelConfirm", "type": "checkbox", "component": "native checkbox", "required": true }]
+        },
+        { "title": "Beiträge (tab dues)", "key": "portal.tabs.dues", "kind": "custom", "notes": "Last 20 dues (not cancelled): description, due date, amount, badge (Bezahlt / Offen / 'Überfällig'). Empty: 'Keine Beiträge.'" },
+        {
+          "title": "Meine Daten (tab data)",
+          "key": "portal.tabs.data",
+          "kind": "custom",
+          "notes": "Card 'Meine Daten': name · email (read-only line), then a second card 'Bankverbindung ändern'. Ended membership: only 'Ausgetreten'.",
+          "fields": [
+            { "name": "phone", "label": "Telefon", "key": "contacts.phone", "type": "phone", "component": "TypedInput:phone", "required": false },
+            { "name": "street", "label": "Straße und Nr.", "key": "contacts.street", "type": "text", "component": "Input", "required": false },
+            { "name": "postal_code", "label": "PLZ", "key": "contacts.postalCode", "type": "postcode", "component": "TypedInput:postcode", "required": false },
+            { "name": "city", "label": "Ort", "key": "contacts.city", "type": "text", "component": "Input", "required": false },
+            { "name": "account_holder", "label": "Kontoinhaber:in (falls abweichend)", "key": "forms.accountHolder", "type": "text", "component": "Input", "required": false },
+            { "name": "iban", "label": "IBAN", "type": "iban", "component": "TypedInput:iban", "required": true, "notes": "always empty (current IBAN not prefilled)" },
+            { "name": "bic", "label": "BIC (optional)", "key": "forms.bicOptional", "type": "bic", "component": "TypedInput:bic", "required": false },
+            { "name": "mandate_ok", "label": "Ich ermächtige {creditor} … (forms.mandateText)", "type": "checkbox", "component": "native checkbox", "required": true }
+          ]
+        },
+        { "title": "Tickets (tab tickets, module tickets)", "key": "portal.tabs.tickets", "kind": "custom", "notes": "Paid ticket/guest-list orders by the contact's email, upcoming first then past (dimmed): event, date · venue, 'n Tickets', 'n erstattet' badge, link 'Tickets öffnen' → /t/<order>?k=<token>. Empty: 'Noch keine Tickets.'" },
+        { "title": "Kurse (tab courses, module courses)", "key": "portal.tabs.courses", "kind": "custom", "notes": "Courses enrolled/waiting: title, 'Warteliste' badge, 'mit {name}', next 5 dates (weekday dd.mm · HH:MM–HH:MM), '… und n weitere Termine'; 'Keine kommenden Termine.'" },
+        { "title": "Meine Miete (tab rental, module rentals)", "key": "portal.tabs.rental", "kind": "custom", "notes": "Running/upcoming rentals: object name + state badge, <dl> Art, Zeitraum, 'Du bist' (role), main tenants also Preis, Kaution, Kündigungsfrist (Monate) ('n Monate' / 'Gekündigt am …'), Personen; 'Dokumente' (files shared to the portal → /portal/file/<id>). Card 'Schlüssel & Zugang' for access items. Empty: 'Gerade läuft bei dir nichts.'" },
+        { "title": "Infos (tab wiki, module wiki)", "key": "portal.tabs.wiki", "kind": "custom", "notes": "Card 'Wissen': wiki pages released for members → /portal/wiki/<id>. Only for contacts with an active membership." },
+        { "title": "Tab bar", "kind": "custom", "notes": "Fixed bottom bar (all devices, max-w-2xl centred, safe-area padding) with icon + label per tab; only when > 1 tab." }
+      ],
+      "actions": [
+        { "label": "Link zuschicken", "key": "portal.sendLink", "where": "section", "kind": "serverAction", "target": "requestLink → sendLoginLink()", "confirm": false, "result": "Mail 'Dein Anmeldelink für {org}' (button 'Anmelden', link /portal/login?token=…, valid 30 min; max 3 per 10 min per address) → ?sent=1. No email provider / send failure: ?error='Die E-Mail mit dem Anmeldelink konnte gerade nicht verschickt werden. Bitte versuche es später noch einmal oder melde dich beim Verein.' Same answer for unknown addresses." },
+        { "label": "Abmelden", "key": "portal.signOut", "where": "header", "kind": "serverAction", "target": "logout → signOut()", "confirm": false, "result": "back to the login form" },
+        { "label": "Kündigen", "key": "membership.cancel", "where": "section", "kind": "serverAction", "target": "cancelMyMembership", "confirm": "checkbox in the form (no confirm sheet)", "result": "ends_on = earliest legal end; toast 'Gekündigt. Deine Mitgliedschaft endet am {date}.'; membership.ended event to the board." },
+        { "label": "Speichern", "key": "common.save", "where": "section", "kind": "serverAction", "target": "updateMyData", "result": "contact phone/address updated; toast 'Gespeichert. Der Vorstand wurde informiert.'; event membership.self_updated." },
+        { "label": "Neues Mandat erteilen", "key": "portal.saveBank", "where": "section", "kind": "serverAction", "target": "updateMyBank", "result": "IBAN/BIC/holder + mandate signed today; toast 'Gespeichert. Der Vorstand wurde informiert.'; errors 'Die IBAN ist ungültig.', 'Die BIC ist ungültig.', 'Bitte erteile das Lastschriftmandat.'" },
+        { "label": "Tickets öffnen", "key": "portal.tickets.open", "where": "row", "kind": "link", "target": "/t/[order]?k=<token>" },
+        { "label": "<tab>", "where": "tabbar", "kind": "link", "target": "?tab=<key>" }
+      ],
+      "states": ["signed out", "link sent", "signed in with tabs", "signed in, nothing to show ('Hier gibt es für dich gerade nichts zu sehen.')", "membership ending / ended"],
+      "links": ["/portal/login", "/portal/wiki/[id]", "/portal/file/[file]", "/t/[order]"],
+      "phone": "The bottom tab bar is the phone pattern (app-like); 'Karte' opens alone so the card can be shown at the door. Content gets pb-24 for the bar.",
+      "uxNotes": [
+        "The 'Infos' tab is shown to every signed-in person when the wiki module is on (no show() check), but its section renders nothing for non-members or when no pages are released – an empty tab.",
+        "Only members can edit their data: 'Meine Daten' lives in the members section, so tenants, course participants and ticket buyers can't change phone/address; nobody can change their email.",
+        "After 'Link zuschicken' the page only shows the sent text – no 'resend' or 'use another address' link, and no hint to check spam.",
+        "The whole area is called 'Mitgliederbereich' even for tenants or ticket buyers without a membership; the mail-failed text says 'melde dich beim Verein' regardless of the org type.",
+        "The membership facts are a hand-made <dl>, the rental facts too (app.md asks for DetailList); the rental row label 'Kündigungsfrist (Monate)' is the App's form label and repeats 'Monate' in the value.",
+        "The current IBAN is not prefilled and changing it is labelled 'Bankverbindung ändern' but the button says 'Neues Mandat erteilen' – two names for one step.",
+        "Status 'Ausgetreten' (membership.state.ended) is the App's wording, shown to the member.",
+        "The login link mail is built in the visitor's language (getT) with a hard-coded green button, not the org's language/brand or its email template."
+      ]
+    },
+    {
+      "route": "/portal/login",
+      "file": "src/app/s/[site]/portal/login/page.tsx",
+      "title": "Mitgliederbereich (Anmeldelink)",
+      "purpose": "Landing page of the login link: one button signs in (a GET alone doesn't, so mail scanners can't use up the link).",
+      "audience": "token (?token= one-time login token)",
+      "header": { "shows": "Org name + h1 'Mitgliederbereich'." },
+      "urlState": [{ "param": "token", "meaning": "one-time login token" }],
+      "sections": [],
+      "actions": [
+        { "label": "Jetzt anmelden", "key": "portal.signInNow", "where": "section", "kind": "serverAction", "target": "confirmLogin → signIn()", "confirm": false, "result": "Valid: 30-day session cookie, redirect to /portal. Invalid/expired/used: /portal?error='Der Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen an.'" }
+      ],
+      "links": ["/portal"],
+      "uxNotes": [
+        "The page shows only a button, without a sentence explaining why a second click is needed.",
+        "An expired or missing token is only detected after the click."
+      ]
+    },
+    {
+      "route": "/portal/wiki/[id]",
+      "file": "src/app/s/[site]/portal/wiki/[id]/page.tsx",
+      "components": ["src/wiki/outside-view.tsx"],
+      "title": "<Wiki page> (Mitgliederbereich)",
+      "purpose": "A wiki page released for members, read inside the member area.",
+      "audience": "portal session with an active membership (else redirect to /portal)",
+      "header": { "shows": "Breadcrumb 'Mitgliederbereich / <path …>', h1 with icon + title." },
+      "sections": [{ "title": "Inhalt", "kind": "custom", "notes": "Markdown body (file + page links resolved); sub-pages as a 2-column link grid." }],
+      "links": ["/portal", "/portal/wiki/[id]", "/wiki/file/[id]"],
+      "uxNotes": ["Leaves the portal layout: no tab bar and no greeting/sign-out here, only the breadcrumb back."]
+    },
+    {
+      "route": "/wiki",
+      "file": "src/app/s/[site]/wiki/page.tsx",
+      "title": "Wissen",
+      "titleKey": "wiki.outside.title",
+      "purpose": "Index of the org's publicly released wiki start pages.",
+      "audience": "anonymous",
+      "header": { "shows": "Org name (muted) + h1 'Wissen'." },
+      "sections": [{ "title": "Seiten", "kind": "custom", "notes": "Bordered link rows (icon + title)." }],
+      "states": ["no public pages → 404"],
+      "links": ["/wiki/[id]"],
+      "uxNotes": ["No link back to the org's start page (org name is plain text)."]
+    },
+    {
+      "route": "/wiki/[id]",
+      "file": "src/app/s/[site]/wiki/[id]/page.tsx",
+      "components": ["src/wiki/outside-view.tsx"],
+      "title": "<Wiki page>",
+      "purpose": "A publicly released wiki page (live, not cached).",
+      "audience": "anonymous",
+      "header": { "shows": "Breadcrumb '<Org> / <path …>' (org name not a link), h1 icon + title." },
+      "sections": [{ "title": "Inhalt", "kind": "custom", "notes": "Markdown body; sub-pages as link grid." }],
+      "links": ["/wiki/[id]", "/wiki/file/[id]"],
+      "uxNotes": ["Breadcrumb has no link to /wiki or the start page; the first crumb is plain text."]
+    },
+    {
+      "route": "/impressum",
+      "file": "src/app/s/[site]/impressum/page.tsx",
+      "components": ["src/app/s/[site]/legal.tsx"],
+      "title": "Impressum",
+      "titleKey": "site.imprint",
+      "purpose": "The org's imprint (Markdown from Website › Seiten › Rechtliches), noindex.",
+      "audience": "anonymous",
+      "header": { "shows": "'← <Org>' back link, h1 'Impressum'." },
+      "sections": [{ "title": "Text", "kind": "custom", "notes": "Markdown." }],
+      "states": ["empty → 404"],
+      "links": ["/"]
+    },
+    {
+      "route": "/datenschutz",
+      "file": "src/app/s/[site]/datenschutz/page.tsx",
+      "components": ["src/app/s/[site]/legal.tsx"],
+      "title": "Datenschutz",
+      "titleKey": "site.privacy",
+      "purpose": "The org's privacy policy (Markdown), noindex.",
+      "audience": "anonymous",
+      "header": { "shows": "'← <Org>' back link, h1 'Datenschutz'." },
+      "sections": [{ "title": "Text", "kind": "custom", "notes": "Markdown." }],
+      "states": ["empty → 404"],
+      "links": ["/"],
+      "uxNotes": ["Footer link 'Datenschutz' (org) vs the shop's 'Widerrufsbelehrung'/'AGB' pages: three legal pages from two different settings screens, with different back links (start page vs shop)."]
+    }
+  ],
+  "flows": [
+    {
+      "name": "Ticket purchase",
+      "steps": ["/ or shared link → /e/[slug]", "pick quantities (+ code) → Weiter", "/e/[slug]/checkout: name, email, holder names → '{amount} bezahlen'", "provider checkout (Stripe …)", "/t/[order]?k&paid=1: 'Zahlung erfolgreich!' + QR codes + PDF", "mail with tickets PDF + link"],
+      "notes": "Free events skip the provider and use 'Anmeldung' wording until the last step, which still says 'Zahlung erfolgreich!'."
+    },
+    {
+      "name": "Waiting list",
+      "steps": ["/e/[slug] sold out → 'Auf die Warteliste' (no visible feedback)", "mail 'Ein Platz ist frei: <event>' → /e/[slug]?w=<token>", "banner 'Für dich reserviert …' → checkout as above (held seats, 24 h)"]
+    },
+    {
+      "name": "Shop order",
+      "steps": ["/shop → /shop/[slug] → 'In den Warenkorb'", "/cart: lines, delivery, buyer + address, payment, terms → 'Zahlungspflichtig bestellen'", "online: provider → /o/[order]?k&paid=1; transfer/pickup: /o/[order]?k at once", "mails: confirmation / paid / ready / shipped / released / cancelled / refunded"]
+    },
+    {
+      "name": "Member area sign-in",
+      "steps": ["/portal → email → 'Link zuschicken'", "mail 'Dein Anmeldelink für {org}' (30 min)", "/portal/login?token → 'Jetzt anmelden'", "/portal tabs"]
+    }
+  ],
+  "uxNotes": [
+    "Two string namespaces talk to the same buyer: tickets use shop.* ('Tickets', '{amount} bezahlen'), the merch shop uses store.* ('Shop', 'Zahlungspflichtig bestellen · {amount}'); the two checkouts differ in fields (shop: phone + address required; tickets: name + email only), legal checkboxes, and error handling.",
+    "Errors on public forms are toasts (Notice) except /f forms (inline alert); the event page has no Notice at all.",
+    "All buyer-facing texts use 'du' consistently; success texts use exclamation marks ('Zahlung erfolgreich!', 'Danke für deine Bestellung!', 'Danke! …').",
+    "Inputs on public pages are plain shadcn Inputs/native selects; TypedInput (iban, phone, postcode) only appears in the portal's data/bank forms."
+  ]
+}

@@ -1,35 +1,32 @@
-import Link from "next/link"
-import { ChevronRightIcon } from "lucide-react"
+import { AreaIcon } from "@/components/area-icon"
+import { LinkRows } from "@/components/link-rows"
 import { getT } from "@/i18n/server"
 import { getContext } from "@/lib/context"
-import { visibleNav } from "@/modules/nav"
+import { areaSettings } from "@/settings/sections"
 
-// Each area keeps its own settings as its last sub-page ("Einstellungen"); this lists them all in one place.
+// Each area keeps its own settings behind the gear in its header; this lists them all in one place.
 export default async function AreaSettings() {
   const ctx = await getContext()
   const t = await getT()
-  const areas = visibleNav((m) => ctx.modules.has(m), ctx.can).flatMap((a) => a.children.filter((c) => c.label === "common.settings").map((c) => ({ ...a, href: c.href })))
+  const areas = areaSettings((m) => ctx.modules.has(m), ctx.can)
   return (
-    <div className="grid gap-4">
-      <p className="text-sm text-muted-foreground">{t("settings.areasIntro")}</p>
+    <section className="grid gap-2">
+      <p className="px-1 text-sm text-muted-foreground">{t("settings.areasIntro")}</p>
       {areas.length ? (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {areas.map((a) => (
-            <li key={a.href}>
-              <Link href={a.href} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm hover:bg-muted">
-                <span className="grid size-9 place-items-center rounded-lg bg-muted text-muted-foreground" aria-hidden>
-                  <a.icon className="size-5" />
-                </span>
-                <span className="flex-1 font-medium">{t.dynamic(a.label)}</span>
-                <ChevronRightIcon className="size-4 text-muted-foreground" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <LinkRows
+          rows={areas.map((a) => ({
+            key: a.href,
+            href: a.href,
+            lead: <AreaIcon area={a.key} icon={a.icon} />,
+            title: t.dynamic(a.label),
+            // An area with more than one page under its gear (Schichten: Einstellungen, Team) names each page.
+            detail: areas.filter((b) => b.key === a.key).length > 1 || a.page !== "common.settings" ? t.dynamic(a.page) : undefined,
+          }))}
+        />
       ) : (
         <p className="text-sm text-muted-foreground">{t("settings.areasNone")}</p>
       )}
-    </div>
+    </section>
   )
 }
 

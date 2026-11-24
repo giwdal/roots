@@ -1,0 +1,711 @@
+{
+  "area": "website",
+  "label": "Website",
+  "module": null,
+  "permission": "org.site.manage (layout requirePerm)",
+  "nav": [
+    {
+      "label": "Übersicht",
+      "key": "nav.overview",
+      "href": "/website"
+    },
+    {
+      "label": "Marke",
+      "key": "website.brand.nav",
+      "href": "/website/brand"
+    },
+    {
+      "label": "Seiten",
+      "key": "website.pages.nav",
+      "href": "/website/pages"
+    },
+    {
+      "label": "Domain",
+      "key": "website.domain.nav",
+      "href": "/website/domain"
+    }
+  ],
+  "sharedParts": {
+    "PublishBar": {
+      "file": "src/app/(app)/website/publish-bar.tsx",
+      "notes": "Strip on every Website page except Domain: 'Unveröffentlichte Änderungen – nur in der Vorschau sichtbar.' / 'Alles veröffentlicht.'; 'Live ansehen' (new tab); when a draft is pending: 'Verwerfen' (data-confirm website.confirmDiscard → discardWebsite, toast 'Änderungen verworfen.') and 'Veröffentlichen' (publishWebsite, toast 'Veröffentlicht.', refreshes public cache). The draft is for the whole site, not per page."
+    },
+    "Preview": {
+      "notes": "iframe of /site-preview?v=<version>[&page=event|portal], 75vh, sticky on lg, hint 'Vorschau des Entwurfs – aktualisiert sich beim Bearbeiten.'. Right column on lg, below the form on phones."
+    },
+    "AutoSave": {
+      "file": "src/app/(app)/website/autosave.tsx",
+      "notes": "Every Website form saves the draft 1.2 s after the last input/change (autosaveWebsiteDraft) and router.refresh()es; status line 'Änderungen werden automatisch als Entwurf gespeichert.' → 'Speichert…' → 'Entwurf gespeichert – Vorschau aktualisiert.' / error. No SaveBar."
+    }
+  },
+  "pages": [
+    {
+      "route": "/website",
+      "file": "src/app/(app)/website/page.tsx",
+      "title": "Website",
+      "purpose": "See the public address, publish state and a setup checklist.",
+      "permission": "org.site.manage",
+      "size": null,
+      "header": {
+        "area": "website",
+        "title": "Website",
+        "description": "website.intro",
+        "actions": [],
+        "menu": []
+      },
+      "urlState": [
+        {
+          "param": "ok / error",
+          "meaning": "toast"
+        }
+      ],
+      "sections": [
+        {
+          "title": "PublishBar",
+          "kind": "custom"
+        },
+        {
+          "title": "Adresse",
+          "key": "website.address",
+          "kind": "FormCard",
+          "notes": "public URL (own domain if live) as link in new tab; 'Zuletzt veröffentlicht: {when}'"
+        },
+        {
+          "title": "Checkliste",
+          "key": "website.checklist",
+          "kind": "FormCard",
+          "notes": "Linked checks with done icon: Logo hochgeladen (→ /settings/general), Farben & Schrift festgelegt (→ /website/brand), Startseite gestaltet (→ /website/pages/start), Impressum ausgefüllt, Datenschutzerklärung ausgefüllt (→ /website/pages/legal), Eigene Domain verbunden (→ /website/domain)."
+        }
+      ],
+      "actions": [
+        {
+          "label": "Live ansehen",
+          "where": "section",
+          "kind": "link",
+          "target": "public site (new tab)"
+        },
+        {
+          "label": "Verwerfen",
+          "where": "section",
+          "kind": "confirm",
+          "target": "discardWebsite",
+          "confirm": true
+        },
+        {
+          "label": "Veröffentlichen",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "publishWebsite",
+          "confirm": false
+        }
+      ],
+      "links": [
+        "/settings/general",
+        "/website/brand",
+        "/website/pages/start",
+        "/website/pages/legal",
+        "/website/domain"
+      ],
+      "uxNotes": [
+        "Area pages pass a description (website.intro, website.brand.intro, website.pages.intro, domains.intro) that PageHeader does not render on area pages – the intro texts (incl. the domain explanation with the roots URL) are never shown.",
+        "Publish/Verwerfen live in a page strip, not in the header actions/primary; on phones there's no round + primary for Website.",
+        "Logo check jumps out of the Website area to Settings › Allgemein (logo is edited there only)."
+      ]
+    },
+    {
+      "route": "/website/brand",
+      "file": "src/app/(app)/website/brand/page.tsx",
+      "title": "Marke",
+      "purpose": "Set language, colours, fonts, corners and custom CSS for all public pages, with live preview.",
+      "permission": "org.site.manage",
+      "header": {
+        "area": "website",
+        "title": "Marke",
+        "description": "website.brand.intro"
+      },
+      "sections": [
+        {
+          "title": "Sprache",
+          "key": "website.brand.language",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "theme.locale",
+              "label": "Sprache",
+              "type": "select",
+              "component": "Choice",
+              "required": true,
+              "notes": "Browser / Deutsch / English"
+            }
+          ]
+        },
+        {
+          "title": "Farben",
+          "key": "website.brand.colors",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "theme.mode",
+              "label": "Grundton",
+              "key": "website.brand.mode",
+              "type": "select",
+              "component": "Choice",
+              "required": true,
+              "notes": "Hell / Dunkel"
+            },
+            {
+              "name": "theme.background",
+              "label": "Hintergrund",
+              "type": "color",
+              "component": "ColorField (color picker + hex Input)"
+            },
+            {
+              "name": "theme.text",
+              "label": "Text",
+              "type": "color",
+              "component": "ColorField"
+            },
+            {
+              "name": "theme.accent",
+              "label": "Akzent (Buttons, Links)",
+              "type": "color",
+              "component": "ColorField"
+            }
+          ]
+        },
+        {
+          "title": "Schrift & Form",
+          "key": "website.brand.type",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "theme.font_heading",
+              "label": "Überschriften",
+              "type": "select",
+              "component": "FontField (NativeSelect + sample line)"
+            },
+            {
+              "name": "theme.font_body",
+              "label": "Fließtext",
+              "type": "select",
+              "component": "FontField (NativeSelect)"
+            },
+            {
+              "name": "theme.radius",
+              "label": "Ecken",
+              "type": "select",
+              "component": "Choice",
+              "notes": "Eckig / Leicht rund / Rund"
+            }
+          ]
+        },
+        {
+          "title": "Erweitert: eigenes CSS",
+          "key": "website.brand.css",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "css",
+              "label": "Erweitert: eigenes CSS",
+              "type": "textarea",
+              "component": "Textarea (mono)",
+              "notes": "<details>, open when CSS exists"
+            }
+          ]
+        },
+        {
+          "title": "Vorschau",
+          "kind": "custom"
+        }
+      ],
+      "actions": [
+        {
+          "label": "(autosave draft)",
+          "where": "section",
+          "kind": "client",
+          "target": "autosaveWebsiteDraft"
+        }
+      ],
+      "phone": "Form above preview; preview iframe 75vh below the whole form.",
+      "uxNotes": [
+        "Font pickers are NativeSelect with many options while the other pickers on the same form are <Choice>."
+      ]
+    },
+    {
+      "route": "/website/pages",
+      "file": "src/app/(app)/website/pages/page.tsx",
+      "title": "Seiten",
+      "purpose": "List of the designable public pages with their state.",
+      "permission": "org.site.manage",
+      "header": {
+        "area": "website",
+        "title": "Seiten",
+        "description": "website.pages.intro"
+      },
+      "sections": [
+        {
+          "title": "Seiten",
+          "kind": "custom",
+          "notes": "Link rows: Startseite ({n} Bausteine / Standard (Events)), Eventseite (eigenes HTML / Standard), Mitgliederbereich (eigenes HTML / leer), Kopf- & Fußzeile (eigenes HTML / leer), Impressum & Datenschutz (ausgefüllt / fehlt)."
+        }
+      ],
+      "links": [
+        "/website/pages/start",
+        "/website/pages/event",
+        "/website/pages/portal",
+        "/website/pages/frame",
+        "/website/pages/legal"
+      ],
+      "uxNotes": [
+        "Hand-made divided list instead of <DataTable> (no card view difference on phones needed, but inconsistent)."
+      ]
+    },
+    {
+      "route": "/website/pages/start",
+      "file": "src/app/(app)/website/pages/start/page.tsx",
+      "title": "Startseite",
+      "purpose": "Design the public start page from blocks or own HTML template.",
+      "permission": "org.site.manage",
+      "header": {
+        "crumbs": [
+          "Seiten",
+          "Startseite"
+        ],
+        "description": "site.intro"
+      },
+      "urlState": [
+        {
+          "param": "mode",
+          "meaning": "blocks | html view; saving in a view makes it the start page's mode (hidden home_mode)"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Startseite aus: Bausteinen · eigenem HTML",
+          "key": "website.html.mode",
+          "kind": "custom",
+          "notes": "<Segments> links ?mode=blocks / ?mode=html"
+        },
+        {
+          "title": "Kopf",
+          "key": "site.headTitle",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "tagline",
+              "label": "Untertitel",
+              "key": "site.tagline",
+              "type": "text",
+              "component": "Input",
+              "notes": "placeholder site.taglinePlaceholder; hint logo/name from Einstellungen → Allgemein"
+            }
+          ]
+        },
+        {
+          "title": "Bausteine",
+          "key": "site.blocksTitle",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "blocks",
+              "label": "per block: Anzeigen (checkbox), Nach oben/Nach unten/Entfernen (icon buttons)",
+              "type": "json",
+              "component": "SiteEditor"
+            },
+            {
+              "name": "title",
+              "label": "Überschrift / Überschrift (optional)",
+              "type": "text",
+              "component": "Input"
+            },
+            {
+              "name": "text",
+              "label": "Text",
+              "type": "textarea",
+              "component": "Textarea",
+              "notes": "hero/portal short; text block Markdown"
+            },
+            {
+              "name": "button_label / button_href",
+              "label": "Button-Text / Button-Link",
+              "type": "text",
+              "component": "Input",
+              "notes": "hero"
+            },
+            {
+              "name": "limit",
+              "label": "Wie viele Events / Wie viele Produkte",
+              "type": "number",
+              "component": "Input"
+            },
+            {
+              "name": "category",
+              "label": "Kategorie",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "shop"
+            },
+            {
+              "name": "event_id",
+              "label": "Event",
+              "type": "select",
+              "component": "NativeSelect",
+              "notes": "upcoming events, max 50 loaded"
+            },
+            {
+              "name": "form_slug",
+              "label": "Formular",
+              "type": "select",
+              "component": "NativeSelect"
+            },
+            {
+              "name": "items[]",
+              "label": "Text / Link (+ Link hinzufügen, max 12)",
+              "type": "text",
+              "component": "Input pairs",
+              "notes": "links block"
+            },
+            {
+              "name": "adding",
+              "label": "Baustein",
+              "key": "site.blockType",
+              "type": "select",
+              "component": "NativeSelect + 'Baustein hinzufügen'",
+              "notes": "types: Großer Einstieg, Text, Links, Kommende Events, Ein Event hervorheben, Formular, Mitgliederbereich, Wissen, Shop (by active modules); max 30"
+            }
+          ],
+          "notes": "Empty: 'Noch keine Bausteine – die Seite zeigt dann nur Logo und Name.'"
+        },
+        {
+          "title": "Eigenes HTML (mode=html)",
+          "key": "website.html.title",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "home_html",
+              "label": "HTML der Startseite",
+              "type": "textarea",
+              "component": "HtmlEditor (Textarea + 'Einfügen:' snippet buttons)",
+              "notes": "STARTER template when empty"
+            }
+          ]
+        },
+        {
+          "title": "Vorschau",
+          "kind": "custom"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Entfernen (Baustein)",
+          "where": "row",
+          "kind": "client",
+          "confirm": false,
+          "result": "block gone from draft after autosave; Verwerfen restores"
+        },
+        {
+          "label": "Baustein hinzufügen",
+          "key": "site.addBlock",
+          "where": "section",
+          "kind": "client"
+        }
+      ],
+      "uxNotes": [
+        "Block reorder by up/down buttons only, no drag.",
+        "Removing a block autosaves into the draft without confirm (recoverable only by discarding the whole draft).",
+        "Event picker loads max 50 upcoming events into a NativeSelect (app.md: pickers search on the server).",
+        "Mode switch is a URL param but becomes persistent only through autosave of the hidden home_mode field."
+      ]
+    },
+    {
+      "route": "/website/pages/event",
+      "file": "src/app/(app)/website/pages/event/page.tsx",
+      "title": "Eventseite",
+      "purpose": "Choose roots' standard event page or an own HTML template for all event pages.",
+      "permission": "org.site.manage",
+      "header": {
+        "crumbs": [
+          "Seiten",
+          "Eventseite"
+        ],
+        "description": "website.event.intro"
+      },
+      "urlState": [
+        {
+          "param": "mode",
+          "meaning": "standard | html"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Standard · Eigene Vorlage",
+          "kind": "custom",
+          "notes": "<Segments>"
+        },
+        {
+          "title": "Vorlage für Eventseiten (html)",
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "event_html",
+              "label": "HTML",
+              "type": "textarea",
+              "component": "HtmlEditor kind=event",
+              "notes": "EVENT_STARTER; snippets incl. {{tickets}}, {{timetable}}"
+            }
+          ]
+        },
+        {
+          "title": "Standard",
+          "kind": "FormCard",
+          "notes": "hint website.event.standardHint; when an own template exists: button 'Standard-Eventseite verwenden' (submits empty event_html)"
+        },
+        {
+          "title": "Vorschau",
+          "kind": "custom",
+          "notes": "/site-preview?page=event"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Standard-Eventseite verwenden",
+          "key": "website.event.useStandard",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "saveWebsiteDraft (event_html='')",
+          "confirm": false,
+          "result": "own template cleared in draft; toast 'Entwurf gespeichert – noch nicht öffentlich.'"
+        }
+      ],
+      "uxNotes": [
+        "Only page in the area with an explicit submit button (others autosave only); clearing the template has no confirm.",
+        "Switching segment to 'Standard' alone does not change anything – the user must press the button, unlike the start page where the view switch + autosave changes the mode."
+      ]
+    },
+    {
+      "route": "/website/pages/portal",
+      "file": "src/app/(app)/website/pages/portal/page.tsx",
+      "title": "Mitgliederbereich",
+      "purpose": "Own HTML welcome area at the top of the signed-in member portal.",
+      "permission": "org.site.manage",
+      "header": {
+        "crumbs": [
+          "Seiten",
+          "Mitgliederbereich"
+        ],
+        "description": "website.portal.intro"
+      },
+      "sections": [
+        {
+          "title": "Willkommensbereich",
+          "key": "website.portal.welcome",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "portal_html",
+              "label": "HTML",
+              "type": "textarea",
+              "component": "HtmlEditor kind=portal"
+            }
+          ]
+        },
+        {
+          "title": "Vorschau",
+          "kind": "custom",
+          "notes": "/site-preview?page=portal; PublishBar 'Live ansehen' opens /portal"
+        }
+      ],
+      "uxNotes": [
+        "The page is always HTML-only (no blocks/standard switch like start and event pages)."
+      ]
+    },
+    {
+      "route": "/website/pages/frame",
+      "file": "src/app/(app)/website/pages/frame/page.tsx",
+      "title": "Kopf- & Fußzeile",
+      "purpose": "Own HTML above and below every public page.",
+      "permission": "org.site.manage",
+      "header": {
+        "crumbs": [
+          "Seiten",
+          "Kopf- & Fußzeile"
+        ],
+        "description": "website.frame.intro"
+      },
+      "sections": [
+        {
+          "title": "HTML",
+          "key": "website.frame.html",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "header_html",
+              "label": "Kopfzeile",
+              "type": "textarea",
+              "component": "Textarea (mono)"
+            },
+            {
+              "name": "footer_html",
+              "label": "Fußzeile",
+              "type": "textarea",
+              "component": "Textarea (mono)"
+            }
+          ]
+        },
+        {
+          "title": "Vorschau",
+          "kind": "custom"
+        }
+      ],
+      "uxNotes": [
+        "Plain textareas without the snippet helper used on the other HTML pages."
+      ]
+    },
+    {
+      "route": "/website/pages/legal",
+      "file": "src/app/(app)/website/pages/legal/page.tsx",
+      "title": "Impressum & Datenschutz",
+      "purpose": "Edit Markdown imprint and privacy policy (linked at the bottom of every public page).",
+      "permission": "org.site.manage",
+      "header": {
+        "crumbs": [
+          "Seiten",
+          "Impressum & Datenschutz"
+        ],
+        "description": "site.legalHint"
+      },
+      "sections": [
+        {
+          "title": "Impressum",
+          "key": "site.imprint",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "imprint",
+              "label": "Impressum",
+              "type": "textarea",
+              "component": "Textarea",
+              "notes": "prefilled from invoice settings (org_billing) when empty"
+            }
+          ]
+        },
+        {
+          "title": "Datenschutz",
+          "key": "site.privacy",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "privacy",
+              "label": "Datenschutz",
+              "type": "textarea",
+              "component": "Textarea",
+              "notes": "placeholder site.privacyPlaceholder"
+            }
+          ]
+        }
+      ],
+      "uxNotes": [
+        "No preview here although the other page editors have one.",
+        "The imprint prefill from org_billing is only a default value: it looks filled in the form but the checklist counts it as missing until autosave stores it."
+      ]
+    },
+    {
+      "route": "/website/domain",
+      "file": "src/app/(app)/website/domain/page.tsx",
+      "title": "Domain",
+      "purpose": "Connect one own domain: enter it, copy DNS records, wait until live; remove it.",
+      "permission": "org.site.manage",
+      "size": "form (max-w-3xl wrapper)",
+      "header": {
+        "area": "website",
+        "title": "Domain",
+        "description": "domains.intro"
+      },
+      "sections": [
+        {
+          "title": "(not configured)",
+          "kind": "custom",
+          "notes": "'Eigene Domains sind auf dieser roots-Installation noch nicht eingerichtet.' when no Vercel env"
+        },
+        {
+          "title": "Domain verbinden",
+          "key": "domains.connectTitle",
+          "anchor": "#connect",
+          "kind": "FormCard",
+          "fields": [
+            {
+              "name": "domain",
+              "label": "Eure Domain",
+              "key": "domains.domain",
+              "type": "text",
+              "component": "Input inputMode=url",
+              "required": true,
+              "notes": "placeholder tickets.euerverein.de"
+            }
+          ]
+        },
+        {
+          "title": "<domain> status",
+          "anchor": "#status",
+          "kind": "FormCard",
+          "notes": "Badge 'Verbunden' / 'Wartet auf DNS' (spinner), 'Zuletzt geprüft {when}', problem text, 'Jetzt prüfen', live text + 'Seite öffnen'. DomainPoller re-checks while pending."
+        },
+        {
+          "title": "So verbindet ihr die Domain",
+          "anchor": "#dns",
+          "kind": "custom",
+          "columns": [
+            "Typ",
+            "Name / Host (+ Kopieren)",
+            "Wert / Ziel (+ Kopieren)"
+          ],
+          "notes": "3 steps, raw <table> of DNS records + tips (apex, full name, replace, Cloudflare, TXT)"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Domain verbinden",
+          "key": "domains.connect",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "connectDomainAction",
+          "result": "toast 'Domain hinzugefügt. Jetzt fehlen nur noch die DNS-Einträge.' or invalid/taken/onlyOne"
+        },
+        {
+          "label": "Jetzt prüfen",
+          "key": "domains.checkNow",
+          "where": "section",
+          "kind": "serverAction",
+          "target": "checkNowAction",
+          "result": "toast 'Eure Domain ist live.' when active, otherwise silent"
+        },
+        {
+          "label": "Kopieren",
+          "where": "row",
+          "kind": "client",
+          "target": "clipboard"
+        },
+        {
+          "label": "Seite öffnen",
+          "where": "section",
+          "kind": "link",
+          "target": "https://<domain>"
+        },
+        {
+          "label": "Domain entfernen",
+          "key": "domains.remove",
+          "where": "section",
+          "kind": "confirm",
+          "target": "removeDomainAction",
+          "confirm": true,
+          "result": "toast 'Domain entfernt.'"
+        }
+      ],
+      "uxNotes": [
+        "No PublishBar here (domain is not part of the draft) – the only Website page without it.",
+        "'Domain entfernen' is a ghost red button at the page bottom, not a ⋯ menu item.",
+        "'Jetzt prüfen' gives no feedback when still pending (back with no message)."
+      ]
+    }
+  ]
+}

@@ -130,7 +130,7 @@ export const GraphInput = z
   .transform((g) => layout(g))
 export type GraphNode = Graph["nodes"][number]
 
-/** Problems as message keys (`automations.problems.<key>`) + node id; empty = can be activated. */
+/** Problems as message keys (`automations.issues.<key>`) + node id; empty = can be activated. */
 export function validate(g: Graph): { key: string; node?: string }[] {
   const out: { key: string; node?: string }[] = []
   const ids = new Set(g.nodes.map((n) => n.id))

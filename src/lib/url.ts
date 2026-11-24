@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirect, RedirectType } from "next/navigation"
 
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "localhost:3000"
@@ -34,7 +34,9 @@ export function back(path: string, result: { error?: string; ok?: string }): nev
   url.searchParams.delete("error")
   url.searchParams.delete("ok")
   for (const [k, v] of Object.entries(result)) if (v) url.searchParams.set(k, v)
-  redirect(url.pathname + url.search)
+  // Replace, not push (the Server Action default): an action on a page must not leave the same page twice in the
+  // history (Back would seem to do nothing), and after creating or deleting, Back leads past the form / the gone record.
+  redirect(url.pathname + url.search, RedirectType.replace)
 }
 
 // Current search params with changes applied (undefined removes a key), as "?…" for links.

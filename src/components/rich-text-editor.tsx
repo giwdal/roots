@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { Toolbar } from "@base-ui/react/toolbar"
 import Image from "@tiptap/extension-image"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import { Placeholder } from "@tiptap/extensions"
 import {
   BoldIcon,
   BracesIcon,
@@ -34,6 +36,7 @@ export function RichTextEditor({
   name,
   defaultValue = "",
   placeholders,
+  placeholder,
   disabled,
   className,
   id,
@@ -42,6 +45,7 @@ export function RichTextEditor({
   name: string
   defaultValue?: string
   placeholders?: string[]
+  placeholder?: string // muted hint while empty ("Beschreibung hinzufügen …")
   disabled?: boolean
   className?: string
   id?: string
@@ -50,14 +54,14 @@ export function RichTextEditor({
   const t = useT()
   const [html, setHtml] = useState(defaultValue)
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false, autolink: true } }), Image],
+    extensions: [StarterKit.configure({ link: { openOnClick: false, autolink: true } }), Image, ...(placeholder ? [Placeholder.configure({ placeholder })] : [])],
     content: defaultValue,
     editable: !disabled,
     immediatelyRender: false, // server render: the editor mounts on the client
     editorProps: {
       attributes: {
         ...(id ? { id } : {}),
-        class: "prose-sm min-h-48 px-3 py-2 outline-none [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
+        class: "prose-sm min-h-48 px-3 py-2 outline-none [&_.is-empty]:before:pointer-events-none [&_.is-empty]:before:float-left [&_.is-empty]:before:h-0 [&_.is-empty]:before:text-muted-foreground [&_.is-empty]:before:content-[attr(data-placeholder)] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
       },
     },
     onUpdate: ({ editor }) => {
@@ -84,7 +88,7 @@ export function RichTextEditor({
     <Tooltip key={label}>
       <TooltipTrigger
         render={
-          <Button type="button" size="icon-sm" variant={on ? "secondary" : "ghost"} aria-label={label} aria-pressed={on} disabled={disabled || !editor} onClick={run} />
+          <Toolbar.Button render={<Button type="button" size="icon-sm" variant={on ? "secondary" : "ghost"} />} aria-label={label} aria-pressed={on} disabled={disabled || !editor} onClick={run} />
         }
       >
         <Icon />
@@ -97,7 +101,7 @@ export function RichTextEditor({
   return (
     <div className={cn("rounded-lg border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30", className)}>
       <input type="hidden" name={name} value={html} />
-      <div role="toolbar" aria-label={t("editor.toolbar")} className="flex flex-wrap gap-0.5 border-b p-1">
+      <Toolbar.Root aria-label={t("editor.toolbar")} className="flex flex-wrap gap-0.5 border-b p-1">
         {tool(t("editor.bold"), BoldIcon, () => chain().toggleBold().run(), active?.bold)}
         {tool(t("editor.italic"), ItalicIcon, () => chain().toggleItalic().run(), active?.italic)}
         {tool(t("editor.h2"), Heading2Icon, () => chain().toggleHeading({ level: 2 }).run(), active?.h2)}
@@ -125,7 +129,7 @@ export function RichTextEditor({
         {placeholders?.length ? (
           <DropdownMenu>
             <Tooltip>
-              <TooltipTrigger render={<DropdownMenuTrigger render={<Button type="button" size="icon-sm" variant="ghost" aria-label={t("editor.placeholder")} disabled={disabled || !editor} />} />}>
+              <TooltipTrigger render={<Toolbar.Button render={<DropdownMenuTrigger render={<Button type="button" size="icon-sm" variant="ghost" />} />} aria-label={t("editor.placeholder")} disabled={disabled || !editor} />}>
                 <BracesIcon />
               </TooltipTrigger>
               <TooltipContent>{t("editor.placeholder")}</TooltipContent>
@@ -143,7 +147,7 @@ export function RichTextEditor({
           {tool(t("editor.undo"), Undo2Icon, () => chain().undo().run())}
           {tool(t("editor.redo"), Redo2Icon, () => chain().redo().run())}
         </span>
-      </div>
+      </Toolbar.Root>
       <EditorContent editor={editor} />
     </div>
   )

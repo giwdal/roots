@@ -69,6 +69,18 @@ export function readCustom(defs: FieldDef[], get: (key: string) => string): { cu
   return { custom }
 }
 
+// Stored custom values in form format ("12,50", "true"), so readCustom checks the record with one changed value (inline editing).
+export const customAsForm = (defs: FieldDef[], stored: unknown): Record<string, string> => {
+  const v = (stored ?? {}) as Record<string, unknown>
+  return Object.fromEntries(defs.map((d) => [d.key, v[d.key] == null ? "" : d.type === "money" && typeof v[d.key] === "number" ? (v[d.key] as number).toFixed(2).replace(".", ",") : String(v[d.key])]))
+}
+
+/** One custom field changed in place: the stored values with `key` set to `value`, checked like the full form. */
+export const patchCustom = (defs: FieldDef[], stored: unknown, key: string, value: string) => {
+  const current = { ...customAsForm(defs, stored), [key]: value }
+  return readCustom(defs, (k) => current[k] ?? "")
+}
+
 // Values given as an object (API: { key: value }) → validated values, through the same parser as text input.
 export const readCustomObject = (defs: FieldDef[], values: Record<string, CustomValue | null> | undefined) =>
   readCustom(defs, (k) => {

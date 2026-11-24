@@ -1,24 +1,26 @@
 import { paidUntil, type Interval } from "@/members/dues"
-import { contactSearch } from "@/contacts/search"
+import { CONTACT_SEARCH } from "@/contacts/search"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { MemberImportBody } from "./import/body"
 import { UrlSheet } from "@/components/url-sheet"
-import { DownloadIcon, IdCardIcon, Trash2Icon, UploadIcon } from "lucide-react"
+import { DownloadIcon, IdCardIcon, PlusIcon, Trash2Icon, UploadIcon } from "lucide-react"
 import { BulkBar } from "@/components/bulk-bar"
 import { Button } from "@/components/ui/button"
 import { ActionsMenu, MenuExport, MenuLink, MenuSeparator } from "@/components/actions-menu"
 import { FilterMenu } from "@/components/filter-menu"
-import { PageHeader } from "@/components/page"
+import { EmptyState, PageHeader } from "@/components/page"
 import { contactName } from "@/app/(app)/contacts/fields"
-import { DataTable, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE, SearchBox } from "@/components/data-table"
+import { Segments } from "@/components/segments"
 import { Notice } from "@/components/notice"
 import { Badge } from "@/components/ui/badge"
+import { MemberStateBadge } from "./badges"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { pageParam, param, withParams } from "@/lib/url"
-import { isPaused } from "@/members/dues"
 import { TYPE_COLS } from "./membership-parts"
+import { matchWords } from "@/lib/search-words"
 
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
@@ -28,7 +30,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   const sp = await searchParams
   const canManage = ctx.can("members.manage")
   const q = param(sp, "q")?.replace(/[%,()*]/g, "").trim()
-  const status = (["active", "ended", "all", "trash"] as const).find((s) => s === param(sp, "status") && (s !== "trash" || canManage)) ?? "active"
+  // Old trash links (?status=trash) → ?trash=1.
+  if (param(sp, "status") === "trash") redirect(`/members?trash=1`)
+  const trash = canManage && param(sp, "trash") === "1"
+  const status = trash ? "trash" : ((["active", "ended", "all"] as const).find((s) => s === param(sp, "status")) ?? "active")
   const typeFilter = param(sp, "type")
   const page = pageParam(sp)
   // Old drawer links (?edit=<id>) → the membership's page.
@@ -47,11 +52,12 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   if (status === "active") query = query.or(`ends_on.is.null,ends_on.gte.${now}`)
   if (status === "ended") query = query.lt("ends_on", now)
   if (typeFilter) query = query.eq("type_id", typeFilter)
-  if (q) query = query.or(contactSearch(q), { referencedTable: "contacts" })
-  const [{ data }, { data: types }, { count: activeCount }] = await Promise.all([
+  if (q) query = matchWords(query, q, CONTACT_SEARCH, { referencedTable: "contacts" })
+  const [{ data }, { data: types }, { count: activeCount }, { count: anyCount }] = await Promise.all([
     query,
     ctx.supabase.from("membership_types").select(TYPE_COLS).eq("org_id", ctx.org.id).order("name"),
     ctx.supabase.from("memberships").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).is("deleted_at", null).lte("starts_on", now).or(`ends_on.is.null,ends_on.gte.${now}`),
+    ctx.supabase.from("memberships").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).is("deleted_at", null),
   ])
   // One row per person: the newest membership of each contact on this page; their other periods fold out under the name.
   // ponytail: grouping per page, a person whose periods straddle a page break shows on both pages.
@@ -66,31 +72,13 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
       : [{ data: [] }, { data: [] }]
   const until = (r: (typeof rows)[number]) =>
     paidUntil((fees ?? []).filter((f) => f.membership_id === r.id), (r.fee_interval ?? types?.find((x) => x.id === r.type_id)?.interval ?? "none") as Interval)
+  // Red when fees exist and the paid time is over (or nothing paid yet) on a running membership; without fees "–".
+  const behind = (r: (typeof rows)[number]) => {
+    const u = until(r)
+    return (fees ?? []).some((f) => f.membership_id === r.id) && (!u || u < now) && (!r.ends_on || r.ends_on >= now)
+  }
   const earlier = (r: (typeof rows)[number]) => (others ?? []).filter((o) => o.contact_id === r.contact_id && o.id !== r.id)
   const typeName = (id: string) => types?.find((x) => x.id === id)?.name ?? ""
-  const chip = (href: string, current: boolean, label: string) => (
-    <Link
-      key={label}
-      href={href}
-      aria-current={current ? "true" : undefined}
-      className="inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-background aria-[current=true]:font-medium aria-[current=true]:text-foreground aria-[current=true]:shadow-sm"
-    >
-      {label}
-    </Link>
-  )
-  const state = (m: { starts_on: string; ends_on: string | null; paused_from: string | null; paused_until: string | null }) =>
-    m.ends_on && m.ends_on < now ? (
-      <Badge variant="outline">{t("membership.state.ended")}</Badge>
-    ) : isPaused(m, now) ? (
-      <Badge variant="secondary">{m.paused_until ? t("membership.state.pausedUntil", { date: t.date(m.paused_until) }) : t("membership.state.paused")}</Badge>
-    ) : m.ends_on ? (
-      <Badge variant="secondary">{t("membership.state.ending", { date: t.date(m.ends_on) })}</Badge>
-    ) : m.starts_on > now ? (
-      <Badge variant="secondary">{t("membership.state.upcoming", { date: t.date(m.starts_on) })}</Badge>
-    ) : (
-      <Badge>{t("membership.state.active")}</Badge>
-    )
-
   return (
     <>
       <PageHeader
@@ -100,7 +88,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
         settings={canManage && { href: "/members/settings", label: t("common.settings") }}
         menu={
           <ActionsMenu>
-            {canManage && ctx.can("crm.manage") && (
+            {canManage && (
               <MenuLink href={withParams(sp, { import: "1" })} icon={<UploadIcon />}>
                 {t("membership.import")}
               </MenuLink>
@@ -109,7 +97,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             {canManage && (
               <>
                 <MenuSeparator />
-                <MenuLink href={status === "trash" ? "/members" : "/members?status=trash"} icon={status === "trash" ? <IdCardIcon /> : <Trash2Icon />}>
+                <MenuLink href={trash ? "/members" : "/members?trash=1"} icon={trash ? <IdCardIcon /> : <Trash2Icon />}>
                   {status === "trash" ? t("membership.filters.active") : t("membership.filters.trash")}
                 </MenuLink>
               </>
@@ -119,32 +107,56 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
         primary={canManage && !!types?.length && status !== "trash" ? { href: "/members/new", label: t("membership.new") } : undefined}
       />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      {!types?.length && (
-        <p className="rounded-lg border bg-muted px-3 py-2 text-sm">
-          {t("membership.noTypes")}{" "}
-          {canManage && (
-            <Link href="/members/types" className="underline">
-              {t("membership.types")}
-            </Link>
+      {(!!anyCount || trash) && (
+        <ListToolbar search={<SearchBox q={q} label={t("common.search")} keep={{ ...(status !== "active" && !trash && { status }), ...(trash && { trash: "1" }), ...(typeFilter && { type: typeFilter }) }} />}>
+          {!trash && (
+            <Segments
+              label={t("membership.filter")}
+              items={(["active", "ended", "all"] as const).map((s) => ({ href: `/members${withParams(sp, { status: s === "active" ? undefined : s, page: undefined })}`, current: s === status, label: t(`membership.filters.${s}`) }))}
+            />
           )}
-        </p>
+          {(types?.length ?? 0) > 1 && <FilterMenu param="type" label={t("membership.type")} options={(types ?? []).map((x) => ({ value: x.id, label: x.name }))} />}
+        </ListToolbar>
       )}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <SearchBox q={q} label={t("common.search")} keep={{ ...(status !== "active" && { status }), ...(typeFilter && { type: typeFilter }) }} />
-        <nav aria-label={t("membership.filter")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
-          {status !== "trash" &&
-            (["active", "ended", "all"] as const).map((s) => chip(withParams(sp, { status: s === "active" ? undefined : s, page: undefined, edit: undefined }), s === status, t(`membership.filters.${s}`)))}
-        </nav>
-        {(types?.length ?? 0) > 1 && <FilterMenu param="type" label={t("membership.type")} options={(types ?? []).map((x) => ({ value: x.id, label: x.name }))} />}
-      </div>
 
       <DataTable
         rows={rows}
         rowKey={(r) => r.id}
         rowHref={(r) => `/members/${r.id}`}
         select={status !== "trash" ? { form: "bulk-members", label: t("common.select") } : undefined}
-        empty={q || typeFilter ? t("membership.noMatch") : t("membership.empty")}
+        empty={
+          trash ? (
+            t("contacts.emptyTrash")
+          ) : anyCount ? (
+            t("membership.noMatch")
+          ) : !types?.length ? (
+            <EmptyState
+              area="members"
+              title={t("membership.noTypesTitle")}
+              text={t("membership.noTypes")}
+              action={
+                canManage && (
+                  <Button render={<Link href="/members/settings?new=type" />} nativeButton={false} size="sm">
+                    <PlusIcon /> {t("membership.newType")}
+                  </Button>
+                )
+              }
+            />
+          ) : (
+            <EmptyState
+              area="members"
+              title={t("membership.empty")}
+              text={t("membership.emptyText")}
+              action={
+                canManage && (
+                  <Button render={<Link href="/members/new" />} nativeButton={false} size="sm">
+                    <PlusIcon /> {t("membership.new")}
+                  </Button>
+                )
+              }
+            />
+          )
+        }
         columns={[
           {
             header: t("membership.name"),
@@ -177,17 +189,19 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             ),
           },
           { header: t("membership.type"), cell: (r) => typeName(r.type_id) },
-          { header: t("membership.since"), cell: (r) => t.date(r.starts_on), className: "whitespace-nowrap" },
-          { header: t("membership.status"), cell: (r) => state(r) },
+          { header: t("membership.since"), cell: (r) => t.date(r.starts_on), className: "whitespace-nowrap", phone: false },
+          { header: t("membership.status"), cell: (r) => <MemberStateBadge t={t} m={r} now={now} /> },
           {
             header: t("membership.paidUntilCol"),
-            cell: (r) => {
-              const u = until(r)
-              // Red when fees exist and the paid time is over (or nothing paid yet); "–" without fees (free, no fee type).
-              const behind = (fees ?? []).some((f) => f.membership_id === r.id) && (!u || u < now)
-              return <span className={behind && (!r.ends_on || r.ends_on >= now) ? "text-destructive tabular-nums" : "tabular-nums"}>{u ? t.date(u) : "–"}</span>
-            },
+            cell: (r) => <span className={behind(r) ? "text-destructive tabular-nums" : "tabular-nums"}>{until(r) ? t.date(until(r)!) : "–"}</span>,
             className: "whitespace-nowrap",
+            phone: false,
+          },
+          // Phones: the paid-until date only when it needs attention.
+          {
+            header: t("membership.paidUntilCol"),
+            cell: (r) => behind(r) && <span className="text-destructive tabular-nums">{until(r) ? `${t("membership.paidUntilCol")} ${t.date(until(r)!)}` : `${t("membership.paidUntilCol")} –`}</span>,
+            table: false,
           },
         ]}
       />
@@ -200,9 +214,9 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           </Button>
         </BulkBar>
       )}
-      {canManage && ctx.can("crm.manage") && param(sp, "import") === "1" && (
+      {canManage && param(sp, "import") === "1" && (
         <UrlSheet params={["import"]} title={t("membership.importTitle")} wide>
-          <MemberImportBody ctx={ctx} />
+          {ctx.can("crm.manage") ? <MemberImportBody ctx={ctx} /> : <p className="rounded-lg border bg-muted px-3 py-2 text-sm">{t("membership.importNeedsCrm")}</p>}
         </UrlSheet>
       )}
     </>

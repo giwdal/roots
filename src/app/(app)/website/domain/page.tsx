@@ -22,7 +22,7 @@ export default async function DomainSettings({ searchParams }: PageProps<"/websi
   const d = await orgDomain(ctx.org.id)
   const rootsUrl = siteUrl(ctx.org.slug)
   return (
-    <div className="grid max-w-3xl gap-6">
+    <div className="grid min-w-0 gap-6">
       <PageHeader area="website" title={t("website.domain.nav")} description={t("domains.intro", { url: rootsUrl })} />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
 

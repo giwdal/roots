@@ -51,9 +51,9 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
 
   const tooEarly = !!(min && date && date < min.slice(0, 10))
   return (
-    <div className={cn("flex max-w-64 items-center gap-1.5", className)}>
+    <div className={cn("flex max-w-full items-center gap-1.5", className)}>
       {name && <input ref={hidden} type="hidden" name={name} value={posted} />}
-      <div className="relative min-w-0 flex-1">
+      <div className="relative w-44 min-w-0">
         <Input
           id={id}
           inputMode="numeric"
@@ -79,11 +79,11 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
             render={<button type="button" />}
             disabled={disabled}
             aria-label={t("inputs.pickDate")}
-            className="absolute top-1/2 right-1 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="absolute top-1/2 right-0.5 grid size-[calc(var(--control)-0.25rem)] -translate-y-1/2 touch-manipulation place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <CalendarIcon className="size-4" />
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
+          <PopoverContent sheet title={t("inputs.pickDate")} className="w-auto p-0 max-md:items-center max-md:pb-4" align="end">
             <Calendar
               mode="single"
               locale={t.locale === "de" ? de : enUS}
@@ -118,7 +118,7 @@ export function DateInput({ name, id, type = "date", defaultValue, onValueChange
             setTimeText(tm)
             commit(date, tm)
           }}
-          className="w-20 text-center tabular-nums"
+          className="w-28 min-w-0 shrink text-center tabular-nums"
         />
       )}
     </div>

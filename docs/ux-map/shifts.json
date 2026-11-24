@@ -1,0 +1,554 @@
+{
+  "area": "shifts",
+  "label": "Schichten",
+  "module": "shifts",
+  "research": "Planday / Deputy / When I Work / Papershift: managers plan on a week grid (rows = people or positions, an 'open shifts' row, colour = coverage), a shift opens a side panel with who is on it, applications to approve and a delete in its menu. Staff use the phone app: the home screen is the next shift as a big card with one 'Clock in' button, then upcoming shifts and an 'Open shifts' list to claim; the time clock and shift check-in are the same button. Timesheets: a list per pay period with hours vs target and an 'Approve' step (approve all, with a count), corrections in a small sheet. Taken: Plan · Meine as views of one area (Meine = the staff home: Jetzt card with one big Einstempeln/Ausstempeln button, then Meine Schichten, Offene Schichten, Zeiten), the shift sheet opens on its Besetzung (assign / accept / clock as immediate actions, delete in ⋯), Stunden with month in the toolbar, Stats and 'Alle freigeben' (count in the confirm), positions/series/team under the gear.",
+  "navRedesign": {
+    "sidebar": "Schichten = Plan · Stunden. Plan (/shifts, permission shifts.view or shifts.self) opens the week plan; people with only shifts.self land on /shifts/me. 'Meine' is a <Segments> view on Plan (/shifts/me keeps its URL; Start keeps its 'Meine Schichten' card). Einstellungen (/shifts/settings, gear: true) holds Team (row › /shifts/team, also gear: true for ⌘K and Settings › Bereiche), Positionen and Wiederkehrende Schichten. /shifts/setup keeps redirecting.",
+    "label": "Plan (not Übersicht); one word for the time clock: Einstempeln / Ausstempeln (free time and a shift's check-in are the same action, 'Einchecken' stays Einlass); 'Beschäftigung' for the employment kind everywhere (was 'Art' on the team)."
+  },
+  "nav": [
+    { "label": "Übersicht", "key": "nav.overview", "href": "/shifts", "permission": "shifts.view" },
+    { "label": "Meine Schichten", "key": "shifts.tabs.me", "href": "/shifts/me", "permission": "shifts.self" },
+    { "label": "Stunden", "key": "shifts.tabs.hours", "href": "/shifts/hours", "permission": "shifts.view" },
+    { "label": "Team", "key": "shifts.tabs.team", "href": "/shifts/team", "permission": "shifts.view" },
+    { "label": "Einstellungen", "key": "common.settings", "href": "/shifts/settings", "permission": "shifts.manage" }
+  ],
+  "pages": [
+    {
+      "route": "/shifts",
+      "file": "src/app/(app)/shifts/page.tsx",
+      "title": "Schichtplan (with event filter: \"Schichtplan · <Event>\")",
+      "purpose": "Plan shifts on a calendar (week/day/month/agenda/per person), see coverage, assign people, approve applications and check people in/out.",
+      "permission": "shifts.view (without it but with shifts.self → redirect /shifts/me)",
+      "size": "list (default Page size; area layout max-w-6xl)",
+      "header": {
+        "area": "shifts",
+        "meta": "\"{filled} von {needed} Plätzen besetzt\" (shifts.coverage) for the focused week, or the whole event when ?event is set",
+        "settings": "/shifts/settings (shifts.manage)",
+        "actions": [],
+        "menu": [],
+        "primary": { "label": "Neue Schicht", "key": "shifts.newShift", "href": "?new=shift", "permission": "shifts.manage" }
+      },
+      "urlState": [
+        { "param": "view", "meaning": "calendar view: week (default) | day | month | agenda | resource (per person); agenda is the default when ?event is set" },
+        { "param": "date", "meaning": "focused day (YYYY-MM-DD); loads shifts 6 weeks before to 7 weeks after" },
+        { "param": "event", "meaning": "FilterMenu: only shifts of this event (all of them, no date window)" },
+        { "param": "location", "meaning": "FilterMenu: only shifts at this location" },
+        { "param": "new", "meaning": "shift = create sheet" },
+        { "param": "shift", "meaning": "<id> = shift sheet (edit + assignments)" },
+        { "param": "start / end / resource", "meaning": "prefill from an empty-slot click or drag in the calendar; resource = person column → that person is assigned on create" },
+        { "param": "ok / error", "meaning": "toast via <Notice>" }
+      ],
+      "sections": [
+        {
+          "title": "Toolbar",
+          "kind": "custom",
+          "fields": [
+            { "name": "event", "label": "Event", "key": "shifts.event", "type": "select", "component": "FilterMenu", "notes": "all label 'Ganze Woche (alle)' (shifts.allWeek); only events from the last 30 days on, max 100; hidden when there are none" },
+            { "name": "location", "label": "Ort", "key": "shifts.location", "type": "select", "component": "FilterMenu", "notes": "all label 'Alle Orte'; hidden without locations" }
+          ]
+        },
+        {
+          "title": "Kalender",
+          "kind": "Calendar",
+          "notes": "CalendarView views week/day/month/agenda/resource. Entry title '<Position or Bezeichnung> · <assigned>/<needed> · <names>'. Colour: full = chart-1, partly = chart-4, empty = destructive. Click → ?shift=<id>. Empty slot click/drag → ?new=shift&start&end (shifts.manage). Drag & drop moves a shift (moveShift, shifts.manage). Resource view: one column per active staff person, read-only entries."
+        }
+      ],
+      "actions": [
+        { "label": "Neue Schicht", "key": "shifts.newShift", "where": "header", "kind": "sheet", "target": "?new=shift", "permission": "shifts.manage", "confirm": false },
+        { "label": "(slot click / drag)", "where": "section", "kind": "sheet", "target": "?new=shift&start=…&end=…(&resource=…)", "permission": "shifts.manage", "confirm": false },
+        { "label": "(drag entry)", "where": "section", "kind": "client", "target": "moveShift (actions.ts)", "permission": "shifts.manage", "confirm": false, "result": "times changed; error shown as toast" }
+      ],
+      "overlays": [
+        {
+          "param": "?new=shift | ?shift=<id>",
+          "component": "UrlSheet",
+          "title": "Neue Schicht | <Position or Bezeichnung>",
+          "fields": [
+            { "name": "position", "label": "Position", "key": "shifts.position", "type": "select", "component": "NativeSelect", "required": false, "notes": "'–' = none; position or Bezeichnung required (shifts.needTitle)" },
+            { "name": "title", "label": "Bezeichnung", "key": "shifts.titleLabel", "type": "text", "component": "Input", "required": false, "notes": "placeholder 'z. B. Aufbau, Theke'" },
+            { "name": "starts_at", "label": "Beginn", "key": "shifts.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true, "notes": "default <focus>T18:00 or slot start" },
+            { "name": "ends_at", "label": "Ende", "key": "shifts.end", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
+            { "name": "needed", "label": "Benötigt", "key": "shifts.needed", "type": "number", "component": "Input type=number", "required": false, "notes": "1–100, default 1" },
+            { "name": "event", "label": "Event", "key": "shifts.event", "type": "select", "component": "NativeSelect", "required": false },
+            { "name": "location", "label": "Ort", "key": "shifts.location", "type": "select", "component": "NativeSelect", "required": false },
+            { "name": "open", "label": "Offen: Team kann sich bewerben", "key": "shifts.openLabel", "type": "checkbox", "component": "native checkbox", "notes": "default on" },
+            { "name": "notes", "label": "Notiz", "key": "shifts.notes", "type": "text", "component": "Input", "required": false }
+          ],
+          "actions": [
+            { "label": "Speichern | Neue Schicht", "where": "savebar", "kind": "serverAction", "target": "saveShift (actions.ts)", "permission": "shifts.manage", "confirm": false, "result": "back to calendar, toast 'Gespeichert.'; with ?resource the person is assigned too ('Wird {name} zugeteilt.' hint)" },
+            { "label": "Person einteilen", "key": "shifts.addPerson", "where": "sheet", "kind": "serverAction", "target": "assign what=assign", "permission": "shifts.manage", "confirm": false, "notes": "NativeSelect of all active staff not yet on the shift; '(nicht eingetragen für diese Position)' suffix", "result": "toast 'Eingeteilt.'" },
+            { "label": "Annehmen", "key": "shifts.approve", "where": "row", "kind": "serverAction", "target": "assign what=assign", "permission": "shifts.manage", "confirm": false, "notes": "only for applied rows (badge 'beworben')" },
+            { "label": "Einchecken / Auschecken", "key": "shifts.checkIn / shifts.checkOut", "where": "row", "kind": "serverAction", "target": "assign what=check_in|check_out", "permission": "shifts.manage", "confirm": false, "notes": "writes a time entry for the person" },
+            { "label": "Entfernen", "key": "shifts.remove", "where": "row", "kind": "serverAction", "target": "assign what=remove", "permission": "shifts.manage", "confirm": false },
+            { "label": "Schicht löschen", "key": "shifts.deleteShift", "where": "sheet", "kind": "serverAction", "target": "deleteShift (actions.ts)", "permission": "shifts.manage", "confirm": false, "result": "toast 'Gelöscht.'" }
+          ],
+          "notes": "Section 'Besetzung {count} / {needed}' (shifts.people) lists assignments with check-in/out times. Without shifts.manage the sheet shows only the assignment list (read-only)."
+        }
+      ],
+      "links": ["/shifts/settings", "/shifts/me"],
+      "phone": "Primary as round + by the tab bar; CalendarView (ReUI) on phones; sheet full width.",
+      "uxNotes": [
+        "'Schicht löschen' is a ghost SubmitButton at the bottom of the sheet with no data-confirm and not a red ⋯ item (docs/design/app.md: delete = destructive ⋯ item with confirm).",
+        "Removing a person from a shift has no confirm.",
+        "Record param is ?shift=<id>, not the documented ?edit=<id>.",
+        "Shift sheet mixes the edit form (SaveBar) and immediate-action forms (assign, check in, remove) below it: two save paths in one sheet; assignment actions submit while form edits may be unsaved.",
+        "Event filter label 'Ganze Woche (alle)' while it actually means 'no event filter' and the view may be month/agenda.",
+        "Event, position, location and staff are NativeSelects; event list capped at 100 (no server-search picker).",
+        "Coverage meta always reflects the focused week, even in month or agenda view."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Desktop week grid opened at 07:00, so evening shifts (18–23 h) were below the fold: <CalendarView> now scrolls time grids to an hour before the earliest timed entry (07:00 without entries; shared, helps Kalender too). Phone already uses the phone calendar (week strip + day list, '+ Neu' on the day). Shift sheet checked: Besetzung with Einstempeln per person, Einteilen picker, fields. Badges 'Beworben' etc. capitalised."},
+        "job": "Managers see the week's shifts with coverage at a glance, fill gaps (assign, accept applications) and create or move shifts.",
+        "phone": "Top bar: Schichten › Plan, ⋯ (gear Einstellungen). Round + = Neue Schicht. Meta line: 'Woche ab <Mo>: 12 von 20 Plätzen besetzt · 3 Bewerbungen'. Toolbar scroll row: Event filter, Ort filter, Segments Plan · Meine (when the person is on the team). Calendar (agenda/day are the useful phone views; view in the URL). Tap a shift → sheet (full width): Besetzung first (people with status, Annehmen / Einstempeln / Ausstempeln / ✕), 'Person einteilen' search picker, then the shift's fields with the SaveBar.",
+        "desktop": "Toolbar: Event FilterMenu ('Alle Events'), Ort FilterMenu, Segments Plan · Meine on the right. CalendarView week grid (week/day/month/agenda/per person), drag to move, drag on empty space to create. Sheet over the content area as on phones.",
+        "moves": [
+          "header meta coverage → 'Woche ab {date}: {filled} von {needed} Plätzen besetzt' (or '{event}: …' with ?event) + applications count; says what it counts",
+          "header settings gear → unchanged (/shifts/settings)",
+          "header primary Neue Schicht (?new=shift) → unchanged",
+          "toolbar Event FilterMenu ('Ganze Woche (alle)') → FilterMenu with allLabel 'Alle Events', in <ListToolbar>",
+          "toolbar Ort FilterMenu → unchanged, in <ListToolbar>",
+          "new: Segments Plan · Meine (Meine = /shifts/me) when the person has shifts.self",
+          "Calendar (views, colours, click → sheet, empty-slot click/drag → ?new=shift, drag & drop moveShift, per-person view) → unchanged; entry href ?edit=<id>",
+          "?shift=<id> → ?edit=<id> (old ?shift= redirects; notification + calendar links updated)",
+          "sheet field Position (NativeSelect) → <Choice> (segments ≤ 5, dropdown ≤ 15, search above)",
+          "sheet field Bezeichnung → unchanged",
+          "sheet fields Beginn / Ende (DateInput datetime) → unchanged",
+          "sheet field Benötigt → <TypedInput kind=number>",
+          "sheet field Event (NativeSelect, 100 events) → <RecordPicker> server search (searchShiftEvents)",
+          "sheet field Ort (NativeSelect) → <Choice>",
+          "sheet field 'Offen: Team kann sich bewerben' → checkbox (accent-primary), unchanged meaning",
+          "sheet field Notiz → unchanged",
+          "sheet SaveBar Speichern | Neue Schicht → SaveBar ('Schicht anlegen' always on create)",
+          "sheet hint 'Wird {name} zugeteilt.' (?resource) → unchanged",
+          "sheet section Besetzung {count}/{needed} → first section of the sheet (state before fields), rows with status badge (beworben = warning, eingeteilt, times)",
+          "sheet row Annehmen → unchanged (immediate)",
+          "sheet row Einchecken / Auschecken → 'Einstempeln' / 'Ausstempeln' (same word as the time clock), immediate",
+          "sheet row Entfernen → ✕ icon button with confirm (shifts.confirmRemovePerson)",
+          "sheet 'Person einteilen' NativeSelect + button → <RecordPicker> server search of the team (searchStaff, 'nicht für diese Position' as detail) + 'Einteilen' button",
+          "sheet 'Schicht löschen' ghost button → sheet ⋯ red item with confirm (shifts.confirmDeleteShift)",
+          "sheet without shifts.manage → read-only facts (<DetailList>) + Besetzung list"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5, 6]
+    },
+    {
+      "route": "/shifts/me",
+      "file": "src/app/(app)/shifts/me/page.tsx",
+      "title": "Meine Schichten",
+      "purpose": "A team member clocks in/out (optionally on a project), adds/edits own time entries, applies for open shifts and checks in/out of own shifts.",
+      "permission": "shifts.self",
+      "size": "list",
+      "header": {
+        "area": "shifts",
+        "actions": [],
+        "menu": [],
+        "primary": { "label": "Zeit nachtragen", "key": "time.add", "href": "/shifts/me?new=time" }
+      },
+      "urlState": [
+        { "param": "month", "meaning": "YYYY-MM for the time entry list (MonthNav)" },
+        { "param": "new", "meaning": "time = add entry sheet" },
+        { "param": "edit", "meaning": "<entry id> = edit sheet (only while not approved)" },
+        { "param": "ok / error", "meaning": "toast" }
+      ],
+      "sections": [
+        {
+          "title": "Zeiterfassung",
+          "anchor": "#time",
+          "kind": "custom",
+          "fields": [
+            { "name": "project_id", "label": "Projekt", "key": "time.project", "type": "select", "component": "NativeSelect", "notes": "only when not clocked in and projects module on + projects.view/manage; 'Kein Projekt'; open projects, max 300" }
+          ],
+          "notes": "Box with Einstempeln/Ausstempeln, hint 'Ohne Schicht einstempeln…' or 'Eingestempelt seit {time}', ghost '+ Zeit nachtragen' link; MonthNav (‹ Monat ›) next to the heading; line 'Arbeitszeit diesen Monat: {hours}'."
+        },
+        {
+          "title": "Zeiteinträge",
+          "kind": "DataTable",
+          "columns": ["Tag", "Von–Bis", "Pause", "Arbeitszeit", "Schicht / Notiz", "Status (freigegeben/offen + law warning badges)"],
+          "notes": "TimeEntryList; Tag links to ?edit=<id> unless approved."
+        },
+        {
+          "title": "Meine Schichten",
+          "anchor": "#mine",
+          "kind": "custom",
+          "notes": "ShiftSelfView: line 'Diesen Monat gearbeitet: {hours} h · Soll: {hours} h'; list of own upcoming shifts with status badge (beworben/eingeteilt/Ausgecheckt.) and buttons Zurückziehen / Einchecken (from 2 h before start) / Auschecken. Empty: 'Gerade keine Schichten.'"
+        },
+        {
+          "title": "Offene Schichten",
+          "anchor": "#open",
+          "kind": "custom",
+          "notes": "Open shifts in the next 45 days the person is qualified for, '{count} Plätze frei', button 'Bewerben'. Empty: 'Keine offenen Schichten.'"
+        }
+      ],
+      "actions": [
+        { "label": "Einstempeln / Ausstempeln", "key": "time.clockIn / time.clockOut", "where": "section", "kind": "serverAction", "target": "clock (time-actions.ts)", "permission": "shifts.self", "confirm": false, "result": "toast 'Eingestempelt.' / 'Ausgestempelt.'" },
+        { "label": "Zeit nachtragen", "key": "time.add", "where": "header + section", "kind": "sheet", "target": "?new=time", "confirm": false },
+        { "label": "Bewerben", "key": "shifts.apply", "where": "row", "kind": "serverAction", "target": "selfAction action=apply", "confirm": false, "result": "toast 'Beworben – du wirst benachrichtigt, wenn du eingeteilt bist.'" },
+        { "label": "Zurückziehen", "key": "shifts.withdraw", "where": "row", "kind": "serverAction", "target": "selfAction action=withdraw", "confirm": false },
+        { "label": "Einchecken / Auschecken", "key": "shifts.checkIn / shifts.checkOut", "where": "row", "kind": "serverAction", "target": "selfAction action=check_in|check_out", "confirm": false, "result": "toast 'Eingecheckt. Gute Schicht!' / 'Ausgecheckt. Danke!'" }
+      ],
+      "overlays": [
+        {
+          "param": "?new=time | ?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Zeit nachtragen | Zeiteintrag bearbeiten",
+          "fields": [
+            { "name": "project_id", "label": "Projekt", "key": "time.project", "type": "select", "component": "NativeSelect", "notes": "only with projects" },
+            { "name": "started_at", "label": "Beginn", "key": "time.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
+            { "name": "ended_at", "label": "Ende", "key": "time.end", "type": "datetime", "component": "DateInput:datetime-local", "required": false },
+            { "name": "break_minutes", "label": "Pause (Minuten)", "key": "time.breakMinutes", "type": "number", "component": "Input type=number", "required": false, "notes": "placeholder 'automatisch'; hint time.breakHint" },
+            { "name": "note", "label": "Notiz", "key": "time.note", "type": "textarea", "component": "Textarea", "required": false }
+          ],
+          "actions": [
+            { "label": "Speichern", "key": "time.save", "where": "sheet", "kind": "serverAction", "target": "saveEntry (time-actions.ts)", "confirm": false, "result": "toast 'Zeiteintrag gespeichert.'" },
+            { "label": "Eintrag löschen", "key": "time.delete", "where": "sheet", "kind": "serverAction", "target": "deleteEntry", "confirm": false, "result": "toast 'Zeiteintrag gelöscht.'" }
+          ]
+        }
+      ],
+      "empty": "Not in team: EmptyState 'Du bist noch nicht im Team dieses Schichtplans.' (no action). Entry list: 'Keine Zeiteinträge in diesem Monat.'",
+      "phone": "Primary 'Zeit nachtragen' as round + (clock in/out stays in the page box, not in the thumb zone).",
+      "uxNotes": [
+        "Time entry sheet uses a plain SubmitButton 'Speichern' instead of <SaveBar> (all other shift sheets use SaveBar).",
+        "'Eintrag löschen' is an outline button without confirm.",
+        "'Zeit nachtragen' appears twice (header primary and ghost button inside the clock box).",
+        "Two month totals on one page: 'Arbeitszeit diesen Monat' follows ?month, while 'Diesen Monat gearbeitet' in ShiftSelfView is always the current month (UTC month start).",
+        "Two clock concepts with similar wording: 'Einstempeln/Ausstempeln' (free time) vs 'Einchecken/Auschecken' (shift).",
+        "Project picker is a NativeSelect of up to 300 projects (code comment: ponytail, search picker if it grows).",
+        "Empty state for people not in the team has no action or link (dead end); adding someone happens in /shifts/team by a manager."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Zeiten rows squeezed time, break, hours, note and up to three badges into one cut-off line on phones: now 'HH:MM–HH:MM · 7,5 h · one badge' (a warning first, else Offen/Freigegeben) via phone-only columns in components/time-entries.tsx (also Stunden › Person and the project Zeit view). Badges capitalised (Eingeteilt, Beworben, Läuft, Offen, Freigegeben, Fertig)."},
+        "job": "A team member checks in and out of today's shift (or clocks free time), sees what's next, takes open shifts and fixes own times.",
+        "phone": "Top bar: Schichten › Plan (Meine selected in the Segments row when the person also plans). 'Jetzt' card at the top: running → 'Eingestempelt seit 18:02 · Bar 1' + big full-width 'Ausstempeln'; a shift starting within 2 h → its title/time + big 'Einstempeln'; otherwise the next shift ('Nächste Schicht: Fr 18:00') and a big 'Ohne Schicht einstempeln' with an optional project picker. Stats: Diesen Monat · Soll. Meine Schichten (rows: day/time, what, status, Zurückziehen for applications). Offene Schichten (rows + 'Bewerben'). Zeiten: month switch in the section toolbar, entries as cards, '+ Zeit nachtragen'. Round + = Zeit nachtragen.",
+        "desktop": "Jetzt card full width, Stats beside it; then Meine Schichten | Offene Schichten as two columns; Zeiten table full width with the month switch in its toolbar.",
+        "moves": [
+          "header primary Zeit nachtragen (?new=time) → unchanged (round + on phones)",
+          "clock box Einstempeln / Ausstempeln → the 'Jetzt' card's big button; a shift within its check-in window takes the button (Einstempeln on the shift via selfAction), else free time (clock)",
+          "clock box project NativeSelect (300 projects) → <RecordPicker> server search (searchProjects), optional, only before clocking in free time",
+          "clock box hint texts (time.clockHint / time.since) → card subtitle (running since / next shift / free clock hint)",
+          "clock box ghost '+ Zeit nachtragen' → removed (duplicate of the primary); AddLink at the end of Zeiten stays",
+          "MonthNav next to Zeiterfassung heading → Zeiten section toolbar",
+          "'Arbeitszeit diesen Monat' line → Stat 'Gearbeitet <Monat>' (follows ?month)",
+          "ShiftSelfView 'Diesen Monat gearbeitet · Soll' line → removed (one total: the Stat above; Soll = second Stat)",
+          "Zeiteinträge DataTable → section Zeiten, rows open ?edit=<id> unless approved",
+          "Meine Schichten list (status badges, Zurückziehen, Einchecken/Auschecken) → section Meine Schichten; badges coloured (beworben warning, eingeteilt info, fertig success); check-in/out moved to the Jetzt card for the current shift, rows keep it for others in the window",
+          "Offene Schichten list + Bewerben → section Offene Schichten (unchanged actions)",
+          "time sheet (?new=time | ?edit=<id>): fields Projekt (→ RecordPicker), Beginn, Ende, Pause (→ TypedInput number), Notiz → unchanged order",
+          "time sheet SubmitButton Speichern → <SaveBar> ('Zeit eintragen' always on create)",
+          "time sheet 'Eintrag löschen' outline button → sheet ⋯ red item with confirm (time.confirmDelete)",
+          "not-in-team EmptyState (no action) → EmptyState with text how to get on the team; managers get 'Mich zum Team hinzufügen' (→ /shifts/team?new=staff&user=<me>)",
+          "new: Segments Plan · Meine when the person has shifts.view"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5, 6]
+    },
+    {
+      "route": "/shifts/hours",
+      "file": "src/app/(app)/shifts/hours/page.tsx",
+      "title": "Stunden",
+      "purpose": "Monthly time account per person: shifts, planned, worked, target, balance, approval status and law warnings; export for payroll.",
+      "permission": "shifts.view",
+      "size": "list",
+      "header": {
+        "area": "shifts",
+        "actions": [{ "label": "‹ <Monat Jahr> ›", "notes": "MonthNav (prev/next month links, aria 'Vorheriger Monat' / 'Nächster Monat')" }],
+        "menu": [
+          { "label": "Summen pro Person", "key": "time.exportTotals", "target": "/export/hours?month=YYYY-MM" },
+          { "label": "Alle Einträge", "key": "time.exportEntries", "target": "/export/time?month=YYYY-MM" }
+        ]
+      },
+      "urlState": [
+        { "param": "month", "meaning": "YYYY-MM" },
+        { "param": "ok / error", "meaning": "toast" }
+      ],
+      "sections": [
+        {
+          "title": "Stunden",
+          "kind": "DataTable",
+          "columns": ["Name (→ /shifts/hours/<id>?month=)", "Schichten", "Geplant", "Gearbeitet", "Soll-Stunden/Monat", "Saldo", "Status ('{count} offen' / 'freigegeben' + '{count} Hinweise')"],
+          "notes": "Hint shifts.hoursHint + '{count} Einträge sind noch nicht freigegeben und fehlen im Export.' Only active staff or staff with shifts/entries this month."
+        }
+      ],
+      "actions": [
+        { "label": "Export", "where": "menu", "kind": "download", "target": "/export/hours | /export/time", "confirm": false }
+      ],
+      "links": ["/shifts/hours/[staffId]", "/export/hours", "/export/time"],
+      "empty": "'Noch niemand im Team.' (shifts.noStaff)",
+      "phone": "DataTable cards.",
+      "uxNotes": [
+        "Month navigation sits in the header actions (top bar) although docs/design/app.md puts views/filters in the list toolbar, never the top bar.",
+        "No approve action on the list; approval only on the person page."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Phone cards '15 h · 3 Schicl · 23,5 · −16,5 ·' + two stacked badges: now worked hours + one badge (Hinweise first). '1 Hinweise' → plural ('1 Hinweis'). Stat hints shortened so they don't truncate ('Ohne Pausen', 'Pausen, Ruhezeit, 10 h')."},
+        "job": "Before payroll: see each person's month (planned vs worked vs target), spot warnings, approve the month and export.",
+        "phone": "Top bar: Schichten › Stunden, ⋯ (Alle freigeben, Export Summen / Einträge). Toolbar: ‹ Monat ›. Stats: Gearbeitet · Offen zur Freigabe · Hinweise. Cards: name + status badge, worked / planned, balance.",
+        "desktop": "Toolbar month switch; Stats; table Name (+ Soll), Geplant, Gearbeitet, Saldo, Status (offen warning / freigegeben success + Hinweise destructive). Header: 'Alle freigeben' (count in the confirm) + ⋯ export.",
+        "moves": [
+          "header actions MonthNav → page toolbar (<ListToolbar>)",
+          "header ⋯ Summen pro Person / Alle Einträge → unchanged (MenuExport)",
+          "hint shifts.hoursHint + exportOnlyApproved → Stat hints (Gearbeitet: what counts; Offen: 'fehlen im Export')",
+          "column Name (link) → title column (row link), muted 'Soll {h} h' underneath",
+          "columns Schichten + Soll-Stunden → folded: Geplant shows '{h} h · {n} Schichten', Soll under the name",
+          "columns Geplant / Gearbeitet / Saldo → unchanged",
+          "column Status → badges with colour (offen warning, freigegeben success, Hinweise destructive)",
+          "new: header action 'Alle freigeben' (shifts.approve, data-confirm-count = open entries) → approveAll",
+          "empty 'Noch niemand im Team.' → <EmptyState> with 'Team einrichten' (shifts.manage)"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1]
+    },
+    {
+      "route": "/shifts/hours/[staffId]",
+      "file": "src/app/(app)/shifts/hours/[staffId]/page.tsx",
+      "title": "<Person name>",
+      "purpose": "One person's month of time entries with warnings; managers correct/add entries, approvers approve or reopen the month.",
+      "permission": "shifts.view (edit: shifts.manage or shifts.approve; approve: shifts.approve; delete entry: shifts.manage)",
+      "size": "list",
+      "header": {
+        "crumbs": ["Stunden", "<Name>"],
+        "actions": [{ "label": "MonthNav ‹ Monat ›" }]
+      },
+      "urlState": [
+        { "param": "month", "meaning": "YYYY-MM" },
+        { "param": "new", "meaning": "time = add entry for this person" },
+        { "param": "edit", "meaning": "<entry id>" }
+      ],
+      "sections": [
+        { "title": "Summary", "kind": "custom", "notes": "'Arbeitszeit diesen Monat: {hours} · Soll: {hours} h' + buttons on the right" },
+        { "title": "Zeiteinträge", "kind": "DataTable", "columns": ["Tag", "Von–Bis", "Pause", "Arbeitszeit", "Schicht / Notiz", "Status"] }
+      ],
+      "actions": [
+        { "label": "+ Zeit nachtragen", "key": "time.add", "where": "section", "kind": "sheet", "target": "?new=time", "permission": "shifts.manage | shifts.approve", "confirm": false },
+        { "label": "{count} Einträge freigeben", "key": "time.approveMonth", "where": "section", "kind": "serverAction", "target": "approveMonth", "permission": "shifts.approve", "confirm": false, "result": "toast 'Monat freigegeben.'; person can no longer edit those entries" },
+        { "label": "Freigabe aufheben", "key": "time.reopen", "where": "section", "kind": "serverAction", "target": "approveMonth undo=1", "permission": "shifts.approve", "confirm": false, "result": "toast 'Freigabe aufgehoben.'" }
+      ],
+      "overlays": [
+        {
+          "param": "?new=time | ?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Zeit nachtragen | Zeiteintrag bearbeiten",
+          "fields": [
+            { "name": "started_at", "label": "Beginn", "key": "time.start", "type": "datetime", "component": "DateInput:datetime-local", "required": true },
+            { "name": "ended_at", "label": "Ende", "key": "time.end", "type": "datetime", "component": "DateInput:datetime-local" },
+            { "name": "break_minutes", "label": "Pause (Minuten)", "key": "time.breakMinutes", "type": "number", "component": "Input type=number" },
+            { "name": "note", "label": "Notiz", "key": "time.note", "type": "textarea", "component": "Textarea" }
+          ],
+          "actions": [
+            { "label": "Speichern", "key": "time.save", "where": "sheet", "kind": "serverAction", "target": "saveEntry", "confirm": false },
+            { "label": "Eintrag löschen", "key": "time.delete", "where": "sheet", "kind": "serverAction", "target": "deleteEntry", "permission": "shifts.manage", "confirm": false }
+          ],
+          "notes": "Approved entries stay editable here for managers (no project picker on this page)."
+        }
+      ],
+      "links": ["/shifts/hours"],
+      "empty": "'Keine Zeiteinträge in diesem Monat.'",
+      "uxNotes": [
+        "Approving a whole month has no confirm.",
+        "Entry form here has no project picker (unlike /shifts/me), so a manager can't set/correct the project of an entry.",
+        "Action buttons placed in a page row, not in the header (other record pages use header actions)."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Entry rows fixed through the shared time-entries phone columns; header badge, Stats, the 'Monat freigeben' next-step card unchanged."},
+        "job": "One person's month: check entries and warnings, correct or add, then approve the month.",
+        "phone": "Top bar: ‹ Stunden · Name; ⋯ (Freigabe aufheben, Personalakte, Im Team bearbeiten). Badge: freigegeben / N offen. Toolbar ‹ Monat ›. Stats: Gearbeitet · Soll · Saldo · Geplant. Next-step row 'N Einträge offen · Monat freigeben' (confirm). Entries as cards → sheet. Round + = Zeit nachtragen.",
+        "desktop": "Same order; table of entries; the next-step row above it.",
+        "moves": [
+          "header actions MonthNav → page toolbar",
+          "summary line 'Arbeitszeit … · Soll' → Stats (Gearbeitet, Soll, Saldo, Geplant)",
+          "button '+ Zeit nachtragen' → header primary (round + on phones)",
+          "button '{count} Einträge freigeben' → next-step row under the Stats, with confirm (time.confirmApprove, count)",
+          "button 'Freigabe aufheben' → header ⋯ with confirm (time.confirmReopen)",
+          "new: header badge month state; ⋯ links to the HR record (hr.view) and the team sheet (shifts.manage)",
+          "entries DataTable → unchanged, rows → ?edit=<id>",
+          "time sheet → shared TimeEntrySheet (SaveBar, delete in ⋯ with confirm) and now with the project picker"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2]
+    },
+    {
+      "route": "/shifts/team",
+      "file": "src/app/(app)/shifts/team/page.tsx",
+      "title": "Team",
+      "purpose": "Which org members are on the shift team, with employment type, target hours and the positions they can do.",
+      "permission": "shifts.view (edit: shifts.manage)",
+      "size": "list",
+      "header": {
+        "area": "shifts",
+        "primary": { "label": "Neue Person", "key": "shifts.newStaff", "href": "?new=staff", "permission": "shifts.manage" }
+      },
+      "urlState": [
+        { "param": "new", "meaning": "staff = add sheet" },
+        { "param": "edit", "meaning": "<staff id> = edit sheet" }
+      ],
+      "sections": [
+        { "title": "Team", "kind": "DataTable", "columns": ["Name (+ 'inaktiv' badge, e-mail below)", "Art", "Positionen ('alle' when none)", "Soll-Stunden/Monat"], "notes": "Row → ?edit=<id> (shifts.manage only)" }
+      ],
+      "overlays": [
+        {
+          "param": "?new=staff | ?edit=<id>",
+          "component": "UrlSheet",
+          "title": "Neue Person | <Name>",
+          "fields": [
+            { "name": "user", "label": "Mitglied", "key": "shifts.member", "type": "select", "component": "NativeSelect", "required": true, "notes": "create only; org members not yet on the team; hint shifts.memberHint (invite people first under Einstellungen → Mitglieder)" },
+            { "name": "role_label", "label": "Art", "key": "shifts.roleLabel", "type": "text", "component": "Input", "notes": "placeholder 'z. B. Minijob, Aushilfe, Ehrenamt'" },
+            { "name": "target_hours", "label": "Soll-Stunden/Monat", "key": "shifts.targetHours", "type": "number", "component": "Input inputMode=decimal" },
+            { "name": "positions", "label": "Kann diese Positionen", "key": "shifts.canDo", "type": "checkbox[]", "component": "native checkboxes", "notes": "hint 'Nichts ausgewählt = alle Positionen.'" },
+            { "name": "active", "label": "Aktiv", "key": "shifts.activeLabel", "type": "checkbox", "component": "native checkbox" }
+          ],
+          "actions": [
+            { "label": "Speichern | Neue Person", "where": "savebar", "kind": "serverAction", "target": "saveStaff", "permission": "shifts.manage", "confirm": false, "result": "back to /shifts/team, toast 'Gespeichert.'; duplicate → 'Dieses Mitglied ist schon im Team.'" }
+          ]
+        }
+      ],
+      "empty": "'Noch niemand im Team.'",
+      "uxNotes": [
+        "No way to remove a person from the team, only 'Aktiv' off.",
+        "'Art' (shifts.roleLabel) vs 'Beschäftigung' (time.roleLabel) vs HR employment type: three names for the employment kind.",
+        "Name/e-mail come from the profile and can't be edited here; staff ↔ HR employee link lives in HR (staff_id), not visible here."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop (list + sheet). No change needed."},
+        "job": "Who can be planned: add org members to the team, set employment, target hours, positions, active.",
+        "phone": "Top bar: ‹ Einstellungen · Team. Round + = Person hinzufügen. Cards: name + inactive badge, Beschäftigung, Positionen, Soll. Sheet: fields + Verknüpft rows (Personalakte, Stunden, Kontakt).",
+        "desktop": "Crumbs Schichten › Einstellungen › Team; table as now; sheet.",
+        "moves": [
+          "sidebar Team → gear (Einstellungen › Team row); nav child gear: true so ⌘K + Settings › Bereiche list it",
+          "header primary Neue Person → 'Person hinzufügen' (?new=staff), unchanged sheet param",
+          "table columns Name, Art, Positionen, Soll → unchanged; 'Art' renamed 'Beschäftigung'",
+          "sheet field Mitglied (NativeSelect) → <RecordPicker> server search of org members not on the team (searchTeamCandidates); ?user=<id> pre-fills (from Meine / HR)",
+          "sheet field Art → 'Beschäftigung' (same text field)",
+          "sheet field Soll-Stunden → <TypedInput kind=number>",
+          "sheet field Positionen checkboxes → <MultiSelect> chips (search)",
+          "sheet field Aktiv → checkbox with hint 'Inaktive bleiben in Stunden und Export'",
+          "sheet SaveBar → unchanged ('Person hinzufügen' always on create)",
+          "new: sheet 'Verknüpft' <LinkRows>: Personalakte (hr.view), Stunden this month, Kontakt (contacts.user_id)",
+          "creating a team member links the HR record of the same account (employees.staff_id)",
+          "removing someone from the team → not added: deleting a team member deletes their time entries (cascade); 'Aktiv' off is the way"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [1, 2]
+    },
+    {
+      "route": "/shifts/settings",
+      "file": "src/app/(app)/shifts/settings/page.tsx",
+      "title": "Einstellungen",
+      "purpose": "Define positions (stations with usual headcount) and recurring shift series that generate shifts 8 weeks ahead.",
+      "permission": "shifts.manage",
+      "size": "form",
+      "header": { "crumbs": ["Schichten", "Einstellungen"] },
+      "urlState": [
+        { "param": "new", "meaning": "series = new series sheet" },
+        { "param": "series", "meaning": "<id> = edit series sheet" }
+      ],
+      "sections": [
+        {
+          "title": "Positionen",
+          "anchor": "#positions",
+          "kind": "FormCard",
+          "fields": [
+            { "name": "name", "label": "Position", "key": "shifts.position", "type": "text", "component": "Input", "required": true, "notes": "placeholder 'z. B. Bar 1'" },
+            { "name": "needed", "label": "Benötigt", "key": "shifts.needed", "type": "number", "component": "Input type=number" },
+            { "name": "location", "label": "Ort", "key": "shifts.location", "type": "select", "component": "NativeSelect", "notes": "'Jeder Ort'; only when locations exist" }
+          ],
+          "notes": "Inline rows, one form each + empty last row to add. Without locations: hint 'Orte … legst du in den Einstellungen an.' + link 'Orte verwalten' → /settings/locations."
+        },
+        {
+          "title": "Wiederkehrende Schichten",
+          "anchor": "#series",
+          "kind": "DataTable",
+          "columns": ["Position", "Rhythmus", "Feste Personen", "Ort"],
+          "notes": "Card action '+ Neue wiederkehrende Schicht'; row → ?series=<id>. Empty 'Noch keine wiederkehrenden Schichten.'"
+        }
+      ],
+      "actions": [
+        { "label": "Speichern / Position hinzufügen", "key": "common.save / shifts.addPosition", "where": "row", "kind": "serverAction", "target": "savePosition", "confirm": false },
+        { "label": "(trash icon) Entfernen", "key": "shifts.remove", "where": "row", "kind": "serverAction", "target": "deletePosition", "confirm": false },
+        { "label": "Neue wiederkehrende Schicht", "key": "shifts.newSeries", "where": "section", "kind": "sheet", "target": "?new=series", "confirm": false }
+      ],
+      "overlays": [
+        {
+          "param": "?new=series | ?series=<id>",
+          "component": "UrlSheet",
+          "title": "Neue wiederkehrende Schicht | <Position or name>",
+          "fields": [
+            { "name": "position", "label": "Position", "key": "shifts.position", "type": "select", "component": "NativeSelect" },
+            { "name": "name", "label": "Bezeichnung", "key": "shifts.titleLabel", "type": "text", "component": "Input", "notes": "placeholder 'z. B. Café Frühschicht'" },
+            { "name": "weekdays", "label": "Wochentage", "key": "shifts.weekdays", "type": "checkbox[]", "component": "native checkboxes (Mo–So)" },
+            { "name": "every_weeks", "label": "Wiederholung", "key": "shifts.every", "type": "select", "component": "NativeSelect", "notes": "jede Woche / alle 2–4 Wochen" },
+            { "name": "start_time", "label": "Von", "key": "shifts.from", "type": "time", "component": "Input type=time", "required": true },
+            { "name": "end_time", "label": "Bis (früher = am nächsten Tag)", "key": "shifts.until", "type": "time", "component": "Input type=time", "required": true },
+            { "name": "start_date", "label": "Ab", "key": "shifts.startDate", "type": "date", "component": "DateInput:date", "required": true },
+            { "name": "end_date", "label": "Bis (optional)", "key": "shifts.endDate", "type": "date", "component": "DateInput:date" },
+            { "name": "needed", "label": "Benötigt", "key": "shifts.needed", "type": "number", "component": "Input type=number" },
+            { "name": "location", "label": "Ort", "key": "shifts.location", "type": "select", "component": "NativeSelect" },
+            { "name": "default_staff", "label": "Feste Personen", "key": "shifts.fixedPeople", "type": "checkbox[]", "component": "native checkboxes", "notes": "hint shifts.fixedHint" }
+          ],
+          "actions": [
+            { "label": "Speichern | Neue wiederkehrende Schicht", "where": "savebar", "kind": "serverAction", "target": "saveSeries", "confirm": false, "result": "regenerates future shifts; toast 'Gespeichert, {count} Schichten angelegt.'" },
+            { "label": "Serie und zukünftige Schichten löschen", "key": "shifts.deleteSeries", "where": "sheet", "kind": "serverAction", "target": "deleteSeries", "confirm": false }
+          ]
+        }
+      ],
+      "links": ["/settings/locations", "/shifts"],
+      "uxNotes": [
+        "'Serie und zukünftige Schichten löschen' deletes many shifts with no confirm, as a ghost button.",
+        "Position delete (trash icon) has no confirm.",
+        "Series uses ?series=<id> instead of ?edit=<id>.",
+        "Start/end time use native <input type=time> (browser locale: may show AM/PM), against the DateInput rule.",
+        "Saving a series silently re-creates future shifts (only a small hint text).",
+        "Weekday and fixed-people pickers are long checkbox lists rather than chips/segments."
+      ],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Checked phone + desktop: Team row ›, position rows, series list + AddLink, series sheet (weekday toggles, TimeInput), Orte. No change needed."},
+        "job": "Set up planning once: team, positions, recurring shifts, locations.",
+        "phone": "Top bar: ‹ Schichten · Einstellungen. RowGroups: Team (row 'Team · N Personen' ›), Positionen (inline rows: name, Benötigt, Ort, ✕; '+ Position hinzufügen'; one SaveBar), Wiederkehrende Schichten (rows: name · rhythm › sheet; '+ Neue wiederkehrende Schicht'), Orte (row › /settings/locations).",
+        "desktop": "Same, form width.",
+        "moves": [
+          "Positionen inline forms (one form + button per row) → <PositionRows> in one form with one SaveBar (savePositions); removing a saved position asks first",
+          "position trash icon (no confirm) → ✕ with confirm (shifts.confirmDeletePosition)",
+          "locations hint + 'Orte verwalten' link → RowGroup Orte with a row › /settings/locations",
+          "Wiederkehrende Schichten DataTable + '+ Neue …' card button → RowGroup of rows › ?edit=<id> + AddLink ?new=series",
+          "?series=<id> → ?edit=<id> (old param redirects)",
+          "series sheet field Position (NativeSelect) → <Choice>",
+          "series sheet field Bezeichnung → unchanged",
+          "series sheet Wochentage checkboxes → compact toggle row (Mo–So)",
+          "series sheet Wiederholung NativeSelect → <Choice> (jede Woche, alle 2/3/4 Wochen)",
+          "series sheet Von / Bis (native type=time) → <TimeInput> (24 h, typed)",
+          "series sheet Ab / Bis DateInputs → unchanged",
+          "series sheet Benötigt → <TypedInput kind=number>",
+          "series sheet Ort NativeSelect → <Choice>",
+          "series sheet Feste Personen checkboxes → <MultiSelect> chips with search",
+          "series sheet generateHint + SaveBar → SaveBar asks first when editing (shifts.confirmSeriesSave: future shifts are rebuilt); create = 'Serie anlegen' always",
+          "series sheet 'Serie und zukünftige Schichten löschen' ghost button → sheet ⋯ red item, confirm names the count of future shifts",
+          "new: RowGroup Team with a row › /shifts/team ('{n} Personen')"
+        ],
+        "built": true
+      },
+      "uxNotesDone": [0, 1, 2, 3, 4, 5]
+    },
+    {
+      "route": "/shifts/setup",
+      "file": "src/app/(app)/shifts/setup/page.tsx",
+      "title": "(redirect)",
+      "purpose": "Old address; redirects to /shifts/settings.",
+      "links": ["/shifts/settings"],
+      "redesign": {
+        "sweep": {"done": true, "date": "2026-11-19", "note": "Redirects to Einstellungen."},
+        "job": "Old address.",
+        "phone": "–",
+        "desktop": "–",
+        "moves": [
+          "redirect → /shifts/settings (unchanged)"
+        ],
+        "built": true
+      }
+    }
+  ]
+}

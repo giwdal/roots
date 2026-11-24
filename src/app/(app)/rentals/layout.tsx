@@ -8,7 +8,7 @@ export const generateMetadata = titled("rentals.nav")
 export default async function RentalsLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePerm("rentals.view")
   if (!ctx.modules.has("rentals")) notFound()
-  return <div className="grid max-w-6xl gap-6">{children}</div>
+  return <div className="grid min-w-0 gap-6">{children}</div>
 }
 
 export const instant = false

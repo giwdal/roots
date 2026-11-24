@@ -392,7 +392,7 @@ export type TeamOrder = {
   shipping_cents: number
   paid: "cash" | "transfer" | null // null = still open
   payment: "transfer" | "pickup" // how an open order gets paid (pickup only with delivery pickup)
-  done: boolean // already handed over / sent
+  done: boolean // already handed over / sent: completed at once (paid or free orders only)
   note: string | null
   notify: boolean // send the buyer the usual mail
   contact_id: string | null // picked from the CRM (else matched/created by email as usual)
@@ -431,6 +431,9 @@ export function readTeamOrder(get: (k: string) => string): { order: TeamOrder } 
   const shipping = get("shipping").trim() ? moneyCents(get("shipping")) : 0
   if (shipping === null || shipping > MAX_UNIT_CENTS) return { error: "store.priceInvalid" }
   const paid = (["cash", "transfer"] as const).find((m) => m === get("paid")) ?? null
+  // "Erledigt" closes an order: only once it is paid (a free order counts as paid). An open one is completed after the money came.
+  const total = lines.reduce((sum, l) => sum + l.q * l.unit, 0) + (delivery === "shipping" ? shipping : 0)
+  if (get("done") === "1" && !paid && total > 0) return { error: "store.teamOrder.doneOpen" }
   return {
     order: {
       lines,

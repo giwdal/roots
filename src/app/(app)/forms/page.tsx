@@ -1,19 +1,26 @@
-import { ClipboardListIcon, Trash2Icon } from "lucide-react"
+import Link from "next/link"
+import { ClipboardListIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { ActionsMenu, MenuLink } from "@/components/actions-menu"
-import { Page, PageHeader } from "@/components/page"
+import { Choice } from "@/components/choice"
+import { EmptyState, Page, PageHeader } from "@/components/page"
 import { notFound } from "next/navigation"
-import { DataTable } from "@/components/data-table"
+import { DataTable, ListToolbar, SearchBox } from "@/components/data-table"
+import { FilterMenu } from "@/components/filter-menu"
+import { SaveBar } from "@/components/save-bar"
 import { Notice } from "@/components/notice"
 import { SubmitButton } from "@/components/submit-button"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
 import { createForm, restoreForm } from "./actions"
+import { FormBadge } from "./badges"
+
+const STATUSES = ["draft", "published", "closed"] as const
 
 export default async function FormsPage({ searchParams }: PageProps<"/forms">) {
   const ctx = await requirePerm("forms.view")
@@ -23,12 +30,18 @@ export default async function FormsPage({ searchParams }: PageProps<"/forms">) {
   const canManage = ctx.can("forms.manage")
   const creating = canManage && param(sp, "new") === "1"
   const trash = canManage && param(sp, "trash") === "1"
-  const [{ data: forms }, { data: open }] = await Promise.all([
-    trash
-      ? ctx.supabase.from("forms").select("id, title, purpose, status, slug, updated_at").eq("org_id", ctx.org.id).not("deleted_at", "is", null).order("deleted_at", { ascending: false })
-      : ctx.supabase.from("forms").select("id, title, purpose, status, slug, updated_at").eq("org_id", ctx.org.id).is("deleted_at", null).order("updated_at", { ascending: false }),
+  const q = param(sp, "q")?.replace(/[%,()*]/g, "").trim()
+  const status = STATUSES.find((s) => s === param(sp, "status"))
+  // ponytail: every form of the org in one list (orgs have a handful); a Pager if that changes.
+  let list = ctx.supabase.from("forms").select("id, title, purpose, status, slug, updated_at").eq("org_id", ctx.org.id)
+  list = trash ? list.not("deleted_at", "is", null).order("deleted_at", { ascending: false }) : list.is("deleted_at", null).order("updated_at", { ascending: false })
+  if (q) list = list.ilike("title", `%${q}%`)
+  if (status) list = list.eq("status", status)
+  const [{ data: forms }, { data: open }, { count: any }] = await Promise.all([
+    list,
     // ponytail: new-submission counts over ≤ 5000 open rows; a grouped RPC if forms get busier.
     ctx.supabase.from("form_submissions").select("form_id").eq("org_id", ctx.org.id).eq("status", "new").limit(5000),
+    ctx.supabase.from("forms").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).is("deleted_at", null),
   ])
   const newCount = (id: string) => open?.filter((s) => s.form_id === id).length ?? 0
 
@@ -49,19 +62,47 @@ export default async function FormsPage({ searchParams }: PageProps<"/forms">) {
         primary={canManage && !trash ? { href: withParams(sp, { new: "1" }), label: t("forms.new") } : undefined}
       />
       <Notice error={!creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
+      {(!!any || trash) && (
+        <ListToolbar search={<SearchBox q={q} label={t("common.search")} keep={{ ...(trash && { trash: "1" }), ...(status && { status }) }} />}>
+          {!trash && <FilterMenu param="status" label={t("forms.status")} options={STATUSES.map((s) => ({ value: s, label: t(`forms.statuses.${s}`) }))} />}
+        </ListToolbar>
+      )}
       {trash && <p className="text-sm text-muted-foreground">{t("forms.trashHint", { days: 30 })}</p>}
       <DataTable
         rows={forms ?? []}
         rowKey={(r) => r.id}
         rowHref={trash ? undefined : (r) => `/forms/${r.id}`}
-        empty={trash ? t("forms.emptyTrash") : t("forms.empty")}
+        empty={
+          trash ? (
+            t("forms.emptyTrash")
+          ) : any ? (
+            t("forms.noMatch")
+          ) : (
+            <EmptyState
+              area="communication"
+              title={t("forms.empty")}
+              text={t("forms.emptyText")}
+              action={
+                canManage && (
+                  <Button render={<Link href={withParams(sp, { new: "1" })} scroll={false} />} nativeButton={false} size="sm">
+                    <PlusIcon /> {t("forms.new")}
+                  </Button>
+                )
+              }
+            />
+          )
+        }
         columns={[
-          { header: t("forms.formTitle"), cell: (r) => <span className="font-medium">{r.title}</span> },
-          { header: t("forms.purpose"), cell: (r) => t.dynamic(`forms.purposes.${r.purpose}`) },
           {
-            header: t("forms.status"),
-            cell: (r) => <Badge variant={r.status === "published" ? "default" : "outline"}>{t.dynamic(`forms.statuses.${r.status}`)}</Badge>,
+            header: t("forms.formTitle"),
+            cell: (r) => (
+              <span className="grid">
+                <span className="font-medium">{r.title}</span>
+                <span className="text-xs text-muted-foreground">{t.dynamic(`forms.purposes.${r.purpose}`)}</span>
+              </span>
+            ),
           },
+          { header: t("forms.status"), cell: (r) => <FormBadge t={t} status={r.status} /> },
           {
             header: trash ? "" : t("forms.newSubmissions"),
             cell: (r) =>
@@ -73,7 +114,7 @@ export default async function FormsPage({ searchParams }: PageProps<"/forms">) {
                   </SubmitButton>
                 </form>
               ) : newCount(r.id) ? (
-                <Badge variant="secondary">{newCount(r.id)}</Badge>
+                <Badge variant="warning">{t("forms.newCount", { count: newCount(r.id) })}</Badge>
               ) : (
                 <span className="text-muted-foreground">–</span>
               ),
@@ -88,15 +129,21 @@ export default async function FormsPage({ searchParams }: PageProps<"/forms">) {
               <Label htmlFor="f-title">{t("forms.formTitle")}</Label>
               <Input id="f-title" name="title" required maxLength={200} placeholder={t("forms.titlePlaceholder")} />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="f-purpose">{t("forms.purpose")}</Label>
-              <NativeSelect id="f-purpose" name="purpose" defaultValue={ctx.modules.has("members") ? "membership" : "contact"} className="w-full">
-                <NativeSelectOption value="contact">{t("forms.purposes.contact")}</NativeSelectOption>
-                {ctx.modules.has("members") && <NativeSelectOption value="membership">{t("forms.purposes.membership")}</NativeSelectOption>}
-              </NativeSelect>
-              <p className="text-xs text-muted-foreground">{t("forms.purposeHint")}</p>
-            </div>
-            <SubmitButton className="justify-self-start">{t("forms.create")}</SubmitButton>
+            {ctx.modules.has("members") && (
+              <div className="grid gap-2">
+                <Label htmlFor="f-purpose">{t("forms.purpose")}</Label>
+                <Choice
+                  id="f-purpose"
+                  name="purpose"
+                  label={t("forms.purpose")}
+                  required
+                  defaultValue="membership"
+                  options={(["contact", "membership"] as const).map((p) => ({ value: p, label: t(`forms.purposes.${p}`) }))}
+                />
+                <p className="text-xs text-muted-foreground">{t("forms.purposeHint")}</p>
+              </div>
+            )}
+            <SaveBar label={t("forms.createForm")} always />
           </form>
         </UrlSheet>
       )}

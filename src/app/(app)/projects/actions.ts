@@ -9,11 +9,10 @@ import { requirePerm } from "@/lib/context"
 import { back } from "@/lib/url"
 import { parseTags } from "@/app/(app)/contacts/fields"
 import { loadFields, readCustom } from "@/lib/custom-fields"
-import { addComment, addLink, editComment, removeComment, createProject, createTask, moveProject, moveTask, saveStatus, setAssignees, updateProject, updateTask, type ProjectFail, type Scope } from "@/projects/server"
+import { addComment, addLink, editComment, removeComment, createProject, createTask, moveProject, moveTask, saveStatus, setAssignees, updateProject, updateTask, type ProjectFail } from "@/projects/server"
 
 const UUID = /^[0-9a-f-]{36}$/
 const SETUP = "/projects/settings"
-const scopeOf = (fd: FormData): Scope => (fd.get("scope") === "project" ? "project" : "task")
 const id = (fd: FormData, key: string) => (UUID.test(String(fd.get(key) ?? "")) ? String(fd.get(key)) : null)
 const message = (t: T, f: ProjectFail) => (f.db ? dbError(t, f.db) : t.dynamic(f.error))
 // Where the form came from (board / list / home), only App paths (no "//host").
@@ -32,17 +31,46 @@ async function manager() {
   return { ctx, t }
 }
 
-/** Quick add at the bottom of a board column (or the list). */
+/** The "Neue Aufgabe" sheet (?new=task): title, project, due date, assignees → the new task's panel. */
 export async function createTaskAction(fd: FormData) {
   const { ctx, t } = await manager()
-  const to = backTo(fd, "/projects")
-  const r = await createTask(ctx.supabase, ctx.org.id, { title: String(fd.get("title") ?? ""), statusId: id(fd, "status_id"), projectId: id(fd, "project_id"), tags: parseTags(String(fd.get("tags") ?? "")) })
-  if ("error" in r) back(to, { error: message(t, r) })
+  const to = backTo(fd, "/projects/tasks")
+  const retry = (error: string) => {
+    const url = new URL(to, "http://x")
+    url.searchParams.set("new", "task")
+    back(url.pathname + url.search, { error })
+  }
+  const r = await createTask(ctx.supabase, ctx.org.id, {
+    title: String(fd.get("title") ?? ""),
+    statusId: id(fd, "status_id"),
+    projectId: id(fd, "project_id"),
+    due_on: String(fd.get("due_on") ?? "") || null,
+    tags: parseTags(String(fd.get("tags") ?? "")),
+    assignees: fd.getAll("assignees").map(String).filter((u) => UUID.test(u)),
+  })
+  if ("error" in r) return retry(message(t, r))
   deliverSoon()
-  // Open the new task's panel right away (assignees, due date, …).
   const url = new URL(to, "http://x")
+  url.searchParams.delete("new")
+  url.searchParams.delete("due")
   url.searchParams.set("task", r.id)
   back(url.pathname + url.search, {})
+}
+
+/** Quick add (type + Enter) on the list and the board: the task appears, the field stays ready for the next one. */
+export async function quickAddTaskAction(input: { title: string; statusId?: string; projectId?: string; mine?: boolean }): Promise<{ error?: string }> {
+  const { ctx, t } = await manager()
+  const ok = (v?: string) => (v && UUID.test(v) ? v : null)
+  const r = await createTask(ctx.supabase, ctx.org.id, { title: String(input.title ?? ""), statusId: ok(input.statusId), projectId: ok(input.projectId), assignees: input.mine ? [ctx.userId] : [] })
+  if ("error" in r) return { error: message(t, r) }
+  deliverSoon()
+  return {}
+}
+
+export async function restoreTaskAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.tasks", p_id: id(fd, "id") ?? "" })
+  back(backTo(fd, "/projects/tasks?trash=1"), error ? { error: dbError(t, error) } : { ok: t("projects.taskRestored") })
 }
 
 /** The task panel saves itself (AutosaveForm): fields, status, assignees. */
@@ -94,31 +122,33 @@ export async function trashTaskAction(fd: FormData) {
 
 // ---------- board columns (setup) ----------
 
-export async function saveStatusAction(fd: FormData) {
+/**
+ * Both boards' columns in one form (settings page, one SaveBar): per scope the rows `<scope>_id/_name/_color/_done`
+ * in their order. Removed columns are deleted (a column that still holds tasks or projects fails with a message).
+ */
+export async function saveColumnsAction(fd: FormData) {
   const { ctx, t } = await manager()
-  const r = await saveStatus(ctx.supabase, ctx.org.id, id(fd, "id"), { name: String(fd.get("name") ?? ""), color: String(fd.get("color") ?? "gray"), is_done: fd.get("is_done") === "on" }, scopeOf(fd))
-  back(SETUP, "error" in r ? { error: message(t, r) } : { ok: t("projects.statusSaved") })
-}
-
-export async function deleteStatusAction(fd: FormData) {
-  const { ctx, t } = await manager()
-  const { error } = await ctx.supabase.from("task_statuses").delete().eq("id", id(fd, "id") ?? "").eq("org_id", ctx.org.id)
-  back(SETUP, error ? { error: error.code === "23503" ? t("projects.statusInUse") : dbError(t, error) } : { ok: t("projects.statusDeleted") })
-}
-
-/** Move a column one step left/right (swap positions with its neighbour). */
-export async function moveStatusAction(fd: FormData) {
-  const { ctx, t } = await manager()
-  const { data: list } = await ctx.supabase.from("task_statuses").select("id, position").eq("org_id", ctx.org.id).eq("scope", scopeOf(fd)).order("position")
-  const all = list ?? []
-  const i = all.findIndex((s) => s.id === id(fd, "id"))
-  const j = fd.get("dir") === "up" ? i - 1 : i + 1
-  if (i < 0 || j < 0 || j >= all.length) back(SETUP, {})
-  const order = [...all]
-  ;[order[i], order[j]] = [order[j], order[i]]
-  const results = await Promise.all(order.map((s, k) => ctx.supabase.from("task_statuses").update({ position: k }).eq("id", s.id).eq("org_id", ctx.org.id)))
-  const failed = results.find((r) => r.error)?.error
-  back(SETUP, failed ? { error: dbError(t, failed) } : {})
+  const { data: existing } = await ctx.supabase.from("task_statuses").select("id, scope").eq("org_id", ctx.org.id)
+  for (const scope of ["task", "project"] as const) {
+    const ids = fd.getAll(`${scope}_id`).map(String)
+    const colors = fd.getAll(`${scope}_color`).map(String)
+    const done = fd.getAll(`${scope}_done`).map(String)
+    const rows = fd.getAll(`${scope}_name`).map((n, i) => ({ id: UUID.test(ids[i] ?? "") ? ids[i] : null, name: String(n), color: colors[i] ?? "gray", is_done: done[i] === "1" }))
+    if (!rows.length) back(SETUP, { error: t("projects.noStatuses") })
+    const keep = new Set(rows.map((r) => r.id).filter(Boolean))
+    const gone = (existing ?? []).filter((s) => s.scope === scope && !keep.has(s.id)).map((s) => s.id)
+    for (const [position, r] of rows.entries()) {
+      const saved = await saveStatus(ctx.supabase, ctx.org.id, r.id, r, scope)
+      if ("error" in saved) back(SETUP, { error: message(t, saved) })
+      const { error } = await ctx.supabase.from("task_statuses").update({ position }).eq("id", "id" in saved ? saved.id : "").eq("org_id", ctx.org.id)
+      if (error) back(SETUP, { error: dbError(t, error) })
+    }
+    if (gone.length) {
+      const { error } = await ctx.supabase.from("task_statuses").delete().eq("org_id", ctx.org.id).in("id", gone)
+      if (error) back(SETUP, { error: error.code === "23503" ? t("projects.statusInUse") : dbError(t, error) })
+    }
+  }
+  back(SETUP, { ok: t("projects.saved") })
 }
 
 /** Bulk bar on the task list: move the ticked tasks to another column, or to the trash. */
@@ -198,13 +228,45 @@ export async function createProjectAction(fd: FormData) {
   back(`/projects/${r.id}`, { ok: t("projects.projectCreated") })
 }
 
-export async function updateProjectAction(fd: FormData) {
+// Properties of a project edited in place on its page (InlineField / autosave), form key → what updateProject gets.
+const PATCHABLE = ["name", "description", "color", "start_on", "end_on", "status_id", "lead_id"] as const
+
+/** One property of a project (InlineField, the title, the description): checked like the full form, only that column saved. */
+export async function patchProject(fd: FormData): Promise<{ error?: string }> {
   const { ctx, t } = await manager()
-  const project = id(fd, "id") ?? ""
-  const { c, input } = await readProjectForm(ctx, fd)
-  if ("error" in c) back(`/projects/${project}`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  const r = await updateProject(ctx.supabase, ctx.org.id, project, { ...input, statusId: input.statusId ?? undefined, custom: c.custom })
-  back(`/projects/${project}`, "error" in r ? { error: message(t, r) } : { ok: t("projects.saved") })
+  const project = id(fd, "id")
+  const raw = String(fd.get("field") ?? "")
+  const field = PATCHABLE.find((f) => f === raw)
+  const value = String(fd.get("value") ?? "")
+  if (!project || (!field && !/^custom\.[a-z0-9_]+$/.test(raw))) return { error: t("errors.invalid_input") }
+  let input: Parameters<typeof updateProject>[3]
+  if (!field) {
+    // A custom field: the stored values in form format with the new one on top, checked by readCustom like the form.
+    const [{ data: p }, defs] = await Promise.all([ctx.supabase.from("projects").select("custom").eq("id", project).eq("org_id", ctx.org.id).maybeSingle(), loadFields(ctx.supabase, ctx.org.id, "projects")])
+    if (!p) return { error: t("errors.not_allowed") }
+    const stored = (p.custom ?? {}) as Record<string, unknown>
+    const current: Record<string, string> = Object.fromEntries(defs.map((d) => [d.key, stored[d.key] == null ? "" : d.type === "money" && typeof stored[d.key] === "number" ? (stored[d.key] as number).toFixed(2).replace(".", ",") : String(stored[d.key])]))
+    current[raw.slice("custom.".length)] = value
+    const c = readCustom(defs, (k) => current[k] ?? "")
+    if ("error" in c) return { error: `${c.field}: ${t.dynamic(c.error)}` }
+    input = { custom: c.custom }
+  } else if (field === "status_id") {
+    const { data: s } = await ctx.supabase.from("task_statuses").select("id").eq("id", UUID.test(value) ? value : "").eq("org_id", ctx.org.id).eq("scope", "project").maybeSingle()
+    if (!s) return { error: t("errors.invalid_input") }
+    input = { statusId: s.id }
+  } else if (field === "lead_id") {
+    if (value && !UUID.test(value)) return { error: t("errors.invalid_input") }
+    if (value) {
+      const { data: m } = await ctx.supabase.from("org_members").select("user_id").eq("org_id", ctx.org.id).eq("user_id", value).maybeSingle()
+      if (!m) return { error: t("errors.invalid_input") }
+    }
+    input = { leadId: value || null }
+  } else if (field === "start_on" || field === "end_on") input = { [field]: value || null }
+  else input = { [field]: value }
+  const r = await updateProject(ctx.supabase, ctx.org.id, project, input)
+  if ("error" in r) return { error: message(t, r) }
+  deliverSoon()
+  return {}
 }
 
 export async function moveProjectAction(input: { id: string; statusId: string; order: string[] }): Promise<{ error?: string }> {
@@ -223,7 +285,7 @@ export async function trashProjectAction(fd: FormData) {
 export async function restoreProjectAction(fd: FormData) {
   const { ctx, t } = await manager()
   const { error } = await ctx.supabase.rpc("restore_deleted", { p_table: "public.projects", p_id: id(fd, "id") ?? "" })
-  back("/projects?view=trash", error ? { error: dbError(t, error) } : { ok: t("projects.restored") })
+  back("/projects?trash=1", error ? { error: dbError(t, error) } : { ok: t("projects.restored") })
 }
 
 // ---------- links ----------
@@ -239,7 +301,7 @@ export async function removeLinkAction(fd: FormData) {
   const { ctx, t } = await manager()
   const project = id(fd, "project_id") ?? ""
   const { error } = await ctx.supabase.from("project_links").delete().eq("id", id(fd, "id") ?? "").eq("org_id", ctx.org.id)
-  back(`/projects/${project}#links`, error ? { error: dbError(t, error) } : {})
+  back(`/projects/${project}?edit=links`, error ? { error: dbError(t, error) } : {})
 }
 
 // ---------- comments (everyone who sees projects may comment) ----------
@@ -269,12 +331,4 @@ export async function deleteCommentAction(fd: FormData) {
   const { ctx, t } = await viewer()
   const r = await removeComment(ctx.supabase, ctx.org.id, id(fd, "id") ?? "")
   back(backTo(fd, "/projects"), "error" in r ? { error: message(t, r) } : {})
-}
-
-/** The project's name, edited in the page header (saves on blur / Enter). */
-export async function renameProjectAction(projectId: string, name: string): Promise<{ error?: string }> {
-  const { ctx, t } = await manager()
-  if (!UUID.test(projectId)) return { error: t("errors.invalid_input") }
-  const r = await updateProject(ctx.supabase, ctx.org.id, projectId, { name })
-  return "error" in r ? { error: message(t, r) } : {}
 }

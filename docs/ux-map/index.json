@@ -1,0 +1,730 @@
+{
+  "generated": "2026-11-18",
+  "readme": "docs/ux-map/README.md",
+  "areas": [
+    {
+      "area": "admin",
+      "label": "Plattform",
+      "file": "docs/ux-map/admin.json",
+      "pages": 5,
+      "routes": [
+        "/admin/orgs",
+        "/admin/users",
+        "/admin/billing",
+        "/admin/roles",
+        "/admin/activity"
+      ]
+    },
+    {
+      "area": "auth",
+      "label": "Konto, Anmeldung & Standalone-Seiten",
+      "file": "docs/ux-map/auth.json",
+      "pages": 11,
+      "routes": [
+        "/login",
+        "/forgot",
+        "/account",
+        "/onboarding",
+        "/invite/[token]",
+        "/oauth/consent",
+        "/checkout/return",
+        "/u/[token]",
+        "/upload/[token]",
+        "/print/documents/[id]",
+        "/site-preview"
+      ]
+    },
+    {
+      "area": "automations",
+      "label": "Automationen",
+      "file": "docs/ux-map/automations.json",
+      "pages": 3,
+      "routes": [
+        "/automations",
+        "/automations/[id]",
+        "/automations/[id]/runs"
+      ]
+    },
+    {
+      "area": "calendar",
+      "label": "Kalender",
+      "file": "docs/ux-map/calendar.json",
+      "pages": 1,
+      "routes": [
+        "/calendar"
+      ]
+    },
+    {
+      "area": "finance",
+      "label": "Kassenbuch",
+      "file": "docs/ux-map/cashbook.json",
+      "pages": 1,
+      "routes": [
+        "/cashbook"
+      ]
+    },
+    {
+      "area": "contacts",
+      "label": "Kontakte",
+      "file": "docs/ux-map/contacts.json",
+      "pages": 4,
+      "routes": [
+        "/contacts",
+        "/contacts/new",
+        "/contacts/import",
+        "/contacts/[id]"
+      ]
+    },
+    {
+      "area": "courses",
+      "label": "Kurse",
+      "file": "docs/ux-map/courses.json",
+      "pages": 4,
+      "routes": [
+        "/courses",
+        "/courses/new",
+        "/courses/[id]",
+        "/courses/[id]/sessions/[sessionId]"
+      ]
+    },
+    {
+      "area": "communication",
+      "label": "Kommunikation › E-Mail",
+      "file": "docs/ux-map/email.json",
+      "pages": 5,
+      "routes": [
+        "/email",
+        "/email/[id]",
+        "/email/automations",
+        "/email/templates",
+        "/email/log"
+      ]
+    },
+    {
+      "area": "events",
+      "label": "Events",
+      "file": "docs/ux-map/events.json",
+      "pages": 6,
+      "routes": [
+        "/events",
+        "/events/new",
+        "/events/[eventId]",
+        "/events/[eventId]/lineup",
+        "/events/[eventId]/tickets",
+        "/events/[eventId]/guestlists"
+      ]
+    },
+    {
+      "area": "files",
+      "label": "Dateien",
+      "file": "docs/ux-map/files.json",
+      "pages": 3,
+      "routes": [
+        "/files",
+        "/files/templates",
+        "/files/templates/[id]"
+      ]
+    },
+    {
+      "area": "communication",
+      "label": "Kommunikation › Formulare",
+      "file": "docs/ux-map/forms.json",
+      "pages": 3,
+      "routes": [
+        "/forms",
+        "/forms/[id]",
+        "/forms/[id]/submissions"
+      ]
+    },
+    {
+      "area": "events",
+      "label": "Gästelisten",
+      "file": "docs/ux-map/guestlists.json",
+      "pages": 3,
+      "routes": [
+        "/guestlists",
+        "/guestlists/new",
+        "/guestlists/[id]"
+      ]
+    },
+    {
+      "area": "home",
+      "label": "Start (Heute)",
+      "file": "docs/ux-map/home.json",
+      "pages": 1,
+      "routes": [
+        "/"
+      ]
+    },
+    {
+      "area": "hr",
+      "label": "Personal",
+      "file": "docs/ux-map/hr.json",
+      "pages": 6,
+      "routes": [
+        "/hr",
+        "/hr/new",
+        "/hr/[id]",
+        "/hr/absences",
+        "/hr/chart",
+        "/hr/payroll"
+      ]
+    },
+    {
+      "area": "finance",
+      "label": "Rechnungen",
+      "file": "docs/ux-map/invoices.json",
+      "pages": 4,
+      "routes": [
+        "/invoices",
+        "/invoices/new",
+        "/invoices/[id]",
+        "/invoices/settings"
+      ]
+    },
+    {
+      "area": "marketing",
+      "label": "roots-Website (Landing, Produkt, Rechtliches) + Style-Referenz",
+      "file": "docs/ux-map/marketing.json",
+      "pages": 7,
+      "routes": [
+        "/",
+        "/product",
+        "/imprint",
+        "/privacy",
+        "/style",
+        "/style/app",
+        "/style/site"
+      ]
+    },
+    {
+      "area": "members",
+      "label": "Mitgliedschaften",
+      "file": "docs/ux-map/members.json",
+      "pages": 8,
+      "routes": [
+        "/members",
+        "/members/new",
+        "/members/[id]",
+        "/members/dues",
+        "/members/types",
+        "/members/settings",
+        "/members/setup",
+        "/members/import"
+      ]
+    },
+    {
+      "area": "notifications",
+      "label": "Benachrichtigungen",
+      "file": "docs/ux-map/notifications.json",
+      "pages": 1,
+      "routes": [
+        "/notifications"
+      ]
+    },
+    {
+      "area": "finance",
+      "label": "Zahlungen",
+      "file": "docs/ux-map/payments.json",
+      "pages": 1,
+      "routes": [
+        "/payments"
+      ]
+    },
+    {
+      "area": "projects",
+      "label": "Projekte",
+      "file": "docs/ux-map/projects.json",
+      "pages": 6,
+      "routes": [
+        "/projects",
+        "/projects/new",
+        "/projects/[id]",
+        "/projects/tasks",
+        "/projects/settings",
+        "/projects/setup"
+      ]
+    },
+    {
+      "area": "public",
+      "label": "Öffentliche Seiten (Org-Website, Tickets, Shop, Formulare, Mitgliederbereich)",
+      "file": "docs/ux-map/public.json",
+      "pages": 19,
+      "routes": [
+        "/",
+        "/e/[slug]",
+        "/e/[slug]/checkout",
+        "/t/[order]",
+        "/g/[token]",
+        "/f/[slug]",
+        "/shop",
+        "/shop/[slug]",
+        "/cart",
+        "/o/[order]",
+        "/shop/agb",
+        "/shop/widerruf",
+        "/portal",
+        "/portal/login",
+        "/portal/wiki/[id]",
+        "/wiki",
+        "/wiki/[id]",
+        "/impressum",
+        "/datenschutz"
+      ]
+    },
+    {
+      "area": "rentals",
+      "label": "Vermietung",
+      "file": "docs/ux-map/rentals.json",
+      "pages": 7,
+      "routes": [
+        "/rentals",
+        "/rentals/new",
+        "/rentals/[id]",
+        "/rentals/list",
+        "/rentals/calendar",
+        "/rentals/r/new",
+        "/rentals/r/[id]"
+      ]
+    },
+    {
+      "area": "reports",
+      "label": "Auswertungen",
+      "file": "docs/ux-map/reports.json",
+      "pages": 1,
+      "routes": [
+        "/reports"
+      ]
+    },
+    {
+      "area": "events",
+      "label": "Einlass",
+      "file": "docs/ux-map/scan.json",
+      "pages": 1,
+      "routes": [
+        "/scan"
+      ]
+    },
+    {
+      "area": "settings",
+      "label": "Einstellungen",
+      "file": "docs/ux-map/settings.json",
+      "pages": 13,
+      "routes": [
+        "/settings",
+        "/settings/domain",
+        "/settings/website",
+        "/settings/profile",
+        "/settings/general",
+        "/settings/team",
+        "/settings/roles",
+        "/settings/modules",
+        "/settings/areas",
+        "/settings/fields",
+        "/settings/locations",
+        "/settings/integrations",
+        "/settings/api"
+      ]
+    },
+    {
+      "area": "shifts",
+      "label": "Schichten",
+      "file": "docs/ux-map/shifts.json",
+      "pages": 7,
+      "routes": [
+        "/shifts",
+        "/shifts/me",
+        "/shifts/hours",
+        "/shifts/hours/[staffId]",
+        "/shifts/team",
+        "/shifts/settings",
+        "/shifts/setup"
+      ]
+    },
+    {
+      "area": "shop",
+      "label": "Shop",
+      "file": "docs/ux-map/shop.json",
+      "pages": 7,
+      "routes": [
+        "/shop/orders",
+        "/shop/orders/[id]",
+        "/shop",
+        "/shop/new",
+        "/shop/[id]",
+        "/shop/stock",
+        "/shop/settings"
+      ]
+    },
+    {
+      "area": "website",
+      "label": "Website",
+      "file": "docs/ux-map/website.json",
+      "pages": 9,
+      "routes": [
+        "/website",
+        "/website/brand",
+        "/website/pages",
+        "/website/pages/start",
+        "/website/pages/event",
+        "/website/pages/portal",
+        "/website/pages/frame",
+        "/website/pages/legal",
+        "/website/domain"
+      ]
+    },
+    {
+      "area": "wiki",
+      "label": "Wissen",
+      "file": "docs/ux-map/wiki.json",
+      "pages": 3,
+      "routes": [
+        "/wiki",
+        "/wiki/new",
+        "/wiki/[id]"
+      ]
+    }
+  ],
+  "shell": {
+    "lastPass": {
+      "moves": [
+        "Neue Organisation for single-org people → Profil › Deine Organisationen AddLink + single-org switcher shows a small menu too",
+        "shortcuts N, /, ⌘K → '?' key opens a 'Tastenkürzel' sheet; user menu item 'Tastenkürzel'",
+        "Einstellungen sidebar → /settings (grouped index on phones); Konto → Profil"
+      ]
+    },
+    "files": [
+      "src/components/app-shell.tsx",
+      "src/app/(app)/layout.tsx",
+      "src/app/admin/layout.tsx"
+    ],
+    "summary": "<AppShell> is the one layout for the App and /admin: shadcn sidebar (drawer on phones, collapsible to icons from md, state in cookie sidebar_state) + sticky top bar (h-12) + main. The App passes search=true, which adds ⌘K search, the phone tab bar, the phone menu sheet and Sprout. /admin passes no search: no ⌘K, no Sprout, no phone tab bar (phones use the sidebar drawer trigger).",
+    "parts": [
+      {
+        "name": "Sidebar",
+        "file": "src/components/app-sidebar.tsx",
+        "shows": "Header: org switcher (App) or 'Zur App' (admin) + 'Suchen ⌘K' row (App). Groups: (1) Start (/) and Benachrichtigungen (/notifications, unread count badge); (2) 'Module' (home.modules): every visible nav.ts area with its icon, opening its first sub-page; sub-pages expand only under the active area; (3) 'Organisation' (general.org): Dateien (org.files.view), Einstellungen (/settings/profile), Plattform (/admin, platform admins). Footer: user menu.",
+        "actions": [
+          {
+            "label": "<area> / <sub-page>",
+            "kind": "link",
+            "notes": "icon turns into a spinner while the page loads (useLinkStatus); clicked item is highlighted at once; closes the phone drawer"
+          },
+          {
+            "label": "Suchen (⌘K)",
+            "key": "search.open",
+            "kind": "client",
+            "target": "opens the command dialog"
+          },
+          {
+            "label": "Rail (<> handle on hover)",
+            "kind": "client",
+            "target": "collapse/expand (desktop)"
+          }
+        ],
+        "phone": "App: the sidebar is never opened on phones (MenuButton/MobileMenu replace it). Admin: SidebarTrigger in the top bar opens it as a drawer.",
+        "uxNotes": [
+          "Files, Settings and Platform are plain links with their own SectionNav/sub-navigation (not nav.ts areas), so their sub-pages never appear in the sidebar tree while module areas do.",
+          "Nav group label 'Organisation' reuses general.org (the Settings › Allgemein card title)."
+        ]
+      },
+      {
+        "name": "Org switcher",
+        "file": "src/components/org-switcher.tsx",
+        "shows": "Org logo + name at the top of the sidebar. One org: static (no menu). Several orgs or platform admin (all orgs, up to 500): dropdown listing orgs (current marked 'Aktuell') + 'Neue Organisation' (→ /onboarding?new=1).",
+        "actions": [
+          {
+            "label": "<org>",
+            "kind": "serverAction",
+            "target": "switchOrg",
+            "result": "active-org cookie, reload"
+          },
+          {
+            "label": "Neue Organisation",
+            "key": "shell.newOrg",
+            "kind": "link",
+            "target": "/onboarding?new=1"
+          }
+        ],
+        "phone": "Shown at the top of the Menü sheet only when there is more than one org to choose.",
+        "uxNotes": [
+          "Users with exactly one org have no way to create a second org from the UI (the 'Neue Organisation' item only exists in the multi-org dropdown).",
+          "Platform admins inside a foreign org see a muted banner 'Du bist in {org} als Plattform-Admin.' above every page."
+        ]
+      },
+      {
+        "name": "User menu",
+        "file": "src/components/app-sidebar.tsx (UserMenu)",
+        "shows": "Sidebar footer: avatar, name, email. Dropdown: email label, Konto (→ /settings/profile), Mein Mitgliederbereich (when the user is a contact of the org with members on; opens the portal via openMyMemberArea), Sprache (Deutsch/English with check), Abmelden.",
+        "actions": [
+          {
+            "label": "Konto",
+            "key": "account.link",
+            "kind": "link",
+            "target": "/settings/profile"
+          },
+          {
+            "label": "Mein Mitgliederbereich",
+            "key": "account.memberArea",
+            "kind": "serverAction",
+            "target": "openMyMemberArea"
+          },
+          {
+            "label": "Deutsch / English",
+            "kind": "serverAction",
+            "target": "setLocale + router.refresh"
+          },
+          {
+            "label": "Abmelden",
+            "key": "auth.signOut",
+            "kind": "serverAction",
+            "target": "signOut → /login",
+            "confirm": false
+          }
+        ],
+        "uxNotes": [
+          "'Konto' and sidebar 'Einstellungen' both open /settings/profile (two entries, one target)."
+        ]
+      },
+      {
+        "name": "Top bar",
+        "files": [
+          "src/components/app-shell.tsx",
+          "src/components/topbar-crumbs.tsx",
+          "src/components/header-actions.tsx",
+          "src/components/page.tsx (PageHeader)"
+        ],
+        "shows": "Left: MenuButton (phones, only while the tab bar is hidden: bar-fallback) or SidebarTrigger (admin, phones). Then 'where am I': a record page's crumbs registered via <TopbarCrumbs> (clickable PageCrumbs) or PageTitle = area icon + area › sub-page from the nav groups (fallback: org name / 'Plattform'). Then #topbar-actions: the page header's gear (settings), actions, ⋯ menu and primary, portalled by <HeaderActions> on every device (link primaries only from md). Right: Sprout button (App).",
+        "actions": [
+          {
+            "label": "<crumb>",
+            "kind": "link"
+          },
+          {
+            "label": "gear (area settings)",
+            "kind": "link",
+            "notes": "icon button with tooltip, from PageHeader settings"
+          },
+          {
+            "label": "⋯ / actions / primary",
+            "kind": "mixed",
+            "notes": "PageHeader content; primary has data-shortcut=new; PrimaryAction adds a split button with 'more' choices"
+          },
+          {
+            "label": "Sprout",
+            "key": "sprout.name",
+            "kind": "client",
+            "target": "toggle Sprout panel (label sr-only below sm)"
+          }
+        ],
+        "phone": "Primary link actions are not in the top bar but the round glass + by the tab bar; gear/actions/⋯ stay in the top bar.",
+        "uxNotes": [
+          "Pages without PageHeader build „where am I“ differently: Settings via <SettingsTitle> crumbs, admin pages via PageTitle from the admin sidebar groups, wiki pages via <PageCrumbs> in the page.",
+          "PageHeader drops description on area/icon pages, so intro texts passed there (Website, Automationen, Vorlagen) are silently not shown."
+        ]
+      },
+      {
+        "name": "Phone tab bar",
+        "file": "src/components/mobile-bar.tsx",
+        "shows": "Floating glass capsule at the bottom (md:hidden, App only): Start (→ /, highlighted on home) · Suche (opens ⌘K dialog) · Menü (opens MobileMenu). The page's primary link action sits beside it as a round glass + (data-slot=page-primary; with 'more' choices it opens a small glass menu). Capsule shrinks to icons (or only Start on home) while scrolling down.",
+        "actions": [
+          {
+            "label": "Start",
+            "key": "shell.home",
+            "kind": "link",
+            "target": "/"
+          },
+          {
+            "label": "Suche",
+            "key": "shell.search",
+            "kind": "client",
+            "target": "roots:search event"
+          },
+          {
+            "label": "Menü",
+            "key": "shell.menu",
+            "kind": "client",
+            "target": "roots:menu event"
+          },
+          {
+            "label": "+ (page primary)",
+            "kind": "link",
+            "target": "PageHeader primary href"
+          }
+        ],
+        "phone": "Hidden (bar-hide) while a SaveBar shows, an input has focus, or the page marks data-own-tab-bar (Einlass); then the top bar shows the menu button.",
+        "uxNotes": [
+          "No Benachrichtigungen tab: the unread count is only visible as a small badge on the Menü sheet tile (not on the Menü tab itself).",
+          "Pages whose primary is a form button (e.g. automation Aktivieren) or a section button (Team 'Einladen', Fields 'Neues Feld', admin 'Neue Organisation') get no round + on phones."
+        ],
+        "uxNotesDone": [
+          0
+        ]
+      },
+      {
+        "name": "Phone menu (Menü sheet)",
+        "file": "src/components/mobile-menu.tsx",
+        "shows": "Bottom ContentSheet without title row/X (grab handle, swipe, backdrop close). Level 1: org switcher (if several orgs), the same groups as the sidebar as a 3-column tile grid (icon + label, active tinted, unread count badge on Benachrichtigungen), account block: name · email, Konto, Mein Mitgliederbereich, Sprache segmented (Deutsch/English), Abmelden. Areas with >1 sub-page drill into level 2: '‹ Menü' + area title + big rows with a check on the current sub-page.",
+        "actions": [
+          {
+            "label": "<tile>",
+            "kind": "link | drill-down"
+          },
+          {
+            "label": "‹ Menü",
+            "kind": "client",
+            "target": "back to level 1"
+          },
+          {
+            "label": "Konto / Mein Mitgliederbereich / Sprache / Abmelden",
+            "kind": "mixed",
+            "notes": "same as user menu"
+          }
+        ],
+        "phone": "Phones only (App)."
+      },
+      {
+        "name": "⌘K search",
+        "files": [
+          "src/components/command-search.tsx",
+          "src/search/actions.ts"
+        ],
+        "shows": "Centred CommandDialog (exception in app.md). Placeholder 'Kontakte, Events, Rechnungen, Seiten …', hint text when empty, 'Suche …' while loading, 'Nichts gefunden.'. Debounced (180 ms) server search; groups: Seiten (nav pages incl. Start, Benachrichtigungen, Dateien, Vorlagen, Kontakte importieren, settings sections; max 8), Kontakte, Mitgliedschaften, Events, Rechnungen, Formulare, E-Mail (campaigns + templates), Dateien, Wissen, Projekte, Aufgaben, Vermietung (objects), Produkte, Bestellungen (shop), Vorlagen (letters).",
+        "actions": [
+          {
+            "label": "open",
+            "kind": "client",
+            "target": "⌘K / Ctrl+K toggle, sidebar 'Suchen', phone tab 'Suche'"
+          },
+          {
+            "label": "<hit>",
+            "kind": "link",
+            "notes": "deep links: /contacts/<id>, /members/<id>, /events/<id>, /invoices/<id>, /forms/<id>, /email/<id>, /email/templates?edit=<id>, /files?edit=<id>, /wiki/<id>, /projects/<id>, /projects/tasks?task=<id>, /rentals/<id>, /shop/<id>, /shop/orders/<id>, /files/templates/<id>"
+          }
+        ],
+        "uxNotes": [
+          "No record sources for courses, shifts, HR employees, guest lists, automations, cash book or payments (app.md: every module adds its source).",
+          "Settings sections are a second hard-coded copy of SETTINGS_TABS without 'Bereiche'.",
+          "Search shortcut '/' (Shortcuts) focuses the list SearchBox, ⌘K opens global search – two search shortcuts."
+        ]
+      },
+      {
+        "name": "Sprout panel",
+        "files": [
+          "src/components/sprout/context.tsx",
+          "src/components/sprout/panel.tsx",
+          "src/components/sprout/chat.tsx",
+          "src/components/sprout/parts.tsx",
+          "src/components/sprout/ask.tsx"
+        ],
+        "shows": "Assistant panel in the layout (App only): right column 26rem from md (sticky, full height), full screen on phones; open state in cookie 'sprout', stays open across pages. Header: chat title, Merken (star), Neuer Chat, Letzte Chats (popover list with delete per chat, visible on hover/focus), Vollbild/Verkleinern (md+), Schließen. Body: greeting with orb + idea chips, messages with tool steps, approval cards for dangerous operations ('Ausführen' / deny), retry. Input: current page as removable context chip, attached files (stored as roots files, folder 'Sprout'), Datei anhängen, Diktieren (browser speech, hidden in Firefox), model picker (from the person's AI keys), Senden / Stoppen. States: org has AI off ('KI ist für diese Organisation ausgeschaltet (Einstellungen → API).'), no key ('Sprout braucht einen API-Schlüssel …' + 'Schlüssel hinzufügen' link to Profil).",
+        "actions": [
+          {
+            "label": "Sprout (top bar)",
+            "kind": "client",
+            "target": "toggle"
+          },
+          {
+            "label": "Neuer Chat",
+            "key": "sprout.newChat",
+            "kind": "client"
+          },
+          {
+            "label": "Chat löschen",
+            "key": "sprout.deleteChat",
+            "kind": "serverAction",
+            "confirm": false
+          },
+          {
+            "label": "Ausführen",
+            "key": "sprout.approve",
+            "kind": "client",
+            "target": "addToolApprovalResponse (signed approval)"
+          },
+          {
+            "label": "Senden",
+            "key": "sprout.send",
+            "kind": "client",
+            "target": "/api/assistant"
+          }
+        ],
+        "phone": "Covers the whole screen (fixed inset-0); Vollbild toggle hidden.",
+        "uxNotes": [
+          "Deleting a chat has no confirm and the delete icon only appears on hover/focus (app.md: nothing only on hover).",
+          "Danger operations ask through Sprout's own approval card, not ConfirmHost – a second confirm pattern.",
+          "Home's SproutAsk box is a second entry point that opens the panel with a new chat."
+        ],
+        "uxNotesDone": [
+          0
+        ]
+      },
+      {
+        "name": "Toasts / Notice",
+        "files": [
+          "src/components/notice.tsx",
+          "root layout <Toaster> (sonner)"
+        ],
+        "shows": "Server actions redirect with ?ok= / ?error= (back()); <Notice> turns them into sonner toasts (errors 8 s) and strips the params from the URL. Client code calls toast() directly.",
+        "uxNotes": [
+          "Pages with sheets suppress or move Notice per sheet (e.g. Integrations, Team, Fields) – the same error may show inside the sheet or as page toast depending on params.",
+          "Some actions give no feedback at all (markAllRead, Website 'Jetzt prüfen' while pending)."
+        ]
+      },
+      {
+        "name": "ConfirmHost",
+        "file": "src/components/confirm-submit.tsx",
+        "shows": "Mounted once in AppShell. Any submit button with data-confirm=\"<message key>\" is held back and a compact bottom ContentSheet asks: title = message (with {count} of ticked ids or data-confirm-count / -amount), optional '<key>Hint' line, buttons Abbrechen / <the button's own label> (destructive). MenuSubmit destructive confirms by default.",
+        "uxNotes": [
+          "Opt-in per button: many destructive actions in this scope skip it (team member remove/leave, invite revoke, API key revoke, payment provider 'Trennen', webhook delete, field delete, location delete, files/template trash in sheets, admin org trash, role delete, superadmin grant, passkey remove).",
+          "Admin permanent deletes use an in-form checkbox instead; Sprout uses its own approval card."
+        ]
+      },
+      {
+        "name": "Keyboard shortcuts",
+        "file": "src/components/shortcuts.tsx",
+        "shows": "Outside text fields/dialogs/menus: 'n' clicks [data-shortcut=new] (PageHeader primary link / PrimaryAction main button), '/' focuses [data-shortcut=search] (list SearchBox). ⌘K/Ctrl+K toggles global search (command-search.tsx). Wiki editor: ⌘S saves at once. Automation canvas: Backspace/Delete removes the selected step.",
+        "uxNotes": [
+          "No visible hint for 'n' and '/' anywhere in the UI (only ⌘K is shown in the sidebar).",
+          "Primaries rendered as form buttons or section buttons don't get data-shortcut=new."
+        ]
+      },
+      {
+        "name": "Notifications bell / inbox entry",
+        "files": [
+          "src/app/(app)/layout.tsx",
+          "src/app/(app)/notifications/page.tsx"
+        ],
+        "shows": "No bell icon: the inbox is the sidebar item 'Benachrichtigungen' (InboxIcon) with the unread count as a SidebarMenuBadge (counted on every App request), plus the Home card and the Menü-sheet tile badge on phones.",
+        "actions": [
+          {
+            "label": "Benachrichtigungen",
+            "kind": "link",
+            "target": "/notifications"
+          }
+        ],
+        "uxNotes": [
+          "Count only refreshes on navigation (server layout), no live update; opening a notification can switch the active org."
+        ]
+      }
+    ],
+    "redesign": {
+      "done": "2026-11-18: phone shell pass (docs/design/mobile.md §1, §2, §6.1)",
+      "job": "On a phone the App feels like a native iOS app; desktop unchanged.",
+      "phone": "Top bar: ‹ back (nearest crumb / parent nav page) · one-line title · ⋯ (PhoneMenu: form primary, gear, header actions, ActionsMenu items, Abbrechen) · Sprout. Tab bar: Start · Suche · Menü (dot while the inbox has unread items) + round primary. Suche = search sheet (field + Abbrechen, recents, results with area tiles). Menü sheet: inbox row first, then org switcher, tiles, account. Every DropdownMenu = action sheet; picker popovers (date, wiki icon/share, product image) = bottom sheets. Segments scroll sideways; body overflow-x clip; SaveBar above the keyboard (--keyboard).",
+      "desktop": "Unchanged: crumbs / area › page in the top bar, gear · actions · ⋯ · primary there, ⌘K palette (now with recents and area tiles), dropdowns and popovers anchored.",
+      "moves": [
+        "Top bar gear / actions / ⋯ / form primary (phones) → one ⋯ action sheet (PhoneMenu)",
+        "Top bar crumbs (phones) → ‹ back + last crumb as title",
+        "PageTitle area › sub (phones) → sub-page only",
+        "Menü tile Benachrichtigungen → first row of the Menü sheet with count; dot on the Menü tab",
+        "⌘K CommandDialog (phones) → search ContentSheet",
+        "Active tints text-primary/bg-primary in tab bar + Menü sheet → neutral muted"
+      ],
+      "sweep": {
+        "done": true,
+        "date": "2026-11-19",
+        "note": "Checked with a one-off Playwright script (Menü sheet + drill-down, search sheet empty + with a query, ⌘K, ⋯ action sheet, a sheet/dialog, ? help, collapsed sidebar, Sprout phone + desktop, offline). Fixed: S9 — a form-button header primary with an icon is the round button on phones (and stays in ⋯ since a SaveBar hides the round button); Menü sheet without the Start tile; search lists records first, pages last with their area tile, member hits 'Nr. 6'; SaveBar inside sheets stacks full width on phones; tooltips hidden on touch screens (Sprout's X kept one open after opening); ⌘B in the help; collapsed sidebar shows an unread dot; offline page has a Neu laden link (works without JS). Left: search placeholder truncates on 390 px ('Kontakte, Events, Rechnungen …'); the admin shell on phones keeps the sidebar trigger instead of the tab bar."
+      }
+    }
+  }
+}

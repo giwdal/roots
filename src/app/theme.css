@@ -1,41 +1,42 @@
 /*
- * The look of roots: colors, radius, shadows (light + .dark).
+ * The look of roots: colors, radius, shadows (light + .dark). A neutral SaaS look: primary is near-black / near-white,
+ * colour only where it means something (area colours, status, --link, focus ring).
  * To switch themes, replace this file with a tweakcn / shadcn theme export (:root + .dark blocks).
  * Fonts come from next/font in src/app/layout.tsx, so --font-* lines from exports are not needed here.
  */
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.20 0 0);
-  --card: oklch(0.99 0 0);
-  --card-foreground: oklch(0.20 0 0);
-  --popover: oklch(0.99 0 0);
-  --popover-foreground: oklch(0.44 0 0);
-  --primary: oklch(0.83 0.13 160.91);
-  --primary-foreground: oklch(0.26 0.01 166.46);
-  --secondary: oklch(0.99 0 0);
-  --secondary-foreground: oklch(0.20 0 0);
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.24 0 0);
-  --accent: oklch(0.95 0 0);
-  --accent-foreground: oklch(0.24 0 0);
+  --background: oklch(0.995 0.004 75);
+  --foreground: oklch(0.17 0.004 75);
+  --card: oklch(1 0.004 75);
+  --card-foreground: oklch(0.17 0.004 75);
+  --popover: oklch(1 0.004 75);
+  --popover-foreground: oklch(0.17 0.004 75);
+  --primary: oklch(0.21 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.99 0.004 75);
+  --secondary-foreground: oklch(0.20 0.004 75);
+  --muted: oklch(0.965 0.004 75);
+  --muted-foreground: oklch(0.46 0.004 75);
+  --accent: oklch(0.955 0.004 75);
+  --accent-foreground: oklch(0.24 0.004 75);
   --destructive: oklch(0.55 0.19 32.73);
-  --border: oklch(0.90 0 0);
+  --border: oklch(0.93 0.004 75);
   --input: oklch(0.86 0 0);
-  --ring: oklch(0.83 0.13 160.91);
-  --chart-1: oklch(0.83 0.13 160.91);
+  --ring: oklch(0.55 0.12 255);
+  --chart-1: oklch(0.62 0.15 155);
   --chart-2: oklch(0.62 0.19 259.81);
   --chart-3: oklch(0.61 0.22 292.72);
   --chart-4: oklch(0.77 0.16 70.08);
-  --chart-5: oklch(0.70 0.15 162.48);
-  --sidebar: oklch(0.99 0 0);
-  --sidebar-foreground: oklch(0.55 0 0);
-  --sidebar-primary: oklch(0.83 0.13 160.91);
-  --sidebar-primary-foreground: oklch(0.26 0.01 166.46);
-  --sidebar-accent: oklch(0.95 0 0);
-  --sidebar-accent-foreground: oklch(0.24 0 0);
-  --sidebar-border: oklch(0.90 0 0);
-  --sidebar-ring: oklch(0.83 0.13 160.91);
-  --radius: 0.5rem;
+  --chart-5: oklch(0.66 0.13 200);
+  --sidebar: oklch(0.98 0.004 75);
+  --sidebar-foreground: oklch(0.45 0.004 75);
+  --sidebar-primary: oklch(0.21 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.94 0.004 75);
+  --sidebar-accent-foreground: oklch(0.24 0.004 75);
+  --sidebar-border: oklch(0.92 0.004 75);
+  --sidebar-ring: oklch(0.55 0.12 255);
+  --radius: 0.5rem; /* controls 8 px (rounded-lg), cards ~11 px (rounded-xl), dialogs ~14 px (rounded-2xl), like Linear */
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
@@ -47,37 +48,70 @@
 }
 
 .dark {
-  --background: oklch(0.18 0 0);
-  --foreground: oklch(0.93 0.01 255.51);
-  --card: oklch(0.20 0 0);
-  --card-foreground: oklch(0.93 0.01 255.51);
-  --popover: oklch(0.26 0 0);
-  --popover-foreground: oklch(0.73 0 0);
-  --primary: oklch(0.44 0.10 156.76);
-  --primary-foreground: oklch(0.92 0.01 167.16);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.24 0 0);
-  --muted-foreground: oklch(0.71 0 0);
-  --accent: oklch(0.31 0 0);
-  --accent-foreground: oklch(0.99 0 0);
+  --background: oklch(0.205 0.004 75);
+  --foreground: oklch(0.96 0.004 75);
+  --card: oklch(0.225 0.004 75);
+  --card-foreground: oklch(0.96 0.004 75);
+  --popover: oklch(0.25 0.004 75);
+  --popover-foreground: oklch(0.94 0.004 75);
+  --primary: oklch(0.93 0 0);
+  --primary-foreground: oklch(0.21 0 0);
+  --secondary: oklch(0.26 0.004 75);
+  --secondary-foreground: oklch(0.99 0.004 75);
+  --muted: oklch(0.255 0.004 75);
+  --muted-foreground: oklch(0.71 0.004 75);
+  --accent: oklch(0.28 0.004 75);
+  --accent-foreground: oklch(0.99 0.004 75);
   /* Theme had oklch(0.31 0.09 29.79): unreadable as text-destructive on the dark background. */
   --destructive: oklch(0.70 0.19 22.22);
-  --border: oklch(0.28 0 0);
+  --border: oklch(0.26 0.004 75);
   /* Was 0.26 = --popover: input borders vanished in drawers. 0.55 = ≥ 3:1 against popover, card, background (theme.test.mjs). */
   --input: oklch(0.55 0 0);
-  --ring: oklch(0.80 0.18 151.71);
-  --chart-1: oklch(0.80 0.18 151.71);
+  --ring: oklch(0.68 0.13 255);
+  --chart-1: oklch(0.74 0.15 155);
   --chart-2: oklch(0.71 0.14 254.62);
   --chart-3: oklch(0.71 0.16 293.54);
   --chart-4: oklch(0.84 0.16 84.43);
-  --chart-5: oklch(0.78 0.13 181.91);
-  --sidebar: oklch(0.18 0 0);
-  --sidebar-foreground: oklch(0.63 0 0);
-  --sidebar-primary: oklch(0.44 0.10 156.76);
-  --sidebar-primary-foreground: oklch(0.92 0.01 167.16);
-  --sidebar-accent: oklch(0.31 0 0);
-  --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(0.28 0 0);
-  --sidebar-ring: oklch(0.80 0.18 151.71);
+  --chart-5: oklch(0.74 0.12 200);
+  --sidebar: oklch(0.185 0.004 75);
+  --sidebar-foreground: oklch(0.74 0.004 75);
+  --sidebar-primary: oklch(0.93 0 0);
+  --sidebar-primary-foreground: oklch(0.21 0 0);
+  --sidebar-accent: oklch(0.26 0.004 75);
+  --sidebar-accent-foreground: oklch(0.99 0.004 75);
+  --sidebar-border: oklch(0.255 0.004 75);
+  --sidebar-ring: oklch(0.68 0.13 255);
+}
+
+/* Area colours (AreaIcon): one per nav area, grouped by family so related areas look related.
+   People: contacts, members, hr · Events: events, courses · Time: calendar, shifts · Money: finance, shop, reports ·
+   Talking: communication · Work: projects, wiki, automations, files · Places: rentals, website. Also --link for "+ Add" rows. */
+:root {
+  --link: oklch(0.55 0.17 255);
+  --success: oklch(0.55 0.14 155);
+  --warning: oklch(0.62 0.15 65);
+  --info: oklch(0.55 0.17 255);
+  --area-contacts: oklch(0.70 0.16 45);
+  --area-members: oklch(0.66 0.18 25);
+  --area-hr: oklch(0.68 0.14 70);
+  --area-events: oklch(0.60 0.20 300);
+  --area-courses: oklch(0.62 0.17 330);
+  --area-calendar: oklch(0.62 0.16 250);
+  --area-shifts: oklch(0.64 0.13 215);
+  --area-finance: oklch(0.62 0.15 155);
+  --area-shop: oklch(0.66 0.15 135);
+  --area-reports: oklch(0.62 0.10 180);
+  --area-communication: oklch(0.64 0.19 350);
+  --area-projects: oklch(0.58 0.18 275);
+  --area-wiki: oklch(0.72 0.14 90);
+  --area-automations: oklch(0.60 0.15 285);
+  --area-rentals: oklch(0.66 0.14 55);
+  --area-website: oklch(0.66 0.12 200);
+  --area-files: oklch(0.64 0.12 240);
+}
+.dark {
+  --link: oklch(0.70 0.15 255);
+  --success: oklch(0.74 0.15 155);
+  --warning: oklch(0.80 0.14 75);
+  --info: oklch(0.72 0.14 255);
 }

@@ -1,21 +1,20 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { contactName } from "@/app/(app)/contacts/fields"
-import { DataTable, Pager, pageRange, PAGE_SIZE } from "@/components/data-table"
+import { DataTable, ListToolbar, Pager, pageRange, PAGE_SIZE } from "@/components/data-table"
 import { Notice } from "@/components/notice"
-import { PageHeader } from "@/components/page"
+import { Page, PageHeader } from "@/components/page"
 import { Segments } from "@/components/segments"
 import { SubmitButton } from "@/components/submit-button"
-import { Badge } from "@/components/ui/badge"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
-import { pageParam, param } from "@/lib/url"
+import { pageParam, param, withParams } from "@/lib/url"
 import { cancelRun } from "../../actions"
+import { RunBadge } from "../../run-badge"
 
-type LogEntry = { at: string; node: string; type: string; ok: boolean; note?: string }
-const TONE: Record<string, "default" | "secondary" | "outline" | "destructive"> = { done: "secondary", waiting: "outline", queued: "outline", running: "default", failed: "destructive", cancelled: "secondary" }
+const STATUSES = ["waiting", "failed", "done", "cancelled"] as const
 
-// Every run of a workflow: who, when, where it stands, the steps it took.
+// Every run of a workflow (Zapier's Zap history, n8n's executions): when, who, how it went; a row opens the run
+// with each step. Waiting runs can be cancelled (asks).
 export default async function RunsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound()
@@ -23,7 +22,7 @@ export default async function RunsPage({ params, searchParams }: { params: Promi
   const t = await getT()
   const sp = await searchParams
   const page = pageParam(sp)
-  const status = param(sp, "status")
+  const status = STATUSES.find((s) => s === param(sp, "status"))
   let q = ctx.supabase
     .from("workflow_runs")
     .select("id, status, created_at, resume_at, error, log, contacts(id, first_name, last_name, company, email)")
@@ -31,57 +30,53 @@ export default async function RunsPage({ params, searchParams }: { params: Promi
     .eq("workflow_id", id)
     .order("created_at", { ascending: false })
     .range(...pageRange(page))
-  if (status) q = q.eq("status", status)
+  if (status === "waiting") q = q.in("status", ["waiting", "queued"])
+  else if (status) q = q.eq("status", status)
   const [{ data: wf }, { data: runs }] = await Promise.all([ctx.supabase.from("workflows").select("name").eq("id", id).eq("org_id", ctx.org.id).maybeSingle(), q])
   if (!wf) notFound()
   const when = (iso: string) => t.date(iso, { dateStyle: "short", timeStyle: "short" })
+  const canManage = ctx.can("automations.manage")
+  const here = `/automations/${id}/runs${withParams(sp, { ok: undefined, error: undefined })}`
 
   return (
-    <div className="grid gap-6">
+    <Page>
       <PageHeader crumbs={[{ href: "/automations", label: t("automations.title") }, { href: `/automations/${id}`, label: wf.name }, { label: t("automations.runs") }]} title={t("automations.runs")} />
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      <Segments label={t("automations.status")} items={["", "waiting", "done", "failed", "cancelled"].map((x) => ({ href: `/automations/${id}/runs${x ? `?status=${x}` : ""}`, current: (status ?? "") === x, label: x ? t.dynamic(`automations.runStatus.${x}`) : t("automations.all") }))} />
+      <ListToolbar>
+        <Segments
+          label={t("automations.status")}
+          items={[undefined, ...STATUSES].map((x) => ({ href: withParams(sp, { status: x, page: undefined }), current: status === x, label: x ? t.dynamic(`automations.runFilter.${x}`) : t("automations.all") }))}
+        />
+      </ListToolbar>
       <DataTable
         rows={(runs ?? []).slice(0, PAGE_SIZE)}
         rowKey={(r) => r.id}
+        rowHref={(r) => `/automations/${id}/runs/${r.id}`}
         empty={t("automations.noRuns")}
         columns={[
-          { header: t("automations.started"), cell: (r) => <span className="font-medium">{when(r.created_at)}</span> },
-          { header: t("automations.person"), cell: (r) => (r.contacts ? <Link href={`/contacts/${r.contacts.id}`} className="underline-offset-4 hover:underline">{contactName(r.contacts)}</Link> : "–") },
+          { header: t("automations.started"), cell: (r) => when(r.created_at) },
+          { header: t("automations.person"), cell: (r) => (r.contacts ? contactName(r.contacts) : "–") },
           {
             header: t("automations.status"),
             cell: (r) => (
-              <span className="grid gap-1">
-                <Badge variant={TONE[r.status] ?? "outline"}>{t.dynamic(`automations.runStatus.${r.status}`)}</Badge>
-                {r.status === "waiting" && <span className="text-xs text-muted-foreground">{t("automations.until", { when: when(r.resume_at) })}</span>}
-                {r.error && <span className="text-xs text-destructive">{r.error}</span>}
+              <span className="flex flex-wrap items-center gap-2">
+                <RunBadge t={t} status={r.status} />
+                {r.status === "waiting" && r.resume_at && <span className="text-xs text-muted-foreground">{t("automations.until", { when: when(r.resume_at) })}</span>}
               </span>
             ),
           },
-          {
-            header: t("automations.steps"),
-            cell: (r) => (
-              <details className="text-xs">
-                <summary className="cursor-pointer">{t("automations.stepCount", { count: (r.log as LogEntry[]).length })}</summary>
-                <ol className="mt-1 grid gap-0.5">
-                  {(r.log as LogEntry[]).map((l, i) => (
-                    <li key={i} className={l.ok ? "" : "text-destructive"}>
-                      {when(l.at)} · {t.dynamic(`automations.nodes.${l.type}`)}
-                      {l.note && ` · ${l.note}`}
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            ),
-          },
+          { header: t("automations.steps"), cell: (r) => t("automations.stepCount", { count: (r.log as unknown[]).length }), className: "text-right tabular-nums" },
           {
             header: "",
+            phone: "end",
+            className: "w-0 text-right",
             cell: (r) =>
-              ctx.can("automations.manage") && (r.status === "waiting" || r.status === "queued") ? (
+              canManage && (r.status === "waiting" || r.status === "queued") ? (
                 <form action={cancelRun}>
                   <input type="hidden" name="id" value={r.id} />
                   <input type="hidden" name="workflow_id" value={id} />
-                  <SubmitButton size="sm" variant="outline">
+                  <input type="hidden" name="back" value={here} />
+                  <SubmitButton size="sm" variant="ghost" data-confirm="automations.confirmCancel">
                     {t("automations.cancel")}
                   </SubmitButton>
                 </form>
@@ -90,7 +85,7 @@ export default async function RunsPage({ params, searchParams }: { params: Promi
         ]}
       />
       <Pager sp={sp} page={page} hasNext={(runs?.length ?? 0) > PAGE_SIZE} newer={t("common.newer")} older={t("common.older")} />
-    </div>
+    </Page>
   )
 }
 

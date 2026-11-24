@@ -68,6 +68,9 @@ export type Submission = {
  * Raw form values → submission, or an errors.* key (+ the field's label for the message).
  * Only fields the form contains are read; required = the element's flag.
  */
+// browser checkboxes post "on"; the API docs say "1"
+const checked = (v: string) => ["on", "1", "true"].includes(v.trim().toLowerCase())
+
 export function readSubmission(
   els: Element[],
   get: (key: string) => string,
@@ -95,14 +98,14 @@ export function readSubmission(
       const bic = get("bic").toUpperCase().replace(/\s/g, "")
       if (!ibanValid(iban)) return { error: "errors.invalid_iban" }
       if (bic && !/^[A-Z0-9]{8}([A-Z0-9]{3})?$/.test(bic)) return { error: "errors.invalid_bic" }
-      if (get("mandate_ok") !== "on") return { error: "errors.mandate_required" }
+      if (!checked(get("mandate_ok"))) return { error: "errors.mandate_required" }
       Object.assign(membership, { iban, bic: bic || null, account_holder: get("account_holder").trim().slice(0, 70) || null })
     }
   }
   const consents: Submission["consents"] = []
   for (const e of els)
     if (e.kind === "consent") {
-      const accepted = get(`consent.${e.id}`) === "on"
+      const accepted = checked(get(`consent.${e.id}`))
       if (e.required && !accepted) return { error: "errors.consent_required", field: e.label }
       consents.push({ label: e.label, accepted })
     }
@@ -129,4 +132,30 @@ export function checkElements(els: Element[], purpose: Purpose, customKeys: stri
     if (e.kind === "mandate" && (purpose !== "membership" || ++mandates > 1)) return "errors.invalid_input"
   }
   return els.length > 100 ? "errors.invalid_input" : null
+}
+
+/**
+ * The builder's element list as posted (JSON from <ElementRows>) → elements with trimmed, length-limited values, or
+ * null when it isn't a list. Unknown kinds are dropped, ids kept when well-formed (else new ones); the rules on fields
+ * and the mandate are checkElements()'s job.
+ */
+export function readElements(raw: string): Element[] | null {
+  let list: unknown
+  try {
+    list = JSON.parse(raw)
+  } catch {
+    return null
+  }
+  if (!Array.isArray(list)) return null
+  const s = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "")
+  return list.slice(0, 100).flatMap((x): Element[] => {
+    if (!x || typeof x !== "object") return []
+    const e = x as Record<string, unknown>
+    const eid = typeof e.id === "string" && /^[A-Za-z0-9_-]{1,20}$/.test(e.id) ? e.id : id()
+    if (e.kind === "field") return [{ id: eid, kind: "field", field: s(e.field, 80), label: s(e.label, 200) || undefined, help: s(e.help, 500) || undefined, required: e.required === true }]
+    if (e.kind === "text") return [{ id: eid, kind: "text", body: s(e.body, 5000) }]
+    if (e.kind === "consent") return [{ id: eid, kind: "consent", label: s(e.label, 1000), required: e.required === true }]
+    if (e.kind === "mandate") return [{ id: eid, kind: "mandate" }]
+    return []
+  })
 }

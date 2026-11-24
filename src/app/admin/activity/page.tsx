@@ -63,18 +63,18 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
       {org && (
         <p className="text-sm">
           {t("admin.activity.filteredBy", { org: orgName.get(org) ?? org })}{" "}
-          <Link href={href({ org: undefined, page: 1 })} className="underline underline-offset-4">
+          <Link href={href({ org: undefined, page: 1 })} className="link">
             {t("activity.all")}
           </Link>
         </p>
       )}
-      <nav aria-label={t("activity.filter")} className="flex flex-wrap gap-1.5">
+      <nav aria-label={t("activity.filter")} className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] max-md:-mx-4 max-md:px-4 md:flex-wrap">
         {[undefined, "errors", ...TABLES].map((tab) => (
           <Link
             key={tab ?? "all"}
             href={href({ table: tab, page: 1 })}
             aria-current={tab === table ? "true" : undefined}
-            className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground hover:text-foreground aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground"
+            className="shrink-0 rounded-full border px-2.5 py-0.5 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground"
           >
             {tab === "errors" ? t("admin.activity.errors") : tab ? area(tab) : t("activity.all")}
           </Link>
@@ -113,7 +113,7 @@ export default async function AdminActivity({ searchParams }: PageProps<"/admin/
               <li key={e.id} id={`entry-${e.id}`}>
                 <details className="group px-4 py-3">
                   <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                    <Badge variant={e.action === "delete" ? "destructive" : e.action === "insert" ? "default" : "secondary"}>
+                    <Badge variant={e.action === "delete" ? "destructive" : e.action === "insert" ? "success" : "secondary"} className="capitalize">
                       {e.action === "insert" ? t("activity.created") : e.action === "update" ? t("activity.changed") : t("activity.deleted")}
                     </Badge>
                     <span className="font-medium">{area(e.table_name)}</span>

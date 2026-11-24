@@ -1,217 +1,82 @@
-import { ArrowDownIcon, ArrowUpIcon, Trash2Icon } from "lucide-react"
-import { Choice } from "@/components/choice"
 import { FormCard, RecordLayout } from "@/components/page"
-import { SaveBar } from "@/components/save-bar"
 import { Notice } from "@/components/notice"
+import { SaveBar } from "@/components/save-bar"
 import { TagSelect } from "@/components/tag-select"
-import { SubmitButton } from "@/components/submit-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Textarea } from "@/components/ui/textarea"
 import { CONTACT_INPUTS, MEMBERSHIP_INPUTS, type Element, type Purpose } from "@/forms/elements"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { loadFields } from "@/lib/custom-fields"
-import { param } from "@/lib/url"
-import { addElement, moveElement, removeElement, saveFormSettings, trashForm, updateElement } from "../actions"
+import { param, siteUrl } from "@/lib/url"
+import { saveForm } from "../actions"
+import { ElementRows } from "./element-rows"
+import { formHeader } from "./header"
 
-const textareaClass =
-  "rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
-
+// Aufbau: the form's elements (inline rows) and its settings in one form with one SaveBar, like Tally's builder.
 export default async function FormBuilderPage({ params, searchParams }: PageProps<"/forms/[id]">) {
   const { id } = await params
   const sp = await searchParams
   const ctx = await requirePerm("forms.view")
   const t = await getT()
   const canManage = ctx.can("forms.manage")
-  const [{ data: form }, defs, { data: tagRows }] = await Promise.all([
-    ctx.supabase.from("forms").select("*").eq("id", id).eq("org_id", ctx.org.id).single(),
-    loadFields(ctx.supabase, ctx.org.id, "contacts"),
-    ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id }),
-  ])
-  const allTags = (tagRows ?? []) as unknown as string[]
-  if (!form) return null
+  const [{ form, header }, defs, { data: tagRows }] = await Promise.all([formHeader(ctx, id, "builder"), loadFields(ctx.supabase, ctx.org.id, "contacts"), ctx.supabase.rpc("contact_tags", { p_org: ctx.org.id })])
   const purpose = form.purpose as Purpose
-  const elements = form.elements as unknown as Element[]
-  const used = new Set(elements.flatMap((e) => (e.kind === "field" ? [e.field] : [])))
-  const fieldLabel = (f: string) =>
-    CONTACT_INPUTS[f] ? t.dynamic(CONTACT_INPUTS[f].label) : MEMBERSHIP_INPUTS[f] ? t.dynamic(MEMBERSHIP_INPUTS[f].label) : (defs.find((d) => `custom.${d.key}` === f)?.label ?? f)
-  const available = [
-    ...Object.keys(CONTACT_INPUTS),
-    ...defs.map((d) => `custom.${d.key}`),
-    ...(purpose === "membership" ? Object.keys(MEMBERSHIP_INPUTS) : []),
-  ].filter((f) => !used.has(f))
+  const fields = [
+    ...Object.entries(CONTACT_INPUTS).map(([k, v]) => ({ value: k, label: t.dynamic(v.label) })),
+    ...defs.map((d) => ({ value: `custom.${d.key}`, label: d.label })),
+    ...(purpose === "membership" ? Object.entries(MEMBERSHIP_INPUTS).map(([k, v]) => ({ value: k, label: t.dynamic(v.label) })) : []),
+  ]
   const settings = form.settings as { tags?: string[] }
-
-  const settingsCard = (
-      <form action={saveFormSettings} className="grid gap-4">
-        <FormCard id="form-settings" title={t("forms.settings")}>
-          <input type="hidden" name="id" value={form.id} />
-          <fieldset disabled={!canManage} className="grid gap-4">
-            <div className="grid gap-4">
-              <Field id="s-title" name="title" label={t("forms.formTitle")} required maxLength={200} defaultValue={form.title} />
-              <Field id="s-slug" name="slug" label={t("forms.slug")} required maxLength={80} defaultValue={form.slug} />
-              <div className="grid gap-2">
-                <Label htmlFor="s-status">{t("forms.status")}</Label>
-                <Choice id="s-status" name="status" label={t("forms.status")} required disabled={!canManage} defaultValue={form.status} options={(["draft", "published", "closed"] as const).map((x) => ({ value: x, label: t(`forms.statuses.${x}`) }))} />
-              </div>
-            </div>
-            <Area id="s-intro" name="intro" label={t("forms.intro")} defaultValue={form.intro ?? ""} maxLength={5000} />
-            <Area id="s-success" name="success_text" label={t("forms.successText")} defaultValue={form.success_text ?? ""} maxLength={2000} />
-            <div className="grid gap-2">
-              <Label htmlFor="s-tags">{t("forms.tags")}</Label>
-              <TagSelect id="s-tags" name="tags" options={allTags} defaultValue={settings.tags ?? []} creatable disabled={!canManage} />
-              <p id="s-tags-help" className="text-xs text-muted-foreground">
-                {t("forms.tagsHelp")}
-              </p>
-            </div>
-          </fieldset>
-        </FormCard>
-        {canManage && <SaveBar />}
-      </form>
-
-  )
+  const urlPrefix = siteUrl(ctx.org.slug, "/f/", ctx.org.site_domain).replace(/^https?:\/\//, "")
 
   return (
     <>
+      {header}
       <Notice error={param(sp, "error")} ok={param(sp, "ok")} />
-      <RecordLayout aside={settingsCard}>
-      <FormCard id="form-elements" title={t("forms.elements")} description={t(purpose === "membership" ? "forms.elementsHintMembership" : "forms.elementsHint")}>
-        <ol className="grid gap-2">
-          {elements.map((e, i) => (
-            <li key={e.id} className="grid gap-3 rounded-lg border p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t.dynamic(`forms.kinds.${e.kind}`)}</span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {e.kind === "field" ? fieldLabel(e.field) : e.kind === "consent" ? e.label : e.kind === "text" ? e.body.slice(0, 80) : t("forms.mandate")}
-                </span>
-                {canManage && (
-                  <div className="flex gap-1">
-                    <IconAction action={moveElement} form={form.id} element={e.id} extra={{ dir: "up" }} label={t("forms.moveUp")} disabled={i === 0}>
-                      <ArrowUpIcon />
-                    </IconAction>
-                    <IconAction action={moveElement} form={form.id} element={e.id} extra={{ dir: "down" }} label={t("forms.moveDown")} disabled={i === elements.length - 1}>
-                      <ArrowDownIcon />
-                    </IconAction>
-                    <IconAction action={removeElement} form={form.id} element={e.id} label={t("forms.remove")}>
-                      <Trash2Icon />
-                    </IconAction>
-                  </div>
-                )}
-              </div>
-              {canManage && e.kind !== "mandate" && (
-                <form action={updateElement} className="grid gap-3">
-                  <input type="hidden" name="id" value={form.id} />
-                  <input type="hidden" name="element" value={e.id} />
-                  {e.kind === "field" && (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field id={`l-${e.id}`} name="label" label={t("forms.label")} maxLength={200} defaultValue={e.label ?? ""} placeholder={fieldLabel(e.field)} />
-                      <Field id={`h-${e.id}`} name="help" label={t("forms.help")} maxLength={500} defaultValue={e.help ?? ""} />
-                    </div>
-                  )}
-                  {e.kind === "consent" && <Area id={`c-${e.id}`} name="label" label={t("forms.consentText")} defaultValue={e.label} maxLength={1000} rows={2} />}
-                  {e.kind === "text" && <Area id={`b-${e.id}`} name="body" label={t("forms.textBody")} defaultValue={e.body} maxLength={5000} />}
-                  <div className="flex flex-wrap items-center gap-3">
-                    {(e.kind === "field" || e.kind === "consent") && (
-                      <label className="flex items-center gap-1.5 text-sm">
-                        <input type="checkbox" name="required" defaultChecked={e.required} className="size-4" /> {t("forms.required")}
-                      </label>
-                    )}
-                    <SubmitButton size="sm" variant="outline">
-                      {t("common.save")}
-                    </SubmitButton>
-                  </div>
-                </form>
-              )}
-            </li>
-          ))}
-        </ol>
-        {canManage && (
-          <form action={addElement} className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed p-3">
-            <input type="hidden" name="id" value={form.id} />
-            <div className="grid min-w-56 flex-1 gap-2">
-              <Label htmlFor="add-kind">{t("forms.addElement")}</Label>
-              <NativeSelect id="add-kind" name="kind" className="w-full">
-                {available.length > 0 && (
-                  <optgroup label={t("forms.kinds.field")}>
-                    {available.map((f) => (
-                      <NativeSelectOption key={f} value={`field:${f}`}>
-                        {fieldLabel(f)}
-                      </NativeSelectOption>
-                    ))}
-                  </optgroup>
-                )}
-                <NativeSelectOption value="text">{t("forms.kinds.text")}</NativeSelectOption>
-                <NativeSelectOption value="consent">{t("forms.kinds.consent")}</NativeSelectOption>
-                {purpose === "membership" && !elements.some((e) => e.kind === "mandate") && <NativeSelectOption value="mandate">{t("forms.mandate")}</NativeSelectOption>}
-              </NativeSelect>
-            </div>
-            <SubmitButton size="sm">{t("forms.add")}</SubmitButton>
-          </form>
-        )}
-      </FormCard>
-      </RecordLayout>
-
-      {canManage && (
-        <form action={trashForm}>
-          <input type="hidden" name="id" value={form.id} />
-          <SubmitButton variant="outline" size="sm">
-            {t("forms.toTrash")}
-          </SubmitButton>
-        </form>
-      )}
+      <form id="form-builder" action={saveForm}>
+        <input type="hidden" name="id" value={form.id} />
+        <RecordLayout
+          aside={
+            <FormCard id="form-settings" title={t("forms.settings")}>
+              <fieldset disabled={!canManage} className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="s-title">{t("forms.formTitle")}</Label>
+                  <Input id="s-title" name="title" required maxLength={200} defaultValue={form.title} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="s-slug">{t("forms.slug")}</Label>
+                  <Input id="s-slug" name="slug" required maxLength={80} defaultValue={form.slug} aria-describedby="s-slug-help" />
+                  <p id="s-slug-help" className="truncate text-xs text-muted-foreground">
+                    {urlPrefix}
+                    {form.slug}
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="s-intro">{t("forms.intro")}</Label>
+                  <Textarea id="s-intro" name="intro" rows={3} maxLength={5000} defaultValue={form.intro ?? ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="s-success">{t("forms.successText")}</Label>
+                  <Textarea id="s-success" name="success_text" rows={3} maxLength={2000} defaultValue={form.success_text ?? ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="s-tags">{t("forms.tags")}</Label>
+                  <TagSelect id="s-tags" name="tags" options={(tagRows ?? []) as unknown as string[]} defaultValue={settings.tags ?? []} creatable disabled={!canManage} />
+                  <p className="text-xs text-muted-foreground">{t("forms.tagsHelp")}</p>
+                </div>
+              </fieldset>
+            </FormCard>
+          }
+        >
+          <FormCard id="form-elements" title={t("forms.elements")} description={t(purpose === "membership" ? "forms.elementsHintMembership" : "forms.elementsHint")}>
+            <ElementRows initial={form.elements as unknown as Element[]} fields={fields} membership={purpose === "membership"} disabled={!canManage} />
+          </FormCard>
+        </RecordLayout>
+        {canManage && <SaveBar />}
+      </form>
     </>
-  )
-}
-
-function IconAction({
-  action,
-  form,
-  element,
-  extra,
-  label,
-  disabled,
-  children,
-}: {
-  action: (fd: FormData) => Promise<void>
-  form: string
-  element: string
-  extra?: Record<string, string>
-  label: string
-  disabled?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <form action={action}>
-      <input type="hidden" name="id" value={form} />
-      <input type="hidden" name="element" value={element} />
-      {Object.entries(extra ?? {}).map(([k, v]) => (
-        <input key={k} type="hidden" name={k} value={v} />
-      ))}
-      <Tooltip>
-        <TooltipTrigger render={<SubmitButton size="icon-sm" variant="ghost" aria-label={label} disabled={disabled} />}>{children}</TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
-    </form>
-  )
-}
-
-function Field({ id, label, ...props }: { id: string; label: string } & React.ComponentProps<typeof Input>) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} {...props} />
-    </div>
-  )
-}
-
-function Area({ id, label, rows = 3, ...props }: { id: string; label: string; rows?: number } & React.ComponentProps<"textarea">) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <textarea id={id} rows={rows} className={textareaClass} {...props} />
-    </div>
   )
 }
 

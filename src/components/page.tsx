@@ -1,3 +1,4 @@
+import { isValidElement } from "react"
 import Link from "next/link"
 import { PlusIcon, SettingsIcon, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -6,17 +7,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NAV } from "@/modules/nav"
 import { cn } from "@/lib/utils"
 import { HeaderActions } from "@/components/header-actions"
+import { BodyFlag } from "@/lib/body-flag"
+import { PhoneMenu } from "@/components/actions-menu"
 import { PrimaryAction } from "@/components/primary-action"
 import { TopbarCrumbs } from "@/components/topbar-crumbs"
 
 // The App's page anatomy (see /style/app): <Page> sets one of three widths, <PageHeader> is the same header everywhere,
 // <RecordLayout> is a record page's two columns, <FormCard> groups fields by topic, <EmptyState> fills empty lists.
 
-const WIDTH = { list: "max-w-6xl", record: "max-w-6xl", form: "max-w-3xl" }
+// Every page fills the content area (user, 19 Nov: one consistent edge); `size` stays for callers and documents intent.
+const WIDTH = { list: "", record: "", form: "" }
 
 /** list = lists, boards, calendars · record = a record's page (content + details column) · form = forms, setup, new. */
 export function Page({ size = "list", className, children }: { size?: keyof typeof WIDTH; className?: string; children: React.ReactNode }) {
-  return <div className={cn("grid gap-6", WIDTH[size], className)}>{children}</div>
+  // min-w-0 on every block: one wide child (a table, a calendar header) can never stretch the page past the screen.
+  return <div className={cn("grid min-w-0 gap-6 *:min-w-0", WIDTH[size], className)}>{children}</div>
+}
+
+/** Whether a header primary given as a node (a form button) carries an icon (a lucide icon somewhere inside it). */
+function hasIcon(node: React.ReactNode): boolean {
+  if (Array.isArray(node)) return node.some(hasIcon)
+  if (!isValidElement(node)) return false
+  const type = node.type as { $$typeof?: symbol; displayName?: string }
+  if (typeof type === "object" && type.$$typeof === Symbol.for("react.forward_ref") && typeof type.displayName === "string") return true
+  return hasIcon((node.props as { children?: React.ReactNode }).children)
 }
 
 /**
@@ -36,6 +50,8 @@ export function PageHeader({
   menu,
   primary,
   settings,
+  titleHidden,
+  primaryInPage,
 }: {
   title: React.ReactNode
   area?: string
@@ -48,14 +64,21 @@ export function PageHeader({
   menu?: React.ReactNode
   primary?: { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } | React.ReactNode
   settings?: { href: string; label: string } | false
+  titleHidden?: boolean // the page shows the title itself (an editor's title field): only for screen readers here
+  primaryInPage?: boolean // phones: the page shows the (form-button) primary itself as a full-width labelled button, so no round button and no copy in the ⋯ sheet
 }) {
   const Icon = icon ?? (area ? NAV.find((a) => a.key === area)?.icon : undefined)
   // The title is already in the top bar: area pages (area › page) and pages whose last crumb is the title.
   // (pages with their own icon are in the sidebar too: Benachrichtigungen, Dateien …)
   const overview = !!(area || icon) && !crumbs
-  const inTopBar = overview || (typeof title === "string" && crumbs?.at(-1)?.label === title)
+  // Record pages always show who/what they are in the page (title + badges + meta together, like Linear/Stripe), even
+  // though the crumbs in the top bar end with the same name; only area overviews leave their title to the top bar.
+  const inTopBar = overview || !!titleHidden
   const isLink = (p: unknown): p is { href: string; label: string; icon?: LucideIcon; more?: { href: string; label: string }[] } => !!p && typeof p === "object" && "href" in p && "label" in p
   const PrimaryIcon = isLink(primary) ? (primary.icon ?? PlusIcon) : null
+  // A form-button primary with an icon (Veröffentlichen, Jetzt senden, Ausstellen) is the round button on phones too
+  // (label only for screen readers); it stays in the ⋯ sheet as well, since a SaveBar hides the round button.
+  const roundForm = !isLink(primary) && !!primary && hasIcon(primary) && !primaryInPage
   // Nothing to show in the page (title in the top bar, no badge/meta/description): the header takes no space at all.
   const bare = inTopBar && !badge && !meta && !(description && !overview)
   return (
@@ -72,7 +95,7 @@ export function PageHeader({
           )}
           <div className="grid min-w-0 gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className={cn("font-heading text-2xl font-semibold break-words", inTopBar && "sr-only")}>{title}</h1>
+              <h1 className={cn("font-heading text-xl font-semibold tracking-tight break-words md:text-2xl", inTopBar && "sr-only")}>{title}</h1>
               {badge}
             </div>
             {meta && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">{meta}</div>}
@@ -82,7 +105,14 @@ export function PageHeader({
         </div>
         {(actions || menu || primary || settings) && (
           <div className={cn("flex flex-wrap items-center gap-2 max-md:contents", bare && "contents")}>
-            <HeaderActions>
+            {/* Phones: one ⋯ in the top bar whose sheet holds the gear, the actions, the menu's items and a form-button primary. */}
+            <HeaderActions
+              phone={
+                <PhoneMenu settings={settings || undefined} actions={actions || undefined} primary={!isLink(primary) && primary && !primaryInPage ? (primary as React.ReactNode) : undefined}>
+                  {menu || undefined}
+                </PhoneMenu>
+              }
+            >
             {settings && (
               <Tooltip>
                 <TooltipTrigger render={<Button render={<Link href={settings.href} />} nativeButton={false} size="icon-sm" variant="ghost" aria-label={settings.label} />}>
@@ -94,8 +124,10 @@ export function PageHeader({
             {actions}
             {menu}
             </HeaderActions>
-            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes to the bar everywhere. */}
-            <HeaderActions desktop={isLink(primary)}>
+            {/* A link primary is the round button on phones (stays out of the top bar); a form button goes into the phone ⋯ sheet. */}
+            {/* The tab bar makes room for the round button only while this page is the one on screen. */}
+            {(isLink(primary) || roundForm) && <BodyFlag name="page-primary" />}
+            <HeaderActions desktop={isLink(primary) || roundForm} phone={isLink(primary) || roundForm ? undefined : false}>
             {isLink(primary) && primary.more?.length ? (
               <PrimaryAction href={primary.href} label={primary.label} more={primary.more} icon={primary.icon} />
             ) : isLink(primary) && PrimaryIcon ? (
@@ -110,6 +142,13 @@ export function PageHeader({
               >
                 <PrimaryIcon className="max-md:size-6" /> <span className="max-md:sr-only">{primary.label}</span>
               </Button>
+            ) : roundForm ? (
+              <div
+                data-slot="page-primary"
+                className="contents bar-hide max-md:glass max-md:fixed max-md:right-4 max-md:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] max-md:z-30 max-md:block max-md:size-[3.625rem] max-md:overflow-hidden max-md:rounded-full max-md:[&_button]:size-full max-md:[&_button]:rounded-full max-md:[&_button]:border-0 max-md:[&_button]:bg-transparent max-md:[&_button]:p-0 max-md:[&_button]:text-[0px] max-md:[&_button]:text-foreground max-md:[&_form]:size-full max-md:[&_svg]:size-6"
+              >
+                {primary as React.ReactNode}
+              </div>
             ) : (
               (primary as React.ReactNode)
             )}
@@ -122,7 +161,15 @@ export function PageHeader({
 }
 
 /** A record page: content on the left, a details/related column on the right. */
-export function RecordLayout({ aside, children }: { aside: React.ReactNode; children: React.ReactNode }) {
+export function RecordLayout({ aside, top, children }: { aside: React.ReactNode; top?: React.ReactNode /* Eigenschaften: top of the rail, before the main column on phones/tablets */; children: React.ReactNode }) {
+  if (top)
+    return (
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+        <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-1">{top}</aside>
+        <div className="grid min-w-0 content-start gap-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">{children}</div>
+        <aside className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-start-2">{aside}</aside>
+      </div>
+    )
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
       <div className="grid min-w-0 gap-6">{children}</div>
@@ -144,7 +191,7 @@ export function FormCard({ id, title, description, action, className, children }
         </div>
         {action}
       </CardHeader>
-      <CardContent className="grid gap-4">{children}</CardContent>
+      <CardContent className="grid grid-cols-[minmax(0,1fr)] gap-4">{children}</CardContent>
     </Card>
   )
 }

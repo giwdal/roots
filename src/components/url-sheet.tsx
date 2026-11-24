@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { confirmDiscard } from "@/components/save-bar"
 import { ContentSheet, ContentSheetDescription, ContentSheetTitle } from "@/components/content-sheet"
 import { useT } from "@/i18n/client"
+import { cn } from "@/lib/utils"
 
 // A drawer (bottom sheet over the content area, <ContentSheet>) that exists because a search param is set (?edit=<id>, ?new=…). Closing removes the param(s).
 // Same anatomy everywhere: title, `meta` underneath (small, muted: "Angelegt am …"; live save status of an autosave
@@ -19,15 +20,19 @@ export function UrlSheet({
   menu,
   children,
   wide,
+  compact,
+  titleHidden,
 }: {
   params: string[]
   wide?: boolean // e.g. an import with a preview table
+  compact?: boolean // a few fields (an address, one question): a small dialog / short sheet
   title: string
   description?: string
   meta?: React.ReactNode
   actions?: React.ReactNode
   menu?: React.ReactNode
   children: React.ReactNode
+  titleHidden?: boolean // the content shows the title itself (an editable title field): only for screen readers here, meta takes its place
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -50,18 +55,30 @@ export function UrlSheet({
     router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false })
   }
 
+  // A sheet whose content shows the title itself and has nothing else for the bar: no title bar at all.
+  const floating = !!titleHidden && !meta && !description && !actions
   return (
     <ContentSheet
       onClose={confirmClose}
       onClosed={closed}
       wide={wide}
+      compact={compact}
+      floating={floating}
       label={title}
       header={
+        floating ? (
+          // Only the buttons float top right; the title stays for screen readers.
+          <>
+            <ContentSheetTitle className="sr-only">{title}</ContentSheetTitle>
+            {menu}
+          </>
+        ) : (
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <ContentSheetTitle className="min-w-0 font-heading text-lg font-semibold break-words text-foreground">{title}</ContentSheetTitle>
+            <ContentSheetTitle className={titleHidden ? "sr-only" : "min-w-0 font-heading text-lg font-semibold break-words text-foreground"}>{title}</ContentSheetTitle>
+            {titleHidden && <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">{meta}</div>}
             {(actions || menu) && (
-              <div className="ml-auto flex shrink-0 items-center gap-2">
+              <div className={cn("flex shrink-0 items-center gap-2", titleHidden ? "ml-auto" : "max-md:w-full md:ml-auto")}>
                 {actions}
                 {menu}
               </div>
@@ -69,13 +86,15 @@ export function UrlSheet({
           </div>
           {description && <ContentSheetDescription className="text-sm text-muted-foreground">{description}</ContentSheetDescription>}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground empty:hidden">
-            {meta}
+            {!titleHidden && meta}
             <span data-slot="sheet-status" className="contents" />
           </div>
         </div>
+        )
       }
     >
-      <div className="grid flex-1 content-start gap-6 px-6 pt-6 pb-8">{children}</div>
+      {/* With a SaveBar the bar is the end of the dialog (no empty space under its buttons). */}
+      <div className="grid flex-1 content-start gap-6 px-6 pt-6 pb-8 has-[[data-slot=sheet-save-bar]]:pb-0">{children}</div>
     </ContentSheet>
   )
 }

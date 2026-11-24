@@ -10,16 +10,18 @@ import type { Me, SidebarLink } from "@/components/app-sidebar"
 import { ContentSheet, ContentSheetClose, ContentSheetTitle } from "@/components/content-sheet"
 import { setLocale } from "@/i18n/actions"
 import { useT } from "@/i18n/client"
-import { localeNames, locales } from "@/i18n/config"
-import { activeChildHref, appRoute, within } from "@/lib/url"
+import { localeNames, locales } from "@/i18n/locales"
+import { activeChildHref, APP_HOME, appRoute, within } from "@/lib/url"
 import { cn } from "@/lib/utils"
 
 type Group = { label?: string; items: SidebarLink[] }
 
 const TAP = "touch-manipulation [-webkit-tap-highlight-color:transparent] transition active:scale-95"
-const TILE = `relative flex h-[4.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-xs [&_svg]:size-5 ${TAP}`
-const ACTIVE = "border-primary/20 bg-primary/10 [&_svg]:text-primary"
+const TILE = `relative flex h-[4.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-xs [&_svg]:size-5 [&_[data-slot=area-icon]]:size-8 [&_[data-slot=area-icon]]:rounded-lg ${TAP}`
+const ACTIVE = "border-foreground/15 bg-muted font-medium"
 const ROW = `flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm active:bg-muted [&_svg]:size-5 [&_svg]:text-muted-foreground ${TAP}`
+
+const INBOX = "/notifications"
 
 const manyChildren = (n: SidebarLink) => (n.children?.length ?? 0) > 1
 
@@ -39,6 +41,8 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
   const heading = useRef<HTMLHeadingElement>(null)
 
   const items = groups.flatMap((g) => g.items)
+  // The inbox is the first row of the sheet (not a tile), with its unread count.
+  const inbox = items.find((n) => n.href === INBOX)
   const activeChild = (n: SidebarLink) => activeChildHref(n.children ?? [], pathname)
   const isActive = (n: SidebarLink) => (n.children ? !!activeChild(n) : within(pathname, n.href))
 
@@ -70,7 +74,7 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
             <button type="button" aria-label={t("shell.menu")} onClick={() => setArea(null)} className="-ml-2 flex h-9 shrink-0 items-center rounded-lg pr-2 text-sm text-muted-foreground active:bg-muted [&_svg]:size-5">
               <ChevronLeftIcon /> {t("shell.menu")}
             </button>
-            <ContentSheetTitle ref={heading} tabIndex={-1} className="flex min-w-0 items-center gap-2 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-primary">
+            <ContentSheetTitle ref={heading} tabIndex={-1} className="flex min-w-0 items-center gap-2 text-lg font-semibold outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_[data-slot=area-icon]]:size-6">
               {current.icon} <span className="truncate">{current.label}</span>
             </ContentSheetTitle>
           </div>
@@ -87,10 +91,10 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
                   <ContentSheetClose
                     nativeButton={false}
                     render={<Link href={c.href} aria-current={on ? "page" : undefined} />}
-                    className={cn("flex h-13 w-full items-center gap-2 px-4 text-sm active:bg-muted", on && "bg-primary/10 font-medium")}
+                    className={cn("flex h-13 w-full items-center gap-2 px-4 text-sm active:bg-muted", on && "bg-muted font-medium")}
                   >
                     <span className="flex-1 truncate">{c.label}</span>
-                    {on ? <CheckIcon className="size-4 text-primary" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
+                    {on ? <CheckIcon className="size-4" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
                   </ContentSheetClose>
                 </li>
               )
@@ -103,12 +107,25 @@ export function MobileMenu({ header, switchOrgs, groups, me }: { header: React.R
           <ContentSheetTitle ref={heading} tabIndex={-1} className="sr-only">
             {t("shell.menu")}
           </ContentSheetTitle>
+          {inbox && (
+            <ContentSheetClose
+              nativeButton={false}
+              render={<Link href={inbox.href} aria-current={isActive(inbox) ? "page" : undefined} />}
+              className={cn("flex h-13 w-full items-center gap-3 rounded-xl border bg-card px-3 text-sm [&_svg]:size-5 [&_svg]:text-muted-foreground", TAP, isActive(inbox) && ACTIVE)}
+            >
+              {inbox.icon}
+              <span className="flex-1 truncate font-medium">{inbox.label}</span>
+              {!!inbox.count && <span className="min-w-6 rounded-full bg-destructive/15 px-2 py-0.5 text-center text-xs font-medium text-destructive tabular-nums">{inbox.count}</span>}
+              <ChevronRightIcon className="size-4" />
+            </ContentSheetClose>
+          )}
           {switchOrgs && header}
-          {groups.map((g, i) => (
+          {/* Start is the tab bar's first tab and the inbox the row above: no tiles for them. */}
+          {groups.filter((g) => g.items.some((n) => n.href !== INBOX && n.href !== APP_HOME)).map((g, i) => (
             <section key={i} aria-label={g.label ?? t("shell.mainNav")} className="grid gap-2">
               {g.label && <h3 className="px-1 text-xs font-medium text-muted-foreground">{g.label}</h3>}
               <div className="grid grid-cols-3 gap-2">
-                {g.items.map((n) => {
+                {g.items.filter((n) => n.href !== INBOX && n.href !== APP_HOME).map((n) => {
                   const on = isActive(n)
                   const body = (
                     <>

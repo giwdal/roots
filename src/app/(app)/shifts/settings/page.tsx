@@ -1,170 +1,159 @@
 import Link from "next/link"
-import { SaveBar } from "@/components/save-bar"
-import { FormCard, Page, PageHeader } from "@/components/page"
-import { notFound } from "next/navigation"
-import { PlusIcon, Trash2Icon } from "lucide-react"
-import { DataTable } from "@/components/data-table"
+import { notFound, redirect } from "next/navigation"
+import { ChevronRightIcon, MapPinIcon, Trash2Icon, UsersIcon } from "lucide-react"
+import { ActionsMenu, MenuSubmit } from "@/components/actions-menu"
+import { Choice } from "@/components/choice"
+import { DateInput } from "@/components/date-input"
+import { MultiSelect } from "@/components/multi-select"
 import { Notice } from "@/components/notice"
-import { SubmitButton } from "@/components/submit-button"
+import { Page, PageHeader } from "@/components/page"
+import { SaveBar } from "@/components/save-bar"
+import { AddLink, RowGroup } from "@/components/section"
+import { TimeInput } from "@/components/time-input"
+import { TitleTip } from "@/components/info-tip"
+import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { getT } from "@/i18n/server"
 import { requirePerm } from "@/lib/context"
 import { param, withParams } from "@/lib/url"
-import { deletePosition, deleteSeries, savePosition, saveSeries } from "../actions"
-import { DateInput } from "@/components/date-input"
+import { deleteSeries, savePositions, saveSeries } from "../actions"
+import { PositionRows } from "./position-rows"
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const
+const ROW = "flex min-h-12 items-center gap-3 px-4 py-3 text-sm hover:bg-muted active:bg-muted"
 
-export default async function ShiftSetup({ searchParams }: PageProps<"/shifts/settings">) {
+// Schichten › Einstellungen (the gear): the team (its own page), positions (inline rows, one SaveBar), recurring
+// shifts (rows → sheet ?edit=<id> / ?new=series) and the org's places (Einstellungen › Orte).
+export default async function ShiftSettings({ searchParams }: PageProps<"/shifts/settings">) {
   const ctx = await requirePerm("shifts.manage")
   if (!ctx.modules.has("shifts")) notFound()
-  const t = await getT()
   const sp = await searchParams
-  const [{ data: positions }, { data: series }, { data: locations }, { data: staff }] = await Promise.all([
-    ctx.supabase.from("positions").select("*, locations(name)").eq("org_id", ctx.org.id).order("position").order("name"),
+  const old = param(sp, "series") // the series sheet's old param
+  if (old) redirect(`/shifts/settings${withParams(sp, { series: undefined, edit: old })}`)
+  const t = await getT()
+  const editId = param(sp, "edit")
+  const [{ data: positions }, { data: series }, { data: locations }, { data: staff }, { count: upcoming }] = await Promise.all([
+    ctx.supabase.from("positions").select("id, name, needed, location_id").eq("org_id", ctx.org.id).order("position").order("name"),
     ctx.supabase.from("shift_series").select("*, positions(name), locations(name)").eq("org_id", ctx.org.id).order("created_at"),
     ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name"),
-    ctx.supabase.from("staff").select("id, name").eq("org_id", ctx.org.id).eq("active", true).order("name"),
+    ctx.supabase.from("staff").select("id, name, active").eq("org_id", ctx.org.id).order("name"),
+    editId && /^[0-9a-f-]{36}$/.test(editId)
+      ? ctx.supabase.from("shifts").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).eq("series_id", editId).gt("starts_at", new Date().toISOString())
+      : Promise.resolve({ count: 0 }),
   ])
-  const editing = series?.find((s) => s.id === param(sp, "series"))
+  const editing = series?.find((s) => s.id === editId)
   const creating = param(sp, "new") === "series"
   // 2026-10-05 is a Monday: weekday names in the user's language.
   const wd = (d: number) => t.date(`2026-10-${String(4 + d).padStart(2, "0")}T12:00:00Z`, { weekday: "short" })
   const staffName = new Map(staff?.map((s) => [s.id, s.name]))
+  const active = (staff ?? []).filter((s) => s.active)
+  const rhythm = (s: NonNullable<typeof series>[number]) =>
+    `${s.weekdays.map(wd).join(", ")} · ${s.every_weeks > 1 ? t("shifts.everyN", { count: s.every_weeks }) : t("shifts.weekly")} · ${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)}`
 
   return (
     <Page size="form">
       <PageHeader crumbs={[{ href: "/shifts", label: t("shifts.nav") }, { label: t("common.settings") }]} title={t("common.settings")} />
       <Notice error={!editing && !creating ? param(sp, "error") : undefined} ok={param(sp, "ok")} />
-      <FormCard id="positions" title={t("shifts.positionsTitle")} description={t("shifts.positionsHint")}>
-        <ul className="grid gap-2">
-          {[...(positions ?? []), null].map((p) => (
-            <li key={p?.id ?? "new"} className="flex flex-wrap items-end gap-2 rounded-lg border p-2">
-              <form action={savePosition} className="flex flex-1 flex-wrap items-end gap-2">
-                {p && <input type="hidden" name="id" value={p.id} />}
-                <Input name="name" defaultValue={p?.name} required maxLength={100} placeholder={t("shifts.positionPlaceholder")} aria-label={t("shifts.position")} className="w-44" />
-                <Input name="needed" type="number" min={1} max={100} defaultValue={p?.needed ?? 1} aria-label={t("shifts.needed")} className="w-20" />
-                {(locations?.length ?? 0) > 0 && (
-                  <NativeSelect name="location" defaultValue={p?.location_id ?? ""} aria-label={t("shifts.location")} className="w-40">
-                    <NativeSelectOption value="">{t("shifts.anyLocation")}</NativeSelectOption>
-                    {locations?.map((l) => (
-                      <NativeSelectOption key={l.id} value={l.id}>
-                        {l.name}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                )}
-                <SubmitButton size="sm" variant={p ? "outline" : "default"}>
-                  {p ? t("common.save") : t("shifts.addPosition")}
-                </SubmitButton>
-              </form>
-              {p && (
-                <form action={deletePosition}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <SubmitButton size="icon-sm" variant="ghost" aria-label={t("shifts.remove")}>
-                    <Trash2Icon />
-                  </SubmitButton>
-                </form>
-              )}
-            </li>
-          ))}
-        </ul>
-        {!locations?.length && (
-          <p className="text-xs text-muted-foreground">
-            {t("shifts.locationsHint")}{" "}
-            <Link href="/settings/locations" className="underline underline-offset-4">
-              {t("shifts.locationsLink")}
-            </Link>
-          </p>
-        )}
-      </FormCard>
 
-      <FormCard
-        id="series"
-        title={t("shifts.seriesTitle")}
-        description={t("shifts.seriesHint")}
-        action={
-          <Button render={<Link href={withParams(sp, { new: "series", series: undefined })} scroll={false} />} nativeButton={false} size="sm" variant="outline">
-            <PlusIcon /> {t("shifts.newSeries")}
-          </Button>
-        }
-      >
-        <DataTable
-          rows={series ?? []}
-          rowKey={(s) => s.id}
-          rowHref={(s) => withParams(sp, { series: s.id, new: undefined })}
-          empty={t("shifts.noSeries")}
-          columns={[
-            { header: t("shifts.position"), cell: (s) => <span className="font-medium">{s.positions?.name ?? s.name}</span> },
-            {
-              header: t("shifts.rhythm"),
-              cell: (s) =>
-                `${s.weekdays.map(wd).join(", ")} · ${s.every_weeks > 1 ? t("shifts.everyN", { count: s.every_weeks }) : t("shifts.weekly")} · ${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)}`,
-            },
-            { header: t("shifts.fixedPeople"), cell: (s) => s.default_staff.map((id) => staffName.get(id)).filter(Boolean).join(", ") },
-            { header: t("shifts.location"), cell: (s) => s.locations?.name },
-          ]}
-        />
-      </FormCard>
+      <RowGroup id="team" title={t("shifts.tabs.team")} description={t("shifts.teamHint")}>
+        <Link href="/shifts/team" className={ROW}>
+          <UsersIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="flex-1 font-medium">{t("shifts.tabs.team")}</span>
+          <span className="text-muted-foreground">{t("shifts.teamCount", { count: active.length })}</span>
+          <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
+      </RowGroup>
+
+      <section id="positions" className="grid scroll-mt-20 gap-2">
+        <div className="grid gap-0.5 px-1">
+          <h3 className="text-sm font-medium">{t("shifts.positionsTitle")}</h3>
+          <p className="text-xs text-muted-foreground">{t("shifts.positionsHint")}</p>
+        </div>
+        <form action={savePositions}>
+          <PositionRows initial={positions ?? []} locations={locations ?? []} />
+          <SaveBar />
+        </form>
+      </section>
+
+      <RowGroup id="series" title={<TitleTip tip={t("shifts.seriesHint")}>{t("shifts.seriesTitle")}</TitleTip>}>
+        {(series ?? []).map((s) => (
+          <Link key={s.id} href={withParams(sp, { edit: s.id, new: undefined })} scroll={false} className={ROW}>
+            <span className="grid min-w-0 flex-1">
+              <span className="truncate font-medium">{s.positions?.name ?? s.name}</span>
+              <span className="truncate text-xs text-muted-foreground">{[rhythm(s), s.locations?.name, s.default_staff.map((id) => staffName.get(id)).filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</span>
+            </span>
+            <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          </Link>
+        ))}
+        {!series?.length && <p className="px-4 py-3 text-sm text-muted-foreground">{t("shifts.noSeries")}</p>}
+      </RowGroup>
+      <AddLink href={withParams(sp, { new: "series", edit: undefined })}>{t("shifts.newSeries")}</AddLink>
+
+      <RowGroup id="locations" title={t("shifts.locationsTitle")} description={t("shifts.locationsHint")}>
+        <Link href="/settings/locations" className={ROW}>
+          <MapPinIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="flex-1 font-medium">{t("shifts.locationsLink")}</span>
+          <span className="text-muted-foreground">{locations?.length ?? 0}</span>
+          <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
+      </RowGroup>
 
       {(creating || editing) && (
-        <UrlSheet params={["new", "series"]} title={editing ? (editing.positions?.name ?? editing.name ?? "") : t("shifts.newSeries")}>
+        <UrlSheet
+          params={["new", "edit"]}
+          title={editing ? (editing.positions?.name ?? editing.name ?? "") : t("shifts.newSeries")}
+          meta={editing && rhythm(editing)}
+          menu={
+            editing && (
+              <ActionsMenu>
+                <MenuSubmit form="delete-series" icon={<Trash2Icon />} destructive confirm="shifts.confirmDeleteSeries" count={upcoming ?? 0}>
+                  {t("shifts.deleteSeries")}
+                </MenuSubmit>
+              </ActionsMenu>
+            )
+          }
+        >
           <Notice error={param(sp, "error")} />
           <form action={saveSeries} className="grid gap-4">
             {editing && <input type="hidden" name="id" value={editing.id} />}
-            <div className="grid gap-4 sm:grid-cols-2">
+            {(positions?.length ?? 0) > 0 && (
               <div className="grid gap-2">
                 <Label htmlFor="se-pos">{t("shifts.position")}</Label>
-                <NativeSelect id="se-pos" name="position" defaultValue={editing?.position_id ?? ""} className="w-full">
-                  <NativeSelectOption value="">–</NativeSelectOption>
-                  {positions?.map((p) => (
-                    <NativeSelectOption key={p.id} value={p.id}>
-                      {p.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                <Choice id="se-pos" name="position" label={t("shifts.position")} defaultValue={editing?.position_id} options={(positions ?? []).map((p) => ({ value: p.id, label: p.name }))} />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="se-name">{t("shifts.titleLabel")}</Label>
-                <Input id="se-name" name="name" defaultValue={editing?.name ?? ""} maxLength={100} placeholder={t("shifts.seriesNamePlaceholder")} />
-              </div>
+            )}
+            <div className="grid max-w-xl gap-2">
+              <Label htmlFor="se-name">{t("shifts.titleLabel")}</Label>
+              <Input id="se-name" name="name" defaultValue={editing?.name ?? ""} maxLength={100} placeholder={t("shifts.seriesNamePlaceholder")} />
             </div>
             <fieldset className="grid gap-2">
-              <legend className="mb-1 text-sm font-medium">{t("shifts.weekdays")}</legend>
-              <div className="flex flex-wrap gap-3">
+              <legend className="mb-2 text-sm font-medium">{t("shifts.weekdays")}</legend>
+              {/* Seven toggles in one row: a tap ticks a day. */}
+              <div className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-muted p-1">
                 {WEEKDAYS.map((d) => (
-                  <label key={d} className="flex items-center gap-1.5 text-sm">
-                    <input type="checkbox" name="weekdays" value={d} defaultChecked={editing?.weekdays.includes(d)} className="size-4" />
+                  <label key={d} className="inline-flex min-h-8 min-w-10 cursor-pointer touch-manipulation items-center justify-center rounded-md px-2 text-sm text-muted-foreground has-checked:bg-background has-checked:font-medium has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring">
+                    <input type="checkbox" name="weekdays" value={d} defaultChecked={editing?.weekdays.includes(d)} className="sr-only" />
                     {wd(d)}
                   </label>
                 ))}
               </div>
             </fieldset>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor="se-every">{t("shifts.every")}</Label>
-                <NativeSelect id="se-every" name="every_weeks" defaultValue={String(editing?.every_weeks ?? 1)} className="w-full">
-                  {[1, 2, 3, 4].map((n) => (
-                    <NativeSelectOption key={n} value={n}>
-                      {n === 1 ? t("shifts.weekly") : t("shifts.everyN", { count: n })}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="se-st">{t("shifts.from")}</Label>
-                <Input id="se-st" name="start_time" type="time" required defaultValue={editing?.start_time.slice(0, 5) ?? "18:00"} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="se-et">{t("shifts.until")}</Label>
-                <Input id="se-et" name="end_time" type="time" required defaultValue={editing?.end_time.slice(0, 5) ?? "23:00"} />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="se-every">{t("shifts.every")}</Label>
+              <Choice id="se-every" name="every_weeks" label={t("shifts.every")} required defaultValue={String(editing?.every_weeks ?? 1)} options={[1, 2, 3, 4].map((n) => ({ value: String(n), label: n === 1 ? t("shifts.weekly") : t("shifts.everyN", { count: n }) }))} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">{t("shifts.timeOfDay")}</span>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <TimeInput id="se-st" name="start_time" required aria-label={t("shifts.from")} defaultValue={editing?.start_time ?? "18:00"} />
+                <span className="text-muted-foreground">–</span>
+                <TimeInput id="se-et" name="end_time" required aria-label={t("shifts.untilShort")} defaultValue={editing?.end_time ?? "23:00"} />
+              </div>
+              <p className="text-xs text-muted-foreground">{t("shifts.overnightHint")}</p>
+            </div>
+            <div className="flex flex-wrap gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="se-sd">{t("shifts.startDate")}</Label>
                 <DateInput id="se-sd" name="start_date" type="date" required defaultValue={editing?.start_date ?? new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })} />
@@ -173,45 +162,31 @@ export default async function ShiftSetup({ searchParams }: PageProps<"/shifts/se
                 <Label htmlFor="se-ed">{t("shifts.endDate")}</Label>
                 <DateInput id="se-ed" name="end_date" type="date" defaultValue={editing?.end_date ?? ""} />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="se-needed">{t("shifts.needed")}</Label>
-                <Input id="se-needed" name="needed" type="number" min={1} max={100} defaultValue={editing?.needed ?? 1} />
-              </div>
             </div>
-            {(locations?.length ?? 0) > 0 && (
-              <div className="grid gap-2">
-                <Label htmlFor="se-loc">{t("shifts.location")}</Label>
-                <NativeSelect id="se-loc" name="location" defaultValue={editing?.location_id ?? ""} className="w-full">
-                  <NativeSelectOption value="">–</NativeSelectOption>
-                  {locations?.map((l) => (
-                    <NativeSelectOption key={l.id} value={l.id}>
-                      {l.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+            <div className="flex flex-wrap gap-4">
+              <div className="grid content-start gap-2">
+                <Label htmlFor="se-needed">{t("shifts.needed")}</Label>
+                <TypedInput kind="number" id="se-needed" name="needed" min={1} max={100} step={1} defaultValue={editing?.needed ?? 1} />
+              </div>
+              {(locations?.length ?? 0) > 0 && (
+                <div className="grid min-w-48 flex-1 content-start gap-2">
+                  <Label htmlFor="se-loc">{t("shifts.location")}</Label>
+                  <Choice id="se-loc" name="location" label={t("shifts.location")} defaultValue={editing?.location_id} options={(locations ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+                </div>
+              )}
+            </div>
+            {active.length > 0 && (
+              <div className="grid max-w-xl gap-2">
+                <Label htmlFor="se-staff">{t("shifts.fixedPeople")}</Label>
+                <MultiSelect id="se-staff" name="default_staff" options={active.map((s) => ({ value: s.id, label: s.name }))} defaultValue={editing?.default_staff ?? []} placeholder={t("shifts.searchPerson")} />
+                <p className="text-xs text-muted-foreground">{t("shifts.fixedHint")}</p>
               </div>
             )}
-            {(staff?.length ?? 0) > 0 && (
-              <fieldset className="grid gap-2">
-                <legend className="mb-1 text-sm font-medium">{t("shifts.fixedPeople")}</legend>
-                {staff?.map((s) => (
-                  <label key={s.id} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="default_staff" value={s.id} defaultChecked={editing?.default_staff.includes(s.id)} className="size-4" />
-                    {s.name}
-                  </label>
-                ))}
-                <p className="text-xs text-muted-foreground">{t("shifts.fixedHint")}</p>
-              </fieldset>
-            )}
-            <p className="text-xs text-muted-foreground">{t("shifts.generateHint")}</p>
-            <SaveBar label={editing ? undefined : t("shifts.newSeries")} always={!editing} />
+            <SaveBar label={editing ? undefined : t("shifts.createSeries")} always={!editing} confirm={editing ? "shifts.confirmSeriesSave" : undefined} />
           </form>
           {editing && (
-            <form action={deleteSeries}>
+            <form id="delete-series" action={deleteSeries} hidden>
               <input type="hidden" name="id" value={editing.id} />
-              <SubmitButton size="sm" variant="ghost">
-                {t("shifts.deleteSeries")}
-              </SubmitButton>
             </form>
           )}
         </UrlSheet>

@@ -12,18 +12,19 @@ export type InputKind = "iban" | "bic" | "postcode" | "phone" | "email" | "url" 
 
 type Spec = { type?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"]; autoComplete?: string; maxLength?: number; width: string; check?: (v: string, country?: string | null) => boolean; format?: (v: string) => string }
 
-// One place for every kind of value: keyboard on phones, browser autofill, width that fits the value, the
-// placeholder (inputs.placeholder.<kind>) and the check (inputs.invalid.<kind>). The server checks again.
+// One place for every kind of value: keyboard on phones, browser autofill, the width from system.md › Forms (a
+// className with a width overrides it), the placeholder (inputs.placeholder.<kind>) and the check
+// (inputs.invalid.<kind>). The server checks again.
 const SPECS: Record<InputKind, Spec> = {
-  iban: { autoComplete: "off", maxLength: 42, width: "sm:max-w-80", check: ibanValid, format: formatIban },
-  bic: { autoComplete: "off", maxLength: 14, width: "sm:max-w-44", check: bicValid, format: (v) => v.toUpperCase().replace(/\s/g, "") },
-  postcode: { inputMode: "text", autoComplete: "postal-code", maxLength: 10, width: "max-w-32", check: postcodeValid, format: (v) => v.trim().toUpperCase() },
-  phone: { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 50, width: "sm:max-w-64", check: phoneValid, format: (v) => v.trim().replace(/\s+/g, " ") },
-  email: { type: "email", inputMode: "email", autoComplete: "email", maxLength: 320, width: "", format: (v) => v.trim().toLowerCase() },
-  url: { type: "url", inputMode: "url", autoComplete: "url", maxLength: 2000, width: "" },
-  money: { inputMode: "decimal", autoComplete: "off", maxLength: 16, width: "max-w-40", check: (v) => moneyCents(v) !== null, format: (v) => (moneyCents(v) === null ? v : formatMoney(moneyCents(v)!)) },
-  number: { type: "number", inputMode: "decimal", width: "max-w-32" },
-  date: { type: "date", width: "max-w-44" },
+  iban: { autoComplete: "off", maxLength: 42, width: "max-w-md", check: ibanValid, format: formatIban },
+  bic: { autoComplete: "off", maxLength: 14, width: "w-40", check: bicValid, format: (v) => v.toUpperCase().replace(/\s/g, "") },
+  postcode: { inputMode: "text", autoComplete: "postal-code", maxLength: 10, width: "w-28", check: postcodeValid, format: (v) => v.trim().toUpperCase() },
+  phone: { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 50, width: "max-w-xs", check: phoneValid, format: (v) => v.trim().replace(/\s+/g, " ") },
+  email: { type: "email", inputMode: "email", autoComplete: "email", maxLength: 320, width: "max-w-xl", format: (v) => v.trim().toLowerCase() },
+  url: { type: "url", inputMode: "url", autoComplete: "url", maxLength: 2000, width: "max-w-xl" },
+  money: { inputMode: "decimal", autoComplete: "off", maxLength: 16, width: "w-40", check: (v) => moneyCents(v) !== null, format: (v) => (moneyCents(v) === null ? v : formatMoney(moneyCents(v)!)) },
+  number: { type: "number", inputMode: "decimal", width: "w-40" },
+  date: { type: "date", width: "w-44" },
 }
 
 /**

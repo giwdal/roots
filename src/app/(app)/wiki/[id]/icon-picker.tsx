@@ -51,7 +51,7 @@ export function IconPicker({ pageId, icon }: { pageId: string; icon: string | nu
         </TooltipTrigger>
         <TooltipContent>{label}</TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" className="grid w-fit gap-1 p-0">
+      <PopoverContent sheet align="start" className="grid w-fit gap-1 p-0 max-md:justify-items-center">
         <EmojiPicker onSelect={(e) => !pending && pick(e)} />
         {value && (
           <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={() => pick(null)} className="m-1.5 mt-0 justify-self-start">

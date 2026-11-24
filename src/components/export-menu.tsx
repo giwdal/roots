@@ -16,7 +16,7 @@ export function ExportMenu({ entity, query = {}, choices }: { entity?: string; q
   const list = choices ?? [{ entity: entity!, label: "" }]
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
+      <DropdownMenuTrigger render={<Button variant="outline" />}>
         <DownloadIcon /> {t("export.button")}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

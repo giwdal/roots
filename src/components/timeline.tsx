@@ -10,7 +10,8 @@ const iso = (n: number) => new Date(n).toISOString().slice(0, 10)
 /**
  * Timeline (Gantt light): one row per item, a bar from start to end (one date only = a one-day bar), grouped by `group`,
  * today marked. Days are the columns; the range covers all items plus a little air, at least four weeks. Items without
- * dates are listed below. Scrolls sideways on small screens; bars link to the item. With `onMove` (a server action)
+ * dates are listed below. Scrolls sideways in its own box, opening a week before today (month and group names and bar
+ * labels stay at the left edge); bars link to the item. With `onMove` (a server action)
  * bars can be dragged: whole bar = shift, edges = start / end (`<TimelineBar>`).
  */
 export function Timeline({ t, items, today, empty, onMove }: { t: T; items: TimelineItem[]; today: string; empty: string; onMove?: (id: string, start: string | null, end: string | null) => Promise<{ error?: string }> }) {
@@ -39,8 +40,8 @@ export function Timeline({ t, items, today, empty, onMove }: { t: T; items: Time
   return (
     <div className="grid gap-4">
       {(dated.length > 0 || (onMove && undated.length > 0)) && (
-        <div className="overflow-x-auto rounded-lg border">
-          <TimelineDrop first={first} days={days} onMove={onMove} style={{ width, minHeight: dated.length ? undefined : "7rem" }}>
+        <div className="relative overflow-x-auto rounded-lg border">
+          <TimelineDrop first={first} days={days} start={Math.max(0, Math.round((now - first) / DAY) - 7)} onMove={onMove} style={{ width, minHeight: dated.length ? undefined : "7rem" }}>
             {/* week lines + today */}
             <div className="pointer-events-none absolute inset-0" aria-hidden>
               {mondays.map((d) => (
@@ -49,9 +50,10 @@ export function Timeline({ t, items, today, empty, onMove }: { t: T; items: Time
               {now >= first && now <= last && <span className="absolute inset-y-0 border-l-2 border-primary" style={{ left: pct(now + DAY / 2) }} />}
             </div>
             <div className="relative h-12 border-b bg-muted/40 text-xs text-muted-foreground">
-              {months.map((d) => (
-                <span key={`m${d}`} className="absolute top-1 pl-1.5 font-medium text-foreground" style={{ left: pct(d) }}>
-                  {t.date(iso(d), { month: "long", year: "numeric" })}
+              {/* one block per month, its name sticks to the left edge while the month is in view */}
+              {months.map((d, i) => (
+                <span key={`m${d}`} className="absolute top-1" style={{ left: pct(d), width: `calc(${pct(months[i + 1] ?? last + DAY)} - ${pct(d)})` }}>
+                  <span className="sticky left-0 inline-block pl-1.5 font-medium whitespace-nowrap text-foreground">{t.date(iso(d), { month: "long", year: "numeric" })}</span>
                 </span>
               ))}
               {mondays.map((d) => (
@@ -62,7 +64,11 @@ export function Timeline({ t, items, today, empty, onMove }: { t: T; items: Time
             </div>
             {groups.map((g) => (
               <div key={g || "all"}>
-                {g && <div className="sticky left-0 border-b bg-background/80 px-3 py-1.5 text-xs font-medium text-muted-foreground">{g}</div>}
+                {g && (
+                  <div className="border-b bg-background/80 py-1.5 text-xs font-medium text-muted-foreground">
+                    <span className="sticky left-0 inline-block px-3">{g}</span>
+                  </div>
+                )}
                 {dated
                   .filter((d) => (d.group ?? "") === g)
                   .sort((a, b) => a.from - b.from)

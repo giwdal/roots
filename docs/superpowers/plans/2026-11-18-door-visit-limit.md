@@ -7,6 +7,156 @@
 > - Die Beschriftung des Schalters wurde später allgemeiner/anders benannt (siehe de.json `eventsPage.countsVisit`).
 > - Der Override zählt als Besuch (z. B. „3 von 2 Besuchen genutzt“).
 
+> **Änderung am 24.11.2026 – gewählt ist Vorschlag #2 (Zählregel über ein Event-Custom-Field).** Der Abschnitt „Vorschlag #2“ direkt darunter ersetzt `events.counts_visit` und `event_types.counts_visit`. Alles weiter unten beschreibt den ersten Stand (Vorschlag #1) und gilt nur noch dort, wo der Abschnitt „Vorschlag #2“ es nicht ändert.
+
+## Vorschlag #1 und #2: Woher weiß die Tür, ob ein Event zählt?
+
+**Vorschlag #1 (heute im PR, Migrationen `140000`/`150000`/`160000` angewendet):** Jedes Event hat die Spalte `events.counts_visit` (Schalter). Der Event-Typ trägt einen Standardwert `event_types.counts_visit`, der beim Anlegen ins Event kopiert wird. Die Tür zählt Tickets bei Events mit `counts_visit = true`.
+
+**Vorschlag #2 (gewählt):** Das Event bekommt **keine** Zähl-Spalte. Die **Mitgliedsart** sagt, welche Events für ihr Limit zählen: „zählt nur, wenn das Event-Feld `<Key>` den Wert `<Wert>` hat". Das Feld ist ein ganz normales Custom Field am Event (Settings → Felder). Ist an der Mitgliedsart keine Regel gesetzt, zählt jedes Event.
+
+### So funktioniert es (Vorschlag #2)
+
+**Einrichten (einmal pro Org):**
+1. Die Org hat ein Event-Custom-Field (Settings → Felder, Bereich Events). Beispiel Coppi: das vorhandene Feld „Zählt als Probebesuch" (Typ Ja/Nein).
+2. An der Mitgliedsart „Probe" steht: Besuchslimit 4, Regel „Zählt nur Events, bei denen ‚Zählt als Probebesuch' = Ja".
+3. Beim Anlegen eines Events füllt das Team das Feld aus. Das Feld liegt in `events.custom`, wie heute bei allen Custom Fields.
+
+**Was bei einem Scan passiert** (`member_door()` und `member_door_rows()`, nichts wird gespeichert):
+1. Die Tür findet den Kontakt und seine aktuelle Mitgliedschaft über den Code.
+2. `member_door_rows()` zählt die Mitglieder-Tickets mit `status = 'used'` seit `starts_on` der Mitgliedschaft. Es zählt nur Tickets bei Events, die nicht im Papierkorb liegen und deren `custom ->> Feld` gleich dem Wert der **Mitgliedsart** ist. Das Ergebnis heißt `visits`.
+3. Dieselbe Funktion prüft das **gerade gescannte** Event mit derselben Regel. Das Ergebnis heißt `event_counts`.
+4. Steht für die Person schon ein Check-in an diesem Event, antwortet die Tür `already`.
+5. Sonst gilt: Gibt es ein `visit_limit`, zählt dieses Event (`event_counts`), ist `visits >= visit_limit` und fehlt der Override, antwortet die Tür `limit` und lässt niemanden ein.
+6. Sonst legt die Tür das Ticket `used` an. `visits` steigt um 1, aber nur wenn `event_counts` wahr ist.
+
+**Beispiel** (Mitgliedsart „Probe", Limit 4, Regel „Zählt als Probebesuch = Ja"):
+
+| Scan | Event | Zählt? | `visits` danach | Ergebnis |
+|---|---|---|---|---|
+| 1 | Session (Feld = Ja) | ja | 1 | ok |
+| 2 | Klubnacht (Feld = Nein) | nein | 1 | ok, Badge „zählt nicht" |
+| 3–5 | Session | ja | 2, 3, 4 | ok |
+| 6 | Session | ja | 4 | `limit`, gesperrt |
+| 7 | Klubnacht | nein | 4 | ok, die Tür bleibt offen |
+| 8 | altes Event ohne Feldwert | nein | 4 | ok, es zählt nicht |
+| 9 | Session, mit Override | ja | 5 | ok, „5 von 4" |
+
+Alle eingelassenen Check-ins bleiben normale Tickets. Die echte Besucherzahl in der Tür-Statistik ist deshalb immer vollständig.
+
+**Offline-Scanner:** Das Gerät lädt für das Event pro Mitglied die Werte `visits`, `visit_limit` und `event_counts` vom Server. Es wendet lokal `visitLimitReached()` an und legt Overrides in die Warteschlange. Dieser Teil ändert sich mit #2 nicht. Nur die Berechnung der drei Werte auf dem Server ist neu.
+
+**Was die Tür nicht tut:** Sie liest keinen gespeicherten Zähler und startet keine Automation. Sie kennt auch keine Coppi-Begriffe, nur „Feld = Wert".
+
+### Warum #2 besser ist als #1
+
+1. **Kein Coppi-Wissen im Kern.** #1 baut „dieses Event zählt für Probebesuche" als feste Spalte für alle Orgs ein. Kaum eine andere Org nutzt das so. #2 fragt nur „Feld = Wert". Jede Org baut ihre eigene Regel, auch eine ganz andere (z. B. „Kategorie = Kurs").
+2. **Coppi hat das Feld schon.** Issue #15 hat die Event-Felder „Typ" und „Zählt als Probebesuch" angelegt, und die Werte stehen in `events.custom`. Mit #2 nutzt die Tür sie direkt. Bei #1 müsste Coppi alle Events auf die neue Spalte umstellen und das alte Feld abschalten.
+3. **Die Regel gehört zur Mitgliedsart.** Verschiedene Arten können verschiedene Regeln haben (Probe zählt nur Sessions, eine andere Art zählt alles). #1 hat einen Schalter pro Event für alle Arten gleich.
+4. **Weniger Schema und keine zweite Wahrheit.** #2 entfernt zwei Spalten (`events.counts_visit`, `event_types.counts_visit`) und fügt zwei an `membership_types` hinzu. Das Kopieren der Typ-Voreinstellung für die Zählregel entfällt.
+5. **Der Event-Typ wird einfacher.** Er bleibt Name, Slug, Farbe, Aktiv und Standard-Kapazität. Er trägt keine Zähllogik mehr.
+
+Was #2 kostet (ehrlich):
+- Die Tür liest ein jsonb-Feld statt einer Spalte. Das ist bei der Menge der Tickets pro Person unkritisch. Ein Index ist nicht nötig.
+- Löscht jemand das Feld oder entfernt einen Wert, bricht die Regel. Dagegen: Löschen eines benutzten Feldes wird gesperrt, und die Mitgliedsarten-Liste warnt, wenn Feld oder Wert fehlen (Task 6).
+- **Ein Event ohne den Wert zählt nicht.** Neue Events müssen das Feld also bekommen. Das ist Absicht: lieber ein Besuch zu wenig als einer zu viel gesperrt. Es kann Admins überraschen, deshalb steht es im Hinweistext der Regel.
+- Event-Typ und Custom Field können doppelt gepflegt werden (z. B. beide heißen „Session"). Das ist bewusst offen. Später kann die Regel auch den Event-Typ als Quelle anbieten.
+
+### Regel (gilt für alle Tasks unten)
+
+- `membership_types.visit_count_field text null` und `membership_types.visit_count_value text null`. Check: beide `null` oder beide gesetzt. Beide `null` = jedes Event zählt (wie heute mit `counts_visit = true`).
+- Erlaubte Feldtypen: `select`, `boolean`, `text`. Andere Typen bietet das Formular nicht an (Shortcut: Vergleich als Text, Upgrade bei Bedarf).
+- Der Wert wird als Text gespeichert, so wie `events.custom ->> key` ihn liefert (`boolean` → `true`/`false`).
+- Ein Event zählt, wenn `events.custom ->> visit_count_field = visit_count_value`. Fehlt der Schlüssel am Event, zählt es **nicht**.
+- `visits` zählt nur Tickets bei zählenden Events (wie bisher, nur mit neuer Prüfung). `event_counts` in der Zeile bleibt: „zählt das abgefragte Event für diese Mitgliedsart". Das Offline-Gerät und `visitLimitReached()` ändern sich daher **nicht**.
+- Achtung SQL: `coalesce(a = b, true)` wäre bei fehlendem Wert falsch (`null` → `true`). Richtig: `case when f is null then true else coalesce(<Vergleich>, false) end`.
+
+### Rückbau der Spalten, die #1 schon angelegt hat
+
+Die angewendeten Migrationen `20261118140000`, `20261118150000` und `20261118160000` werden **nicht** bearbeitet. Eine neue Migration baut zurück:
+
+| Was #1 angelegt hat | Was mit #2 passiert |
+|---|---|
+| `events.counts_visit` (`140000`) | **entfernt** |
+| `event_types.counts_visit` (`150000`) | **entfernt** |
+| `membership_types.visit_limit` (`140000`) | bleibt |
+| `events.event_type_id`, Tabelle `event_types` mit `name, slug, color, active, capacity` (`150000`) | bleiben |
+| `member_door_rows()` (`160000`) liest `e.counts_visit` | **ersetzt** durch die Regel |
+| `member_door()` (`140000`) | bleibt (liest nur `event_counts` aus der Zeile) |
+
+Neue Migration: `supabase/migrations/20261124120000_visit_rule_custom_field.sql` (Version höher als `20261121100000` auf `main`; vor dem Anlegen mit `ls supabase/migrations` prüfen). Reihenfolge in der Datei:
+1. `alter table public.membership_types add column visit_count_field text, add column visit_count_value text, add constraint … check ((visit_count_field is null) = (visit_count_value is null))`.
+2. `create or replace function public.member_door_rows(…)` ohne `counts_visit`, mit der Regel.
+3. `alter table public.events drop column counts_visit`.
+4. `alter table public.event_types drop column counts_visit`.
+
+Vorher prüfen (nur lesen, Ergebnis in den PR schreiben): `select org_id, count(*) from public.events where not counts_visit group by 1`. Zeilen mit „nicht zählend" gehen mit dem Drop verloren. Erwartet sind nur die Domes-Testevents. Findet sich etwas in Coppi, nicht ausführen und fragen.
+
+Die Datenbank ist von allen Branches geteilt. `main` kennt `counts_visit` nicht, daher bricht das Löschen die Produktion nicht. Der Vorschau-Deploy von `feat/visit-limit` liest bis zum nächsten Push noch die alte Spalte. Darum die Migration erst pushen (`npm run db:push`), wenn der Code dazu im selben Schritt auf dem Branch steht.
+
+### Änderungen für Vorschlag #2
+
+**Task 6 (Datenbank):** Migration wie oben. Danach `npm run db:push`, `npm run db:types`, `npm run db:test`. In `supabase/tests/isolation.sql` die Stellen mit `counts_visit` (Zeilen um 1395, 1430, 1439) umbauen. Neue Assertions:
+- Mit Regel zählt nur das Event mit passendem Wert.
+- Ein Event ohne den Schlüssel zählt nicht (kein Fehler, kein `null`).
+- Ohne Regel zählt jedes Event.
+- `event_counts` folgt der Regel der **Mitgliedsart** der Person, nicht dem Event allein.
+- Besuche an Events im Papierkorb zählen weiter nicht (Test aus `160000` bleibt).
+
+**Task 7 (Mitgliedsart, App + API):**
+- `src/app/(app)/members/types/page.tsx`: unter „Besuchslimit" zwei Felder „Zählt nur Events, bei denen …": Auswahl eines Event-Custom-Fields (nur Typen `select`, `boolean`, `text`) und der Wert (bei `select` die Optionen, bei `boolean` Ja/Nein, sonst Text). Leer = jedes Event. Hinweis, dass Events ohne den Wert nicht zählen.
+- `src/app/(app)/members/actions.ts` (um Zeile 155): beide Felder lesen und prüfen (Feld gehört zur Org, `entity = 'events'`, Typ erlaubt, Wert über `parseValue()` aus `src/lib/custom-fields.ts` normalisieren). Fehlt eins von beiden, Fehler.
+- `src/api/v1/members.ts`: `visit_count_field` und `visit_count_value` in Lesen/Schreiben der Mitgliedsarten (Spaltenliste `TYPE_COLS`, Schema, Schreiben), gleiche Prüfung über die gemeinsame Funktion. Beschreibung von `event_counts` (Zeile ~511) anpassen.
+- `src/automations/objects.ts`: `membership_type` bekommt `text("visit_count_field")` und `text("visit_count_value")`.
+- Die Prüfung steht in einer reinen Datei (z. B. `src/members/visit-rule.ts`) mit `node --test`, damit App und API sie gemeinsam nutzen.
+
+**Task 8 (Feld löschen absichern):** `src/app/(app)/settings/fields/actions.ts` (`deleteField`, Zeile 42): Vor dem Löschen eines Event-Felds prüfen, ob eine Mitgliedsart dessen Key als `visit_count_field` nutzt. Wenn ja, abbrechen mit `errors.field_in_use` (Texte de/en). In der Mitgliedsarten-Liste eine Warnung zeigen, wenn Feld oder Wert nicht mehr existiert. Prüfen, ob der Key eines Felds nach dem Anlegen änderbar ist. Wenn ja, ebenfalls sperren.
+
+**Task 9 (Event und Event-Typ ohne Zähllogik):**
+- `src/app/(app)/events/event-form.tsx` (Zeilen ~100–105): Häkchen „Zählt als Mitglieder-Besuch" entfernen, samt verstecktem Feld `counts_visit_field`.
+- `src/app/(app)/events/type-and-defaults.tsx`: Zähl-Zustand `cnt` und Checkbox entfernen. Es bleibt die Vorbelegung der Kapazität.
+- `src/app/(app)/events/actions.ts` (Zeilen ~53, ~76, ~175): `counts_visit` überall entfernen. Bei der Typ-Abfrage nur noch `capacity, active`.
+- `src/app/(app)/events/type-fields.ts` und `type-fields.test.mjs`: `counts_visit` aus `TypeInput`, `TypeDefaults`, `readEventType()` und `withTypeDefaults()` entfernen. Tests anpassen.
+- `src/app/(app)/events/settings/page.tsx` (Zeilen ~62, ~111): Spalte und Checkbox entfernen.
+- `src/api/v1/events.ts` (Zeilen ~36, ~71–72, ~133) und `src/api/v1/event-types.ts` (Zeilen ~18, ~30, ~80): `counts_visit` aus Schema, Spaltenlisten und Beschreibungen entfernen. Das ist keine Bruchänderung für Dritte, denn das Feld war nie auf `main` oder in einer Version ausgeliefert.
+- `src/automations/objects.ts`: `counts_visit` aus `event` (Zeile ~79) und `event_type` (Zeile ~73) entfernen.
+- `src/i18n/messages/de.json` und `en.json`: entfernen `eventsPage.countsVisit`, `eventsPage.countsVisitHint`, `eventTypes.countsVisit`, `automations.fields.event.counts_visit`, `automations.fields.event_type.counts_visit`. Neu: Texte für die Regel an der Mitgliedsart und `errors.field_in_use`. `membership.visitLimitHint` anpassen (spricht heute von „Events mit ‚Zählt als Besuch'").
+
+**Task 10 (Tür bleibt gleich, prüfen):** `src/members/door.ts`, `src/app/(app)/scan/member-card.tsx` und `scanner.tsx` bleiben unverändert, denn sie lesen `event_counts`, `visits` und `visit_limit` aus der Zeile. Nur prüfen, dass der Badge „zählt nicht" (`door.member.notCounting`) weiter zur neuen Regel passt, und den Offline-Test in `src/members/members.test.mjs` unverändert laufen lassen.
+
+**Task 11 (Pläne und PR):** In `2026-11-18-event-types.md` einen Hinweis oben ergänzen („Zähllogik entfernt, siehe Vorschlag #2") und die `counts_visit`-Stellen im Datenmodell und in Task 2–4 streichen. PR-Beschreibung aktualisieren (Abschnitt Event-Typen, Hinweis auf Regel und Rückbau-Migration).
+
+**Nach dem Merge (ersetzt den alten Abschnitt unten):** siehe „Einrichtung in Coppi“ weiter unten. Kurz: Limit und Regel an der Mitgliedsart, mit dem **vorhandenen** Event-Feld „Zählt als Probebesuch" = Ja (aus #15), Events nachpflegen, dann #16 abschalten. Kein Test in Coppi, nur in Domes.
+
+### Einrichtung in Coppi (nach dem Merge, kein Code)
+
+Das macht der Nutzer selbst oder es geschieht auf ausdrücklichen Auftrag. Kein Test in Coppi: erst alles in Domes durchspielen (Abschnitt „Prüfung“).
+
+**Vor dem Einrichten:**
+1. Reihenfolge im Deploy: erst `feat/custom-field-search` nach `main`, dann PR 42 (mit der Migration `20261124120000`), dann erst die Einrichtung in Coppi.
+2. Vor dem Umstellen die Zähler vergleichen: Für jedes aktuelle Trial-Mitglied den alten Wert im Kontaktfeld „Probebesuche“ (Automation #16) neben die Zahl der Tür stellen (Mitglieder-Tab zeigt `visits`). Weichen sie ab, entscheidet das Team, welche Zahl gilt. Die Tür übernimmt den alten Zähler nicht.
+
+**Einrichten:**
+1. **Event-Feld prüfen:** Das Feld „Zählt als Probebesuch“ (Typ Ja/Nein) aus #15 muss unter Settings → Felder (Events) existieren. Der Key steht dort, die Regel nutzt ihn.
+2. **Events nachpflegen:** Jedes Event, das zählen soll (die Sessions), braucht den Wert „Ja“. Events ohne Wert zählen nicht. Das gilt auch für **vergangene** Sessions, denn die Tür zählt seit Beginn der Mitgliedschaft. Klubnächte bleiben „Nein“ oder leer. Kommende Events: Feld beim Anlegen ausfüllen.
+3. **Mitgliedsart „Trial“:** Besuchslimit auf 4 und die Regel „Zählt nur Events, bei denen ‚Zählt als Probebesuch‘ = Ja“ setzen (Mitglieder → Einstellungen → Mitgliedsarten).
+4. **Event-Typen (optional, nur Optik):** „Session“ und „Klubnacht“ mit Farbe anlegen, Standard-Kapazität setzen. Die Typen zählen nichts. Sie färben Kalender, Liste und Tür-Chips und füllen die Kapazität vor.
+5. **Team informieren:** Wer `tickets.scan` hat, kann an der Tür den Override setzen (Sperre ab dem 5. zählenden Besuch). Kurz zeigen, wie die Karte „x von 4“ und „zählt nicht“ aussieht.
+
+**Aufräumen (erst wenn die Tür stimmt):**
+1. Die Probebesuch-Automation (#16) abschalten, damit nicht zwei Zähler laufen.
+2. Das Kontaktfeld „Probebesuche“ nicht mehr pflegen. Löschen erst nach einer Woche ohne Abweichung, denn gelöschte Werte sind weg.
+3. Den Schalter „Zählt als Besuch“ gibt es nicht mehr. Wenn jemand ihn im Event-Formular sucht: die Regel steht jetzt an der Mitgliedsart.
+
+### Prüfung (Domes-Testorg, nach der Umsetzung)
+
+1. Ein Event-Feld „Zählt" (Ja/Nein) in Domes anlegen, an der Mitgliedsart „Probe" Limit 2 und Regel „Zählt = Ja" setzen.
+2. Ein Event mit „Ja", eins mit „Nein", eins ohne Wert anlegen.
+3. Ein Mitglied dreimal scannen (je ein Mal pro Event). Erwartung: nur das Event mit „Ja" zählt, die anderen zeigen „zählt nicht".
+4. Zwei Check-ins am „Ja"-Event, dann der dritte: `limit`. Mit Override geht er durch.
+5. Das Feld „Zählt" löschen. Erwartung: Fehlermeldung, solange die Regel es nutzt.
+6. Offline-Scanner: ein Mitglied vorher laden, offline scannen. Erwartung: gleiche Ergebnisse wie online.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Die Tür zählt Mitgliederbesuche nur bei Veranstaltungen, die „als Besuch zählen“. Sie zeigt „x von N“ für Mitgliedsarten mit Besuchslimit und sperrt den Einlass, sobald das Limit erreicht ist. Mit `tickets.scan` lässt sich die Sperre bewusst übergehen (Override).

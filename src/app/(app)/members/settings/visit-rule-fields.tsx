@@ -11,7 +11,7 @@ export type RuleField = { key: string; label: string; type: string; options: str
 // "Which events count": an event custom field and the value it must have. The value control follows the field's type:
 // a select field offers its options, a yes/no field only "Yes" (a "No" is not stored on events), a text field is typed.
 // shortcut: with more than 15 event fields Choice becomes a search box that fires no change events; raise the limit then.
-export function VisitRuleFields({ id, fields, field, value, problem }: { id: string; fields: RuleField[]; field: string | null; value: string | null; problem: boolean }) {
+export function VisitRuleFields({ id, fields, field, value }: { id: string; fields: RuleField[]; field: string | null; value: string | null }) {
   const t = useT()
   const [key, setKey] = useState(field ?? "")
   const def = fields.find((f) => f.key === key)
@@ -42,7 +42,6 @@ export function VisitRuleFields({ id, fields, field, value, problem }: { id: str
           )}
         </div>
       )}
-      {problem && <p className="text-sm text-destructive">{t("membership.countRuleProblem")}</p>}
       <p className="text-xs text-muted-foreground">{t("membership.countRuleHint")}</p>
     </div>
   )

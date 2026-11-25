@@ -1,6 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { readVisitRule, visitRuleProblem } from "./visit-rule.ts"
+import { readVisitRule } from "./visit-rule.ts"
 
 const defs = [
   { key: "zaehlt", label: "Zählt", type: "boolean", options: [], required: false },
@@ -36,12 +36,4 @@ test("field and value go together, the field must be an event field of an allowe
   assert.equal(readVisitRule(defs, "gibtsnicht", "x").error, "errors.invalid_input") // unknown field
   assert.equal(readVisitRule(defs, "anzahl", "3").error, "errors.invalid_input") // number is not offered
   assert.equal(readVisitRule(defs, "reihe", "x".repeat(201)).error, "errors.invalid_input") // the column holds at most 200 characters
-})
-
-test("a rule whose field or value no longer exists is reported (the door then counts nothing)", () => {
-  assert.equal(visitRuleProblem(defs, none), null)
-  assert.equal(visitRuleProblem(defs, { visit_count_field: "typ", visit_count_value: "Session" }), null)
-  assert.equal(visitRuleProblem(defs, { visit_count_field: "weg", visit_count_value: "x" }), "field_missing")
-  assert.equal(visitRuleProblem(defs, { visit_count_field: "typ", visit_count_value: "Gelöscht" }), "value_missing")
-  assert.equal(visitRuleProblem(defs, { visit_count_field: "anzahl", visit_count_value: "3" }), "field_missing") // type changed away
 })

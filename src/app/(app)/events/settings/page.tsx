@@ -28,12 +28,7 @@ export default async function EventSettingsPage({ searchParams }: PageProps<"/ev
   if (!ctx.modules.has("events")) notFound()
   const t = await getT()
   const sp = await searchParams
-  const [{ data: types }, { data: used }] = await Promise.all([
-    ctx.supabase.from("event_types").select("*").eq("org_id", ctx.org.id).order("name"),
-    ctx.supabase.from("events").select("event_type_id").eq("org_id", ctx.org.id).is("deleted_at", null).not("event_type_id", "is", null).limit(5000),
-  ])
-  const counts = new Map<string, number>()
-  for (const e of used ?? []) counts.set(e.event_type_id!, (counts.get(e.event_type_id!) ?? 0) + 1)
+  const { data: types } = await ctx.supabase.from("event_types").select("*, events(count)").eq("org_id", ctx.org.id).is("events.deleted_at", null).order("name")
   const rows = types ?? []
   const edit = rows.find((x) => x.id === param(sp, "edit"))
 
@@ -59,7 +54,7 @@ export default async function EventSettingsPage({ searchParams }: PageProps<"/ev
               ),
             },
             { header: t("eventTypes.slug"), cell: (x) => <span className="text-muted-foreground">{x.slug}</span> },
-            { header: t("eventTypes.events"), cell: (x) => <span className="tabular-nums">{counts.get(x.id) ?? 0}</span> },
+            { header: t("eventTypes.events"), cell: (x) => <span className="tabular-nums">{x.events[0]?.count ?? 0}</span> },
             { header: t("eventTypes.status"), cell: (x) => (x.active ? <Badge>{t("eventTypes.active")}</Badge> : <Badge variant="outline">{t("eventTypes.inactive")}</Badge>) },
           ]}
         />

@@ -24,12 +24,3 @@ export function readVisitRule(defs: FieldDef[], field: unknown, value: unknown):
   if (out.length > 200) return { error: "errors.invalid_input" } // column limit (migration 20261124120000)
   return { rule: { visit_count_field: key, visit_count_value: out } }
 }
-
-/** A stored rule whose field or value was removed from the org's event fields (the door would count nothing). */
-export function visitRuleProblem(defs: FieldDef[], rule: VisitRule): "field_missing" | "value_missing" | null {
-  if (!rule.visit_count_field) return null
-  const def = defs.find((d) => d.key === rule.visit_count_field)
-  if (!def || !RULE_FIELD_TYPES.includes(def.type)) return "field_missing"
-  if (def.type === "select" && !def.options.includes(rule.visit_count_value ?? "")) return "value_missing"
-  return null
-}

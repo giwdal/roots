@@ -3016,7 +3016,6 @@
     "countRuleYes": "Ja",
     "countRuleHint": "Das Feld legst du unter Einstellungen → Felder für Events an. Events ohne diesen Wert zählen nicht, neue Events brauchen das Feld also. Bei „Alle Events zählen“ zählt jedes Event.",
     "countRuleShort": "zählt: {field} = {value}",
-    "countRuleProblem": "Das Event-Feld oder sein Wert gibt es nicht mehr. Die Tür zählt deshalb keinen Besuch. Wähle das Feld neu oder setze „Alle Events zählen“.",
     "typeActive": "aktiv",
     "addType": "Hinzufügen",
     "deleteType": "Mitgliedsart löschen",

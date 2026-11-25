@@ -24,7 +24,7 @@ import { deleteType, saveSettings, saveType } from "../actions"
 import { Field } from "../membership-parts"
 import { VisitRuleFields } from "./visit-rule-fields"
 import { loadFields, type FieldDef } from "@/lib/custom-fields"
-import { RULE_FIELD_TYPES, visitRuleProblem } from "@/members/visit-rule"
+import { RULE_FIELD_TYPES } from "@/members/visit-rule"
 
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
@@ -183,7 +183,6 @@ function TypeForm({ t, type, eventFields }: { t: T; type?: Tables<"membership_ty
         fields={eventFields.filter((f) => RULE_FIELD_TYPES.includes(f.type))}
         field={type?.visit_count_field ?? null}
         value={type?.visit_count_value ?? null}
-        problem={!!type && visitRuleProblem(eventFields, type) !== null}
       />
       <div className="grid gap-2.5">
         <label className="flex items-center gap-2 text-sm">

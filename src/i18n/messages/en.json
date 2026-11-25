@@ -3016,7 +3016,6 @@
     "countRuleYes": "Yes",
     "countRuleHint": "Create the field under Settings → Fields for events. Events without this value don't count, so new events need the field. With \"Every event counts\" every event counts.",
     "countRuleShort": "counts: {field} = {value}",
-    "countRuleProblem": "The event field or its value no longer exists, so the door counts no visit. Pick the field again or set \"Every event counts\".",
     "typeActive": "active",
     "addType": "Add",
     "deleteType": "Delete membership type",

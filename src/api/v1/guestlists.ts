@@ -38,7 +38,7 @@ const Entry = z.object({
   name: z.string(),
   email: z.string().nullable(),
   note: z.string().nullable(),
-  added_via: z.enum(["app", "link", "api"]),
+  added_via: z.enum(["app", "link", "api", "automation"]),
   submitted_by: z.string().nullable().describe("Who entered the name via the sign-up link"),
   ticket_id: uuid.nullable(),
   ticket_code: z.string().nullable().describe("Code of the linked free ticket"),

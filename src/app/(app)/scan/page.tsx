@@ -483,7 +483,10 @@ async function Members({ eventId, q, who, sp }: { eventId: string; q?: string; w
             <input type="hidden" name="event" value={eventId} />
             <input type="hidden" name="contact" value={who} />
             <input type="hidden" name="q" value={q ?? ""} />
-            <SubmitButton size="lg">{t("door.member.admit")}</SubmitButton>
+            {member.result === "limit" && <input type="hidden" name="override" value="1" />}
+            <SubmitButton size="lg" variant={member.result === "limit" ? "destructive" : "default"}>
+              {member.result === "limit" ? t("door.member.override") : t("door.member.admit")}
+            </SubmitButton>
           </form>
         </MemberCard>
       )}

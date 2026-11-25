@@ -13,6 +13,7 @@ import { loadFields, type CustomValues } from "@/lib/custom-fields"
 import type { Tables } from "@/lib/supabase/types"
 import { toLocalInput } from "@/lib/time"
 import { DateInput } from "@/components/date-input"
+import { TypeAndDefaults } from "./type-and-defaults"
 import { MoreDetails } from "@/components/section"
 
 type Ev = Tables<"events">
@@ -23,14 +24,18 @@ export function StatusBadge({ t, status }: { t: T; status: string }) {
   return <Badge variant={variant}>{t.dynamic(`eventsPage.statuses.${status}`)}</Badge>
 }
 
-export async function EventForm({ t, action, ev, disabled, start }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; start?: string /* new event: "YYYY-MM-DDTHH:MM" pre-filled (from a calendar day) */ }) {
+export async function EventForm({ t, action, ev, disabled, initialType, start }: { t: T; action: (fd: FormData) => Promise<void>; ev?: Ev; disabled?: boolean; initialType?: string; start?: string /* new event: "YYYY-MM-DDTHH:MM" pre-filled (from a calendar day) */ }) {
   const ctx = await getContext()
   const mails = ctx.modules.has("email") && ctx.can("email.view")
-  const [{ data: locations }, defs, { data: templates }] = await Promise.all([
+  const [{ data: locations }, defs, { data: templates }, { data: allTypes }] = await Promise.all([
     ctx.supabase.from("locations").select("id, name").eq("org_id", ctx.org.id).order("name"),
     loadFields(ctx.supabase, ctx.org.id, "events"),
     mails ? ctx.supabase.from("email_templates").select("id, name, is_default").eq("org_id", ctx.org.id).order("name") : Promise.resolve({ data: null }),
+    ctx.supabase.from("event_types").select("id, name, slug, capacity, active").eq("org_id", ctx.org.id).order("name"),
   ])
+  // Inactive types can't be picked for new events; an event keeps the one it has.
+  const types = (allTypes ?? []).filter((x) => x.active || x.id === ev?.event_type_id)
+  const withTypes = !ev && types.length > 0 // new event: the type comes first and prefills
   const fallback = templates?.find((x) => x.is_default)
   const more = (
     <>
@@ -69,11 +74,22 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
     <form action={action} className="grid gap-6">
       {ev && <input type="hidden" name="id" value={ev.id} />}
       <fieldset disabled={disabled} className="grid gap-6">
+        {withTypes && (
+          <FormCard id="type" title={t("eventsPage.type")}>
+            <TypeAndDefaults types={types} initialSlug={initialType} />
+          </FormCard>
+        )}
         <FormCard id="when" title={t("eventsPage.basics")}>
           <div className="grid max-w-xl gap-2">
             <Label htmlFor="ev-title">{t("eventsPage.titleLabel")}</Label>
             <Input id="ev-title" name="title" defaultValue={ev?.title} required maxLength={200} className="text-base font-medium" />
           </div>
+          {ev && types.length > 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="ev-type">{t("eventsPage.type")}</Label>
+              <Choice id="ev-type" name="event_type" label={t("eventsPage.type")} dropdown defaultValue={ev.event_type_id} options={types.map((x) => ({ value: x.id, label: x.name }))} />
+            </div>
+          )}
           <div className="flex flex-wrap gap-x-8 gap-y-4">
             <div className="grid gap-2">
               <Label htmlFor="ev-starts">{t("eventsPage.startsAt")}</Label>
@@ -103,11 +119,13 @@ export async function EventForm({ t, action, ev, disabled, start }: { t: T; acti
               <Input id="ev-address" name="venue_address" defaultValue={ev?.venue_address ?? ""} maxLength={500} autoComplete="off" />
             </div>
           </div>
-          {/* How many fit belongs to the place. */}
-          <div className="grid gap-2">
-            <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
-            <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
-          </div>
+          {/* How many fit belongs to the place (a new event with types gets it from the type's box above). */}
+          {!withTypes && (
+            <div className="grid gap-2">
+              <Label htmlFor="ev-capacity">{t("eventsPage.capacity")}</Label>
+              <TypedInput kind="number" id="ev-capacity" name="capacity" min={1} step={1} defaultValue={ev?.capacity ?? ""} />
+            </div>
+          )}
         </FormCard>
 
         <FormCard id="about" title={t("eventsPage.description")}>

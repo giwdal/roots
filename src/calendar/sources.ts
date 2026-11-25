@@ -74,8 +74,8 @@ export async function calendarEntries(ctx: Ctx, t: T, from: string, to: string, 
         const v = typed && (custom as Record<string, unknown> | null)?.[typed.key]
         return (typeof v === "string" && DOT[(typed!.option_colors as Record<string, string>)[v]]) || COLOR.events
       }
-      const { data } = await ctx.supabase.from("events").select("id, title, starts_at, ends_at, status, custom").eq("org_id", org).is("deleted_at", null).lt("starts_at", to).or(`ends_at.gte.${from},and(ends_at.is.null,starts_at.gte.${from})`).limit(1000)
-      return (data ?? []).map((e) => ({ source: "events", id: e.id, title: e.status === "cancelled" ? `✕ ${e.title}` : e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: false, color: colorOf(e.custom), href: `/events/${e.id}` }))
+      const { data } = await ctx.supabase.from("events").select("id, title, starts_at, ends_at, status, custom, event_types(color)").eq("org_id", org).is("deleted_at", null).lt("starts_at", to).or(`ends_at.gte.${from},and(ends_at.is.null,starts_at.gte.${from})`).limit(1000)
+      return (data ?? []).map((e) => ({ source: "events", id: e.id, title: e.status === "cancelled" ? `✕ ${e.title}` : e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: false, color: (e.event_types?.color && DOT[e.event_types.color]) || colorOf(e.custom), href: `/events/${e.id}` }))
     },
     shifts: async () => {
       const { data } = await ctx.supabase.from("shifts").select("id, title, starts_at, ends_at, positions(name)").eq("org_id", org).lt("starts_at", to).gte("ends_at", from).limit(2000)

@@ -13,9 +13,11 @@ import type { TablesUpdate } from "@/lib/supabase/types"
 import { refreshPublic } from "@/lib/public-cache"
 import { back } from "@/lib/url"
 import { checkEvent, EVENT_STATUSES, insertEvent } from "./fields"
+import { readEventType } from "./type-fields"
 import { readEventLinks } from "@/site/blocks"
 
 const PATH = "/events"
+const SETTINGS = "/events/settings"
 
 async function manager() {
   const ctx = await requirePerm("events.manage")
@@ -46,6 +48,8 @@ function readEvent(fd: FormData) {
     description: text(fd, "description")?.slice(0, 20000) ?? null,
     capacity: capRaw ? Number(capRaw) : null,
     links: readEventLinks([0, 1, 2].map((i) => ({ label: fd.get(`link_label_${i}`), url: fd.get(`link_url_${i}`) }))) as never,
+    // Only in the form when the org has event types; otherwise left as it is.
+    ...(fd.has("event_type") && { event_type_id: /^[0-9a-f-]{36}$/.test(String(fd.get("event_type"))) ? String(fd.get("event_type")) : null }),
     // Only in the form for people who see the email templates; otherwise left as it is.
     ...(fd.has("email_template") && { email_template_id: /^[0-9a-f-]{36}$/.test(String(fd.get("email_template"))) ? String(fd.get("email_template")) : null }),
   }
@@ -65,7 +69,13 @@ export async function createEvent(fd: FormData) {
   if ("error" in r) back(`${PATH}/new`, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
   if ("error" in c) back(`${PATH}/new`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  const res = await insertEvent(ctx.supabase, { ...r.row!, custom: c.custom, org_id: ctx.org.id }, r.slug ?? null)
+  // The form prefills the capacity from the type in the browser; here only a type that is gone or inactive is refused.
+  if (r.row!.event_type_id) {
+    const { data: type } = await ctx.supabase.from("event_types").select("active").eq("id", r.row!.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
+    if (!type?.active) back(`${PATH}/new`, { error: t("errors.invalid_input") })
+  }
+  const row = r.row!
+  const res = await insertEvent(ctx.supabase, { ...row, custom: c.custom, org_id: ctx.org.id }, r.slug ?? null)
   if (res.error) back(`${PATH}/new`, { error: res.error.code === "23505" ? t("errors.slug_taken") : dbError(t, res.error) })
   refreshPublic(ctx.org.id) // public pages show this
   back(`${PATH}/${res.data!.id}`, { ok: t("eventsPage.created") })
@@ -199,6 +209,31 @@ export async function bulkTrashEvents(fd: FormData) {
   const error = ids.length ? await trashMany(ctx, "public.events", ids) : null
   refreshPublic(ctx.org.id)
   back(PATH, error ? { error: dbError(t, error) } : { ok: t("common.bulkTrashed", { count: ids.length }) })
+}
+
+// Settings → Event-Typen. Slug empty = made from the name (numbered if taken).
+export async function saveEventType(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = String(fd.get("id") ?? "")
+  const { data: others } = await ctx.supabase.from("event_types").select("id, slug").eq("org_id", ctx.org.id)
+  const r = readEventType(
+    { name: fd.get("name"), slug: String(fd.get("slug") ?? "").trim() || (others ?? []).find((o) => o.id === id)?.slug, color: fd.get("color"), capacity: fd.get("capacity"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
+    (others ?? []).filter((o) => o.id !== id).map((o) => o.slug),
+  )
+  if ("error" in r) back(SETTINGS, { error: t.dynamic(r.error) })
+  const { error } = id
+    ? await ctx.supabase.from("event_types").update(r.row).eq("id", id).eq("org_id", ctx.org.id)
+    : await ctx.supabase.from("event_types").insert({ ...r.row, org_id: ctx.org.id })
+  if (error) back(SETTINGS, { error: error.code === "23505" ? t("errors.slug_taken") : dbError(t, error) })
+  back(SETTINGS, { ok: t("eventTypes.saved") })
+}
+
+export async function deleteEventType(fd: FormData) {
+  const { ctx, t } = await manager()
+  const { error } = await ctx.supabase.from("event_types").delete().eq("id", String(fd.get("id") ?? "")).eq("org_id", ctx.org.id)
+  // Still used by an event (a trashed one too) → foreign key violation: deactivate instead.
+  if (error) back(SETTINGS, { error: error.code === "23503" ? t("eventTypes.inUse") : dbError(t, error) })
+  back(SETTINGS, { ok: t("eventTypes.deleted") })
 }
 
 /** Bulk bar in the trash: restore the ticked events. */

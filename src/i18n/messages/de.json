@@ -744,6 +744,7 @@
       "shift_assignments": "Schicht-Einteilungen",
       "files": "Dateien",
       "membership_types": "Mitgliedsarten",
+      "event_types": "Event-Typen",
       "memberships": "Mitgliedschaften",
       "member_dues": "Mitgliedsbeiträge",
       "sepa_runs": "Lastschriftdateien",
@@ -841,6 +842,7 @@
     "image_type": "Nur PNG, JPG, WebP oder GIF.",
     "image_too_large": "Das Bild ist größer als 2 MB.",
     "slug_taken": "Dieser Slug ist schon vergeben.",
+    "field_in_use": "Dieses Event-Feld wird als Zählregel einer Mitgliedsart benutzt. Ändere erst die Mitgliedsart.",
     "invalid_time": "Bitte gib ein gültiges Datum mit Uhrzeit an.",
     "end_before_start": "Das Ende muss nach dem Beginn liegen.",
     "invalid_input": "Bitte prüfe deine Eingaben.",
@@ -1413,6 +1415,29 @@
     "none": "Für deine Rollen gibt es noch keine Benachrichtigungen.",
     "openInbox": "Zu den Benachrichtigungen"
   },
+  "eventTypes": {
+    "title": "Event-Typen",
+    "hint": "Typen ordnen Events (z. B. Session, Workshop, Klubnacht) und füllen neue Events vor.",
+    "new": "Neuer Typ",
+    "empty": "Noch keine Event-Typen.",
+    "name": "Name",
+    "slug": "Kurzname",
+    "slugHint": "Für die API und Links, z. B. klubnacht. Leer = aus dem Namen.",
+    "color": "Farbe",
+    "colors": { "gray": "Grau", "blue": "Blau", "green": "Grün", "yellow": "Gelb", "orange": "Orange", "red": "Rot", "purple": "Lila", "pink": "Pink" },
+    "defaults": "Voreinstellungen für neue Events",
+    "defaultsHint": "Gilt nur beim Anlegen. Spätere Änderungen am Typ ändern bestehende Events nicht.",
+    "events": "Events",
+    "status": "Status",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "activeLabel": "aktiv (bei neuen Events wählbar)",
+    "delete": "Typ löschen",
+    "confirmDelete": "Typ wirklich löschen?",
+    "inUse": "Dieser Typ wird noch von Events genutzt, auch von gelöschten im Papierkorb. Setze ihn stattdessen auf inaktiv.",
+    "saved": "Typ gespeichert.",
+    "deleted": "Typ gelöscht."
+  },
   "eventsPage": {
     "venueNameShort": "Ort",
     "venueAddressShort": "Adresse",
@@ -1434,6 +1459,7 @@
     "venueAddress": "Adresse des Orts",
     "description": "Beschreibung",
     "capacity": "Kapazität (optional)",
+    "type": "Typ",
     "capacityHelp": "Maximale Anzahl Personen.",
     "image": "Bild",
     "imageHint": "PNG, JPG, WebP oder GIF, max. 2 MB.",
@@ -2531,7 +2557,12 @@
       "lastVisit": "Zuletzt da: {date}",
       "admit": "Einchecken",
       "admitting": "Checkt ein …",
-      "noneFound": "Kein Mitglied gefunden."
+      "noneFound": "Kein Mitglied gefunden.",
+      "limit": "Besuchslimit erreicht",
+      "limitHint": "Alle Besuche dieser Mitgliedsart sind aufgebraucht.",
+      "override": "Trotzdem einlassen",
+      "visitsOf": "{count} von {limit} Besuchen genutzt",
+      "notCounting": "Zählt nicht als Besuch"
     },
     "sale": {
       "cashEntry": "Abendkasse: {event}",
@@ -2976,6 +3007,15 @@
     "interval": "Rhythmus",
     "entryFee": "Aufnahme (€)",
     "noticeMonths": "Frist (Monate)",
+    "visitLimit": "Besuchslimit",
+    "visitLimitHint": "Leer = unbegrenzt. Danach sperrt die Tür, außer man lässt bewusst trotzdem ein. Welche Events zählen, steht unten.",
+    "visitLimitShort": "max. {n} Besuche",
+    "countRuleField": "Es zählen nur Events mit diesem Event-Feld",
+    "countRuleAll": "Alle Events zählen",
+    "countRuleValue": "„{field}“ ist",
+    "countRuleYes": "Ja",
+    "countRuleHint": "Das Feld legst du unter Einstellungen → Felder für Events an. Events ohne diesen Wert zählen nicht, neue Events brauchen das Feld also. Bei „Alle Events zählen“ zählt jedes Event.",
+    "countRuleShort": "zählt: {field} = {value}",
     "typeActive": "aktiv",
     "addType": "Hinzufügen",
     "deleteType": "Mitgliedsart löschen",
@@ -4863,6 +4903,7 @@
       "note": "Notiz",
       "membership": "Mitgliedschaft",
       "membership_type": "Mitgliedsart",
+      "event_type": "Event-Typ",
       "due": "Beitrag",
       "event": "Event",
       "slot": "Timetable-Slot",
@@ -4925,10 +4966,16 @@
         "ends_on": "Ende",
         "note": "Notiz"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Kurzname",
+        "capacity": "Kapazität"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Beitrag (Cent)",
-        "interval": "Intervall"
+        "interval": "Intervall",
+        "visit_limit": "Besuchslimit"
       },
       "due": {
         "kind": "Art",

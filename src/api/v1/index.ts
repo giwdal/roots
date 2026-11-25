@@ -8,6 +8,7 @@ import { endpoints as contacts } from "./contacts"
 import { endpoints as courses } from "./courses"
 import { endpoints as email } from "./email"
 import { endpoints as events } from "./events"
+import { endpoints as eventTypes } from "./event-types"
 import { endpoints as files } from "./files"
 import { endpoints as forms } from "./forms"
 import { endpoints as guestlists } from "./guestlists"
@@ -26,6 +27,7 @@ import { endpoints as wiki } from "./wiki"
 
 export const endpoints: Endpoint[] = [
   ...events,
+  ...eventTypes,
   ...tickets,
   ...pos,
   ...guestlists,

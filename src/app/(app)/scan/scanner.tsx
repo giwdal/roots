@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useT } from "@/i18n/client"
 import { cn } from "@/lib/utils"
-import type { MemberAtDoor } from "@/members/door"
+import { localAdmit, queuedMember, visitLimitReached, type MemberAtDoor } from "@/members/door"
 import { admitMember, checkIn, lookupCode, scanList, scanMembers, syncCheckIns, type ScanEntry, type ScanResult } from "./actions"
 import { MemberCard } from "./member-card"
 import { doorChanged } from "./door-stats"
@@ -83,7 +83,7 @@ export function Scanner({ eventId }: { eventId: string }) {
       // Keep local check-ins that haven't been synced yet.
       const map = Object.fromEntries(list.map((e) => [e.code, cur.queue.includes(e.code) ? { ...e, status: "used" as const } : e]))
       const local = new Map(cur.members?.map((m) => [m.contact_id, m]))
-      const mine = members.map((m) => (cur.queue.includes(`member:${m.contact_id}`) ? (local.get(m.contact_id) ?? m) : m))
+      const mine = members.map((m) => (cur.queue.some((e) => queuedMember(e)?.contactId === m.contact_id) ? (local.get(m.contact_id) ?? m) : m))
       update({ list: map, members: mine, at: new Date().toISOString(), queue: cur.queue })
     } catch {}
   }
@@ -129,7 +129,7 @@ export function Scanner({ eventId }: { eventId: string }) {
     const e = cur.list[clean]
     if (!e) {
       const m = cur.members?.find((x) => x.code === clean || x.number === clean)
-      return m ? { result: "ok", member: { ...m, result: m.checked_in_at ? "already" : "member" } } : { result: "invalid" }
+      return m ? { result: "ok", member: { ...m, result: m.checked_in_at ? "already" : visitLimitReached(m) ? "limit" : "member" } } : { result: "invalid" }
     }
     if (e.status === "used") return { result: "used", holder: e.holder, type: e.type }
     update({ ...cur, list: { ...cur.list, [clean]: { ...e, status: "used" } }, queue: [...cur.queue, clean] })
@@ -151,7 +151,7 @@ export function Scanner({ eventId }: { eventId: string }) {
         r = peekLocally(code) // request failed (bad venue Wi-Fi): fall back to the device list
       }
       setLast({ ...r, code })
-      navigator.vibrate?.(r.result === "valid" || r.member ? 80 : [80, 60, 80])
+      navigator.vibrate?.(r.result === "valid" || (r.member && r.member.result !== "limit") ? 80 : [80, 60, 80])
       busy.current = false
     })
   }
@@ -227,24 +227,23 @@ export function Scanner({ eventId }: { eventId: string }) {
 
   const count = Object.keys(store.list).length
   // No connection: let in on the device, sync later (conflict if another device let them in meanwhile).
-  function admitLocally(contactId: string): MemberAtDoor {
+  function admitLocally(contactId: string, override: boolean): MemberAtDoor {
     const cur = load(eventId)
     const m = cur.members?.find((x) => x.contact_id === contactId)
     if (!m) return { result: "invalid" }
-    if (m.checked_in_at) return { ...m, result: "already" }
-    const now = { ...m, checked_in_at: new Date().toISOString(), visits: (m.visits ?? 0) + 1 }
-    update({ ...cur, members: cur.members!.map((x) => (x.contact_id === contactId ? now : x)), queue: [...cur.queue, `member:${contactId}`] })
-    return { ...now, result: "ok" }
+    const { member, queue } = localAdmit(m, override, new Date().toISOString())
+    if (queue) update({ ...cur, members: cur.members!.map((x) => (x.contact_id === contactId ? member : x)), queue: [...cur.queue, queue] })
+    return member
   }
 
-  function admit(contactId: string) {
+  function admit(contactId: string, override = false) {
     start(async () => {
       let r: MemberAtDoor | { result: "error"; message: string }
       try {
-        r = navigator.onLine ? await admitMember(eventId, contactId) : admitLocally(contactId)
-        if (r.result === "error" && !navigator.onLine) r = admitLocally(contactId)
+        r = navigator.onLine ? await admitMember(eventId, contactId, override) : admitLocally(contactId, override)
+        if (r.result === "error" && !navigator.onLine) r = admitLocally(contactId, override)
       } catch {
-        r = admitLocally(contactId)
+        r = admitLocally(contactId, override)
       }
       setLast((l) => l && (r.result === "error" ? { ...l, result: "error", message: r.message, member: undefined } : { ...l, member: r }))
       navigator.vibrate?.(r.result === "ok" ? 80 : [80, 60, 80])
@@ -276,9 +275,16 @@ export function Scanner({ eventId }: { eventId: string }) {
           <Button type="button" size="lg" variant="ghost" onClick={() => setLast(null)} className={cn(full && "h-12")}>
             {t("common.close")}
           </Button>
-          {last.member.result === "member" && (
-            <Button type="button" size="lg" disabled={pending} onClick={() => admit(last.member!.contact_id!)} className={cn(full && "h-14 text-base")}>
-              {pending ? t("door.member.admitting") : t("door.member.admit")}
+          {(last.member.result === "member" || last.member.result === "limit") && (
+            <Button
+              type="button"
+              size="lg"
+              variant={last.member.result === "limit" ? "destructive" : "default"}
+              disabled={pending}
+              onClick={() => admit(last.member!.contact_id!, last.member!.result === "limit")}
+              className={cn(full && "h-14 text-base")}
+            >
+              {pending ? t("door.member.admitting") : last.member.result === "limit" ? t("door.member.override") : t("door.member.admit")}
             </Button>
           )}
         </div>

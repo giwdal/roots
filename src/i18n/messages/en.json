@@ -744,6 +744,7 @@
       "shift_assignments": "Shift assignments",
       "files": "Files",
       "membership_types": "Membership types",
+      "event_types": "Event types",
       "memberships": "Memberships",
       "member_dues": "Member dues",
       "sepa_runs": "Direct debit files",
@@ -841,6 +842,7 @@
     "image_type": "Only PNG, JPG, WebP or GIF.",
     "image_too_large": "The image is larger than 2 MB.",
     "slug_taken": "This slug is already taken.",
+    "field_in_use": "This event field is used as the counting rule of a membership type. Change the membership type first.",
     "invalid_time": "Please enter a valid date and time.",
     "end_before_start": "The end must be after the start.",
     "invalid_input": "Please check your input.",
@@ -1413,6 +1415,29 @@
     "none": "There are no notifications for your roles yet.",
     "openInbox": "Go to notifications"
   },
+  "eventTypes": {
+    "title": "Event types",
+    "hint": "Types organise events (e.g. session, workshop, club night) and prefill new events.",
+    "new": "New type",
+    "empty": "No event types yet.",
+    "name": "Name",
+    "slug": "Short name",
+    "slugHint": "For the API and links, e.g. club-night. Empty = made from the name.",
+    "color": "Colour",
+    "colors": { "gray": "Gray", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "red": "Red", "purple": "Purple", "pink": "Pink" },
+    "defaults": "Defaults for new events",
+    "defaultsHint": "Only applied when creating. Changing the type later doesn't change existing events.",
+    "events": "Events",
+    "status": "Status",
+    "active": "active",
+    "inactive": "inactive",
+    "activeLabel": "active (can be picked for new events)",
+    "delete": "Delete type",
+    "confirmDelete": "Really delete this type?",
+    "inUse": "This type is still used by events, including trashed ones. Set it to inactive instead.",
+    "saved": "Type saved.",
+    "deleted": "Type deleted."
+  },
   "eventsPage": {
     "venueNameShort": "Venue",
     "venueAddressShort": "Address",
@@ -1434,6 +1459,7 @@
     "venueAddress": "Venue address",
     "description": "Description",
     "capacity": "Capacity (optional)",
+    "type": "Type",
     "capacityHelp": "Maximum number of people.",
     "image": "Image",
     "imageHint": "PNG, JPG, WebP or GIF, max. 2 MB.",
@@ -2531,7 +2557,12 @@
       "lastVisit": "Last visit: {date}",
       "admit": "Check in",
       "admitting": "Checking in …",
-      "noneFound": "No member found."
+      "noneFound": "No member found.",
+      "limit": "Visit limit reached",
+      "limitHint": "All visits of this membership type are used up.",
+      "override": "Let in anyway",
+      "visitsOf": "{count} of {limit} visits used",
+      "notCounting": "Doesn't count as a visit"
     },
     "sale": {
       "cashEntry": "Door sales: {event}",
@@ -2976,6 +3007,15 @@
     "interval": "Interval",
     "entryFee": "Entry fee (€)",
     "noticeMonths": "Notice (months)",
+    "visitLimit": "Visit limit",
+    "visitLimitHint": "Empty = unlimited. After that the door blocks unless someone lets them in anyway. Which events count is set below.",
+    "visitLimitShort": "max. {n} visits",
+    "countRuleField": "Only events with this event field count",
+    "countRuleAll": "Every event counts",
+    "countRuleValue": "\"{field}\" is",
+    "countRuleYes": "Yes",
+    "countRuleHint": "Create the field under Settings → Fields for events. Events without this value don't count, so new events need the field. With \"Every event counts\" every event counts.",
+    "countRuleShort": "counts: {field} = {value}",
     "typeActive": "active",
     "addType": "Add",
     "deleteType": "Delete membership type",
@@ -4863,6 +4903,7 @@
       "note": "Note",
       "membership": "Membership",
       "membership_type": "Membership type",
+      "event_type": "Event type",
       "due": "Due",
       "event": "Event",
       "slot": "Timetable slot",
@@ -4925,10 +4966,16 @@
         "ends_on": "End",
         "note": "Note"
       },
+      "event_type": {
+        "name": "Name",
+        "slug": "Short name",
+        "capacity": "Capacity"
+      },
       "membership_type": {
         "name": "Name",
         "fee_cents": "Fee (cents)",
-        "interval": "Interval"
+        "interval": "Interval",
+        "visit_limit": "Visit limit"
       },
       "due": {
         "kind": "Kind",

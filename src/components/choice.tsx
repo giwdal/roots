@@ -7,10 +7,11 @@ export type ChoiceOption = { value: string; label: string }
 /**
  * Pick one value; the control follows the number of options so every screen decides the same way:
  * ≤ 5 → segmented buttons (all visible, one tap) · 6–15 → dropdown · > 15 → search dropdown.
- * Posts `name` like a select. Not `required` → an empty choice ("–") is offered.
+ * Posts `name` like a select. Not `required` → an empty choice ("–") is offered. `dropdown` forces the dropdown for ≤ 15
+ * options (a value that is not a small fixed set, e.g. an org's own types).
  */
-export function Choice({ name, options, defaultValue, required, disabled, id, label, className, emptyLabel }: { name: string; options: ChoiceOption[]; defaultValue?: string | null; required?: boolean; disabled?: boolean; id?: string; label?: string; className?: string; emptyLabel?: string }) {
-  if (options.length <= 5)
+export function Choice({ name, options, defaultValue, required, disabled, id, label, className, emptyLabel, dropdown }: { name: string; options: ChoiceOption[]; defaultValue?: string | null; required?: boolean; disabled?: boolean; id?: string; label?: string; className?: string; emptyLabel?: string; dropdown?: boolean }) {
+  if (options.length <= 5 && !dropdown)
     return (
       <SegmentGroup id={id} label={label} className={className}>
           {!required && <Segment name={name} value="" label={emptyLabel ?? "–"} defaultChecked={!defaultValue} disabled={disabled} />}

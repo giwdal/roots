@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { TypeBadge } from "../type-badge"
 import { CalendarClockIcon, ExternalLinkIcon, EyeOffIcon, PencilIcon, RotateCcwIcon, ScanLineIcon, SendIcon, Trash2Icon, UndoIcon, XCircleIcon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { SubmitButton } from "@/components/submit-button"
@@ -23,7 +24,7 @@ export default async function EventLayout({ children, params }: { children: Reac
   const t = await getT()
   const { data: ev } = await ctx.supabase
     .from("events")
-    .select("id, title, slug, status, starts_at, ends_at, venue_name, deleted_at, locations(name)")
+    .select("id, title, slug, status, starts_at, ends_at, venue_name, deleted_at, locations(name), event_types(name, color)")
     .eq("id", eventId)
     .eq("org_id", ctx.org.id)
     .maybeSingle()
@@ -57,7 +58,16 @@ export default async function EventLayout({ children, params }: { children: Reac
       <PageHeader
         crumbs={[{ href: "/events", label: t("eventsPage.nav") }, { label: ev.title }]}
         title={live && canManage ? <InlineTitle action={patchEvent} id={ev.id} field="title" name={ev.title} label={t("eventsPage.titleLabel")} /> : ev.title}
-        badge={live ? <StatusBadge t={t} status={ev.status} /> : <StatusBadge t={t} status="trashed" />}
+        badge={
+          live ? (
+            <>
+              <StatusBadge t={t} status={ev.status} />
+              <TypeBadge type={ev.event_types} />
+            </>
+          ) : (
+            <StatusBadge t={t} status="trashed" />
+          )
+        }
         meta={
           <>
             <span>{when}</span>

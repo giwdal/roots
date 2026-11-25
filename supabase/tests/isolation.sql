@@ -1386,6 +1386,104 @@ begin
   end;
   reset role;
 
+  -- Visit limit at the door (#17): the membership type's rule (event custom field = value) says which events count, the limit blocks counting events, override lets in, non-counting stay open
+  declare v_t uuid; v_t2 uuid; v_c2 uuid; v_c uuid; v_e0 uuid; v_e1 uuid; v_e2 uuid; v_e3 uuid; v_x uuid; v_x2 uuid; v_j jsonb;
+  begin
+    insert into public.membership_types (org_id, name, visit_limit, visit_count_field, visit_count_value) values (org_a, 'Probe', 2, 'zaehlt', 'true') returning id into v_t;
+    begin insert into public.membership_types (org_id, name, visit_count_field) values (org_a, 'Halb', 'zaehlt'); assert false, 'a rule needs field and value';
+    exception when check_violation then null; end;
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'Probe', 'probe@x.de') returning id into v_c;
+    insert into public.memberships (org_id, contact_id, type_id, starts_on) values (org_a, v_c, v_t, current_date - 30);
+    insert into public.events (org_id, title, slug, starts_at, custom) values
+      (org_a, 'E0', 'vl-e0', now(), '{"zaehlt": true}'), (org_a, 'E1', 'vl-e1', now(), '{"zaehlt": true}'), (org_a, 'E2', 'vl-e2', now(), '{"zaehlt": true}'),
+      (org_a, 'E3', 'vl-e3', now(), '{"zaehlt": true}'), (org_a, 'X', 'vl-x', now(), '{"zaehlt": false}'), (org_a, 'X2', 'vl-x2', now(), '{}'); -- X2: the key is missing = does not count
+    select id into v_e0 from public.events where org_id = org_a and slug = 'vl-e0'; select id into v_e1 from public.events where org_id = org_a and slug = 'vl-e1';
+    select id into v_e2 from public.events where org_id = org_a and slug = 'vl-e2'; select id into v_e3 from public.events where org_id = org_a and slug = 'vl-e3';
+    select id into v_x from public.events where org_id = org_a and slug = 'vl-x';   select id into v_x2 from public.events where org_id = org_a and slug = 'vl-x2';
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    perform public.member_door(v_e0, '', v_c, true);
+    reset role;
+    update public.tickets set checked_in_at = now() - interval '60 days' where event_id = v_e0 and contact_id = v_c; -- before this membership started
+    set local role authenticated;
+    v_j := public.member_door(v_e1, '', v_c, false);            assert v_j->>'result' = 'member', 'lookup below limit';
+    assert (v_j->>'visits')::int = 0 and (v_j->>'visit_limit')::int = 2, 'visits before starts_on do not count; row carries the limit';
+    v_j := public.member_door(v_x, '', v_c, false);             assert (v_j->>'event_counts')::boolean = false, 'event_counts follows the rule (zaehlt = false)';
+    v_j := public.member_door(v_x, '', v_c, true);              assert v_j->>'result' = 'ok' and (v_j->>'visits')::int = 0, 'non-counting check-in lets in but does not count';
+    select count(*) into n from public.tickets where event_id = v_x and contact_id = v_c and status = 'used'; assert n = 1, 'non-counting check-in is a used ticket (real headcount)';
+    v_j := public.member_door(v_e1, '', v_c, true);             assert (v_j->>'visits')::int = 1, 'counting check-in counts';
+    v_j := public.member_door(v_e2, '', v_c, true);             assert (v_j->>'visits')::int = 2, 'second counts';
+    v_j := public.member_door(v_e2, '', v_c, false);            assert v_j->>'result' = 'already', 'already beats limit';
+    v_j := public.member_door(v_x2, '', v_c, false);            assert (v_j->>'event_counts')::boolean = false, 'a missing value does not count (not null, not true)';
+    v_j := public.member_door(v_x2, '', v_c, true);             assert v_j->>'result' = 'ok', 'non-counting event stays open at the limit';
+    v_j := public.member_door(v_e3, '', v_c, false);            assert v_j->>'result' = 'limit', 'lookup at limit';
+    v_j := public.member_door(v_e3, '', v_c, true);             assert v_j->>'result' = 'limit', 'admit at limit is blocked';
+    select count(*) into n from public.tickets where event_id = v_e3 and contact_id = v_c; assert n = 0, 'blocked = no ticket';
+    v_j := public.member_door(v_e3, '', v_c, true, true);       assert v_j->>'result' = 'ok', 'override lets in';
+    reset role;
+    select count(*) into n from public.pay_orders where org_id = org_a and source_module = 'members' and (metadata->>'override')::boolean; assert n = 1, 'override is recorded on the order';
+    assert not has_function_privilege('anon', 'public.member_door(uuid, text, uuid, boolean, boolean)', 'execute'), 'anon must not run member_door';
+    update public.events set deleted_at = now() where id = v_e1;
+    select (r->>'visits')::int into n from public.member_door_rows(org_a, v_e2, v_c) r; assert n = 2, 'visits at a trashed event do not count';
+    -- a type without a rule counts every event (also those the Probe rule skips)
+    insert into public.membership_types (org_id, name, visit_limit) values (org_a, 'Frei', 1) returning id into v_t2;
+    insert into public.contacts (org_id, first_name, email) values (org_a, 'Frei', 'frei@x.de') returning id into v_c2;
+    insert into public.memberships (org_id, contact_id, type_id, starts_on) values (org_a, v_c2, v_t2, current_date - 30);
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    v_j := public.member_door(v_x, '', v_c2, true);             assert v_j->>'result' = 'ok' and (v_j->>'visits')::int = 1, 'without a rule every event counts (X counts for this type)';
+    v_j := public.member_door(v_x2, '', v_c2, false);           assert v_j->>'result' = 'limit', 'the rule belongs to the membership type: limit 1 reached by one check-in at X';
+    reset role;
+  end;
+
+  -- A custom field used as a membership type's counting rule can't be deleted until the rule is changed (field_in_use)
+  declare v_f uuid; v_mt uuid;
+  begin
+    insert into public.custom_fields (org_id, entity, key, label, type) values (org_a, 'events', 'regel_zaehlt', 'Regel', 'boolean') returning id into v_f;
+    insert into public.membership_types (org_id, name, visit_limit, visit_count_field, visit_count_value) values (org_a, 'Mit Regel', 3, 'regel_zaehlt', 'true') returning id into v_mt;
+    begin delete from public.custom_fields where id = v_f; assert false, 'a field used by a counting rule was deleted';
+    exception when others then if sqlerrm <> 'field_in_use' then raise; end if; end;
+    update public.membership_types set visit_count_field = null, visit_count_value = null where id = v_mt;
+    delete from public.custom_fields where id = v_f;
+    get diagnostics n = row_count;                                             assert n = 1, 'a field no rule uses can be deleted';
+  end;
+
+  -- Event types: per org, an event may only use its own org's type, a type in use can't be deleted
+  declare v_ta uuid; v_tx uuid; v_x uuid; v_e uuid;
+  begin
+    insert into public.orgs (name, slug) values ('Org X', 'iso-org-x') returning id into v_x;
+    insert into public.event_types (org_id, name, slug, capacity) values (org_a, 'Klubnacht', 'klubnacht', 300) returning id into v_ta;
+    insert into public.event_types (org_id, name, slug) values (v_x, 'Fremd', 'fremd') returning id into v_tx;
+    begin insert into public.event_types (org_id, name, slug) values (org_a, 'Dup', 'klubnacht'); assert false, 'slug unique per org';
+    exception when unique_violation then null; end;
+    begin insert into public.events (org_id, title, slug, starts_at, event_type_id) values (org_a, 'X', 'et-x', now(), v_tx); assert false, 'foreign type rejected';
+    exception when foreign_key_violation then null; end;
+    insert into public.events (org_id, title, slug, starts_at, event_type_id) values (org_a, 'Mit Typ', 'et-ok', now(), v_ta) returning id into v_e;
+    begin delete from public.event_types where id = v_ta; assert false, 'type in use must not be deleted';
+    exception when foreign_key_violation then null; end;
+    select count(*) into n from public.events where id = v_e and capacity is null; assert n = 1, 'the DB does not apply type defaults (the app does)';
+    assert not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name in ('events', 'event_types') and column_name = 'counts_visit'), 'counts_visit is gone (the rule lives on the membership type)';
+    update public.org_members set role_id = (select id from public.roles where org_id is null and name ->> 'en' = 'Member') where org_id = org_a and user_id = c;
+    perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true); -- plain Member: no events.manage
+    set local role authenticated;
+    begin insert into public.event_types (org_id, name, slug) values (org_a, 'Member', 'member-x'); assert false, 'plain member wrote a type';
+    exception when insufficient_privilege then null; end;
+    reset role;
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true); -- the owner writes through the policies
+    set local role authenticated;
+    select count(*) into n from public.event_types where org_id = v_x; assert n = 0, 'owner of A sees types of another org';
+    begin insert into public.event_types (org_id, name, slug) values (v_x, 'Hack', 'hack'); assert false, 'A wrote a type into another org';
+    exception when insufficient_privilege then null; end;
+    insert into public.event_types (org_id, name, slug) values (org_a, 'Owner', 'owner-typ');
+    update public.event_types set name = 'Owner 2' where org_id = org_a and slug = 'owner-typ';
+    get diagnostics n = row_count;                                             assert n = 1, 'owner edits a type';
+    delete from public.event_types where org_id = org_a and slug = 'owner-typ';
+    get diagnostics n = row_count;                                             assert n = 1, 'owner deletes an unused type';
+    reset role;
+    assert not has_table_privilege('anon', 'public.event_types', 'select'), 'anon sees no types';
+    assert not has_column_privilege('anon', 'public.events', 'event_type_id', 'select'), 'anon must not read events.event_type_id';
+  end;
+
   -- contact search over custom values: text and numbers only, nothing for a non-object
   assert public.custom_text('{"nr":"TA-90","n":7,"ok":true}') = '7 TA-90', 'custom_text keeps text + numbers, drops booleans';
   assert public.custom_text('[]') is null and public.custom_text('{"ok":true}') is null, 'custom_text: nothing to search';

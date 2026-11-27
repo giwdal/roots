@@ -7,7 +7,7 @@ import { getT } from "@/i18n/server"
 import { APP_URL } from "@/lib/url"
 
 // "Mit KI verbinden": the MCP address to copy plus one-click starts where the app supports it. Cursor and VS Code have
-// install links; Claude (claude.ai / Desktop) has none, so the button opens its connector settings and the URL is
+// install links; Claude (claude.ai / Desktop) and ChatGPT have none, so their buttons open the connector settings and the URL is
 // pasted there. Signing in and picking the org happen on /oauth/consent.
 export async function ConnectAi() {
   const t = await getT()

@@ -32,6 +32,12 @@ export async function ConnectAi() {
           </span>
           <ExternalLinkIcon />
         </Button>
+        <Button render={<a href="https://chatgpt.com/#settings/Connectors" target="_blank" rel="noreferrer" />} nativeButton={false} variant="outline" className="justify-between">
+          <span className="flex items-center gap-2">
+            {logo("openai", "dark:invert")} {t("settings.openChatgpt")}
+          </span>
+          <ExternalLinkIcon />
+        </Button>
         <Button render={<a href={cursor} />} nativeButton={false} variant="outline" className="justify-between">
           <span className="flex items-center gap-2">
             {logo("cursor", "dark:invert")} {t("settings.installIn", { app: "Cursor" })}
@@ -46,6 +52,7 @@ export async function ConnectAi() {
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t("settings.claudeSteps")}</p>
+      <p className="text-xs text-muted-foreground">{t("settings.chatgptSteps")}</p>
       <div className={row}>
         {logo("claude")}
         <code className="min-w-0 flex-1 truncate text-xs">{cli}</code>

@@ -22,9 +22,6 @@ import { param, siteUrl, withParams } from "@/lib/url"
 import { INTERVALS, type Interval } from "@/members/dues"
 import { deleteType, saveSettings, saveType } from "../actions"
 import { Field } from "../membership-parts"
-import { VisitRuleFields } from "./visit-rule-fields"
-import { loadFields, type FieldDef } from "@/lib/custom-fields"
-import { RULE_FIELD_TYPES } from "@/members/visit-rule"
 
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
 
@@ -36,12 +33,12 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
   const t = await getT()
   const sp = await searchParams
   const now = today()
-  const [{ data: settings }, { data: range }, { data: types }, { data: active }, eventFields] = await Promise.all([
+  const [{ data: settings }, { data: range }, { data: types }, { data: active }, { data: eventTypes }] = await Promise.all([
     ctx.supabase.from("member_settings").select("*").eq("org_id", ctx.org.id).maybeSingle(),
     ctx.supabase.from("number_ranges").select("format, next_number, yearly_reset").eq("org_id", ctx.org.id).eq("kind", "member").maybeSingle(),
     ctx.supabase.from("membership_types").select("*").eq("org_id", ctx.org.id).order("name"),
     ctx.supabase.from("memberships").select("type_id").eq("org_id", ctx.org.id).is("deleted_at", null).lte("starts_on", now).or(`ends_on.is.null,ends_on.gte.${now}`),
-    loadFields(ctx.supabase, ctx.org.id, "events"),
+    ctx.supabase.from("event_types").select("id, name, active").eq("org_id", ctx.org.id).order("name"),
   ])
   const counts = new Map<string, number>()
   for (const m of active ?? []) counts.set(m.type_id, (counts.get(m.type_id) ?? 0) + 1)
@@ -67,11 +64,8 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
                   x.notice_months ? t("membership.noticeShortValue", { n: x.notice_months }) : null,
                   x.prorate && t("membership.prorate"),
                   x.visit_limit ? t("membership.visitLimitShort", { n: x.visit_limit }) : null,
-                  x.visit_limit && x.visit_count_field
-                    ? t("membership.countRuleShort", {
-                        field: eventFields.find((f) => f.key === x.visit_count_field)?.label ?? x.visit_count_field,
-                        value: eventFields.find((f) => f.key === x.visit_count_field)?.type === "boolean" ? t("membership.countRuleYes") : (x.visit_count_value ?? ""),
-                      })
+                  x.visit_limit && x.visit_event_types
+                    ? t("membership.countRuleShort", { types: t.list(x.visit_event_types.map((id) => eventTypes?.find((e) => e.id === id)?.name ?? "?")) })
                     : null,
                 ]
                   .filter(Boolean)
@@ -142,14 +136,17 @@ export default async function MembersSettingsPage({ searchParams }: PageProps<"/
               <input type="hidden" name="id" value={edit.id} />
             </form>
           )}
-          <TypeForm t={t} type={edit} eventFields={eventFields} />
+          <TypeForm t={t} type={edit} eventTypes={eventTypes ?? []} />
         </UrlSheet>
       )}
     </Page>
   )
 }
 
-function TypeForm({ t, type, eventFields }: { t: T; type?: Tables<"membership_types">; eventFields: FieldDef[] }) {
+function TypeForm({ t, type, eventTypes }: { t: T; type?: Tables<"membership_types">; eventTypes: { id: string; name: string; active: boolean }[] }) {
+  const counted = type?.visit_event_types ?? []
+  // Inactive types only show while this membership type still counts them.
+  const offered = eventTypes.filter((e) => e.active || counted.includes(e.id))
   const id = type?.id ?? "new"
   return (
     <form action={saveType} className="grid gap-4">
@@ -178,12 +175,18 @@ function TypeForm({ t, type, eventFields }: { t: T; type?: Tables<"membership_ty
         <TypedInput kind="number" id={`t-visits-${id}`} name="visit_limit" min={1} max={1000} defaultValue={type?.visit_limit ?? ""} />
         <p className="text-xs text-muted-foreground">{t("membership.visitLimitHint")}</p>
       </div>
-      <VisitRuleFields
-        id={`t-rule-${id}`}
-        fields={eventFields.filter((f) => RULE_FIELD_TYPES.includes(f.type))}
-        field={type?.visit_count_field ?? null}
-        value={type?.visit_count_value ?? null}
-      />
+      {offered.length > 0 && (
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-sm font-medium">{t("membership.countRule")}</legend>
+          {offered.map((e) => (
+            <label key={e.id} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="size-4 accent-primary" name="visit_event_types" value={e.id} defaultChecked={counted.includes(e.id)} />
+              {e.name}
+            </label>
+          ))}
+          <p className="text-xs text-muted-foreground">{t("membership.countRuleHint")}</p>
+        </fieldset>
+      )}
       <div className="grid gap-2.5">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" className="size-4 accent-primary" name="prorate" value="on" defaultChecked={type?.prorate ?? false} />

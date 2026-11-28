@@ -33,7 +33,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
   const view = VIEWS.find((v) => v === param(sp, "view")) ?? "upcoming"
   const status = STATUSES.find((s) => s === param(sp, "status"))
   const page = pageParam(sp)
-  const typeSlug = param(sp, "type")
+  const typeId = /^[0-9a-f-]{36}$/.test(param(sp, "type") ?? "") ? param(sp, "type") : undefined
   // Old drawer links (?edit=<id>) → the event's page.
   const editId = param(sp, "edit")
   if (editId && /^[0-9a-f-]{36}$/.test(editId)) redirect(`/events/${editId}`)
@@ -45,7 +45,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
   const tickets = !trash && ctx.modules.has("tickets") && ctx.can("tickets.view")
   let query = ctx.supabase
     .from("events")
-    .select(`id, title, slug, status, starts_at, ends_at, venue_name, capacity, deleted_at, sold:tickets(count), event_types${typeSlug ? "!inner" : ""}(name, slug, color)`)
+    .select(`id, title, slug, status, starts_at, ends_at, venue_name, capacity, deleted_at, sold:tickets(count), event_types(name, color)`)
     .eq("org_id", ctx.org.id)
     .range(...pageRange(page))
   if (trash) query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false })
@@ -58,12 +58,12 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
     if (status) query = query.eq("status", status)
   }
   if (q) query = query.or(`title.ilike.%${q}%,venue_name.ilike.%${q}%`)
-  if (typeSlug) query = query.eq("event_types.slug", typeSlug)
+  if (typeId) query = query.eq("event_type_id", typeId)
   if (tickets) query = query.in("sold.status", ["valid", "used"])
-  const [{ data }, { data: typeList }] = await Promise.all([query, ctx.supabase.from("event_types").select("name, slug").eq("org_id", ctx.org.id).order("name")])
+  const [{ data }, { data: typeList }] = await Promise.all([query, ctx.supabase.from("event_types").select("id, name").eq("org_id", ctx.org.id).order("name")])
   const rows = data?.slice(0, PAGE_SIZE) ?? []
   const counts = tickets ? new Map(rows.map((r) => [r.id, r.sold[0]?.count ?? 0])) : null
-  const filtered = !!(q || status || typeSlug || view !== "upcoming")
+  const filtered = !!(q || status || typeId || view !== "upcoming")
 
   return (
     <Page>
@@ -91,7 +91,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
               items={VIEWS.map((v) => ({ href: withParams(sp, { view: v === "upcoming" ? undefined : v, page: undefined }), label: t.dynamic(`eventsPage.${v}`), current: v === view }))}
             />
             <FilterMenu param="status" label={t("eventsPage.status")} options={STATUSES.map((s) => ({ value: s, label: t.dynamic(`eventsPage.statuses.${s}`) }))} />
-            {!!typeList?.length && <FilterMenu param="type" label={t("eventsPage.type")} options={typeList.map((x) => ({ value: x.slug, label: x.name }))} />}
+            {!!typeList?.length && <FilterMenu param="type" label={t("eventsPage.type")} options={typeList.map((x) => ({ value: x.id, label: x.name }))} />}
           </>
         )}
       </ListToolbar>

@@ -7,7 +7,6 @@ import { Notice } from "@/components/notice"
 import { EmptyState, Page, PageHeader } from "@/components/page"
 import { SaveBar } from "@/components/save-bar"
 import { SubmitButton } from "@/components/submit-button"
-import { TypedInput } from "@/components/typed-input"
 import { UrlSheet } from "@/components/url-sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -53,7 +52,6 @@ export default async function EventSettingsPage({ searchParams }: PageProps<"/ev
                 </span>
               ),
             },
-            { header: t("eventTypes.slug"), cell: (x) => <span className="text-muted-foreground">{x.slug}</span> },
             { header: t("eventTypes.events"), cell: (x) => <span className="tabular-nums">{x.events[0]?.count ?? 0}</span> },
             { header: t("eventTypes.status"), cell: (x) => (x.active ? <Badge>{t("eventTypes.active")}</Badge> : <Badge variant="outline">{t("eventTypes.inactive")}</Badge>) },
           ]}
@@ -90,21 +88,8 @@ function TypeForm({ t, type }: { t: T; type?: Tables<"event_types"> }) {
           <Input id={`et-name-${id}`} name="name" required maxLength={100} defaultValue={type?.name ?? ""} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`et-slug-${id}`}>{t("eventTypes.slug")}</Label>
-          <Input id={`et-slug-${id}`} name="slug" maxLength={80} defaultValue={type?.slug ?? ""} pattern="[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]" autoComplete="off" />
-          <p className="text-xs text-muted-foreground">{t("eventTypes.slugHint")}</p>
-        </div>
-        <div className="grid gap-2">
           <Label htmlFor={`et-color-${id}`}>{t("eventTypes.color")}</Label>
           <Choice id={`et-color-${id}`} name="color" label={t("eventTypes.color")} defaultValue={type?.color} options={STATUS_COLORS.map((c) => ({ value: c, label: t.dynamic(`eventTypes.colors.${c}`) }))} />
-        </div>
-        <div className="grid gap-3 rounded-lg border p-4">
-          <p className="text-sm font-medium">{t("eventTypes.defaults")}</p>
-          <p className="text-xs text-muted-foreground">{t("eventTypes.defaultsHint")}</p>
-          <div className="grid gap-2">
-            <Label htmlFor={`et-cap-${id}`}>{t("eventsPage.capacity")}</Label>
-            <TypedInput kind="number" id={`et-cap-${id}`} name="capacity" min={1} step={1} defaultValue={type?.capacity ?? ""} />
-          </div>
         </div>
         {type && (
           <label className="flex items-center gap-2 text-sm">

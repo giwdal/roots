@@ -26,6 +26,7 @@ export default async function LocationsSettings({ searchParams }: PageProps<"/se
               {l && <input type="hidden" name="id" value={l.id} />}
               <Input name="name" defaultValue={l?.name} required maxLength={100} placeholder={t("locations.namePlaceholder")} aria-label={t("locations.name")} className="w-48" disabled={!canManage} />
               <Input name="address" defaultValue={l?.address ?? ""} maxLength={500} placeholder={t("locations.address")} aria-label={t("locations.address")} className="min-w-48 flex-1" disabled={!canManage} />
+              <Input name="capacity" type="number" inputMode="numeric" min={1} step={1} defaultValue={l?.capacity ?? ""} placeholder={t("locations.capacity")} aria-label={t("locations.capacity")} className="w-28" disabled={!canManage} />
               {canManage && (
                 <SubmitButton size="sm" variant={l ? "outline" : "default"}>
                   {l ? t("common.save") : t("locations.add")}

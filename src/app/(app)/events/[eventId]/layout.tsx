@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { TypeBadge } from "../type-badge"
-import { CalendarClockIcon, ExternalLinkIcon, EyeOffIcon, PencilIcon, RotateCcwIcon, ScanLineIcon, SendIcon, Trash2Icon, UndoIcon, XCircleIcon } from "lucide-react"
+import { CalendarClockIcon, CopyIcon, ExternalLinkIcon, EyeOffIcon, PencilIcon, RotateCcwIcon, ScanLineIcon, SendIcon, Trash2Icon, UndoIcon, XCircleIcon } from "lucide-react"
 import { ActionsMenu, MenuLink, MenuSeparator, MenuSubmit } from "@/components/actions-menu"
 import { SubmitButton } from "@/components/submit-button"
 import { Page, PageHeader } from "@/components/page"
@@ -102,6 +102,11 @@ export default async function EventLayout({ children, params }: { children: Reac
               {canManage && (
                 <MenuLink href={`${base}?edit=${ev.id}`} icon={<PencilIcon />}>
                   {t("common.editAll")}
+                </MenuLink>
+              )}
+              {canManage && (
+                <MenuLink href={`${base}?new=repeat`} icon={<CopyIcon />}>
+                  {t("eventsPage.series.repeat")}
                 </MenuLink>
               )}
               {canManage && ev.status === "published" && (

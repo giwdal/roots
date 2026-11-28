@@ -8,7 +8,7 @@ import { loadFields, readCustomObject, type CustomValues } from "@/lib/custom-fi
 import { validRangeFormat } from "@/lib/number-ranges"
 import { isPaused, type Interval } from "@/members/dues"
 import { memberDoor } from "@/members/door"
-import { readVisitRule } from "@/members/visit-rule"
+import { readVisitTypes } from "@/members/visit-rule"
 import { compact, CREDITOR_ID, type Fail } from "@/members/server"
 import { ApiError, dbError, endpoint, list, notFound, page, paged, uuid, type Endpoint } from "../core"
 import { ImportResult, trashRow } from "./contacts"
@@ -38,12 +38,11 @@ const MembershipType = z.object({
   fee_is_minimum: z.boolean().describe("The fee is a minimum (\"from X €\"): members may pay more"),
   notice_months: z.number().int(),
   visit_limit: z.number().int().nullable().describe("Counting visits allowed per membership (null = unlimited); the door blocks after that unless overridden"),
-  visit_count_field: z.string().nullable().describe("Key of an event custom field: only events whose field equals visit_count_value count towards the limit (null = every event counts)"),
-  visit_count_value: z.string().nullable().describe("The value that field must have (select option, text, or `true` for a yes/no field). Events without the value don't count"),
+  visit_event_types: z.array(uuid).nullable().describe("Event types whose events count towards the limit (see GET /event-types); null = every event counts"),
   prorate: z.boolean(),
   active: z.boolean(),
 })
-const TYPE_COLS = "id, name, fee:fee_cents, interval, entry_fee:entry_fee_cents, fee_is_minimum, notice_months, visit_limit, visit_count_field, visit_count_value, prorate, active"
+const TYPE_COLS = "id, name, fee:fee_cents, interval, entry_fee:entry_fee_cents, fee_is_minimum, notice_months, visit_limit, visit_event_types, prorate, active"
 const TypeInput = z
   .object({
     name: z.string().trim().min(1).max(100),
@@ -53,20 +52,19 @@ const TypeInput = z
     fee_is_minimum: z.boolean().describe("The fee is a minimum (\"from X €\"): members may pay more"),
     notice_months: z.number().int().min(0).max(24),
     visit_limit: z.number().int().min(1).max(1000).nullable().describe("Counting visits allowed per membership (null = unlimited)"),
-    visit_count_field: z.string().max(40).nullable().describe("Key of an event custom field (type select, yes/no or text, see GET /fields): only events whose field equals visit_count_value count. null = every event counts. Give it together with visit_count_value"),
-    visit_count_value: z.string().max(200).nullable().describe("Value the field must have: an option of a select field, any text, or `true` for a yes/no field. Events without the value do not count"),
+    visit_event_types: z.array(uuid).max(50).nullable().describe("Only events of these event types count towards the limit (ids from GET /event-types); null or [] = every event counts. Events without a type don't count under a list"),
     prorate: z.boolean().describe("Bill partial periods pro rata when joining/leaving mid-period"),
     active: z.boolean().describe("Inactive types can't be chosen for new members"),
   })
   .partial()
   .strict()
-// The counting rule needs the org's event fields; the two parts come together (both null = no rule).
+// The counting list must name the org's own event types (null or [] = every event counts).
 async function ruleRow(db: Db, orgId: string, b: z.infer<typeof TypeInput>) {
-  if (b.visit_count_field === undefined && b.visit_count_value === undefined) return {}
-  if (b.visit_count_field === undefined || b.visit_count_value === undefined) throw new ApiError(422, "invalid_input", "Give visit_count_field and visit_count_value together.")
-  const r = readVisitRule(await loadFields(db, orgId, "events"), b.visit_count_field, b.visit_count_value)
-  if ("error" in r) throw new ApiError(422, "invalid_input", "visit_count_field must be an event custom field of type select, yes/no or text, and visit_count_value one of its values (yes/no: `true`).")
-  return r.rule
+  if (b.visit_event_types === undefined) return {}
+  const { data } = await db.from("event_types").select("id").eq("org_id", orgId)
+  const r = readVisitTypes(b.visit_event_types, (data ?? []).map((x) => x.id))
+  if ("error" in r) throw new ApiError(422, "invalid_input", "visit_event_types must be ids of this organisation's event types.")
+  return { visit_event_types: r.types }
 }
 const typeRow = (b: z.infer<typeof TypeInput>) => ({
   ...(b.name !== undefined && { name: b.name }),
@@ -516,7 +514,7 @@ export const endpoints: Endpoint[] = [
     tag: "Members",
     summary: "Member check-in at the door",
     description:
-      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). `limit` = the membership type's visit limit is reached at an event that counts as a visit: nobody is let in unless `override: true` (events that don't match the membership type's counting rule never block). A cancelled event lets nobody in: `admit` fails with 422 `event_cancelled`. Needs the members and tickets modules.",
+      "Find a member by `code` (the 12-character member card code, or the member number) or `contact_id`. Without `admit` it only looks them up (`member`). With `admit: true` they are let in: a used, free ticket of the event's member ticket type (counts against capacity), event `membership.checked_in`. Results: `ok`, `member`, `already` (in since `checked_in_at`), `not_member`, `invalid`; `full` = event capacity reached (not enforced for members). `limit` = the membership type's visit limit is reached at an event that counts as a visit: nobody is let in unless `override: true` (events whose type the membership type doesn't count never block). A cancelled event lets nobody in: `admit` fails with 422 `event_cancelled`. Needs the members and tickets modules.",
     body: z.object({ code: z.string().max(40).optional(), contact_id: uuid.optional(), admit: z.boolean().optional(), override: z.boolean().optional().describe("Let in although the membership type's visit limit is reached (recorded on the order)") }).strict(),
     response: z.object({
       result: z.enum(["invalid", "not_member", "member", "ok", "already", "limit"]),
@@ -534,7 +532,7 @@ export const endpoints: Endpoint[] = [
       paused_until: day.nullable().optional(),
       overdue_count: z.number().int().optional(),
       overdue_cents: z.number().int().optional(),
-      visits: z.number().int().optional().describe("Counting check-ins in the current membership (events that match the membership type's counting rule)"),
+      visits: z.number().int().optional().describe("Counting check-ins in the current membership (events of the types the membership type counts, or all)"),
       last_visit: ts.nullable().optional(),
       checked_in_at: ts.nullable().optional(),
     }),

@@ -23,6 +23,7 @@ import { customDetails } from "@/components/custom-field-details"
 import { toLocalInput } from "@/lib/time"
 import { patchEvent, updateEvent, updateEventImage } from "../actions"
 import { EventForm } from "../event-form"
+import { SeriesSection } from "./series-section"
 
 // Event overview: what's the state (tickets, money, check-ins, waiting list), what's still missing before it goes
 // live, the description and the next slots of the programme; the right rail holds the properties (edited in place),
@@ -244,6 +245,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
                 </ul>
               </Section>
             )}
+            <SeriesSection ctx={ctx} t={t} ev={ev} sp={sp} canManage={canManage} />
             <Section id="image" title={t("eventsPage.image")}>
               {canManage ? (
                 <ImageForm labelHidden action={updateEventImage} id="ev-image" label={t("eventsPage.image")} hint={t("eventsPage.imageHint")} name={ev.title} path={ev.image_path} square hidden={{ id: ev.id }} />

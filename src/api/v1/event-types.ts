@@ -4,7 +4,7 @@ import { messages } from "@/i18n/config"
 import { createT } from "@/i18n/translate"
 import { STATUS_COLORS } from "@/projects/fields"
 import { ApiError, dbError, endpoint, notFound, uuid, type Endpoint } from "../core"
-import { ts, type Db } from "./shared"
+import { ts } from "./shared"
 
 const en = createT("en", messages.en)
 const Ok = z.object({ ok: z.literal(true) })
@@ -12,31 +12,24 @@ const Ok = z.object({ ok: z.literal(true) })
 const EventType = z.object({
   id: uuid,
   name: z.string(),
-  slug: z.string().describe("Short name, unique in the organisation (a–z, 0–9, hyphens); usable instead of the id in the events API"),
   color: z.enum(STATUS_COLORS).nullable().describe("Colour in calendar and lists"),
   active: z.boolean().describe("Inactive types can't be chosen for new events"),
-  capacity: z.number().int().nullable().describe("Default for the new event's capacity (null = none)"),
   created_at: ts,
   updated_at: ts,
 })
-const COLS = "id, name, slug, color, active, capacity, created_at, updated_at"
+const COLS = "id, name, color, active, created_at, updated_at"
 const Input = z
   .object({
     name: z.string().trim().min(1).max(100),
-    slug: z.string().describe("Optional, made from the name when empty; numbered if taken"),
     color: z.enum(STATUS_COLORS).nullable(),
     active: z.boolean(),
-    capacity: z.number().int().min(1).nullable(),
   })
   .partial()
   .strict()
 
-const slugTaken = () => new ApiError(409, "slug_taken", "Another event type already uses this slug.")
-
-// Same checks as the App's form; `rest` = the org's other slugs (an empty slug is made from the name).
-async function read(db: Db, orgId: string, body: Parameters<typeof readEventType>[0], id?: string) {
-  const { data: others } = await db.from("event_types").select("id, slug").eq("org_id", orgId)
-  const r = readEventType(body, (others ?? []).filter((o) => o.id !== id).map((o) => o.slug))
+// Same checks as the App's form.
+function read(body: Parameters<typeof readEventType>[0]) {
+  const r = readEventType(body)
   if ("error" in r) throw new ApiError(422, "invalid_input", "Invalid input.")
   return r.row
 }
@@ -48,7 +41,7 @@ export const endpoints: Endpoint[] = [
     permission: "events.view",
     tag: "Events",
     summary: "List event types",
-    description: "The organisation's event types (name, slug, colour, defaults for new events). Events carry `event_type_id` and `event_type_slug`.",
+    description: "The organisation's event types (name, colour, active). Events carry `event_type_id`; membership types can count only certain types as visits (`visit_event_types`).",
     response: z.object({ data: z.array(EventType) }),
     async handler({ db, orgId }) {
       const { data } = await db.from("event_types").select(COLS).eq("org_id", orgId).order("name")
@@ -75,14 +68,13 @@ export const endpoints: Endpoint[] = [
     tag: "Events",
     summary: "Create an event type",
     description:
-      "A type labels events (filters, colour) and presets new events: `capacity` is copied into an event created with this type unless the request sets it. (Which events count towards a membership type's visit limit is set on the membership type, not here.) Changing a type later does not change existing events. 409 `slug_taken` if a given slug is in use.",
+      "A type labels events (filter, colour in calendar and lists). Which types count towards a membership type's visit limit is set on the membership type (`visit_event_types`).",
     body: Input.required({ name: true }),
     response: EventType,
     status: 201,
     async handler({ db, orgId, body }) {
-      const row = await read(db, orgId, body)
-      const { data, error } = await db.from("event_types").insert({ ...row, org_id: orgId }).select(COLS).single()
-      if (error) throw error.code === "23505" ? slugTaken() : dbError(error)
+      const { data, error } = await db.from("event_types").insert({ ...read(body), org_id: orgId }).select(COLS).single()
+      if (error) throw dbError(error)
       return data
     },
   }),
@@ -92,15 +84,14 @@ export const endpoints: Endpoint[] = [
     permission: "events.manage",
     tag: "Events",
     summary: "Change an event type",
-    description: "Only the given fields change. Existing events keep their own values.",
+    description: "Only the given fields change.",
     body: Input,
     response: EventType,
     async handler({ db, orgId, params, body }) {
       const { data: old } = await db.from("event_types").select(COLS).eq("id", params.id).eq("org_id", orgId).maybeSingle()
       if (!old) throw notFound()
-      const row = await read(db, orgId, { ...old, ...body, slug: body.slug || old.slug }, params.id) // an empty slug keeps the old one
-      const { data, error } = await db.from("event_types").update(row).eq("id", params.id).eq("org_id", orgId).select(COLS).single()
-      if (error) throw error.code === "23505" ? slugTaken() : dbError(error)
+      const { data, error } = await db.from("event_types").update(read({ ...old, ...body })).eq("id", params.id).eq("org_id", orgId).select(COLS).single()
+      if (error) throw dbError(error)
       return data
     },
   }),
@@ -110,7 +101,7 @@ export const endpoints: Endpoint[] = [
     permission: "events.manage",
     tag: "Events",
     summary: "Delete an event type",
-    description: "Only types no event uses, trashed events included (409 `type_in_use` otherwise: set `active` to false instead).",
+    description: "Only types no event uses (trashed events included) and no membership type counts (409 `type_in_use` otherwise: set `active` to false instead).",
     response: Ok,
     async handler({ db, orgId, params }) {
       const { error, count } = await db.from("event_types").delete({ count: "exact" }).eq("id", params.id).eq("org_id", orgId)

@@ -15,6 +15,7 @@ import { back } from "@/lib/url"
 import { checkEvent, EVENT_STATUSES, insertEvent } from "./fields"
 import { readEventType } from "./type-fields"
 import { readEventLinks } from "@/site/blocks"
+import { cancelEvents, repeatEvent, retimeEvents } from "./series-server"
 
 const PATH = "/events"
 const SETTINGS = "/events/settings"
@@ -69,7 +70,7 @@ export async function createEvent(fd: FormData) {
   if ("error" in r) back(`${PATH}/new`, { error: t.dynamic(r.error!) })
   const c = await readEventCustom(ctx, fd)
   if ("error" in c) back(`${PATH}/new`, { error: `${c.field}: ${t.dynamic(c.error)}` })
-  // The form prefills the capacity from the type in the browser; here only a type that is gone or inactive is refused.
+  // A type that is gone or inactive is refused.
   if (r.row!.event_type_id) {
     const { data: type } = await ctx.supabase.from("event_types").select("active").eq("id", r.row!.event_type_id).eq("org_id", ctx.org.id).maybeSingle()
     if (!type?.active) back(`${PATH}/new`, { error: t("errors.invalid_input") })
@@ -189,9 +190,12 @@ export async function updateEventImage(fd: FormData) {
   const { data: ev } = await ctx.supabase.from("events").select("image_path").eq("id", id).eq("org_id", ctx.org.id).maybeSingle()
   if (!ev) back(here, { error: t("errors.not_allowed") })
   let image_path: string | null = null
-  if (fd.get("remove") === "1") await removeImage(ctx.supabase, ev.image_path)
+  // Copies of an event share its picture: the file goes only when no other event uses it.
+  const { count: shared } = ev.image_path ? await ctx.supabase.from("events").select("id", { count: "exact", head: true }).eq("org_id", ctx.org.id).eq("image_path", ev.image_path).neq("id", id) : { count: 0 }
+  const previous = shared ? null : ev.image_path
+  if (fd.get("remove") === "1") await removeImage(ctx.supabase, previous)
   else {
-    const res = await replaceImage(ctx.supabase, `orgs/${ctx.org.id}/events/${id}`, fd.get("file"), ev.image_path)
+    const res = await replaceImage(ctx.supabase, `orgs/${ctx.org.id}/events/${id}`, fd.get("file"), previous)
     if ("error" in res) back(here, { error: t.dynamic(`errors.${res.error}`) })
     image_path = res.path!
   }
@@ -200,6 +204,40 @@ export async function updateEventImage(fd: FormData) {
   revalidatePath(PATH)
   refreshPublic(ctx.org.id) // public pages show this
   back(here, { ok: t("eventsPage.saved") })
+}
+
+// Duplicate (one date) or repeat (a series) from the event page's sheet ?new=repeat.
+export async function repeatEventAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const here = `${PATH}/${id}`
+  const r = await repeatEvent(ctx.supabase, ctx.org.id, id, { first: String(fd.get("first") ?? ""), every: String(fd.get("every") ?? ""), count: Number(fd.get("count")), publish: fd.get("publish") === "on" })
+  if ("error" in r) back(`${here}?new=repeat`, { error: r.db ? dbError(t, r.db) : t.dynamic(r.error) })
+  refreshPublic(ctx.org.id)
+  // One copy: open it to adjust; a series: stay here, the series section lists the dates.
+  if (r.ids.length === 1) back(`${PATH}/${r.ids[0]}?edit=${r.ids[0]}`, { ok: t("eventsPage.series.copied") })
+  back(here, { ok: t("eventsPage.series.created", { count: r.ids.length }) })
+}
+
+// Series section: new time of day / cancel, for this date or this and all following (?edit=time, ?edit=cancel).
+export async function retimeEventAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const r = await retimeEvents(ctx.supabase, ctx.org.id, id, { following: fd.get("scope") === "following", start: String(fd.get("start") ?? ""), end: String(fd.get("end") ?? "") || null })
+  if ("error" in r) back(`${PATH}/${id}?edit=time`, { error: r.db ? dbError(t, r.db) : t.dynamic(r.error) })
+  deliverSoon()
+  refreshPublic(ctx.org.id)
+  back(`${PATH}/${id}`, { ok: t("eventsPage.series.retimed", { count: r.count }) })
+}
+
+export async function cancelEventsAction(fd: FormData) {
+  const { ctx, t } = await manager()
+  const id = idOf(fd)
+  const r = await cancelEvents(ctx.supabase, ctx.org.id, id, fd.get("scope") === "following")
+  if ("error" in r) back(`${PATH}/${id}?edit=cancel`, { error: r.db ? dbError(t, r.db) : t.dynamic(r.error) })
+  deliverSoon()
+  refreshPublic(ctx.org.id)
+  back(`${PATH}/${id}`, { ok: t("eventsPage.series.cancelled", { count: r.count }) })
 }
 
 /** Bulk bar on the list: move the ticked events to the trash. */
@@ -211,27 +249,23 @@ export async function bulkTrashEvents(fd: FormData) {
   back(PATH, error ? { error: dbError(t, error) } : { ok: t("common.bulkTrashed", { count: ids.length }) })
 }
 
-// Settings → Event-Typen. Slug empty = made from the name (numbered if taken).
+// Settings → Event-Typen.
 export async function saveEventType(fd: FormData) {
   const { ctx, t } = await manager()
   const id = String(fd.get("id") ?? "")
-  const { data: others } = await ctx.supabase.from("event_types").select("id, slug").eq("org_id", ctx.org.id)
-  const r = readEventType(
-    { name: fd.get("name"), slug: String(fd.get("slug") ?? "").trim() || (others ?? []).find((o) => o.id === id)?.slug, color: fd.get("color"), capacity: fd.get("capacity"), active: fd.has("active") ? fd.getAll("active").includes("on") : true },
-    (others ?? []).filter((o) => o.id !== id).map((o) => o.slug),
-  )
+  const r = readEventType({ name: fd.get("name"), color: fd.get("color"), active: fd.has("active") ? fd.getAll("active").includes("on") : true })
   if ("error" in r) back(SETTINGS, { error: t.dynamic(r.error) })
   const { error } = id
     ? await ctx.supabase.from("event_types").update(r.row).eq("id", id).eq("org_id", ctx.org.id)
     : await ctx.supabase.from("event_types").insert({ ...r.row, org_id: ctx.org.id })
-  if (error) back(SETTINGS, { error: error.code === "23505" ? t("errors.slug_taken") : dbError(t, error) })
+  if (error) back(SETTINGS, { error: dbError(t, error) })
   back(SETTINGS, { ok: t("eventTypes.saved") })
 }
 
 export async function deleteEventType(fd: FormData) {
   const { ctx, t } = await manager()
   const { error } = await ctx.supabase.from("event_types").delete().eq("id", String(fd.get("id") ?? "")).eq("org_id", ctx.org.id)
-  // Still used by an event (a trashed one too) → foreign key violation: deactivate instead.
+  // Still used by an event (a trashed one too) or counted by a membership type → foreign key violation: deactivate instead.
   if (error) back(SETTINGS, { error: error.code === "23503" ? t("eventTypes.inUse") : dbError(t, error) })
   back(SETTINGS, { ok: t("eventTypes.deleted") })
 }

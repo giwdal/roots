@@ -52,7 +52,7 @@ const CustomField = z.object({
 const FIELD_COLS = "id, entity, key, label, type, options, required, position"
 
 // ---------- locations, team (read-only: settings stay in the App) ----------
-const Location = z.object({ id: uuid, name: z.string(), address: z.string().nullable(), notes: z.string().nullable(), created_at: ts, updated_at: ts })
+const Location = z.object({ id: uuid, name: z.string(), address: z.string().nullable(), capacity: z.number().int().nullable().describe("How many fit; a new event at this location copies it"), notes: z.string().nullable(), created_at: ts, updated_at: ts })
 const Role = z.object({ id: uuid, name: z.string().nullable().describe("German name"), name_en: z.string().nullable(), is_owner: z.boolean(), permissions: z.array(z.string()) })
 const Invite = z.object({ id: uuid, email: z.string(), role_id: uuid, expires_at: ts, created_at: ts })
 const FieldBody = z.object({
@@ -60,7 +60,7 @@ const FieldBody = z.object({
   options: z.array(z.string()).optional().describe("Choices (select fields; required there)"),
   required: z.boolean().optional(),
 })
-const LOC_COLS = "id, name, address, notes, created_at, updated_at"
+const LOC_COLS = "id, name, address, capacity, notes, created_at, updated_at"
 const TeamMember = z.object({
   id: uuid.describe("Membership id (PATCH/DELETE /org-members/{id})"),
   user_id: uuid,
@@ -202,7 +202,7 @@ export const endpoints: Endpoint[] = [
     permission: "org.settings.manage",
     tag: "Settings",
     summary: "Delete a custom field",
-    description: "Stored values stay in the records (hidden); creating the field again with the same label brings them back. 422 `field_in_use` while a membership type uses an event field as its visit counting rule (change the membership type first); the same applies to removing the select option that rule uses.",
+    description: "Stored values stay in the records (hidden); creating the field again with the same label brings them back.",
     response: z.object({ id: uuid }),
     async handler({ db, orgId, params }) {
       const { error, count } = await db.from("custom_fields").delete({ count: "exact" }).eq("id", params.id).eq("org_id", orgId)

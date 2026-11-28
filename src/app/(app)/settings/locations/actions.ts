@@ -17,7 +17,13 @@ export async function saveLocation(fd: FormData) {
   const name = str(fd, "name", 100)
   if (!name) back(PATH, { error: t("errors.invalid_input") })
   // Notes only when the form has the field (the settings rows don't), so a save never clears them.
-  const row = { name, address: str(fd, "address", 500), ...(fd.has("notes") && { notes: str(fd, "notes", 2000) }) }
+  const cap = Math.floor(Number(fd.get("capacity")))
+  const row = {
+    name,
+    address: str(fd, "address", 500),
+    ...(fd.has("notes") && { notes: str(fd, "notes", 2000) }),
+    ...(fd.has("capacity") && { capacity: cap >= 1 ? cap : null }), // how many fit; new events copy it
+  }
   const { error } = UUID.test(id)
     ? await ctx.supabase.from("locations").update(row).eq("id", id).eq("org_id", ctx.org.id)
     : await ctx.supabase.from("locations").insert({ ...row, org_id: ctx.org.id })

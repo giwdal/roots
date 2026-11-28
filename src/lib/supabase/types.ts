@@ -763,14 +763,14 @@ isOneToOne: false
                   ]
                 },"event_types": {
                   Row: {
-                    "active": boolean,"capacity": number | null,"color": string | null,"created_at": string,"created_by": string | null,"id": string,"name": string,"org_id": string,"slug": string | null,"updated_at": string,"updated_by": string | null
+                    "active": boolean,"color": string | null,"created_at": string,"created_by": string | null,"id": string,"name": string,"org_id": string,"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"capacity"?: number | null,"color"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"org_id": string,"slug"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                    "active"?: boolean,"color"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"org_id": string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "active"?: boolean,"capacity"?: number | null,"color"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"slug"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                    "active"?: boolean,"color"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Relationships: [
                     {
@@ -1205,14 +1205,14 @@ isOneToOne: true
                   ]
                 },"membership_types": {
                   Row: {
-                    "active": boolean,"created_at": string,"created_by": string | null,"entry_fee_cents": number,"fee_cents": number,"fee_is_minimum": boolean,"id": string,"interval": string,"name": string,"notice_months": number,"org_id": string,"prorate": boolean,"updated_at": string,"updated_by": string | null,"visit_count_field": string | null,"visit_count_value": string | null,"visit_event_types": (string)[] | null,"visit_limit": number | null
+                    "active": boolean,"created_at": string,"created_by": string | null,"entry_fee_cents": number,"fee_cents": number,"fee_is_minimum": boolean,"id": string,"interval": string,"name": string,"notice_months": number,"org_id": string,"prorate": boolean,"updated_at": string,"updated_by": string | null,"visit_event_types": (string)[] | null,"visit_limit": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name": string,"notice_months"?: number,"org_id": string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_count_field"?: string | null,"visit_count_value"?: string | null,"visit_event_types"?: (string)[] | null,"visit_limit"?: number | null
+                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name": string,"notice_months"?: number,"org_id": string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_event_types"?: (string)[] | null,"visit_limit"?: number | null
                   }
                   Update: {
-                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name"?: string,"notice_months"?: number,"org_id"?: string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_count_field"?: string | null,"visit_count_value"?: string | null,"visit_event_types"?: (string)[] | null,"visit_limit"?: number | null
+                    "active"?: boolean,"created_at"?: string,"created_by"?: string | null,"entry_fee_cents"?: number,"fee_cents"?: number,"fee_is_minimum"?: boolean,"id"?: string,"interval"?: string,"name"?: string,"notice_months"?: number,"org_id"?: string,"prorate"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"visit_event_types"?: (string)[] | null,"visit_limit"?: number | null
                   }
                   Relationships: [
                     {
